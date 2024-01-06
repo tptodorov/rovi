@@ -1,7 +1,7 @@
-from enum import StrEnum, auto
+from enum import Enum, auto
 
 
-class ControlEvent(StrEnum):
+class ControlEvent(Enum):
     UP = auto()
     DOWN = auto()
     LEFT = auto()
