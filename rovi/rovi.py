@@ -1,5 +1,4 @@
 import RPi.GPIO as GPIO
-import time
 
 # left
 in1 = 27

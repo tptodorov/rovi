@@ -1,8 +1,8 @@
-import pygame
-
-from event import ControlEvent
 import pickle
+
+import pygame
 import zenoh
+from event import ControlEvent
 
 pygame.init()
 clock = pygame.time.Clock()
