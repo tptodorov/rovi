@@ -1,5 +1,5 @@
 import pickle
-import zenoh, random, time
+import zenoh
 from getkey import getkey
 
 from event import ControlEvent
@@ -10,8 +10,11 @@ if __name__ == "__main__":
     pub = session.declare_publisher(key)
 
     while True:  # Breaks when key is pressed
-        key = getkey().encode()
-        print("key", key)  # Optionally prints out the key.
+        key_byte = getkey()
+        if key:
+            key = key_byte.encode()
+        else:
+            continue
         event = None
         if key == b"q":
             break
@@ -23,12 +26,12 @@ if __name__ == "__main__":
             event = ControlEvent.RIGHT
         elif key in [b"\x1b[D", b"j"]:
             event = ControlEvent.LEFT
+        elif key in [b"\x1b[D", b"u"]:
+            event = ControlEvent.ROTATE_LEFT
+        elif key in [b"\x1b[D", b"o"]:
+            event = ControlEvent.ROTATE_RIGHT
         if event:
+            print(event)
             pub.put(pickle.dumps(event))
-
-    # while True:
-    #     t = read_temp()
-    #     buf = f"{t}"
-    #     print(f"Putting Data ('{key}': '{buf}')...")
-    #     pub.put(buf)
-    #     time.sleep(1)
+        else:
+            print("unknown", key)

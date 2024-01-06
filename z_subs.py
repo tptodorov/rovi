@@ -18,6 +18,10 @@ def listener(sample):
             print("car left")
         case ControlEvent.RIGHT:
             print("car right")
+        case ControlEvent.ROTATE_RIGHT:
+            print("rotate right")
+        case ControlEvent.ROTATE_LEFT:
+            print("rotate left")
         case _:
             raise NotImplementedError
 
