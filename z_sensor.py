@@ -30,6 +30,9 @@ if __name__ == "__main__":
             event = ControlEvent.ROTATE_LEFT
         elif key in [b"\x1b[D", b"o"]:
             event = ControlEvent.ROTATE_RIGHT
+        else:
+            event = ControlEvent.STOP
+
         if event:
             print(event)
             pub.put(pickle.dumps(event))
