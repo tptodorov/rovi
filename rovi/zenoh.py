@@ -2,8 +2,8 @@ import pickle
 import time
 import sys
 
-import zenoh
-from rovi import *
+import remote
+from rovi.rovi import *
 
 from event import ControlEvent
 
@@ -41,9 +41,9 @@ class MyController():
 key = "rovi/controller/event"
 
 if __name__ == "__main__":
-    zenoh.init_logger()
+    remote.init_logger()
 
-    session = zenoh.open()
+    session = remote.open()
     car = MyController()
     sub = session.declare_subscriber(key,lambda s: car.listener(s))
 

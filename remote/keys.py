@@ -1,12 +1,12 @@
 import pickle
-import zenoh
+import remote
 from getkey import getkey
 
 from event import ControlEvent
 
 key = "rovi/controller/event"
 if __name__ == "__main__":
-    session = zenoh.open()
+    session = remote.open()
     pub = session.declare_publisher(key)
 
     while True:  # Breaks when key is pressed

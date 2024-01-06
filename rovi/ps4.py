@@ -1,5 +1,5 @@
 from pyPS4Controller.controller import Controller
-from rovi import *
+from rovi.rovi import *
 
 def _normalize(v):
     return abs(round(v/32767 * 100))
