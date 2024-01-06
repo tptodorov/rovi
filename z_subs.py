@@ -7,9 +7,6 @@ from rovi import *
 
 from event import ControlEvent
 
-def list(sample):
-    print(sample)
-
 class MyController():
     def __init__(self, **kwargs):
        Car.setup()
@@ -23,7 +20,7 @@ class MyController():
                 print("car up")
                 self.car.forward()
             case ControlEvent.DOWN:
-                self.self.car.backward()
+                self.car.backward()
                 print("car down")
             case ControlEvent.LEFT:
                 print("car left")
@@ -47,8 +44,8 @@ if __name__ == "__main__":
     zenoh.init_logger()
 
     session = zenoh.open()
-    c = MyController()
-    sub = session.declare_subscriber(key,list)
+    car = MyController()
+    sub = session.declare_subscriber(key,lambda s: car.listener(s))
 
     print("Enter 'q' to quit...")
     c = '\0'
