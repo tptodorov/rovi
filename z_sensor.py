@@ -35,6 +35,6 @@ if __name__ == "__main__":
 
         if event:
             print(event)
-            pub.put(pickle.dumps(event))
+            pub.put(value=pickle.dumps(event))
         else:
             print("unknown", key)
