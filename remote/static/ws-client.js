@@ -4,7 +4,7 @@ keydown_events = {
   j: "LEFT",
   l: "RIGHT",
   i: "UP",
-  j: "DOWN",
+  k: "DOWN",
 };
 
 $(document).ready(function () {

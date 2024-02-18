@@ -17,7 +17,7 @@ settings = dict(
 )
 
 # Tonado server port
-PORT = 80
+PORT = 8000
 
 msg_to_event = {
     "STOP": ControlEvent.STOP,
@@ -39,6 +39,7 @@ class MainHandler(tornado.web.RequestHandler):
 class WSHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         print("[WS] Connection was opened.")
+        Car.setup()
         self.car = Car()
 
     def on_message(self, message):
@@ -76,14 +77,9 @@ application = tornado.web.Application(
 
 
 if __name__ == "__main__":
-    try:
-        http_server = tornado.httpserver.HTTPServer(application)
-        http_server.listen(PORT)
-        main_loop = tornado.ioloop.IOLoop.instance()
+    http_server = tornado.httpserver.HTTPServer(application)
+    http_server.listen(PORT)
+    main_loop = tornado.ioloop.IOLoop.instance()
 
-        print("Tornado Server started")
-        main_loop.start()
-
-    except:
-        print("Exception triggered - Tornado Server stopped.")
-    # End of Program
+    print("Tornado Server started")
+    main_loop.start()
