@@ -47,3 +47,11 @@ Implemented control methods:
 * over Bluetooth PS4 controller directly connected to the car
 * network via websockets from any internet host using a web page
 * network via Zenoh from the local network using a keyboard
+
+### Milestone 1
+
+First bring-up goal: drive one DC motor with the ESP32-S3-N16R8 + one TB6612FNG (Rust `no_std`).
+
+* GitHub milestone: https://github.com/tptodorov/rovi/milestone/1
+* Plan + wiring: [`docs/m1-wiring.md`](docs/m1-wiring.md), [`MILESTONES.md`](MILESTONES.md)
+* Firmware: [`firmware/m1-tb6612/`](firmware/m1-tb6612/)
