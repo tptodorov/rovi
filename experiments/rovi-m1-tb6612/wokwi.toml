@@ -1,4 +1,0 @@
-[wokwi]
-version = 1
-firmware = "target/xtensa-esp32s3-none-elf/release/rovi-m1-tb6612"
-elf = "target/xtensa-esp32s3-none-elf/release/rovi-m1-tb6612"

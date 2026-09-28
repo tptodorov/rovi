@@ -1,6 +1,6 @@
-# rovi-m1-tb6612
+# rovi-m1-wokwi
 
-`no_std` firmware for **Milestone 1**: ESP32-S3-N16R8 + one TB6612FNG channel.
+`no_std` firmware for **Milestone 1**: ESP32-S3-N16R8 + one TB6612FNG channel. So far this crate only proves the firmware in Wokwi simulation (GPIO/PWM timing, no panics) — real hardware bring-up (see [`MILESTONE.md`](MILESTONE.md) acceptance checklist) is still pending.
 
 ## Crate choice
 
@@ -12,7 +12,7 @@ The project includes a Wokwi ESP32-S3 diagram with a logic analyzer on STBY, AIN
 
 Install [`wokwi-cli`](https://docs.wokwi.com/wokwi-ci/cli-installation), then run `direnv allow` once from the repo root. Direnv loads the Wokwi token from `pass` and the Rust toolchain environment.
 
-Run the simulation from `experiments/rovi-m1-tb6612`:
+Run the simulation from `experiments/rovi-m1-wokwi`:
 
 ```bash
 cargo build --release --features wokwi
@@ -39,12 +39,12 @@ Wire the board per [`WIRING.md`](WIRING.md), then plug in **USB Type-C**.
 ## Build & flash
 
 ```bash
-cd experiments/rovi-m1-tb6612
+cd experiments/rovi-m1-wokwi
 cargo build --release
 cargo run --release   # uses espflash runner + serial monitor
 ```
 
-If the port is not detected, hold **BOOT**, tap **RESET**, release **BOOT**, then retry `espflash flash --monitor target/xtensa-esp32s3-none-elf/release/rovi-m1-tb6612`.
+If the port is not detected, hold **BOOT**, tap **RESET**, release **BOOT**, then retry `espflash flash --monitor target/xtensa-esp32s3-none-elf/release/rovi-m1-wokwi`.
 
 ## Behavior
 

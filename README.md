@@ -55,4 +55,4 @@ The ESP32-S3 + Rust (`no_std`) firmware is intended to become the car's primary 
 **Milestone 1** — first bring-up goal: drive one DC motor with the ESP32-S3-N16R8 + one TB6612FNG.
 
 * GitHub milestone: https://github.com/tptodorov/rovi/milestone/1
-* M1 plan, wiring, and experiment: [`experiments/rovi-m1-tb6612/`](experiments/rovi-m1-tb6612/)
+* M1 plan, wiring, and experiment: [`experiments/rovi-m1-wokwi/`](experiments/rovi-m1-wokwi/)

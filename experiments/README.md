@@ -1,6 +1,6 @@
 # Hardware experiments
 
-Each hardware milestone is an independent Cargo package, named `<milestone>-<topic>/` (e.g. `rovi-m1-tb6612/`). "Independent" means:
+Each hardware milestone is an independent Cargo package, named `<milestone>-<topic>/` (e.g. `rovi-m1-wokwi/`). "Independent" means:
 
 * its own `Cargo.toml`/`Cargo.lock` and `target/` build directory (gitignored via `/experiments/*/target/`)
 * its own `README.md` (build/flash/simulate instructions), `MILESTONE.md` (goal, deliverables, test plan, acceptance) and, where relevant, `WIRING.md`
@@ -10,4 +10,4 @@ Milestones don't share code with each other or with the Rovi Python product (`ro
 
 ## Milestones
 
-* [`rovi-m1-tb6612/`](rovi-m1-tb6612/) — ESP32-S3-N16R8 + one TB6612FNG channel, single-motor bring-up.
+* [`rovi-m1-wokwi/`](rovi-m1-wokwi/) — Wokwi-simulated ESP32-S3-N16R8 + one TB6612FNG channel firmware (GPIO/PWM timing validated in simulation; real hardware bring-up still pending).
