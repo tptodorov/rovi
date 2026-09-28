@@ -13,6 +13,8 @@ use esp_hal::time::Rate;
 use esp_println::println;
 use tb6612fng::{DriveCommand, Motor};
 
+esp_bootloader_esp_idf::esp_app_desc!();
+
 /// Pin map (see WIRING.md):
 /// STBY=GPIO4, AIN1=GPIO5, AIN2=GPIO6, PWMA=GPIO7
 #[main]
