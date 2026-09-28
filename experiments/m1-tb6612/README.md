@@ -49,3 +49,5 @@ If the port is not detected, hold **BOOT**, tap **RESET**, release **BOOT**, the
 ## Behavior
 
 After boot, the firmware loops: forward 2 s → stop 1 s → reverse 2 s → stop 1 s at ~40% duty on channel A (GPIO7 PWM, GPIO5/6 direction, GPIO4 STBY high).
+
+The `wokwi` feature shortens the phases to 100 ms drive / 50 ms stop for simulation. It builds to the same `target/` path as the default firmware, so rebuild without it before flashing hardware.

@@ -7,7 +7,7 @@ use esp_hal::delay::Delay;
 use esp_hal::gpio::{DriveMode, Level, Output, OutputConfig};
 use esp_hal::ledc::channel::ChannelIFace;
 use esp_hal::ledc::timer::TimerIFace;
-use esp_hal::ledc::{channel, timer, Ledc, LowSpeed, LSGlobalClkSource};
+use esp_hal::ledc::{channel, timer, LSGlobalClkSource, Ledc, LowSpeed};
 use esp_hal::main;
 use esp_hal::time::Rate;
 use esp_println::println;
