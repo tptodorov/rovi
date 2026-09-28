@@ -12,14 +12,15 @@ The project includes a Wokwi ESP32-S3 diagram with a logic analyzer on STBY, AIN
 
 Install [`wokwi-cli`](https://docs.wokwi.com/wokwi-ci/cli-installation), then run `direnv allow` once from the repo root. Direnv loads the Wokwi token from `pass` and the Rust toolchain environment.
 
-Run the simulation from the repository root:
+Run the simulation from `experiments/m1-tb6612`:
 
 ```bash
-cd experiments/m1-tb6612
 cargo build --release --features wokwi
-wokwi-cli . --timeout 700 --timeout-exit-code 0 \
-  --fail-text 'Guru Meditation' --vcd-file target/m1-signals.vcd
+wokwi-cli . --timeout 700 --fail-text 'PANIC' --expect-text 'reverse' \
+  --vcd-file target/m1-signals.vcd
 ```
+
+The run exits non-zero if the firmware panics, never reaches `reverse`, or times out.
 
 The simulator can also be started through the Wokwi MCP configured in `.codex/config.toml`.
 
