@@ -16,11 +16,11 @@ Run the simulation from `experiments/m1-tb6612`:
 
 ```bash
 cargo build --release --features wokwi
-wokwi-cli . --timeout 700 --fail-text 'PANIC' --expect-text 'reverse' \
+wokwi-cli . --timeout 700 --timeout-exit-code 0 --fail-text 'PANIC' \
   --vcd-file target/m1-signals.vcd
 ```
 
-The run exits non-zero if the firmware panics, never reaches `reverse`, or times out.
+The firmware loops forever, so the run always ends at the timeout: exit 0 means it ran the full 700 ms without panicking, and the VCD captures the whole run. It exits non-zero if the firmware panics or the simulation fails to start.
 
 The simulator can also be started through the Wokwi MCP configured in `.codex/config.toml`.
 
