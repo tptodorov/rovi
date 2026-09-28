@@ -18,13 +18,13 @@ Do **not** power the motor from the ESP 3.3 V rail.
 
 | TB6612FNG pin | ESP32-S3 GPIO | Role |
 | --- | --- | --- |
-| `PWMA` | **GPIO7** | Speed (MCPWM PWM) |
+| `PWMA` | **GPIO7** | Speed (LEDC PWM, 20 kHz) |
 | `AIN1` | **GPIO5** | Direction bit 1 |
 | `AIN2` | **GPIO6** | Direction bit 2 |
 | `STBY` | **GPIO4** | Standby (hold **HIGH** to enable) |
 | `PWMB`, `BIN1`, `BIN2` | — | Unused for M1 (tie inactive or leave for later) |
 
-These GPIOs are free on a typical ESP32-S3 DEV/CORE board and match the firmware defaults in `firmware/m1-tb6612`.
+These GPIOs are free on a typical ESP32-S3 DEV/CORE board and match the firmware defaults in this experiment.
 
 ## Quick checklist
 

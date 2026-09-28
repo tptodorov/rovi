@@ -37,7 +37,7 @@ Dual brushed-DC motor driver IC (two H-bridges). Official limits: **VM up to 15 
 
 ### Control Software
 
-The following package is meant to run on Raspberry Pi with Python 3.11.
+The main Rovi product is the Raspberry Pi application, meant to run with Python 3.11. Its service entrypoint is [`roviservice.py`](roviservice.py).
 
 The 4 motors are controlled via PWM pins connected to the motor drivers.
 For each motor, one pin is used to control the direction and another pin to control the speed.
@@ -53,5 +53,6 @@ Implemented control methods:
 First bring-up goal: drive one DC motor with the ESP32-S3-N16R8 + one TB6612FNG (Rust `no_std`).
 
 * GitHub milestone: https://github.com/tptodorov/rovi/milestone/1
-* Plan + wiring: [`docs/m1-wiring.md`](docs/m1-wiring.md), [`MILESTONES.md`](MILESTONES.md)
-* Firmware: [`firmware/m1-tb6612/`](firmware/m1-tb6612/)
+* M1 plan, wiring, and experiment: [`experiments/m1-tb6612/`](experiments/m1-tb6612/)
+
+Rust hardware experiments live under `experiments/`. Each is an independent Cargo package with its own `target/` build directory; the Rovi product remains a separate application.

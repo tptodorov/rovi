@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "author": "rovi",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-s3-devkitc-1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": { "flashSize": "16", "psramSize": "8", "psramType": "octal" }
+    },
+    {
+      "type": "wokwi-logic-analyzer",
+      "id": "logic",
+      "top": 0,
+      "left": 260,
+      "attrs": {
+        "bufferSize": "100000"
+      }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:4", "logic:D0", "green", [] ],
+    [ "esp:5", "logic:D1", "blue", [] ],
+    [ "esp:6", "logic:D2", "orange", [] ],
+    [ "esp:7", "logic:D3", "purple", [] ],
+    [ "esp:GND.1", "logic:GND", "black", [] ]
+  ],
+  "dependencies": {}
+}

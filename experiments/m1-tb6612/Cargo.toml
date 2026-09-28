@@ -6,6 +6,9 @@ license = "MIT OR Apache-2.0"
 publish = false
 description = "M1: ESP32-S3 + TB6612FNG single-motor bring-up (no_std)"
 
+[features]
+wokwi = []
+
 [dependencies]
 esp-hal = { version = "1.2.2", features = ["esp32s3", "unstable"] }
 esp-backtrace = { version = "0.20.0", features = ["esp32s3", "panic-handler", "println"] }

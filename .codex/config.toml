@@ -1,0 +1,4 @@
+[mcp_servers.wokwi]
+command = "wokwi-cli"
+args = ["mcp", "--quiet", "experiments/m1-tb6612"]
+env_vars = ["WOKWI_CLI_TOKEN"]
