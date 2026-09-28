@@ -12,7 +12,7 @@ The project includes a Wokwi ESP32-S3 diagram with a logic analyzer on STBY, AIN
 
 Install [`wokwi-cli`](https://docs.wokwi.com/wokwi-ci/cli-installation), then run `direnv allow` once from the repo root. Direnv loads the Wokwi token from `pass` and the Rust toolchain environment.
 
-Run the simulation from `experiments/m1-tb6612`:
+Run the simulation from `experiments/rovi-m1-tb6612`:
 
 ```bash
 cargo build --release --features wokwi
@@ -39,7 +39,7 @@ Wire the board per [`WIRING.md`](WIRING.md), then plug in **USB Type-C**.
 ## Build & flash
 
 ```bash
-cd experiments/m1-tb6612
+cd experiments/rovi-m1-tb6612
 cargo build --release
 cargo run --release   # uses espflash runner + serial monitor
 ```

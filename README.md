@@ -48,11 +48,11 @@ Implemented control methods:
 * network via websockets from any internet host using a web page
 * network via Zenoh from the local network using a keyboard
 
-### Milestone 1
+### Hardware milestones
 
-First bring-up goal: drive one DC motor with the ESP32-S3-N16R8 + one TB6612FNG (Rust `no_std`).
+The ESP32-S3 + Rust (`no_std`) firmware is intended to become the car's primary controller, replacing the Raspberry Pi/Python stack above once a milestone proves closed-loop driving end-to-end. Until then, the Python app remains the working product and this firmware track is developed milestone by milestone under [`experiments/`](experiments/) — see [`experiments/README.md`](experiments/README.md) for the convention each milestone follows.
+
+**Milestone 1** — first bring-up goal: drive one DC motor with the ESP32-S3-N16R8 + one TB6612FNG.
 
 * GitHub milestone: https://github.com/tptodorov/rovi/milestone/1
-* M1 plan, wiring, and experiment: [`experiments/m1-tb6612/`](experiments/m1-tb6612/)
-
-Rust hardware experiments live under `experiments/`. Each is an independent Cargo package with its own `target/` build directory; the Rovi product remains a separate application.
+* M1 plan, wiring, and experiment: [`experiments/rovi-m1-tb6612/`](experiments/rovi-m1-tb6612/)
