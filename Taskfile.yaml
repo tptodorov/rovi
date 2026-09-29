@@ -1,0 +1,15 @@
+version: "3"
+
+tasks:
+  worktree:prepare:
+    desc: Prepare a fresh worktree (install third-party skills from skills-lock.json)
+    sources:
+      - skills-lock.json
+    generates:
+      - .agents/skills/**/*
+      - .claude/skills
+    method: checksum
+    cmds:
+      - npx -y skills experimental_install -y
+      - mkdir -p .claude
+      - ln -sfn ../.agents/skills .claude/skills
