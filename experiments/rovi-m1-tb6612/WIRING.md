@@ -1,6 +1,6 @@
 # M1 wiring: ESP32-S3-N16R8 ↔ one TB6612FNG
 
-Schematic: [`wiring.kicad_sch`](wiring.kicad_sch) — open in KiCad for the visual diagram. This file is the quick-reference pin table and bring-up notes; the two should always agree.
+Schematic: [`wiring.kicad_sch`](wiring.kicad_sch) — open in KiCad for the visual diagram. It draws the *complete* pinout of both actual boards (every physical header pin, matching [`docs/reference/`](../../docs/reference/) exactly — same pin count, same order, `X` marks on everything M1 doesn't use), not just the wired subset, so it can be checked directly against the physical hardware. This file is the quick-reference pin table and bring-up notes; the two should always agree.
 
 Easiest bring-up: **one motor, one TB6612FNG channel A**, PWM + direction + STBY from the ESP32-S3.
 
