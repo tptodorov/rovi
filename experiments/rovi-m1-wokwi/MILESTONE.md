@@ -34,7 +34,7 @@ Prove the new hardware stack: one **ESP32-S3-N16R8** CORE board drives one **TB6
 
 ### Acceptance
 
-Wokwi doesn't model the TB6612FNG electrically, so a passing Wokwi run (see this crate's README) proves firmware GPIO/PWM timing only — it does not satisfy any of the items below. All three need physical bench verification (see [`../../docs/VISION.md`](../../docs/VISION.md#hardware-validation-policy)).
+Wokwi doesn't model the TB6612FNG electrically, so a passing Wokwi run (see this crate's README) proves firmware GPIO/PWM timing only — it does not satisfy any of the items below. All three need physical bench verification (see [`../../README.md`](../../README.md#hardware-validation-policy)).
 
 - [ ] Wiring matches the doc and was verified on the bench
 - [ ] Firmware flashes via USB Type-C
