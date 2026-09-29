@@ -1,6 +1,6 @@
 # Rovi plan
 
-Current status, roadmap, and decisions deliberately deferred. For what Rovi is and why, see [`VISION.md`](VISION.md). For how work gets done, see the root [`README.md`](../README.md). This file is living — update it as milestones land, don't append a history; for *why* a past architecture decision was made, see [`plans/`](plans/).
+Current status, roadmap, and decisions deliberately deferred. For what Rovi is and why, see [`VISION.md`](VISION.md). For how work gets done, see the root [`README.md`](../README.md). This file is living — update it as milestones land, don't append a history; for *why* a specific hard-to-reverse decision was made, see [`adr/`](adr/).
 
 ## Current state (2026-09-29)
 
@@ -15,6 +15,10 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 * **M2** (planned) — ESP32-S3 as a BLE peripheral: advertises a custom GATT service, a generic BLE client writes drive commands, firmware reacts observably (LED/serial). Bare board, no motor hardware — independent of M1. Not yet created.
 * **M3** (placeholder) — ESP32-S3 as BLE central, pairing with a real BLE gamepad. Not yet designed; comes after M2.
 * Beyond M1-M3: the low-level 4-wheel API becomes the first spec-driven product-development effort — see root [README.md](../README.md#how-we-work).
+
+## Outstanding
+
+* The OpenVPN client config that used to be committed at repo root (`tptodorov.homeservice.ovpn`) contained certificate/private-key material and was pushed to this public repo before being untracked — the key is still exposed in git history. Needs a credential rotation and a history rewrite (destructive, requires explicit sign-off) — not yet done.
 
 ## Deferred decisions (non-goals for now)
 
