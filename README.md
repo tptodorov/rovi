@@ -47,6 +47,10 @@ All changes land via pull request against `main` — no direct pushes to `main`.
 
 Simulation never counts as proof for hardware a simulator doesn't model electrically. Wokwi, for example, simulates ESP32-S3 GPIO/PWM timing but not the TB6612FNG's electrical behavior, and doesn't simulate BLE radio at all (tracked upstream: https://github.com/wokwi/wokwi-features/issues/225). A milestone touching hardware isn't accepted until it's been physically bench-verified, whatever a simulator says. This applies to every hardware component (drivers, sensors, radios, etc.), not just one.
 
+#### Hardware design assumptions
+
+Never assume a wiring diagram, schematic, or PCB layout targets bare chips. Ask first: dev boards or bare chips, and if dev boards, which specific ones (get the exact board/listing, not just the chip family) — then design against [`docs/reference/`](docs/reference/) for those specific boards, not a generic chip datasheet. A bare-chip symbol with a handful of arbitrarily-numbered pins doesn't correspond to anything printed on a real dev board, and re-deriving the actual physical pinout after the fact means redoing the design. See [ADR 0003](docs/adr/0003-confirm-devboard-vs-chip-before-hw-design.md).
+
 #### Two development tracks
 
 * **Exploratory hardware bring-up** (`experiments/`) stays lightweight: each milestone is an independent Cargo package with colocated `README.md`/`MILESTONE.md`/`WIRING.md` (see [`experiments/README.md`](experiments/README.md)). Results get tracked, not just planned — after bench testing, the milestone's `MILESTONE.md` gets a `## Results` section (what was observed, pass/fail, date, links to logs/photos), and `experiments/README.md`'s index gets a status marker.
