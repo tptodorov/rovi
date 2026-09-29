@@ -28,11 +28,9 @@ Do **not** power the motor from the ESP 3.3 V rail.
 
 These GPIOs are free on a typical ESP32-S3 DEV/CORE board and match the firmware defaults in this experiment.
 
-## Verified against the actual boards received (2026-09-29)
+## Verified against the actual boards received
 
-* **ESP32-S3-N16R8 board**: vendor datasheet PDF's pinout diagram confirms GPIO4/5/6/7 exist on this specific board (left header) and aren't boot-strapping (GPIO0/3/45/46), USB (GPIO19/20/21), or RGB-LED (GPIO48) pins — no conflicts with M1's use of them. The logic-supply pin is silkscreened `3V3` (two of them; either works).
-* **TB6612FNG board** (AliExpress, seller HHKFYD/ICGOICIC): product photos confirm the physical IC package is marked `TB6612FNG` and the breakout's silkscreen pin names exactly match the table above (`PWMA`/`AIN1`/`AIN2`/`STBY`/`VM`/`GND`/`AO1`/`AO2`, plus unused `PWMB`/`BIN1`/`BIN2`/`BO1`/`BO2`) — **except** the logic-supply pin, which this board silkscreens `VCC`, not `3V3` (fixed in `wiring.kicad_sch`; it's still the same net as the ESP's `3V3`, just named differently on each side).
-* ✅ **Confirmed not a DRV8833.** The listing's title reads "TB6612 DRV8833" as if interchangeable (they're different, incompatible chips — DRV8833 has no separate PWM pin and a `SLEEP` pin instead of `STBY`), but the physical IC received is marked `TB717A3` / `6612FNG` (lot code / part number split across two lines) — genuinely a Toshiba TB6612FNG.
+Full pin catalogs, board photos, and sources for both boards: [`docs/reference/esp32-s3-n16r8/`](../../docs/reference/esp32-s3-n16r8/) and [`docs/reference/tb6612fng/`](../../docs/reference/tb6612fng/). Confirmed: GPIO4/5/6/7 exist and don't conflict with strapping/USB/RGB-LED pins; the TB6612FNG board's pin names match this doc exactly except the logic-supply pin, silkscreened `VCC` here (fixed in `wiring.kicad_sch`, still the same net as the ESP's `3V3`); the physical IC is a genuine TB6612FNG (marked `TB717A3`/`6612FNG`), not the DRV8833 the listing's title ambiguously suggested.
 
 ## Quick checklist
 
@@ -45,5 +43,4 @@ These GPIOs are free on a typical ESP32-S3 DEV/CORE board and match the firmware
 
 * Toshiba TB6612FNG datasheet: https://toshiba.semicon-storage.com/info/TB6612FNG_datasheet_en_20141001.pdf?did=10660&prodName=TB6612FNG
 * Espressif ESP32-S3 module datasheet: https://www.espressif.com/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf
-* This specific ESP32-S3-N16R8 board's vendor datasheet (pinout diagram, page 32): user-supplied PDF, not in this repo
-* This specific TB6612FNG board: https://de.aliexpress.com/item/1005009294983213.html (seller HHKFYD Module Store / ICGOICIC brand)
+* Board-specific pinouts and sources: [`docs/reference/`](../../docs/reference/)

@@ -20,6 +20,8 @@ A modular robotics hardware + software platform, currently building its first ap
 
 #### Board references
 
+For the pinout of the *specific boards received* (not just the chip family), see [`docs/reference/`](docs/reference/).
+
 ##### ESP32-S3-N16R8 (Espressif)
 
 N16R8 means **16 MB Quad-SPI flash** and **8 MB Octal-SPI PSRAM** on an ESP32-S3 module (commonly ESP32-S3-WROOM-1 / WROOM-1U). Dual-core Xtensa LX7, 2.4 GHz Wi-Fi + Bluetooth LE, USB Type-C on this CORE board; headers not pre-soldered on the received unit.
