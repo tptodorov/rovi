@@ -14,7 +14,7 @@ Easiest bring-up: **one motor, one TB6612FNG channel A**, PWM + direction + STBY
 | Motor battery / PSU (−) | TB6612FNG `GND` / ESP GND | Same ground as logic |
 | Motor | TB6612FNG `AO1` / `AO2` | Channel A outputs |
 
-Do **not** power the motor from the ESP 3.3 V rail.
+Do **not** power the motor from the ESP 3.3 V rail. Do **not** feed 5 V (or anything else) into the ESP's `3V3` pin either — it's the *regulated output* of the board's onboard LDO (visible in `docs/reference/esp32-s3-n16r8/pinout.png` as a 3-pin SOT-223 marked `...117`), not an input; forcing 5 V onto it bypasses the regulator and will very likely destroy the ESP32-S3 module (its 3.3 V rail's absolute max is ~3.6 V). Power the board via USB-C or the `5Vin` pin — the regulator produces `3V3` automatically from either.
 
 ## Signal map (channel A only)
 

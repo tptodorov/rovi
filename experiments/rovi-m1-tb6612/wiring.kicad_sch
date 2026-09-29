@@ -140,7 +140,7 @@
 		(effects (font (size 1.2 1.2)))
 		(uuid "00000000-0000-4000-8000-000000000051")
 	)
-	(text "Notes:\n- Common ground required: ESP GND = TB6612FNG GND = motor supply GND.\n- Do not power the motor from the ESP 3.3V rail; use a separate, current-limited supply.\n- Pin names shown are TB6612FNG datasheet logical names, not any specific breakout board's silkscreen layout.\n- Full context: WIRING.md and MILESTONE.md in this experiment's directory."
+	(text "Notes:\n- Common ground required: ESP GND = TB6612FNG GND = motor supply GND.\n- Do not power the motor from the ESP 3.3V rail; use a separate, current-limited supply.\n- Do not feed 5V into ESP 3V3 -- it's a regulated OUTPUT, not an input. Power via USB-C or 5Vin.\n- Pin names shown are TB6612FNG datasheet logical names, not any specific breakout board's silkscreen layout.\n- Full context: WIRING.md and MILESTONE.md in this experiment's directory."
 		(at 20 160 0)
 		(effects (font (size 1.5 1.5)))
 		(uuid "00000000-0000-4000-8000-000000000052")
