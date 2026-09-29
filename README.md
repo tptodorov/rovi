@@ -1,6 +1,8 @@
-## Remote Controlled Car with 4 mecanum-wheels
+## Rovi
 
-### Status
+A modular robotics hardware + software platform, currently building its first application: a remote-controlled 4 mecanum-wheel car. See [`docs/VISION.md`](docs/VISION.md) for what Rovi is and where it's going, and [`AGENTS.md`](AGENTS.md) if you're a coding agent working in this repo.
+
+### Hardware status
 
 * Hardware parts package: **received** (2026-09-26)
 
@@ -35,15 +37,8 @@ Dual brushed-DC motor driver IC (two H-bridges). Official limits: **VM up to 15 
 * Product page: https://toshiba.semicon-storage.com/ap-en/semiconductor/product/motor-driver-ics/brushed-dc-motor-driver-ics/detail.TB6612FNG.html
 * Datasheet (English): https://toshiba.semicon-storage.com/info/TB6612FNG_datasheet_en_20141001.pdf?did=10660&prodName=TB6612FNG
 
-### Control software
+### Software status
 
-The current, working control stack is the Python application in [`legacy-python/`](legacy-python/) — see its README for setup, the service entrypoint, and implemented control methods (PS4 controller, websockets, Zenoh/keyboard).
-
-### Hardware milestones
-
-The ESP32-S3 + Rust (`no_std`) firmware is intended to become the car's primary controller, replacing the Raspberry Pi/Python stack above once a milestone proves closed-loop driving end-to-end. Until then, `legacy-python/` remains the working product and this firmware track is developed milestone by milestone under [`experiments/`](experiments/) — see [`experiments/README.md`](experiments/README.md) for the convention each milestone follows.
-
-**Milestone 1** — first bring-up goal: drive one DC motor with the ESP32-S3-N16R8 + one TB6612FNG.
-
-* GitHub milestone: https://github.com/tptodorov/rovi/milestone/1
-* M1 plan, wiring, and experiment: [`experiments/rovi-m1-wokwi/`](experiments/rovi-m1-wokwi/)
+* Working product today: the Python app in [`legacy-python/`](legacy-python/).
+* The ESP32-S3/Rust hardware platform (see [`docs/VISION.md`](docs/VISION.md)) is being bootstrapped milestone by milestone under [`experiments/`](experiments/) — see [`experiments/README.md`](experiments/README.md) for the convention and current milestone status.
+* GitHub milestones: https://github.com/tptodorov/rovi/milestones
