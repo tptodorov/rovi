@@ -29,7 +29,7 @@
 			(property "Value" "TB6612FNG" (at 0 25 0) (effects (font (size 1.27 1.27)) hide))
 			(symbol "TB6612FNG_1_1"
 				(rectangle (start 0 8) (end 50 -74) (stroke (width 0.254) (type default)) (fill (type none)))
-				(pin power_in line (at 0 0 0) (length 5) (name "3V3" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
+				(pin power_in line (at 0 0 0) (length 5) (name "VCC" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
 				(pin passive line (at 0 -8 0) (length 5) (name "GND" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27)))))
 				(pin input line (at 0 -16 0) (length 5) (name "STBY" (effects (font (size 1.27 1.27)))) (number "3" (effects (font (size 1.27 1.27)))))
 				(pin input line (at 0 -24 0) (length 5) (name "AIN1" (effects (font (size 1.27 1.27)))) (number "4" (effects (font (size 1.27 1.27)))))

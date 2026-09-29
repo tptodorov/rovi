@@ -42,4 +42,6 @@ Real hardware only — no simulator is used for this experiment (see [`../../REA
 
 ### Results
 
-_Pending — not yet bench-tested. Fill in after running the test plan on real hardware: date, what was observed, pass/fail per acceptance item, links to logs/photos._
+**2026-09-29** — Wiring verified on paper against the actual boards' vendor documentation (see [`WIRING.md`](WIRING.md#verified-against-the-actual-boards-received-2026-09-29)): GPIO4/5/6/7 confirmed present and conflict-free on this ESP32-S3-N16R8 board, TB6612FNG pin names confirmed against this specific AliExpress board's photos (one naming fix: the logic-supply pin is silkscreened `VCC` on this board, not `3V3` — `wiring.kicad_sch` corrected). This is paper verification only, not bench verification — it doesn't satisfy any acceptance item above, which all require the physical bench test.
+
+_Bench test still pending. Fill in after running the test plan on real hardware: date, what was observed, pass/fail per acceptance item, links to logs/photos._
