@@ -2,3 +2,9 @@ __pycache__
 /.direnv/
 /experiments/*/target/
 *.ovpn
+~*.lck
+
+# third-party skills, restored from skills-lock.json (task worktree:prepare)
+/.claude/skills
+/.agents/
+/.task/
