@@ -4,5 +4,6 @@ Pinouts and specs for the actual boards received, extracted from vendor document
 
 * [`esp32-s3-n16r8/`](esp32-s3-n16r8/) — the ESP32-S3-N16R8 CORE board
 * [`tb6612fng/`](tb6612fng/) — the TB6612FNG dual motor driver board
+* [`kicad-authoring.md`](kicad-authoring.md) — hand-authoring `.kicad_sch` files: pin-geometry formulas, a net-merge trap that's bitten twice, a real `kicad-cli` ERC false positive, and the validation checklist. Read before writing or editing any wiring diagram.
 
 This is reference material for the hardware platform generally (used across `experiments/` and beyond), not scoped to one milestone — see the root [README.md](../../README.md) and [`VISION.md`](../VISION.md) for how the platform layers fit together.

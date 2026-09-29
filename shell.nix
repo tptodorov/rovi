@@ -1,5 +1,11 @@
-{ pkgs ? import <nixpkgs> {} }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 pkgs.mkShell {
-  packages = [ pkgs.rustup ];
+  packages = [
+    pkgs.go-task
+    pkgs.rustup
+  ];
+
 }

@@ -11,7 +11,7 @@ Prove the new hardware stack: one **ESP32-S3-N16R8** CORE board drives one **TB6
 
 ### Recommended stack
 
-* HAL: [`esp-hal`](https://crates.io/crates/esp-hal) (`esp32s3` + `unstable` for LEDC PWM)
+* HAL: [`esp-hal`](https://crates.io/crates/esp-hal) (`esp32s3` + `unstable` for MCPWM — the chip's native motor-control PWM peripheral)
 * Motor driver: [`tb6612fng`](https://crates.io/crates/tb6612fng) `1.0.0` (`no_std`, `embedded-hal` 1.0)
 * Flash tool: [`espflash`](https://crates.io/crates/espflash) over the board USB Type-C port
 

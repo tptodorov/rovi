@@ -4,7 +4,7 @@
 
 ## Crate choice
 
-Use **[`tb6612fng`](https://crates.io/crates/tb6612fng) `1.0.0`** — dedicated `no_std` driver for this IC (`Motor` / `Tb6612fng`, `DriveCommand::{Forward, Backward, Stop, Brake}`), built on `embedded-hal` 1.0. Pair with **`esp-hal`** (`esp32s3`, `unstable` for LEDC).
+Use **[`tb6612fng`](https://crates.io/crates/tb6612fng) `1.0.0`** — dedicated `no_std` driver for this IC (`Motor` / `Tb6612fng`, `DriveCommand::{Forward, Backward, Stop, Brake}`), built on `embedded-hal` 1.0. Pair with **`esp-hal`** (`esp32s3`, `unstable` for MCPWM — the chip's native motor-control PWM peripheral).
 
 ## Hardware setup
 
@@ -30,4 +30,4 @@ If the port is not detected, hold **BOOT**, tap **RESET**, release **BOOT**, the
 
 ## Behavior
 
-After boot, the firmware loops: forward 2 s → stop 1 s → reverse 2 s → stop 1 s at ~40% duty on channel A (GPIO7 PWM, GPIO5/6 direction, GPIO4 STBY high).
+After boot, the firmware loops: forward 2 s → stop 1 s → reverse 2 s → stop 1 s at ~40% duty on channel A (GPIO7 MCPWM, GPIO5/6 direction, GPIO4 STBY high).

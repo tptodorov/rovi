@@ -3,7 +3,7 @@
 Each hardware milestone is an independent Cargo package, named `<milestone>-<topic>/` (e.g. `rovi-m1-tb6612/`). "Independent" means:
 
 * its own `Cargo.toml`/`Cargo.lock` and `target/` build directory (gitignored via `/experiments/*/target/`)
-* its own `README.md` (build/flash instructions), `MILESTONE.md` (goal, deliverables, test plan, acceptance), and, where relevant, `WIRING.md` + a `.kicad_sch` schematic
+* its own `README.md` (build/flash instructions), `MILESTONE.md` (goal, deliverables, test plan, acceptance), and, where relevant, `WIRING.md` + a `.kicad_sch` schematic (read [`../docs/reference/kicad-authoring.md`](../docs/reference/kicad-authoring.md) before writing one)
 * the crate name matches the directory name, so `cargo build`/`espflash` paths stay predictable from the directory alone
 * real hardware only, per the hardware-validation policy (see root [`README.md`](../README.md#hardware-validation-policy)) — no simulator dependency
 

@@ -4,11 +4,11 @@
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
 use esp_hal::delay::Delay;
-use esp_hal::gpio::{DriveMode, Level, Output, OutputConfig};
-use esp_hal::ledc::channel::ChannelIFace;
-use esp_hal::ledc::timer::TimerIFace;
-use esp_hal::ledc::{channel, timer, LSGlobalClkSource, Ledc, LowSpeed};
+use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::main;
+use esp_hal::mcpwm::operator::PwmPinConfig;
+use esp_hal::mcpwm::timer::PwmWorkingMode;
+use esp_hal::mcpwm::{McPwm, PeripheralClockConfig};
 use esp_hal::time::Rate;
 use esp_println::println;
 use tb6612fng::{DriveCommand, Motor};
@@ -26,24 +26,19 @@ fn main() -> ! {
     let ain2 = Output::new(peripherals.GPIO6, Level::Low, OutputConfig::default());
     let mut stby = Output::new(peripherals.GPIO4, Level::Low, OutputConfig::default());
 
-    let mut ledc = Ledc::new(peripherals.LEDC);
-    ledc.set_global_slow_clock(LSGlobalClkSource::APBClk);
-    let mut pwm_timer = ledc.timer::<LowSpeed>(timer::Number::Timer0);
-    pwm_timer
-        .configure(timer::config::Config {
-            duty: timer::config::Duty::Duty5Bit,
-            clock_source: timer::LSClockSource::APBClk,
-            frequency: Rate::from_khz(20),
-        })
-        .unwrap();
+    // MCPWM0 is the ESP32-S3's dedicated motor-control PWM peripheral (as
+    // opposed to LEDC, which is designed for LED dimming).
+    let clock_cfg = PeripheralClockConfig::with_frequency(Rate::from_mhz(40)).unwrap();
+    let mut mcpwm = McPwm::new(peripherals.MCPWM0, clock_cfg);
+    mcpwm.operator0.set_timer(&mcpwm.timer0);
+    let pwma = mcpwm
+        .operator0
+        .with_pin_a(peripherals.GPIO7, PwmPinConfig::UP_ACTIVE_HIGH);
 
-    let mut pwma = ledc.channel(channel::Number::Channel0, peripherals.GPIO7);
-    pwma.configure(channel::config::Config {
-        timer: &pwm_timer,
-        duty_pct: 0,
-        drive_mode: DriveMode::PushPull,
-    })
-    .unwrap();
+    let timer_clock_cfg = clock_cfg
+        .timer_clock_with_frequency(99, PwmWorkingMode::Increase, Rate::from_khz(20))
+        .unwrap();
+    mcpwm.timer0.start(timer_clock_cfg);
 
     let mut motor = Motor::new(ain1, ain2, pwma).unwrap();
     stby.set_high();

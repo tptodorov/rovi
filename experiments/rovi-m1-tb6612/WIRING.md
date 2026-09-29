@@ -4,15 +4,17 @@ Schematic: [`wiring.kicad_sch`](wiring.kicad_sch) — open in KiCad for the visu
 
 Easiest bring-up: **one motor, one TB6612FNG channel A**, PWM + direction + STBY from the ESP32-S3.
 
+Pin numbers below (`Lnn` / `Rnn`) are the physical pin numbers from the left/right headers, matching the pin `number` fields on the `M1:ESP32S3` / `M1:TB6612FNG` symbols in [`wiring.kicad_sch`](wiring.kicad_sch) (and the row order in [`docs/reference/`](../../docs/reference/)).
+
 ## Power (do this first)
 
 | Net | Connection | Notes |
 | --- | --- | --- |
-| ESP 3V3 | TB6612FNG `VCC` (logic) | Keep logic at 3.3 V |
-| ESP GND | TB6612FNG `GND` | **Common ground required** |
-| Motor battery / PSU (+) | TB6612FNG `VM` | Separate motor supply; max **15 V** per Toshiba datasheet |
-| Motor battery / PSU (−) | TB6612FNG `GND` / ESP GND | Same ground as logic |
-| Motor | TB6612FNG `AO1` / `AO2` | Channel A outputs |
+| ESP `3V3` (L1) | TB6612FNG `VCC` (L2, logic) | Keep logic at 3.3 V |
+| ESP `GND` (L22) | TB6612FNG `GND` (L3) | **Common ground required** |
+| Motor battery / PSU (+) | TB6612FNG `VM` (L1) | Separate motor supply; max **15 V** per Toshiba datasheet |
+| Motor battery / PSU (−) | TB6612FNG `GND` (L3) / ESP `GND` (L22) | Same ground as logic |
+| Motor | TB6612FNG `AO1` (L4) / `AO2` (L5) | Channel A outputs |
 
 Do **not** power the motor from the ESP 3.3 V rail. Do **not** feed 5 V (or anything else) into the ESP's `3V3` pin either — it's the *regulated output* of the board's onboard LDO (visible in `docs/reference/esp32-s3-n16r8/pinout.png` as a 3-pin SOT-223 marked `...117`), not an input; forcing 5 V onto it bypasses the regulator and will very likely destroy the ESP32-S3 module (its 3.3 V rail's absolute max is ~3.6 V). Power the board via USB-C or the `5Vin` pin — the regulator produces `3V3` automatically from either.
 
@@ -20,10 +22,10 @@ Do **not** power the motor from the ESP 3.3 V rail. Do **not** feed 5 V (or anyt
 
 | TB6612FNG pin | ESP32-S3 GPIO | Role |
 | --- | --- | --- |
-| `PWMA` | **GPIO7** | Speed (LEDC PWM, 20 kHz) |
-| `AIN1` | **GPIO5** | Direction bit 1 |
-| `AIN2` | **GPIO6** | Direction bit 2 |
-| `STBY` | **GPIO4** | Standby (hold **HIGH** to enable) |
+| `PWMA` (R1) | **GPIO7** (L7) | Speed (MCPWM, 20 kHz) |
+| `AIN1` (R3) | **GPIO5** (L5) | Direction bit 1 |
+| `AIN2` (R2) | **GPIO6** (L6) | Direction bit 2 |
+| `STBY` (R4) | **GPIO4** (L4) | Standby (hold **HIGH** to enable) |
 | `PWMB`, `BIN1`, `BIN2` | — | Unused for M1 (tie inactive or leave for later) |
 
 These GPIOs are free on a typical ESP32-S3 DEV/CORE board and match the firmware defaults in this experiment.

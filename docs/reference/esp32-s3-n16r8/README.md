@@ -46,9 +46,9 @@ The specific dev board in hand: ESP32-S3-N16R8 module (16 MB flash / 8 MB PSRAM)
 | 40 | GPIO40, MTDO |
 | 39 | GPIO39, MTCK |
 | 38 | GPIO38 |
-| 37 | GPIO37 |
-| 36 | GPIO36 |
-| 35 | GPIO35 |
+| 37 | GPIO37 (**reserved: octal PSRAM SPIIO7**) |
+| 36 | GPIO36 (**reserved: octal PSRAM SPIIO6**) |
+| 35 | GPIO35 (**reserved: octal PSRAM SPIIO5**) |
 | 0 | GPIO0, **BOOT** (strapping pin) |
 | 45 | GPIO45 (strapping pin) |
 | 48 | GPIO48 — drives the **onboard WS2812 RGB LED** |
@@ -59,7 +59,7 @@ The specific dev board in hand: ESP32-S3-N16R8 module (16 MB flash / 8 MB PSRAM)
 | GND | Ground |
 | GND | Ground |
 
-Strapping pins (GPIO0/3/45/46) affect boot mode — avoid using them for general I/O unless you know what you're doing. GPIO48 is already committed to the onboard RGB LED. GPIO19-21 are the USB D+/D- lines.
+Strapping pins (GPIO0/3/45/46) affect boot mode — avoid using them for general I/O unless you know what you're doing. GPIO48 is already committed to the onboard RGB LED. GPIO19-21 are the USB D+/D- lines. This module is the **R8 (octal PSRAM)** variant, so GPIO33–37 are wired internally to the PSRAM SPI bus (`SPIIO4`–`SPIIO7`/`SPIDQS`) and must not be reused as general I/O even though GPIO35–37 are broken out on the header — see [Espressif's ESP32-S3 GPIO docs](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/gpio.html). GPIO33/34 aren't broken out on this header at all.
 
 ## Used so far
 
