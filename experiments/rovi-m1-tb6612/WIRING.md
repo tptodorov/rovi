@@ -1,5 +1,7 @@
 # M1 wiring: ESP32-S3-N16R8 ↔ one TB6612FNG
 
+Schematic: [`wiring.kicad_sch`](wiring.kicad_sch) — open in KiCad for the visual diagram. This file is the quick-reference pin table and bring-up notes; the two should always agree.
+
 Easiest bring-up: **one motor, one TB6612FNG channel A**, PWM + direction + STBY from the ESP32-S3.
 
 ## Power (do this first)
@@ -25,6 +27,8 @@ Do **not** power the motor from the ESP 3.3 V rail.
 | `PWMB`, `BIN1`, `BIN2` | — | Unused for M1 (tie inactive or leave for later) |
 
 These GPIOs are free on a typical ESP32-S3 DEV/CORE board and match the firmware defaults in this experiment.
+
+Pin names above are the TB6612FNG datasheet's logical names, not any specific breakout board's silkscreen layout — check your board's printed labels against the datasheet if they don't match a diagram you find elsewhere.
 
 ## Quick checklist
 

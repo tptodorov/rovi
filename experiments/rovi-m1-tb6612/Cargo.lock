@@ -1172,7 +1172,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1376b15f3ff160e9b1e8ea564ce427f2f6fcf77528cc0a8bf405cb476f9cea7"
 
 [[package]]
-name = "rovi-m1-wokwi"
+name = "rovi-m1-tb6612"
 version = "0.1.0"
 dependencies = [
  "critical-section",

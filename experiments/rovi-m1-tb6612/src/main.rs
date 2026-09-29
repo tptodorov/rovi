@@ -26,7 +26,6 @@ fn main() -> ! {
     let ain2 = Output::new(peripherals.GPIO6, Level::Low, OutputConfig::default());
     let mut stby = Output::new(peripherals.GPIO4, Level::Low, OutputConfig::default());
 
-    // Wokwi models LEDC on ESP32-S3, while MCPWM is not yet simulated.
     let mut ledc = Ledc::new(peripherals.LEDC);
     ledc.set_global_slow_clock(LSGlobalClkSource::APBClk);
     let mut pwm_timer = ledc.timer::<LowSpeed>(timer::Number::Timer0);
@@ -52,13 +51,7 @@ fn main() -> ! {
     let delay = Delay::new();
     // Duty is crate-specific (0..=100 style in tb6612fng examples).
     const DUTY: u8 = 40;
-    #[cfg(feature = "wokwi")]
-    const DRIVE_MS: u32 = 100;
-    #[cfg(not(feature = "wokwi"))]
     const DRIVE_MS: u32 = 2000;
-    #[cfg(feature = "wokwi")]
-    const STOP_MS: u32 = 50;
-    #[cfg(not(feature = "wokwi"))]
     const STOP_MS: u32 = 1000;
 
     println!("rovi M1: TB6612FNG bring-up starting");

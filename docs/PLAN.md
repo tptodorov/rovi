@@ -11,7 +11,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 ## Roadmap
 
 * GitHub milestones: https://github.com/tptodorov/rovi/milestones
-* **M1** (in progress) — prove one ESP32-S3 + one TB6612FNG channel drives one motor, on real hardware, not just simulated. See [`experiments/rovi-m1-wokwi/MILESTONE.md`](../experiments/rovi-m1-wokwi/MILESTONE.md).
+* **M1** (in progress) — prove one ESP32-S3 + one TB6612FNG channel drives one motor, on real hardware. See [`experiments/rovi-m1-tb6612/MILESTONE.md`](../experiments/rovi-m1-tb6612/MILESTONE.md).
 * **M2** (planned) — ESP32-S3 as a BLE peripheral: advertises a custom GATT service, a generic BLE client writes drive commands, firmware reacts observably (LED/serial). Bare board, no motor hardware — independent of M1. Not yet created.
 * **M3** (placeholder) — ESP32-S3 as BLE central, pairing with a real BLE gamepad. Not yet designed; comes after M2.
 * Beyond M1-M3: the low-level 4-wheel API becomes the first spec-driven product-development effort — see root [README.md](../README.md#how-we-work).
