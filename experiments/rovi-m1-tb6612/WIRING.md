@@ -32,7 +32,7 @@ These GPIOs are free on a typical ESP32-S3 DEV/CORE board and match the firmware
 
 * **ESP32-S3-N16R8 board**: vendor datasheet PDF's pinout diagram confirms GPIO4/5/6/7 exist on this specific board (left header) and aren't boot-strapping (GPIO0/3/45/46), USB (GPIO19/20/21), or RGB-LED (GPIO48) pins — no conflicts with M1's use of them. The logic-supply pin is silkscreened `3V3` (two of them; either works).
 * **TB6612FNG board** (AliExpress, seller HHKFYD/ICGOICIC): product photos confirm the physical IC package is marked `TB6612FNG` and the breakout's silkscreen pin names exactly match the table above (`PWMA`/`AIN1`/`AIN2`/`STBY`/`VM`/`GND`/`AO1`/`AO2`, plus unused `PWMB`/`BIN1`/`BIN2`/`BO1`/`BO2`) — **except** the logic-supply pin, which this board silkscreens `VCC`, not `3V3` (fixed in `wiring.kicad_sch`; it's still the same net as the ESP's `3V3`, just named differently on each side).
-* ⚠️ **The listing's title reads "TB6612 DRV8833"** — these are different, incompatible chips (DRV8833 has no separate PWM pin and a `SLEEP` pin instead of `STBY`). The listing's own photos are TB6612FNG, but confirm the marking on your *actual* received IC (`TB6612FNG` printed on the black package) before wiring — a marketplace listing mixing chip names in the title is a real risk of receiving the wrong part.
+* ✅ **Confirmed not a DRV8833.** The listing's title reads "TB6612 DRV8833" as if interchangeable (they're different, incompatible chips — DRV8833 has no separate PWM pin and a `SLEEP` pin instead of `STBY`), but the physical IC received is marked `TB717A3` / `6612FNG` (lot code / part number split across two lines) — genuinely a Toshiba TB6612FNG.
 
 ## Quick checklist
 
