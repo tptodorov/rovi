@@ -37,6 +37,10 @@ Dual brushed-DC motor driver IC (two H-bridges). Official limits: **VM up to 15 
 
 ### How we work
 
+#### Contribution method
+
+All changes land via pull request against `main` — no direct pushes to `main`. Work happens on a branch, gets its own PR, and is reviewed before merge.
+
 #### Hardware-validation policy
 
 Simulation never counts as proof for hardware a simulator doesn't model electrically. Wokwi, for example, simulates ESP32-S3 GPIO/PWM timing but not the TB6612FNG's electrical behavior, and doesn't simulate BLE radio at all (tracked upstream: https://github.com/wokwi/wokwi-features/issues/225). A milestone touching hardware isn't accepted until it's been physically bench-verified, whatever a simulator says. This applies to every hardware component (drivers, sensors, radios, etc.), not just one.
