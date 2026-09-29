@@ -56,21 +56,45 @@ fn main() -> ! {
 
     println!("rovi M1: TB6612FNG bring-up starting");
 
+    let mut drive = |command, label| match motor.drive(command) {
+        Ok(()) => {
+            println!("{}", label);
+            true
+        }
+        Err(error) => {
+            println!("motor command failed ({}): {:?}", label, error);
+            stby.set_low();
+            false
+        }
+    };
+
     loop {
-        println!("forward");
-        motor.drive(DriveCommand::Forward(DUTY)).ok();
+        if !drive(DriveCommand::Forward(DUTY), "forward") {
+            loop {
+                delay.delay_millis(1000);
+            }
+        }
         delay.delay_millis(DRIVE_MS);
 
-        println!("stop");
-        motor.drive(DriveCommand::Stop).ok();
+        if !drive(DriveCommand::Stop, "stop") {
+            loop {
+                delay.delay_millis(1000);
+            }
+        }
         delay.delay_millis(STOP_MS);
 
-        println!("reverse");
-        motor.drive(DriveCommand::Backward(DUTY)).ok();
+        if !drive(DriveCommand::Backward(DUTY), "reverse") {
+            loop {
+                delay.delay_millis(1000);
+            }
+        }
         delay.delay_millis(DRIVE_MS);
 
-        println!("stop");
-        motor.drive(DriveCommand::Stop).ok();
+        if !drive(DriveCommand::Stop, "stop") {
+            loop {
+                delay.delay_millis(1000);
+            }
+        }
         delay.delay_millis(STOP_MS);
     }
 }
