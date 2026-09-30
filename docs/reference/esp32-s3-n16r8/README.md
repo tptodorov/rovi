@@ -5,6 +5,16 @@ The specific dev board in hand: ESP32-S3-N16R8 module (16 MB flash / 8 MB PSRAM)
 * Board size: 57 × 28 mm (63.3 mm including the antenna connector overhang)
 * Working voltage: 3.3–5 V · 36 IO pins · 2× I2C, 4× SPI
 
+## Docs by level
+
+| Level | Files | Notes |
+| --- | --- | --- |
+| **Board** (this CORE dev board) | [`pinout.png`](pinout.png), [`dimensions.png`](dimensions.png), the pin tables below | The only docs that describe the headers, the two USB-C ports, the RGB LED and the 5Vin/3V3 pins. Header labels are **GPIO numbers**, not package pin numbers. |
+| **Module** (ESP32-S3-WROOM-1-N16R8) | [`module-datasheet.md`](module-datasheet.md) | Module pin numbers/names differ from the board header order; shows which GPIOs flash/PSRAM consume. No USB-C ports, LED or board regulator here. |
+| **Chip** (ESP32-S3 SoC) | [`soc-datasheet.md`](soc-datasheet.md), [`technical-reference-manual.md`](technical-reference-manual.md), [`errata.md`](errata.md), [`hardware-design-guidelines.md`](hardware-design-guidelines.md) | QFN56 package pin numbers, electrical limits, peripherals/registers. Says nothing about this board's connectors. |
+
+**Ports differ by level.** Chip docs only know the native USB D+/D- on GPIO19/20 and UART0 on GPIO43/44. The board has **two USB Type-C ports** and their routing (which goes to native USB, which to a USB–UART bridge, if any) is board-level and **not documented in any file here** — verify against the physical board or vendor schematic before relying on either port for flashing/serial/power.
+
 ## Pin header (left)
 
 | Pin | Function |
@@ -65,6 +75,16 @@ Strapping pins (GPIO0/3/45/46) affect boot mode — avoid using them for general
 
 * **M1** (`experiments/rovi-m1-tb6612/`): GPIO4 (STBY), GPIO5 (AIN1), GPIO6 (AIN2), GPIO7 (PWMA) — none of these conflict with strapping, USB, or the RGB LED pin. See [`WIRING.md`](../../../experiments/rovi-m1-tb6612/WIRING.md).
 
+## Datasheets (chip and module level — not the board)
+
+Full-text, searchable Markdown transcriptions (machine-converted from Espressif's PDFs; the PDFs are authoritative):
+
+* [`module-datasheet.md`](module-datasheet.md) / [`.pdf`](module-datasheet.pdf) — ESP32-S3-WROOM-1 / -1U v1.8. The board carries the **-N16R8** variant (16 MB quad flash, 8 MB **octal** PSRAM).
+* [`soc-datasheet.md`](soc-datasheet.md) / [`.pdf`](soc-datasheet.pdf) — ESP32-S3 series SoC v2.2 (peripherals incl. MCPWM, electrical characteristics, pin/IO MUX tables).
+* [`hardware-design-guidelines.md`](hardware-design-guidelines.md) / [`.pdf`](hardware-design-guidelines.pdf) — ESP32-S3 hardware design guidelines (power, strapping, flash/PSRAM pin reservations, layout).
+* [`errata.md`](errata.md) / [`.pdf`](errata.pdf) — ESP32-S3 SoC errata.
+* [`technical-reference-manual.md`](technical-reference-manual.md) — Technical Reference Manual (1531 pp., register-level MCPWM etc.). Markdown only; the 15 MB PDF is not vendored, fetch it from the URL in the file header.
+
 ## Source
 
-Vendor-supplied datasheet PDF (product listing documentation), pages 32 (pinout) and 30 (dimensions). Not committed to this repo (large, vendor-owned); the extracted images here are the durable copy.
+Pinout/dimensions images: vendor product-listing datasheet, pages 32 (pinout) and 30 (dimensions). Datasheets above: `espressif.com/sites/default/files/documentation/` (`esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf`, `esp32-s3_datasheet_en.pdf`), fetched 2026-09-30.
