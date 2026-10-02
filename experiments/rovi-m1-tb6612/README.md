@@ -18,6 +18,8 @@ cargo install espflash
 
 Wire the board per [`wiring.kicad_sch`](wiring.kicad_sch) / [`WIRING.md`](WIRING.md), then plug in **USB Type-C**.
 
+![M1 breadboard setup: ESP32-S3, TB6612FNG, DC motor, power bank](docs/breadboard-setup.jpg)
+
 ## Build & flash
 
 ```bash
