@@ -2,16 +2,16 @@
 
 Current status, roadmap, and decisions deliberately deferred. For what Rovi is and why, see [`VISION.md`](VISION.md). For how work gets done, see the root [`README.md`](../README.md). This file is living — update it as milestones land, don't append a history; for *why* a specific hard-to-reverse decision was made, see [`adr/`](adr/).
 
-## Current state (2026-09-29)
+## Current state (2026-10-02)
 
 * Hardware parts package: received (2026-09-26) — see root [README.md](../README.md#hardware) for the part list and datasheets.
 * Software: [`legacy-python/`](../legacy-python/) is the current working product — a flat, car-specific Raspberry Pi app. It predates the layered vision and stays the working product until the ESP32-S3 platform reaches parity.
-* No code yet implements the low-level 4-wheel API or any layered application — that starts once M1 proves the basic hardware chain works.
+* No code yet implements the low-level 4-wheel API or any layered application — that starts now that M1 has proven the basic hardware chain on real hardware.
 
 ## Roadmap
 
 * GitHub milestones: https://github.com/tptodorov/rovi/milestones
-* **M1** (in progress) — prove one ESP32-S3 + one TB6612FNG channel drives one motor, on real hardware. See [`experiments/rovi-m1-tb6612/MILESTONE.md`](../experiments/rovi-m1-tb6612/MILESTONE.md).
+* **M1** (complete, bench-tested 2026-10-02) — prove one ESP32-S3 + one TB6612FNG channel drives one motor, on real hardware. See [`experiments/rovi-m1-tb6612/MILESTONE.md`](../experiments/rovi-m1-tb6612/MILESTONE.md).
 * **M2** (planned) — ESP32-S3 as a BLE peripheral: advertises a custom GATT service, a generic BLE client writes drive commands, firmware reacts observably (LED/serial). Bare board, no motor hardware — independent of M1. Not yet created.
 * **M3** (placeholder) — ESP32-S3 as BLE central, pairing with a real BLE gamepad. Not yet designed; comes after M2.
 * Beyond M1-M3: the low-level 4-wheel API becomes the first spec-driven product-development effort — see root [README.md](../README.md#how-we-work).
