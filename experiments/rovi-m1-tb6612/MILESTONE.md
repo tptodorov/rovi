@@ -2,7 +2,7 @@
 
 ## M1: TB6612FNG + ESP32-S3 motor test
 
-**Status:** in progress  
+**Status:** complete — bench-tested on real hardware  
 **GitHub:** https://github.com/tptodorov/rovi/milestone/1
 
 ### Goal
@@ -28,20 +28,23 @@ Prove the new hardware stack: one **ESP32-S3-N16R8** CORE board drives one **TB6
 2. Install Rust ESP toolchain (`espup`) and `espflash` (see [`experiments/rovi-m1-tb6612/README.md`](experiments/rovi-m1-tb6612/README.md)).
 3. `cd experiments/rovi-m1-tb6612 && cargo build --release`
 4. Connect Type-C USB, put board in download mode if needed, then `cargo run --release` (or `espflash flash ...`).
-5. Observe serial log: firmware should cycle **forward (2 s) → stop (1 s) → reverse (2 s) → stop (1 s)**.
-6. Confirm motor direction matches log; if reversed, swap motor leads or swap AIN1/AIN2.
-7. Power-cycle with STBY expected high in firmware; motor must not free-run unexpectedly when stopped (short-brake/stop modes).
+5. Observe the serial log and onboard LED while firmware ramps forward and reverse from 5% to 40%, then back down, with a stop between directions.
+6. Confirm the LED identifies commanded direction and that the motor direction matches it.
+7. Confirm the motor stops when STBY is disabled and resumes when STBY is enabled.
 
 ### Acceptance
 
 Real hardware only — no simulator is used for this experiment (see [`../../README.md`](../../README.md#hardware-validation-policy)).
 
-- [ ] Wiring matches the doc and was verified on the bench
-- [ ] Firmware flashes via USB Type-C
-- [ ] Forward / reverse / stop all work under firmware control
+- [x] Wiring was assembled and the documented motor control path was verified on the bench
+- [x] Firmware builds and flashes via the board's COM USB-C connector
+- [x] Forward / reverse / stop work under firmware control
+- [x] Speed ramps up and down smoothly in both directions
+- [x] STBY disables and re-enables the motor as expected
+- [x] Onboard LED distinguishes forward, reverse, and standby
 
 ### Results
 
-**2026-09-29** — Wiring verified on paper against the actual boards' vendor documentation (see [`WIRING.md`](WIRING.md#verified-against-the-actual-boards-received-2026-09-29)): GPIO4/5/6/7 confirmed present and conflict-free on this ESP32-S3-N16R8 board, TB6612FNG pin names confirmed against this specific AliExpress board's photos (one naming fix: the logic-supply pin is silkscreened `VCC` on this board, not `3V3` — `wiring.kicad_sch` corrected). Also confirmed the physical IC is genuinely a TB6612FNG (marked `TB717A3` / `6612FNG`), not the DRV8833 the listing title ambiguously suggested. This is paper verification only, not bench verification — it doesn't satisfy any acceptance item above, which all require the physical bench test.
+**2026-09-29** — Wiring verified on paper against the actual boards' vendor documentation (see [`WIRING.md`](WIRING.md#verified-against-the-actual-boards-received-2026-09-29)): GPIO4/5/6/7 confirmed present and conflict-free on this ESP32-S3-N16R8 board, TB6612FNG pin names confirmed against this specific AliExpress board's photos (one naming fix: the logic-supply pin is silkscreened `VCC` on this board, not `3V3` — `wiring.kicad_sch` corrected). Also confirmed the physical IC is genuinely a TB6612FNG (marked `TB717A3` / `6612FNG`), not the DRV8833 the listing title ambiguously suggested. This was paper verification; the bench test below completed the hardware validation.
 
-_Bench test still pending. Fill in after running the test plan on real hardware: date, what was observed, pass/fail per acceptance item, links to logs/photos._
+**2026-10-02 — PASS, real-hardware bench test.** Firmware built and flashed over the board's COM USB-C connector; the ESP32-S3 booted and its serial output showed the expected forward/reverse ramps and standby transitions. The user confirmed the motor runs clockwise on the green forward indication and in reverse on red, the onboard LED shows blue while standby is disabled, speed increases and decreases smoothly, and direction and standby controls behave as expected. The documented wiring path, firmware flashing, forward/reverse/stop control, speed ramp, standby, and direction indication acceptance criteria are all satisfied.

@@ -13,4 +13,4 @@ After bench-testing a milestone, add a `## Results` section to its `MILESTONE.md
 
 ## Milestones
 
-* 🚧 [`rovi-m1-tb6612/`](rovi-m1-tb6612/) — ESP32-S3-N16R8 + one TB6612FNG channel, single-motor bring-up, real hardware. Not yet bench-tested (see its `MILESTONE.md`).
+* ✅ [`rovi-m1-tb6612/`](rovi-m1-tb6612/) — ESP32-S3-N16R8 + one TB6612FNG channel, single-motor bring-up. Bench-tested successfully; see its `MILESTONE.md` results.

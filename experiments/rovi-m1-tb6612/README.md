@@ -30,4 +30,4 @@ If the port is not detected, hold **BOOT**, tap **RESET**, release **BOOT**, the
 
 ## Behavior
 
-After boot, the firmware loops: forward 2 s → stop 1 s → reverse 2 s → stop 1 s at ~40% duty on channel A (GPIO7 MCPWM, GPIO5/6 direction, GPIO4 STBY high).
+After boot, the firmware briefly tests standby disabled/enabled, then loops through forward and reverse. In each direction it ramps from 5% to 40% duty in 5% steps every 200 ms, then ramps down to 5% and stops for 1 s. During the forward ramp, it also disables standby for 1 s at 40%, then re-enables it and resumes. The onboard LED is green for forward, red for reverse, blue while standby is disabled, and off when stopped. The user confirmed green corresponds to clockwise rotation on the tested motor setup. Channel A uses GPIO7 for 20 kHz MCPWM, GPIO5/6 for direction, and GPIO4 for STBY.
