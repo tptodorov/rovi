@@ -1,0 +1,21 @@
+[package]
+name = "rovi-m1-tb6612"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "M1: ESP32-S3 + TB6612FNG single-motor bring-up on real hardware (no_std)"
+
+[dependencies]
+esp-hal = { version = "1.2.2", features = ["esp32s3", "unstable"] }
+esp-hal-smartled = { version = "0.18", features = ["esp32s3"] }
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32s3"] }
+esp-backtrace = { version = "0.20.0", features = ["esp32s3", "panic-handler", "println"] }
+esp-println = { version = "0.18.0", features = ["esp32s3"] }
+smart-leds = "0.4"
+tb6612fng = "1.0.0"
+critical-section = "1.2"
+
+[profile.release]
+opt-level = "s"
+lto = true

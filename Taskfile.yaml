@@ -1,0 +1,27 @@
+version: "3"
+
+tasks:
+  m1:build:
+    desc: "M1 (rovi-m1-tb6612): cargo build --release"
+    dir: experiments/rovi-m1-tb6612
+    cmds:
+      - cargo build --release
+
+  m1:flash:
+    desc: "M1 (rovi-m1-tb6612): flash + serial monitor via espflash"
+    dir: experiments/rovi-m1-tb6612
+    cmds:
+      - cargo run --release
+
+  worktree:prepare:
+    desc: Prepare a fresh worktree (install third-party skills from skills-lock.json)
+    sources:
+      - skills-lock.json
+    generates:
+      - .agents/skills/**/*
+      - .claude/skills
+    method: checksum
+    cmds:
+      - npx -y skills experimental_install -y
+      - mkdir -p .claude
+      - ln -sfn ../.agents/skills .claude/skills

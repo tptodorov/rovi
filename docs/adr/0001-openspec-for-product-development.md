@@ -1,0 +1,3 @@
+# Use OpenSpec for product-development specs
+
+Product development (the low-level 4-wheel API and anything built on it) needs a spec process before code gets written, but exploratory hardware bring-up already has a working lightweight pattern (`README.md`/`MILESTONE.md`/`WIRING.md` per experiment). Rather than invent a bespoke spec format, we adopted the OpenSpec convention (`spec/changes/{change-id}/{proposal.md,tasks.md,specs/*.md}`) via the already-installed `openspec-implementation` skill — a known structure instead of a one-off invention. Applies going forward only, once real product development starts; not retroactive to `legacy-python/` or `experiments/`.
