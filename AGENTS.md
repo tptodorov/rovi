@@ -16,3 +16,17 @@ One topic, one home. Read the relevant file below rather than expecting the answ
 * [`experiments/`](experiments/) — exploratory ESP32-S3/Rust hardware bring-up, one milestone per independent Cargo package.
 * `spec/` — not created yet; will hold OpenSpec change proposals once product development starts on the low-level API.
 * [`docs/`](docs/) — `VISION.md`, `PLAN.md`, `adr/` (decision records), `reference/` (hardware component docs).
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues via `gh`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five default triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use the single-context layout. See `docs/agents/domain.md`.
