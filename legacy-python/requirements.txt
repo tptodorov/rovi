@@ -1,6 +1,0 @@
-getkey
-eclipse-zenoh
-RPi.GPIO
-pygame
-tornado
-tornado-proxy-handlers

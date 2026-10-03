@@ -5,20 +5,19 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 ## Current state (2026-10-03)
 
 * Hardware parts package: received (2026-09-26) — see root [README.md](../README.md#hardware) for the part list and datasheets.
-* Software: [`legacy-python/`](../legacy-python/) is the current working product — a flat, car-specific Raspberry Pi app. It predates the layered vision and stays the working product until the ESP32-S3 platform reaches parity.
-* No code yet implements the low-level 4-wheel API or any layered application — that starts now that M1 has proven the basic hardware chain on real hardware.
+* Product software: the ESP32-S3 bring-up experiments exist; the low-level 4-wheel API and layered application are not implemented yet. Spec-driven product work starts after M1 as described in the root README; the API proposal can start now, while M3-M5 hardware evidence will constrain its final requirements and implementation.
+* Preliminary current observation: one motor drew 120 mA from a 5 V power bank labeled 6500 mAh. Conditions are incomplete; see the [M4 results](../experiments/rovi-m4-four-motor-safety/MILESTONE.md#results) and [mecanum reference](reference/mecanum-car/README.md#preliminary-measurement). It does not yet establish operating limits or runtime.
 
 ## Roadmap
 
 * GitHub milestones: https://github.com/tptodorov/rovi/milestones
 * **M1** (complete, bench-tested 2026-10-02) — prove one ESP32-S3 + one TB6612FNG channel drives one motor, on real hardware. See [`experiments/rovi-m1-tb6612/MILESTONE.md`](../experiments/rovi-m1-tb6612/MILESTONE.md).
 * **M2** (complete, bench-tested 2026-10-02) — ESP32-S3 as a BLE peripheral: advertises a custom GATT service, a generic BLE client writes drive commands, firmware reacts observably (LED/serial). Bare board, no motor hardware — independent of M1. See [`experiments/rovi-m2-ble/`](../experiments/rovi-m2-ble/).
-* **M3** (placeholder) — ESP32-S3 as BLE central, pairing with a real BLE gamepad. Not yet designed; comes after M2.
-* Beyond M1-M3: the low-level 4-wheel API becomes the first spec-driven product-development effort — see root [README.md](../README.md#how-we-work).
-
-## Outstanding
-
-* The OpenVPN client config that used to be committed at repo root (`tptodorov.homeservice.ovpn`) contained certificate/private-key material and was pushed to this public repo before being untracked — the key is still exposed in git history. Needs a credential rotation and a history rewrite (destructive, requires explicit sign-off) — not yet done.
+* **M3** (proposed) — direct Wi-Fi and shared BLE/Wi-Fi command ingress, board-only. BLE operation is proven; no BLE bring-up work is planned. See [`experiments/rovi-m3-wifi-queue/`](../experiments/rovi-m3-wifi-queue/).
+* **M4** (proposed) — qualify four-motor electrical limits, power integrity, and standby fail-safe in one integrated bench setup. See [`experiments/rovi-m4-four-motor-safety/`](../experiments/rovi-m4-four-motor-safety/).
+* **M5** (proposed) — characterize mecanum wheel mapping, open-loop behavior, and available feedback using the M4 setup. See [`experiments/rovi-m5-mecanum-motion/`](../experiments/rovi-m5-mecanum-motion/).
+* **M6** (planned) — begin the low-level four-wheel API proposal now; finalize requirements and implement against M3-M5 evidence.
+* **M7** (planned) — integrate direct teleoperation and the selected video path after the camera/compute decision. See [`experiments/rovi-m7-video-teleop/`](../experiments/rovi-m7-video-teleop/) and [next milestones and software options](research/next-milestones-and-software-options.md).
 
 ## Deferred decisions (non-goals for now)
 
