@@ -1,0 +1,33 @@
+[package]
+name = "rovi-m2-ble"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "M2: ESP32-S3 BLE peripheral bring-up"
+
+[dependencies]
+embassy-executor = "0.10.0"
+embassy-futures = "0.1.1"
+embassy-sync = "0.8.0"
+esp-alloc = { version = "0.11.0", features = ["esp32s3"] }
+esp-backtrace = { version = "0.20.0", features = ["esp32s3", "panic-handler", "println"] }
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32s3"] }
+esp-hal = { version = "1.2.2", features = ["esp32s3", "unstable"] }
+esp-hal-smartled = { version = "0.18.0", features = ["esp32s3"] }
+esp-radio = { version = "1.0.0-beta.1", features = ["esp32s3", "ble", "unstable"] }
+esp-rtos = { version = "0.4.0", features = ["esp32s3", "esp-radio", "esp-alloc", "embassy"] }
+esp-println = { version = "0.18.0", features = ["esp32s3"] }
+smart-leds = "0.4.0"
+static_cell = "2.1.1"
+trouble-host = { version = "0.8.0", features = ["peripheral", "gatt", "derive"] }
+
+[profile.dev.package.esp-radio]
+opt-level = 3
+
+[profile.release.package.esp-radio]
+opt-level = 3
+
+[profile.release]
+opt-level = "s"
+lto = true
