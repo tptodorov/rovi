@@ -9,7 +9,15 @@ import time
 
 class Client:
     def __init__(self, host):
-        self.socket = socket.create_connection((host, 7777), timeout=3)
+        # The board's single listener refuses connections while it tears down a session.
+        for attempt in range(20):
+            try:
+                self.socket = socket.create_connection((host, 7777), timeout=3)
+                break
+            except ConnectionRefusedError:
+                if attempt == 19:
+                    raise
+                time.sleep(0.05)
         self.reader = self.socket.makefile("rb")
         banner = self.reader.readline().decode().strip()
         self.anchor = time.monotonic_ns()
@@ -24,6 +32,13 @@ class Client:
                          (pair.split("=") for pair in fields["commands"].split(","))}
         self.seq = 0
         print(json.dumps({"discovery": fields}), flush=True)
+        # Client power save can deliver the banner >100 ms late. A ping's board receive
+        # time bounds board time at send by uplink delay only; anchor deadlines on it.
+        ping = self.frame("ping")
+        sent = time.monotonic_ns()
+        self.socket.sendall(ping)
+        response = self.receive(sent, ping)
+        self.board_ms, self.anchor = int(response.split("rx_ms=")[1].split()[0]), sent
 
     def frame(self, command, ttl=None, version=1):
         self.seq += 1
@@ -87,7 +102,11 @@ def main():
             client.receive(sent, payload)
         if args.hold:
             time.sleep(args.hold)
-            print(json.dumps({"idle_s": args.hold, "socket_eof": client.reader.read(1) == b""}), flush=True)
+            try:
+                closed = client.reader.read(1) == b""
+            except ConnectionResetError:  # the board aborts expired sessions
+                closed = True
+            print(json.dumps({"idle_s": args.hold, "socket_closed": closed}), flush=True)
         if args.reconnect_replay and frame:
             client.close()
             client = Client(args.host)
