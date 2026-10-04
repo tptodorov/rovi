@@ -1,3 +1,5 @@
+@RTK.md
+
 # Rovi — agent guide
 
 One topic, one home. Read the relevant file below rather than expecting the answer here — and if you're tempted to add project explanation to this file, it almost certainly belongs in one of these instead.
