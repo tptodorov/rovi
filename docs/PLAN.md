@@ -2,7 +2,7 @@
 
 Current status, roadmap, and decisions deliberately deferred. For what Rovi is and why, see [`VISION.md`](VISION.md). For how work gets done, see the root [`README.md`](../README.md). This file is living — update it as milestones land, don't append a history; for *why* a specific hard-to-reverse decision was made, see [`adr/`](adr/).
 
-## Current state (2026-10-03)
+## Current state (2026-10-04)
 
 * Hardware parts package: received (2026-09-26) — see root [README.md](../README.md#hardware) for the part list and datasheets.
 * Product software: the ESP32-S3 bring-up experiments exist; the low-level 4-wheel API and layered application are not implemented yet. Spec-driven product work starts after M1 as described in the root README; the API proposal can start now, while M3-M5 hardware evidence will constrain its final requirements and implementation.
@@ -13,7 +13,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 * GitHub milestones: https://github.com/tptodorov/rovi/milestones
 * **M1** (complete, bench-tested 2026-10-02) — prove one ESP32-S3 + one TB6612FNG channel drives one motor, on real hardware. See [`experiments/rovi-m1-tb6612/MILESTONE.md`](../experiments/rovi-m1-tb6612/MILESTONE.md).
 * **M2** (complete, bench-tested 2026-10-02) — ESP32-S3 as a BLE peripheral: advertises a custom GATT service, a generic BLE client writes drive commands, firmware reacts observably (LED/serial). Bare board, no motor hardware — independent of M1. See [`experiments/rovi-m2-ble/`](../experiments/rovi-m2-ble/).
-* **M3** (proposed) — direct Wi-Fi and shared BLE/Wi-Fi command ingress, board-only. BLE operation is proven; no BLE bring-up work is planned. See [`experiments/rovi-m3-wifi-queue/`](../experiments/rovi-m3-wifi-queue/).
+* **M3** (implemented; physical acceptance pending) — direct WPA2 car AP and shared BLE/Wi-Fi command ingress, board-only. Firmware release build and host checks pass; radio coexistence, access/recovery and timing still require the real board. See [`experiments/rovi-m3-wifi-queue/`](../experiments/rovi-m3-wifi-queue/).
 * **M4** (proposed) — qualify four-motor electrical limits, power integrity, and standby fail-safe in one integrated bench setup. See [`experiments/rovi-m4-four-motor-safety/`](../experiments/rovi-m4-four-motor-safety/).
 * **M5** (proposed) — characterize mecanum wheel mapping, open-loop behavior, and available feedback using the M4 setup. See [`experiments/rovi-m5-mecanum-motion/`](../experiments/rovi-m5-mecanum-motion/).
 * **M6** (planned) — begin the low-level four-wheel API proposal now; finalize requirements and implement against M3-M5 evidence.
