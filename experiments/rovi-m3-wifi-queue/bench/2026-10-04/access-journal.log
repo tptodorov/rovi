@@ -1,0 +1,13 @@
+Oct 04 20:21:14.771410 blade wpa_supplicant[162049]: wlrovi: Trying to associate with 16:c1:9f:cd:71:78 (SSID='Rovi M3' freq=2412 MHz)
+Oct 04 20:21:14.792806 blade wpa_supplicant[162049]: wlrovi: Associated with 16:c1:9f:cd:71:78
+Oct 04 20:21:18.868574 blade wpa_supplicant[162049]: wlrovi: CTRL-EVENT-DISCONNECTED bssid=16:c1:9f:cd:71:78 reason=15
+Oct 04 20:21:18.868582 blade wpa_supplicant[162049]: wlrovi: WPA: 4-Way Handshake failed - pre-shared key may be incorrect
+Oct 04 20:21:18.868585 blade wpa_supplicant[162049]: wlrovi: CTRL-EVENT-SSID-TEMP-DISABLED id=0 ssid="Rovi M3" auth_failures=1 duration=10 reason=WRONG_KEY
+Oct 04 20:21:42.515683 blade NetworkManager[1547]: <warn>  [1791138102.5156] device (wlrovi): Deactivation failed: GDBus.Error:fi.w1.wpa_supplicant1.NotConnected: This interface is not connected
+Oct 04 20:21:42.535902 blade wpa_supplicant[162049]: wlrovi: CTRL-EVENT-SCAN-FAILED ret=-100
+Oct 04 20:22:07.496911 blade NetworkManager[1547]: <warn>  [1791138127.4968] device (wlrovi): Activation: (wifi) association took too long, failing activation
+Oct 04 20:22:07.497029 blade NetworkManager[1547]: <warn>  [1791138127.4970] device (wlrovi): Activation: failed for connection 'rovi-open'
+Oct 04 20:22:17.938930 blade wpa_supplicant[162049]: wlrovi: Trying to associate with 16:c1:9f:cd:71:78 (SSID='Rovi M3' freq=2412 MHz)
+Oct 04 20:22:17.947241 blade wpa_supplicant[162049]: wlrovi: Associated with 16:c1:9f:cd:71:78
+Oct 04 20:22:17.976147 blade wpa_supplicant[162049]: wlrovi: WPA: Key negotiation completed with 16:c1:9f:cd:71:78 [PTK=CCMP GTK=CCMP]
+Oct 04 20:22:17.976158 blade wpa_supplicant[162049]: wlrovi: CTRL-EVENT-CONNECTED - Connection to 16:c1:9f:cd:71:78 completed [id=0 id_str=]

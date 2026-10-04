@@ -1,0 +1,4 @@
+{"discovery": {"version": "1", "session": "170192753655817", "now_ms": "91508", "max_age_ms": "5000", "watchdog_ms": "10000", "commands": "0=stop,1=forward,2=reverse,3=ping"}}
+{"session": 170192753655817, "seq": 1, "tx_ns": 7144618528187, "ack_ns": 7144623336575, "rtt_ms": 4.808388, "response": "ACK seq=1 status=Ping order=71 rx_ms=91513 depth=0"}
+{"session": 170192753655817, "seq": 2, "tx_ns": 7146123471932, "ack_ns": 7146200074119, "rtt_ms": 76.602187, "response": "ACK seq=2 status=Stale order=0 rx_ms=93090 depth=0"}
+{"session": 170192753655817, "seq": 3, "tx_ns": 7147750341170, "ack_ns": 7147834312061, "rtt_ms": 83.970891, "response": "ACK seq=3 status=Stale order=0 rx_ms=94648 depth=0"}

@@ -1,0 +1,16 @@
+{"t_ns": 7192692687517, "event": "connected", "connect_ms": 764.003362, "address": "FF:E4:05:1A:9F:FF"}
+{"t_ns": 7195276472177, "write": "01", "ok": true, "rtt_ms": 71.272009}
+{"t_ns": 7195365632125, "write": "02", "ok": true, "rtt_ms": 89.077511}
+{"t_ns": 7196445389905, "write": "03", "ok": true, "rtt_ms": 75.256328}
+{"t_ns": 7197525639274, "write": "03", "ok": true, "rtt_ms": 75.538308}
+{"t_ns": 7198606436565, "write": "03", "ok": true, "rtt_ms": 76.173867}
+{"t_ns": 7199685538998, "write": "03", "ok": true, "rtt_ms": 74.435755}
+{"t_ns": 7200765536664, "write": "03", "ok": true, "rtt_ms": 75.373898}
+{"t_ns": 7201846842277, "write": "03", "ok": true, "rtt_ms": 76.659477}
+{"t_ns": 7202971332015, "write": "03", "ok": true, "rtt_ms": 120.21612}
+{"t_ns": 7204096397017, "write": "03", "ok": true, "rtt_ms": 120.296221}
+{"t_ns": 7205175491300, "write": "03", "ok": true, "rtt_ms": 74.391441}
+{"t_ns": 7206255407695, "write": "03", "ok": true, "rtt_ms": 75.289596}
+{"t_ns": 7207335457391, "write": "03", "ok": true, "rtt_ms": 75.278451}
+{"t_ns": 7208416295359, "write": "03", "ok": true, "rtt_ms": 76.182572}
+{"t_ns": 7211024461676, "event": "disconnected_by_client"}

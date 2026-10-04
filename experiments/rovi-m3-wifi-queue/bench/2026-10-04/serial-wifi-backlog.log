@@ -1,0 +1,328 @@
+[2026-10-04T18:37:13Z INFO ] 🚀 A new version of espflash is available: v4.6.0
+[2026-10-04T18:37:13Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-04T18:37:13Z INFO ] Connecting...
+[2026-10-04T18:37:13Z INFO ] Using flash stub
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x158c
+load:0x403c8700,len:0xd24
+load:0x403cb700,len:0x2f34
+entry 0x403c8924
+I (29) boot: ESP-IDF v5.5.1-838-gd66ebb86d2e 2nd stage bootloader
+I (30) boot: compile time Nov 26 2025 12:27:56
+I (30) boot: Multicore bootloader
+I (31) boot: chip revision: v0.2
+I (34) boot: efuse block revision: v1.4
+I (38) boot.esp32s3: Boot SPI Speed : 40MHz
+I (42) boot.esp32s3: SPI Mode       : DIO
+I (45) boot.esp32s3: SPI Flash Size : 16MB
+I (49) boot: Enabling RNG early entropy source...
+I (54) boot: Partition Table:
+I (56) boot: ## Label            Usage          Type ST Offset   Length
+I (63) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (69) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (76) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (82) boot: End of partition table
+I (86) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=1774ch ( 96076) map
+I (116) esp_image: segment 1: paddr=00027774 vaddr=3fc97958 size=04c18h ( 19480) load
+I (122) esp_image: segment 2: paddr=0002c394 vaddr=40378000 size=03c84h ( 15492) load
+I (127) esp_image: segment 3: paddr=00030020 vaddr=42020020 size=7bbfch (506876) map
+I (252) esp_image: segment 4: paddr=000abc24 vaddr=4037bc84 size=0bcd4h ( 48340) load
+I (273) boot: Loaded app from partition at offset 0x10000
+I (273) boot: Disabling RNG early entropy source...
+M3 board-only AP=Rovi M3 ip=192.168.4.1:7777 WPA2 channel=1 watchdog_ms=1000 max_age_ms=5000 consumer_ms=5000 capacity=8
+BLE advertising at_ms=932
+CONNECT src=Wifi session=199940270129153 at_ms=3599
+RX src=Wifi session=199940270129153 seq=1 cmd=Ping rx_ms=3604 expires_ms=6099 order=1 depth=0 status=Ping
+RX src=Wifi session=199940270129153 seq=2 cmd=Forward rx_ms=3658 expires_ms=6157 order=2 depth=1 status=Queued
+RX src=Wifi session=199940270129153 seq=3 cmd=Forward rx_ms=3661 expires_ms=6157 order=3 depth=2 status=Queued
+RX src=Wifi session=199940270129153 seq=4 cmd=Forward rx_ms=3669 expires_ms=6157 order=4 depth=3 status=Queued
+RX src=Wifi session=199940270129153 seq=5 cmd=Forward rx_ms=3678 expires_ms=6157 order=5 depth=4 status=Queued
+RX src=Wifi session=199940270129153 seq=6 cmd=Forward rx_ms=3687 expires_ms=6157 order=6 depth=5 status=Queued
+RX src=Wifi session=199940270129153 seq=7 cmd=Forward rx_ms=3699 expires_ms=6157 order=7 depth=6 status=Queued
+RX src=Wifi session=199940270129153 seq=8 cmd=Forward rx_ms=3707 expires_ms=6157 order=8 depth=7 status=Queued
+RX src=Wifi session=199940270129153 seq=9 cmd=Forward rx_ms=3716 expires_ms=6157 order=9 depth=8 status=Queued
+RX src=Wifi session=199940270129153 seq=10 cmd=Forward rx_ms=3725 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=11 cmd=Forward rx_ms=3735 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=12 cmd=Forward rx_ms=3746 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=13 cmd=Forward rx_ms=3756 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=14 cmd=Forward rx_ms=3764 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=15 cmd=Forward rx_ms=3774 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=16 cmd=Forward rx_ms=3783 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=17 cmd=Forward rx_ms=3792 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=18 cmd=Forward rx_ms=3802 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=19 cmd=Forward rx_ms=3811 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=20 cmd=Forward rx_ms=3821 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=21 cmd=Forward rx_ms=3833 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=22 cmd=Forward rx_ms=3842 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=23 cmd=Forward rx_ms=3851 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=24 cmd=Forward rx_ms=3861 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=25 cmd=Forward rx_ms=3870 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=26 cmd=Forward rx_ms=3880 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=27 cmd=Forward rx_ms=3889 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=28 cmd=Forward rx_ms=3898 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=29 cmd=Forward rx_ms=3909 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=30 cmd=Forward rx_ms=3916 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=31 cmd=Forward rx_ms=3926 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=32 cmd=Forward rx_ms=3935 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=33 cmd=Forward rx_ms=3948 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=34 cmd=Forward rx_ms=3954 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=35 cmd=Forward rx_ms=3964 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=36 cmd=Forward rx_ms=3973 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=37 cmd=Forward rx_ms=3984 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=38 cmd=Forward rx_ms=3993 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=39 cmd=Forward rx_ms=4003 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=40 cmd=Forward rx_ms=4012 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=41 cmd=Forward rx_ms=4021 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=42 cmd=Forward rx_ms=4031 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=43 cmd=Forward rx_ms=4042 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=44 cmd=Forward rx_ms=4052 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=45 cmd=Forward rx_ms=4061 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=46 cmd=Forward rx_ms=4071 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=47 cmd=Forward rx_ms=4080 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=48 cmd=Forward rx_ms=4090 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=49 cmd=Forward rx_ms=4098 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=50 cmd=Forward rx_ms=4108 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=51 cmd=Forward rx_ms=4117 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=52 cmd=Forward rx_ms=4127 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=53 cmd=Forward rx_ms=4139 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=54 cmd=Forward rx_ms=4147 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=55 cmd=Forward rx_ms=4156 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=56 cmd=Forward rx_ms=4166 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=57 cmd=Forward rx_ms=4176 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=58 cmd=Forward rx_ms=4184 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=59 cmd=Forward rx_ms=4193 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=60 cmd=Forward rx_ms=4203 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=61 cmd=Forward rx_ms=4213 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=62 cmd=Forward rx_ms=4222 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=63 cmd=Forward rx_ms=4232 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=64 cmd=Forward rx_ms=4242 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=65 cmd=Forward rx_ms=4253 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=66 cmd=Forward rx_ms=4262 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=67 cmd=Forward rx_ms=4271 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=68 cmd=Forward rx_ms=4281 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=69 cmd=Forward rx_ms=4291 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=70 cmd=Forward rx_ms=4300 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=71 cmd=Forward rx_ms=4309 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=72 cmd=Forward rx_ms=4319 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=73 cmd=Forward rx_ms=4327 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=74 cmd=Forward rx_ms=4336 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=75 cmd=Forward rx_ms=4346 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=76 cmd=Forward rx_ms=4355 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=77 cmd=Forward rx_ms=4366 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=78 cmd=Forward rx_ms=4376 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=79 cmd=Forward rx_ms=4386 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=80 cmd=Forward rx_ms=4395 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=81 cmd=Forward rx_ms=4403 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=82 cmd=Forward rx_ms=4413 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=83 cmd=Forward rx_ms=4423 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=84 cmd=Forward rx_ms=4432 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=85 cmd=Forward rx_ms=4441 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=86 cmd=Forward rx_ms=4452 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=87 cmd=Forward rx_ms=4463 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=88 cmd=Forward rx_ms=4472 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=89 cmd=Forward rx_ms=4482 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=90 cmd=Forward rx_ms=4491 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=91 cmd=Forward rx_ms=4500 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=92 cmd=Forward rx_ms=4508 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=93 cmd=Forward rx_ms=4518 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=94 cmd=Forward rx_ms=4528 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=95 cmd=Forward rx_ms=4537 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=96 cmd=Forward rx_ms=4550 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=97 cmd=Forward rx_ms=4558 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=98 cmd=Forward rx_ms=4567 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=99 cmd=Forward rx_ms=4577 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=100 cmd=Forward rx_ms=4587 expires_ms=6157 order=0 depth=8 status=Full
+RX src=Wifi session=199940270129153 seq=101 cmd=Forward rx_ms=4596 expires_ms=6157 order=0 depth=8 status=Full
+OUT at_ms=4725 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 4725, purged: 8, entry: None }
+DISCONNECT src=Wifi session=199940270129153 at_ms=4726
+CONNECT src=Wifi session=199940270129154 at_ms=20428
+RX src=Wifi session=199940270129154 seq=1 cmd=Ping rx_ms=20509 expires_ms=22928 order=10 depth=0 status=Ping
+RX src=Wifi session=199940270129154 seq=2 cmd=Forward rx_ms=20515 expires_ms=23013 order=11 depth=1 status=Queued
+RX src=Wifi session=199940270129154 seq=3 cmd=Forward rx_ms=20522 expires_ms=23021 order=12 depth=2 status=Queued
+RX src=Wifi session=199940270129154 seq=4 cmd=Forward rx_ms=20589 expires_ms=23031 order=13 depth=3 status=Queued
+RX src=Wifi session=199940270129154 seq=5 cmd=Forward rx_ms=20594 expires_ms=23093 order=14 depth=4 status=Queued
+RX src=Wifi session=199940270129154 seq=6 cmd=Forward rx_ms=20603 expires_ms=23101 order=15 depth=5 status=Queued
+RX src=Wifi session=199940270129154 seq=7 cmd=Forward rx_ms=20614 expires_ms=23113 order=16 depth=6 status=Queued
+RX src=Wifi session=199940270129154 seq=8 cmd=Forward rx_ms=20624 expires_ms=23122 order=17 depth=7 status=Queued
+RX src=Wifi session=199940270129154 seq=9 cmd=Forward rx_ms=20633 expires_ms=23132 order=18 depth=8 status=Queued
+RX src=Wifi session=199940270129154 seq=10 cmd=Ping rx_ms=20681 expires_ms=23180 order=19 depth=8 status=Ping
+INVALID src=Wifi at_ms=20686
+INVALID src=Wifi at_ms=20795
+INVALID src=Wifi at_ms=20896
+OUT at_ms=20964 depth=7 event=Apply(Entry { input: Input { source: Wifi, session: 199940270129154, seq: 2, expires_ms: 23013, command: Forward }, order: 11, received_ms: 20515 })
+INVALID src=Wifi at_ms=20999
+INVALID src=Wifi at_ms=21089
+INVALID src=Wifi at_ms=21203
+INVALID src=Wifi at_ms=21306
+INVALID src=Wifi at_ms=21408
+INVALID src=Wifi at_ms=21498
+INVALID src=Wifi at_ms=21613
+OUT at_ms=21686 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 21686, purged: 7, entry: None }
+DISCONNECT src=Wifi session=199940270129154 at_ms=21696
+CONNECT src=Wifi session=199940270129155 at_ms=22971
+RX src=Wifi session=199940270129155 seq=1 cmd=Ping rx_ms=23049 expires_ms=25472 order=20 depth=0 status=Ping
+RX src=Wifi session=199940270129155 seq=2 cmd=Forward rx_ms=23054 expires_ms=25554 order=21 depth=1 status=Queued
+RX src=Wifi session=199940270129155 seq=3 cmd=Forward rx_ms=23062 expires_ms=25561 order=22 depth=2 status=Queued
+RX src=Wifi session=199940270129155 seq=4 cmd=Forward rx_ms=23072 expires_ms=25571 order=23 depth=3 status=Queued
+RX src=Wifi session=199940270129155 seq=5 cmd=Forward rx_ms=23082 expires_ms=25582 order=24 depth=4 status=Queued
+RX src=Wifi session=199940270129155 seq=6 cmd=Forward rx_ms=23149 expires_ms=25592 order=25 depth=5 status=Queued
+RX src=Wifi session=199940270129155 seq=7 cmd=Forward rx_ms=23155 expires_ms=25654 order=26 depth=6 status=Queued
+RX src=Wifi session=199940270129155 seq=8 cmd=Forward rx_ms=23163 expires_ms=25662 order=27 depth=7 status=Queued
+RX src=Wifi session=199940270129155 seq=9 cmd=Forward rx_ms=23172 expires_ms=25672 order=28 depth=8 status=Queued
+RX src=Wifi session=199940270129155 seq=10 cmd=Ping rx_ms=23184 expires_ms=25684 order=29 depth=8 status=Ping
+INVALID src=Wifi at_ms=23252
+INVALID src=Wifi at_ms=23342
+INVALID src=Wifi at_ms=23457
+INVALID src=Wifi at_ms=23559
+INVALID src=Wifi at_ms=23662
+INVALID src=Wifi at_ms=23751
+INVALID src=Wifi at_ms=23866
+INVALID src=Wifi at_ms=23968
+INVALID src=Wifi at_ms=24071
+INVALID src=Wifi at_ms=24162
+OUT at_ms=24191 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 24191, purged: 8, entry: None }
+DISCONNECT src=Wifi session=199940270129155 at_ms=24196
+CONNECT src=Wifi session=199940270129156 at_ms=25508
+RX src=Wifi session=199940270129156 seq=1 cmd=Ping rx_ms=25512 expires_ms=28008 order=30 depth=0 status=Ping
+RX src=Wifi session=199940270129156 seq=2 cmd=Forward rx_ms=25517 expires_ms=28016 order=31 depth=1 status=Queued
+RX src=Wifi session=199940270129156 seq=3 cmd=Forward rx_ms=25526 expires_ms=28024 order=32 depth=2 status=Queued
+RX src=Wifi session=199940270129156 seq=4 cmd=Forward rx_ms=25539 expires_ms=28038 order=33 depth=3 status=Queued
+RX src=Wifi session=199940270129156 seq=5 cmd=Forward rx_ms=25549 expires_ms=28047 order=34 depth=4 status=Queued
+RX src=Wifi session=199940270129156 seq=6 cmd=Forward rx_ms=25613 expires_ms=28110 order=35 depth=5 status=Queued
+RX src=Wifi session=199940270129156 seq=7 cmd=Forward rx_ms=25622 expires_ms=28120 order=36 depth=6 status=Queued
+RX src=Wifi session=199940270129156 seq=8 cmd=Forward rx_ms=25631 expires_ms=28129 order=37 depth=7 status=Queued
+RX src=Wifi session=199940270129156 seq=9 cmd=Forward rx_ms=25636 expires_ms=28134 order=38 depth=8 status=Queued
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=25645 expires_ms=28144 order=39 depth=8 status=Ping
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=25712 expires_ms=28144 order=0 depth=8 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=25800 expires_ms=28144 order=0 depth=8 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=25914 expires_ms=28144 order=0 depth=8 status=Sequence
+OUT at_ms=25968 depth=7 event=Apply(Entry { input: Input { source: Wifi, session: 199940270129156, seq: 2, expires_ms: 28016, command: Forward }, order: 31, received_ms: 25517 })
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26016 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26119 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26209 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26323 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26426 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26529 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26618 expires_ms=28144 order=0 depth=7 status=Sequence
+OUT at_ms=26651 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 26651, purged: 7, entry: None }
+DISCONNECT src=Wifi session=199940270129156 at_ms=26654
+CONNECT src=Wifi session=199940270129157 at_ms=27967
+RX src=Wifi session=199940270129157 seq=1 cmd=Ping rx_ms=27971 expires_ms=30467 order=40 depth=0 status=Ping
+RX src=Wifi session=199940270129157 seq=2 cmd=Forward rx_ms=27976 expires_ms=30475 order=41 depth=1 status=Queued
+RX src=Wifi session=199940270129157 seq=3 cmd=Forward rx_ms=27987 expires_ms=30483 order=42 depth=2 status=Queued
+RX src=Wifi session=199940270129157 seq=4 cmd=Forward rx_ms=28067 expires_ms=30567 order=43 depth=3 status=Queued
+RX src=Wifi session=199940270129157 seq=5 cmd=Forward rx_ms=28073 expires_ms=30571 order=44 depth=4 status=Queued
+RX src=Wifi session=199940270129157 seq=6 cmd=Forward rx_ms=28080 expires_ms=30579 order=45 depth=5 status=Queued
+RX src=Wifi session=199940270129157 seq=7 cmd=Forward rx_ms=28090 expires_ms=30589 order=46 depth=6 status=Queued
+RX src=Wifi session=199940270129157 seq=8 cmd=Forward rx_ms=28100 expires_ms=30599 order=47 depth=7 status=Queued
+RX src=Wifi session=199940270129157 seq=9 cmd=Forward rx_ms=28167 expires_ms=30609 order=48 depth=8 status=Queued
+RX src=Wifi session=199940270129157 seq=10 cmd=Ping rx_ms=28172 expires_ms=30672 order=49 depth=8 status=Ping
+RX src=Wifi session=199940270129157 seq=11 cmd=Forward rx_ms=28184 expires_ms=28181 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=12 cmd=Forward rx_ms=28257 expires_ms=28242 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=13 cmd=Forward rx_ms=28371 expires_ms=28324 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=14 cmd=Forward rx_ms=28425 expires_ms=28424 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=15 cmd=Forward rx_ms=28503 expires_ms=28478 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=16 cmd=Forward rx_ms=28608 expires_ms=28558 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=17 cmd=Forward rx_ms=28674 expires_ms=28662 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=18 cmd=Forward rx_ms=28729 expires_ms=28728 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=19 cmd=Forward rx_ms=28813 expires_ms=28782 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=20 cmd=Forward rx_ms=28912 expires_ms=28866 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=21 cmd=Forward rx_ms=29017 expires_ms=28967 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=22 cmd=Forward rx_ms=29072 expires_ms=29070 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=23 cmd=Forward rx_ms=29138 expires_ms=29134 order=0 depth=8 status=Stale
+OUT at_ms=29181 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 29181, purged: 8, entry: None }
+DISCONNECT src=Wifi session=199940270129157 at_ms=29191
+CONNECT src=Wifi session=199940270129158 at_ms=30474
+RX src=Wifi session=199940270129158 seq=1 cmd=Ping rx_ms=30479 expires_ms=32975 order=50 depth=0 status=Ping
+RX src=Wifi session=199940270129158 seq=2 cmd=Forward rx_ms=30484 expires_ms=32983 order=51 depth=1 status=Queued
+RX src=Wifi session=199940270129158 seq=3 cmd=Forward rx_ms=30492 expires_ms=32991 order=52 depth=2 status=Queued
+RX src=Wifi session=199940270129158 seq=4 cmd=Forward rx_ms=30501 expires_ms=33001 order=53 depth=3 status=Queued
+RX src=Wifi session=199940270129158 seq=5 cmd=Forward rx_ms=30552 expires_ms=33052 order=54 depth=4 status=Queued
+RX src=Wifi session=199940270129158 seq=6 cmd=Forward rx_ms=30557 expires_ms=33057 order=55 depth=5 status=Queued
+RX src=Wifi session=199940270129158 seq=7 cmd=Forward rx_ms=30565 expires_ms=33065 order=56 depth=6 status=Queued
+RX src=Wifi session=199940270129158 seq=8 cmd=Forward rx_ms=30576 expires_ms=33075 order=57 depth=7 status=Queued
+RX src=Wifi session=199940270129158 seq=9 cmd=Forward rx_ms=30585 expires_ms=33085 order=58 depth=8 status=Queued
+RX src=Wifi session=199940270129158 seq=10 cmd=Ping rx_ms=30595 expires_ms=33095 order=59 depth=8 status=Ping
+OUT at_ms=30975 depth=7 event=Apply(Entry { input: Input { source: Wifi, session: 199940270129158, seq: 2, expires_ms: 32983, command: Forward }, order: 51, received_ms: 30484 })
+OUT at_ms=31602 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 31602, purged: 7, entry: None }
+DISCONNECT src=Wifi session=199940270129158 at_ms=31603
+CONNECT src=Wifi session=199940270129159 at_ms=41250
+RX src=Wifi session=199940270129159 seq=1 cmd=Ping rx_ms=41255 expires_ms=43750 order=60 depth=0 status=Ping
+RX src=Wifi session=199940270129159 seq=2 cmd=Forward rx_ms=41280 expires_ms=43778 order=61 depth=1 status=Queued
+RX src=Wifi session=199940270129159 seq=3 cmd=Forward rx_ms=41285 expires_ms=43784 order=62 depth=2 status=Queued
+RX src=Wifi session=199940270129159 seq=4 cmd=Forward rx_ms=41293 expires_ms=43792 order=63 depth=3 status=Queued
+RX src=Wifi session=199940270129159 seq=5 cmd=Forward rx_ms=41306 expires_ms=43802 order=64 depth=4 status=Queued
+RX src=Wifi session=199940270129159 seq=6 cmd=Forward rx_ms=41348 expires_ms=43812 order=65 depth=5 status=Queued
+RX src=Wifi session=199940270129159 seq=7 cmd=Forward rx_ms=41352 expires_ms=43852 order=66 depth=6 status=Queued
+RX src=Wifi session=199940270129159 seq=8 cmd=Forward rx_ms=41379 expires_ms=43878 order=67 depth=7 status=Queued
+RX src=Wifi session=199940270129159 seq=9 cmd=Forward rx_ms=41383 expires_ms=43883 order=68 depth=8 status=Queued
+RX src=Wifi session=199940270129159 seq=10 cmd=Ping rx_ms=41393 expires_ms=43892 order=69 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=11 cmd=Ping rx_ms=41403 expires_ms=43902 order=70 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=12 cmd=Ping rx_ms=41655 expires_ms=44111 order=71 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=13 cmd=Ping rx_ms=41862 expires_ms=44360 order=72 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=14 cmd=Ping rx_ms=42070 expires_ms=44566 order=73 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=15 cmd=Ping rx_ms=42279 expires_ms=44774 order=74 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=16 cmd=Ping rx_ms=42503 expires_ms=45000 order=75 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=17 cmd=Ping rx_ms=42709 expires_ms=45207 order=76 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=18 cmd=Ping rx_ms=42915 expires_ms=45413 order=77 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=19 cmd=Ping rx_ms=43120 expires_ms=45619 order=78 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=20 cmd=Ping rx_ms=43326 expires_ms=45824 order=79 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=21 cmd=Ping rx_ms=43532 expires_ms=46030 order=80 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=22 cmd=Ping rx_ms=43738 expires_ms=46236 order=81 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=23 cmd=Ping rx_ms=43943 expires_ms=46442 order=82 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=24 cmd=Ping rx_ms=44149 expires_ms=46647 order=83 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=25 cmd=Ping rx_ms=44356 expires_ms=46854 order=84 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=26 cmd=Ping rx_ms=44562 expires_ms=47060 order=85 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=27 cmd=Ping rx_ms=44767 expires_ms=47266 order=86 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=28 cmd=Ping rx_ms=44976 expires_ms=47471 order=87 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=29 cmd=Ping rx_ms=45181 expires_ms=47680 order=88 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=30 cmd=Ping rx_ms=45391 expires_ms=47885 order=89 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=31 cmd=Ping rx_ms=45599 expires_ms=48095 order=90 depth=8 status=Ping
+RX src=Wifi session=199940270129159 seq=32 cmd=Ping rx_ms=45806 expires_ms=48303 order=91 depth=8 status=Ping
+OUT at_ms=45990 depth=7 event=Stale(Entry { input: Input { source: Wifi, session: 199940270129159, seq: 2, expires_ms: 43778, command: Forward }, order: 61, received_ms: 41280 })
+RX src=Wifi session=199940270129159 seq=33 cmd=Ping rx_ms=46017 expires_ms=48514 order=92 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=34 cmd=Ping rx_ms=46225 expires_ms=48721 order=93 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=35 cmd=Ping rx_ms=46473 expires_ms=48968 order=94 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=36 cmd=Ping rx_ms=46678 expires_ms=49177 order=95 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=37 cmd=Ping rx_ms=46883 expires_ms=49382 order=96 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=38 cmd=Ping rx_ms=47088 expires_ms=49587 order=97 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=39 cmd=Ping rx_ms=47293 expires_ms=49792 order=98 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=40 cmd=Ping rx_ms=47498 expires_ms=49997 order=99 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=41 cmd=Ping rx_ms=47703 expires_ms=50201 order=100 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=42 cmd=Ping rx_ms=47963 expires_ms=50407 order=101 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=43 cmd=Ping rx_ms=48178 expires_ms=50668 order=102 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=44 cmd=Ping rx_ms=48387 expires_ms=50882 order=103 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=45 cmd=Ping rx_ms=48592 expires_ms=51091 order=104 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=46 cmd=Ping rx_ms=48802 expires_ms=51296 order=105 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=47 cmd=Ping rx_ms=49007 expires_ms=51505 order=106 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=48 cmd=Ping rx_ms=49213 expires_ms=51711 order=107 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=49 cmd=Ping rx_ms=49418 expires_ms=51917 order=108 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=50 cmd=Ping rx_ms=49626 expires_ms=52122 order=109 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=51 cmd=Ping rx_ms=49836 expires_ms=52330 order=110 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=52 cmd=Ping rx_ms=50044 expires_ms=52540 order=111 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=53 cmd=Ping rx_ms=50251 expires_ms=52748 order=112 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=54 cmd=Ping rx_ms=50460 expires_ms=52955 order=113 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=55 cmd=Ping rx_ms=50670 expires_ms=53164 order=114 depth=7 status=Ping
+RX src=Wifi session=199940270129159 seq=56 cmd=Ping rx_ms=50876 expires_ms=53374 order=115 depth=7 status=Ping
+OUT at_ms=50994 depth=6 event=Stale(Entry { input: Input { source: Wifi, session: 199940270129159, seq: 3, expires_ms: 43784, command: Forward }, order: 62, received_ms: 41285 })
+RX src=Wifi session=199940270129159 seq=57 cmd=Ping rx_ms=51082 expires_ms=53580 order=116 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=58 cmd=Ping rx_ms=51290 expires_ms=53786 order=117 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=59 cmd=Ping rx_ms=51548 expires_ms=54044 order=118 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=60 cmd=Ping rx_ms=51757 expires_ms=54252 order=119 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=61 cmd=Ping rx_ms=51966 expires_ms=54462 order=120 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=62 cmd=Ping rx_ms=52172 expires_ms=54670 order=121 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=63 cmd=Ping rx_ms=52380 expires_ms=54875 order=122 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=64 cmd=Ping rx_ms=52593 expires_ms=55084 order=123 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=65 cmd=Ping rx_ms=52800 expires_ms=55297 order=124 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=66 cmd=Ping rx_ms=53004 expires_ms=55503 order=125 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=67 cmd=Ping rx_ms=53213 expires_ms=55708 order=126 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=68 cmd=Ping rx_ms=53422 expires_ms=55917 order=127 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=69 cmd=Ping rx_ms=53630 expires_ms=56125 order=128 depth=6 status=Ping
+RX src=Wifi session=199940270129159 seq=70 cmd=Ping rx_ms=53836 expires_ms=56334 order=129 depth=6 status=Ping
+DISCONNECT src=Wifi session=199940270129159 at_ms=54047
+OUT at_ms=54053 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 54047, purged: 6, entry: None }
+Terminated                 espflash monitor --non-interactive --port /dev/ttyACM0

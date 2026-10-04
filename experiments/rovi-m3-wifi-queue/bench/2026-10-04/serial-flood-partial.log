@@ -1,0 +1,14 @@
+CONNECT src=Wifi session=199940270129158 at_ms=30474
+RX src=Wifi session=199940270129158 seq=1 cmd=Ping rx_ms=30479 expires_ms=32975 order=50 depth=0 status=Ping
+RX src=Wifi session=199940270129158 seq=2 cmd=Forward rx_ms=30484 expires_ms=32983 order=51 depth=1 status=Queued
+RX src=Wifi session=199940270129158 seq=3 cmd=Forward rx_ms=30492 expires_ms=32991 order=52 depth=2 status=Queued
+RX src=Wifi session=199940270129158 seq=4 cmd=Forward rx_ms=30501 expires_ms=33001 order=53 depth=3 status=Queued
+RX src=Wifi session=199940270129158 seq=5 cmd=Forward rx_ms=30552 expires_ms=33052 order=54 depth=4 status=Queued
+RX src=Wifi session=199940270129158 seq=6 cmd=Forward rx_ms=30557 expires_ms=33057 order=55 depth=5 status=Queued
+RX src=Wifi session=199940270129158 seq=7 cmd=Forward rx_ms=30565 expires_ms=33065 order=56 depth=6 status=Queued
+RX src=Wifi session=199940270129158 seq=8 cmd=Forward rx_ms=30576 expires_ms=33075 order=57 depth=7 status=Queued
+RX src=Wifi session=199940270129158 seq=9 cmd=Forward rx_ms=30585 expires_ms=33085 order=58 depth=8 status=Queued
+RX src=Wifi session=199940270129158 seq=10 cmd=Ping rx_ms=30595 expires_ms=33095 order=59 depth=8 status=Ping
+OUT at_ms=30975 depth=7 event=Apply(Entry { input: Input { source: Wifi, session: 199940270129158, seq: 2, expires_ms: 32983, command: Forward }, order: 51, received_ms: 30484 })
+OUT at_ms=31602 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 31602, purged: 7, entry: None }
+DISCONNECT src=Wifi session=199940270129158 at_ms=31603

@@ -1,0 +1,6 @@
+CONNECT src=Wifi session=170192753655817 at_ms=91508
+RX src=Wifi session=170192753655817 seq=1 cmd=Ping rx_ms=91513 expires_ms=94008 order=71 depth=0 status=Ping
+RX src=Wifi session=170192753655817 seq=2 cmd=Forward rx_ms=93090 expires_ms=92517 order=0 depth=0 status=Stale
+RX src=Wifi session=170192753655817 seq=3 cmd=Ping rx_ms=94648 expires_ms=94144 order=0 depth=0 status=Stale
+DISCONNECT src=Wifi session=170192753655817 at_ms=94779
+OUT at_ms=94785 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 94779, purged: 0, entry: None }

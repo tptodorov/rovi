@@ -1,0 +1,4 @@
+{"t_ns": 6980454415283, "event": "connected", "connect_ms": 778.234621, "address": "FF:E4:05:1A:9F:FF"}
+{"t_ns": 6980530482024, "write": "01", "ok": true, "rtt_ms": 75.995222}
+{"t_ns": 6981610504509, "write": "03", "ok": true, "rtt_ms": 74.797459}
+{"t_ns": 6991649209684, "event": "peer_disconnected_before", "step": "03"}

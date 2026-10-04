@@ -1,0 +1,16 @@
+{"t_ns": 6029625283312, "event": "connected", "connect_ms": 1551.197448, "address": "FF:E4:05:1A:9F:FF"}
+{"t_ns": 6029887489419, "write": "01", "ok": true, "rtt_ms": 262.102436}
+{"t_ns": 6029976432903, "write": "01", "ok": true, "rtt_ms": 88.857544}
+{"t_ns": 6030066359587, "write": "01", "ok": true, "rtt_ms": 89.851801}
+{"t_ns": 6030156561423, "write": "01", "ok": true, "rtt_ms": 90.124772}
+{"t_ns": 6030247355317, "write": "01", "ok": true, "rtt_ms": 90.720199}
+{"t_ns": 6030337353040, "write": "01", "ok": true, "rtt_ms": 89.925852}
+{"t_ns": 6030427845796, "write": "01", "ok": true, "rtt_ms": 90.415419}
+{"t_ns": 6030516444592, "write": "01", "ok": true, "rtt_ms": 88.521391}
+{"t_ns": 6030651391192, "write": "01", "ok": false, "rtt_ms": 134.846161, "error": "[org.bluez.Error.Failed] Operation failed with ATT error: 0x13 (Value Not Allowed)"}
+{"t_ns": 6030741701106, "write": "01", "ok": false, "rtt_ms": 90.214716, "error": "[org.bluez.Error.Failed] Operation failed with ATT error: 0x13 (Value Not Allowed)"}
+{"t_ns": 6030831401413, "write": "02", "ok": false, "rtt_ms": 89.591918, "error": "[org.bluez.Error.Failed] Operation failed with ATT error: 0x13 (Value Not Allowed)"}
+{"t_ns": 6030921278941, "write": "00", "ok": true, "rtt_ms": 89.810907}
+{"t_ns": 6031191472075, "write": "01", "ok": true, "rtt_ms": 69.795241}
+{"t_ns": 6031462442062, "write": "03", "ok": true, "rtt_ms": 70.545224}
+{"t_ns": 6031462497990, "event": "steps_done", "connected": true}

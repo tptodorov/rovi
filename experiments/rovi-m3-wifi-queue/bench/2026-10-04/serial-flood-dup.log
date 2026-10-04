@@ -1,0 +1,24 @@
+CONNECT src=Wifi session=199940270129156 at_ms=25508
+RX src=Wifi session=199940270129156 seq=1 cmd=Ping rx_ms=25512 expires_ms=28008 order=30 depth=0 status=Ping
+RX src=Wifi session=199940270129156 seq=2 cmd=Forward rx_ms=25517 expires_ms=28016 order=31 depth=1 status=Queued
+RX src=Wifi session=199940270129156 seq=3 cmd=Forward rx_ms=25526 expires_ms=28024 order=32 depth=2 status=Queued
+RX src=Wifi session=199940270129156 seq=4 cmd=Forward rx_ms=25539 expires_ms=28038 order=33 depth=3 status=Queued
+RX src=Wifi session=199940270129156 seq=5 cmd=Forward rx_ms=25549 expires_ms=28047 order=34 depth=4 status=Queued
+RX src=Wifi session=199940270129156 seq=6 cmd=Forward rx_ms=25613 expires_ms=28110 order=35 depth=5 status=Queued
+RX src=Wifi session=199940270129156 seq=7 cmd=Forward rx_ms=25622 expires_ms=28120 order=36 depth=6 status=Queued
+RX src=Wifi session=199940270129156 seq=8 cmd=Forward rx_ms=25631 expires_ms=28129 order=37 depth=7 status=Queued
+RX src=Wifi session=199940270129156 seq=9 cmd=Forward rx_ms=25636 expires_ms=28134 order=38 depth=8 status=Queued
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=25645 expires_ms=28144 order=39 depth=8 status=Ping
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=25712 expires_ms=28144 order=0 depth=8 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=25800 expires_ms=28144 order=0 depth=8 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=25914 expires_ms=28144 order=0 depth=8 status=Sequence
+OUT at_ms=25968 depth=7 event=Apply(Entry { input: Input { source: Wifi, session: 199940270129156, seq: 2, expires_ms: 28016, command: Forward }, order: 31, received_ms: 25517 })
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26016 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26119 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26209 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26323 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26426 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26529 expires_ms=28144 order=0 depth=7 status=Sequence
+RX src=Wifi session=199940270129156 seq=10 cmd=Ping rx_ms=26618 expires_ms=28144 order=0 depth=7 status=Sequence
+OUT at_ms=26651 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 26651, purged: 7, entry: None }
+DISCONNECT src=Wifi session=199940270129156 at_ms=26654

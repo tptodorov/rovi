@@ -1,0 +1,69 @@
+WIFI link departure/event loss at_ms=302385
+CONNECT src=Wifi session=45608403140637 at_ms=308874
+RX src=Wifi session=45608403140637 seq=1 cmd=Ping rx_ms=308879 expires_ms=308999 order=28 depth=0 status=Ping
+RX src=Wifi session=45608403140637 seq=2 cmd=Forward rx_ms=308883 expires_ms=309008 order=29 depth=1 status=Queued
+OUT at_ms=308888 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 45608403140637, seq: 2, expires_ms: 309008, command: Forward }, order: 29, received_ms: 308883 })
+RX src=Wifi session=45608403140637 seq=3 cmd=Reverse rx_ms=309049 expires_ms=309140 order=30 depth=1 status=Queued
+OUT at_ms=309055 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 45608403140637, seq: 3, expires_ms: 309140, command: Reverse }, order: 30, received_ms: 309049 })
+RX src=Wifi session=45608403140637 seq=4 cmd=Stop rx_ms=309166 expires_ms=309232 order=31 depth=0 status=Stop
+OUT at_ms=309175 depth=0 event=Safety { reason: Stop, at_ms: 309166, purged: 0, entry: Some(Entry { input: Input { source: Wifi, session: 45608403140637, seq: 4, expires_ms: 309232, command: Stop }, order: 31, received_ms: 309166 }) }
+RX src=Wifi session=45608403140637 seq=5 cmd=Ping rx_ms=309268 expires_ms=309346 order=32 depth=0 status=Ping
+DISCONNECT src=Wifi session=45608403140637 at_ms=309371
+OUT at_ms=309376 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 309371, purged: 0, entry: None }
+CONNECT src=Wifi session=45608403140638 at_ms=309465
+RX src=Wifi session=45608403140638 seq=1 cmd=Ping rx_ms=309472 expires_ms=309591 order=33 depth=0 status=Ping
+RX src=Wifi session=45608403140638 seq=2 cmd=Stop rx_ms=309477 expires_ms=309601 order=34 depth=0 status=Stop
+OUT at_ms=309480 depth=0 event=Safety { reason: Stop, at_ms: 309477, purged: 0, entry: Some(Entry { input: Input { source: Wifi, session: 45608403140638, seq: 2, expires_ms: 309601, command: Stop }, order: 34, received_ms: 309477 }) }
+DISCONNECT src=Wifi session=45608403140638 at_ms=309679
+OUT at_ms=309682 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 309679, purged: 0, entry: None }
+CONNECT src=Wifi session=45608403140639 at_ms=309784
+RX src=Wifi session=45608403140639 seq=1 cmd=Ping rx_ms=309789 expires_ms=309909 order=35 depth=0 status=Ping
+RX src=Wifi session=45608403140638 seq=2 cmd=Stop rx_ms=309794 expires_ms=309601 order=0 depth=0 status=Session
+DISCONNECT src=Wifi session=45608403140639 at_ms=309804
+OUT at_ms=309808 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 309804, purged: 0, entry: None }
+WIFI link departure/event loss at_ms=309857
+CONNECT src=Wifi session=45608403140640 at_ms=313334
+RX src=Wifi session=45608403140640 seq=1 cmd=Ping rx_ms=313392 expires_ms=313459 order=36 depth=0 status=Ping
+RX src=Wifi session=45608403140640 seq=2 cmd=Forward rx_ms=313400 expires_ms=313526 order=37 depth=1 status=Queued
+OUT at_ms=313416 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 45608403140640, seq: 2, expires_ms: 313526, command: Forward }, order: 37, received_ms: 313400 })
+RX src=Wifi session=45608403140640 seq=3 cmd=Reverse rx_ms=313501 expires_ms=313581 order=38 depth=1 status=Queued
+OUT at_ms=313502 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 45608403140640, seq: 3, expires_ms: 313581, command: Reverse }, order: 38, received_ms: 313501 })
+RX src=Wifi session=45608403140640 seq=4 cmd=Stop rx_ms=313604 expires_ms=313696 order=39 depth=0 status=Stop
+OUT at_ms=313607 depth=0 event=Safety { reason: Stop, at_ms: 313604, purged: 0, entry: Some(Entry { input: Input { source: Wifi, session: 45608403140640, seq: 4, expires_ms: 313696, command: Stop }, order: 39, received_ms: 313604 }) }
+RX src=Wifi session=45608403140640 seq=5 cmd=Ping rx_ms=313706 expires_ms=313785 order=40 depth=0 status=Ping
+DISCONNECT src=Wifi session=45608403140640 at_ms=313763
+OUT at_ms=313763 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 313763, purged: 0, entry: None }
+CONNECT src=Wifi session=45608403140641 at_ms=313830
+RX src=Wifi session=45608403140641 seq=1 cmd=Ping rx_ms=313835 expires_ms=313955 order=41 depth=0 status=Ping
+RX src=Wifi session=45608403140641 seq=2 cmd=Stop rx_ms=313840 expires_ms=313965 order=42 depth=0 status=Stop
+OUT at_ms=313848 depth=0 event=Safety { reason: Stop, at_ms: 313840, purged: 0, entry: Some(Entry { input: Input { source: Wifi, session: 45608403140641, seq: 2, expires_ms: 313965, command: Stop }, order: 42, received_ms: 313840 }) }
+DISCONNECT src=Wifi session=45608403140641 at_ms=313913
+OUT at_ms=313915 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 313913, purged: 0, entry: None }
+CONNECT src=Wifi session=45608403140642 at_ms=314020
+RX src=Wifi session=45608403140642 seq=1 cmd=Ping rx_ms=314027 expires_ms=314145 order=43 depth=0 status=Ping
+RX src=Wifi session=45608403140641 seq=2 cmd=Stop rx_ms=314031 expires_ms=313965 order=0 depth=0 status=Session
+DISCONNECT src=Wifi session=45608403140642 at_ms=314040
+OUT at_ms=314048 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 314040, purged: 0, entry: None }
+WIFI link departure/event loss at_ms=314117
+CONNECT src=Wifi session=45608403140643 at_ms=316591
+RX src=Wifi session=45608403140643 seq=1 cmd=Ping rx_ms=316598 expires_ms=316716 order=44 depth=0 status=Ping
+RX src=Wifi session=45608403140643 seq=2 cmd=Forward rx_ms=316663 expires_ms=316734 order=45 depth=1 status=Queued
+OUT at_ms=316669 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 45608403140643, seq: 2, expires_ms: 316734, command: Forward }, order: 45, received_ms: 316663 })
+RX src=Wifi session=45608403140643 seq=3 cmd=Reverse rx_ms=316762 expires_ms=316846 order=46 depth=1 status=Queued
+OUT at_ms=316779 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 45608403140643, seq: 3, expires_ms: 316846, command: Reverse }, order: 46, received_ms: 316762 })
+RX src=Wifi session=45608403140643 seq=4 cmd=Stop rx_ms=316832 expires_ms=316944 order=47 depth=0 status=Stop
+OUT at_ms=316835 depth=0 event=Safety { reason: Stop, at_ms: 316832, purged: 0, entry: Some(Entry { input: Input { source: Wifi, session: 45608403140643, seq: 4, expires_ms: 316944, command: Stop }, order: 47, received_ms: 316832 }) }
+RX src=Wifi session=45608403140643 seq=5 cmd=Ping rx_ms=316887 expires_ms=317014 order=48 depth=0 status=Ping
+DISCONNECT src=Wifi session=45608403140643 at_ms=316968
+OUT at_ms=316974 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 316968, purged: 0, entry: None }
+CONNECT src=Wifi session=45608403140644 at_ms=317075
+RX src=Wifi session=45608403140644 seq=1 cmd=Ping rx_ms=317080 expires_ms=317200 order=49 depth=0 status=Ping
+RX src=Wifi session=45608403140644 seq=2 cmd=Stop rx_ms=317087 expires_ms=317212 order=50 depth=0 status=Stop
+OUT at_ms=317088 depth=0 event=Safety { reason: Stop, at_ms: 317087, purged: 0, entry: Some(Entry { input: Input { source: Wifi, session: 45608403140644, seq: 2, expires_ms: 317212, command: Stop }, order: 50, received_ms: 317087 }) }
+DISCONNECT src=Wifi session=45608403140644 at_ms=317173
+OUT at_ms=317179 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 317173, purged: 0, entry: None }
+CONNECT src=Wifi session=45608403140645 at_ms=317245
+RX src=Wifi session=45608403140645 seq=1 cmd=Ping rx_ms=317249 expires_ms=317370 order=51 depth=0 status=Ping
+RX src=Wifi session=45608403140644 seq=2 cmd=Stop rx_ms=317255 expires_ms=317212 order=0 depth=0 status=Session
+DISCONNECT src=Wifi session=45608403140645 at_ms=317296
+OUT at_ms=317300 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 317296, purged: 0, entry: None }

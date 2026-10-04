@@ -1,0 +1,2 @@
+{"discovery": {"version": "1", "session": "170192753655816", "now_ms": "69308", "max_age_ms": "5000", "watchdog_ms": "10000", "commands": "0=stop,1=forward,2=reverse,3=ping"}}
+{"session": 170192753655816, "seq": 1, "tx_ns": 7122418458437, "ack_ns": 7122425121320, "rtt_ms": 6.662883, "response": "ACK seq=1 status=Ping order=70 rx_ms=69313 depth=0"}

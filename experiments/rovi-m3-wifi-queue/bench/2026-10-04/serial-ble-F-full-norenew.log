@@ -1,0 +1,22 @@
+CONNECT src=Ble session=110591898288131 at_ms=27591
+RX src=Ble session=110591898288131 seq=1 cmd=Forward rx_ms=28045 expires_ms=33045 order=9 depth=1 status=Queued
+RX src=Ble session=110591898288131 seq=2 cmd=Forward rx_ms=28135 expires_ms=33135 order=10 depth=2 status=Queued
+RX src=Ble session=110591898288131 seq=3 cmd=Forward rx_ms=28225 expires_ms=33225 order=11 depth=3 status=Queued
+RX src=Ble session=110591898288131 seq=4 cmd=Forward rx_ms=28315 expires_ms=33315 order=12 depth=4 status=Queued
+RX src=Ble session=110591898288131 seq=5 cmd=Forward rx_ms=28405 expires_ms=33405 order=13 depth=5 status=Queued
+RX src=Ble session=110591898288131 seq=6 cmd=Forward rx_ms=28495 expires_ms=33495 order=14 depth=6 status=Queued
+RX src=Ble session=110591898288131 seq=7 cmd=Forward rx_ms=28585 expires_ms=33585 order=15 depth=7 status=Queued
+RX src=Ble session=110591898288131 seq=8 cmd=Forward rx_ms=28675 expires_ms=33675 order=16 depth=8 status=Queued
+RX src=Ble session=110591898288131 seq=9 cmd=Forward rx_ms=28765 expires_ms=33765 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=10 cmd=Forward rx_ms=28855 expires_ms=33855 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=11 cmd=Forward rx_ms=28945 expires_ms=33945 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=12 cmd=Forward rx_ms=29035 expires_ms=34035 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=13 cmd=Forward rx_ms=29125 expires_ms=34125 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=14 cmd=Forward rx_ms=29215 expires_ms=34215 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=15 cmd=Forward rx_ms=29305 expires_ms=34305 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=16 cmd=Forward rx_ms=29440 expires_ms=34440 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=17 cmd=Forward rx_ms=29530 expires_ms=34530 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=18 cmd=Forward rx_ms=29620 expires_ms=34620 order=0 depth=8 status=Full
+OUT at_ms=29684 depth=0 event=Safety { reason: Timeout(Ble), at_ms: 29684, purged: 8, entry: None }
+DISCONNECT src=Ble session=110591898288131 at_ms=29692
+BLE advertising at_ms=29693

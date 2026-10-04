@@ -1,0 +1,13 @@
+{"discovery": {"version": "1", "session": "199940270129158", "now_ms": "30475", "max_age_ms": "5000", "watchdog_ms": "1000", "commands": "0=stop,1=forward,2=reverse,3=ping"}}
+{"session": 199940270129158, "seq": 1, "tx_ns": 7301735974318, "ack_ns": 7301740667884, "rtt_ms": 4.693566, "response": "ACK seq=1 status=Ping order=50 rx_ms=30479 depth=0"}
+{"session": 199940270129158, "seq": 2, "tx_ns": 7301740748128, "ack_ns": 7301748397347, "rtt_ms": 7.649219, "response": "ACK seq=2 status=Queued order=51 rx_ms=30484 depth=1"}
+{"session": 199940270129158, "seq": 3, "tx_ns": 7301748461123, "ack_ns": 7301758276984, "rtt_ms": 9.815861, "response": "ACK seq=3 status=Queued order=52 rx_ms=30492 depth=2"}
+{"session": 199940270129158, "seq": 4, "tx_ns": 7301758353830, "ack_ns": 7301809289545, "rtt_ms": 50.935715, "response": "ACK seq=4 status=Queued order=53 rx_ms=30501 depth=3"}
+{"session": 199940270129158, "seq": 5, "tx_ns": 7301809382558, "ack_ns": 7301814097902, "rtt_ms": 4.715344, "response": "ACK seq=5 status=Queued order=54 rx_ms=30552 depth=4"}
+{"session": 199940270129158, "seq": 6, "tx_ns": 7301814142277, "ack_ns": 7301822275014, "rtt_ms": 8.132737, "response": "ACK seq=6 status=Queued order=55 rx_ms=30557 depth=5"}
+{"session": 199940270129158, "seq": 7, "tx_ns": 7301822360093, "ack_ns": 7301832280328, "rtt_ms": 9.920235, "response": "ACK seq=7 status=Queued order=56 rx_ms=30565 depth=6"}
+{"session": 199940270129158, "seq": 8, "tx_ns": 7301832383285, "ack_ns": 7301842038466, "rtt_ms": 9.655181, "response": "ACK seq=8 status=Queued order=57 rx_ms=30576 depth=7"}
+{"session": 199940270129158, "seq": 9, "tx_ns": 7301842114880, "ack_ns": 7301852021237, "rtt_ms": 9.906357, "response": "ACK seq=9 status=Queued order=58 rx_ms=30585 depth=8"}
+{"session": 199940270129158, "seq": 10, "tx_ns": 7301852096153, "ack_ns": 7301861551516, "rtt_ms": 9.455363, "response": "ACK seq=10 status=Ping order=59 rx_ms=30595 depth=8"}
+{"partial_sent": true}
+{"closed_after_ms": 1394.685695, "error": "ConnectionResetError"}

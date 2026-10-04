@@ -2,7 +2,7 @@
 
 ## M3: direct Wi-Fi and shared command ingress
 
-**Status:** implemented and software-verified — physical acceptance pending (2026-10-04)
+**Status:** hardware-validated 2026-10-04; 5 of 6 acceptance items met. Range/distance and visual LED checks not run
 **Setup count:** one, ESP32-S3 board only; motor hardware disconnected
 
 ### Goal
@@ -30,11 +30,11 @@ Prove that a remote control connects directly to the car over its Wi-Fi network 
 
 Real hardware only; no motor hardware is connected for this milestone.
 
-- [ ] Direct Wi-Fi client can issue every defined car command.
-- [ ] BLE and Wi-Fi feed the same device-command processing path.
-- [ ] Per-source ordering and cross-source arbitration are documented.
-- [ ] Queue-full, stale-input, stop-priority, disconnect, and reconnect behavior are observed and recorded.
-- [ ] Watchdog refresh and timeout behavior are independent of queue backlog.
+- [x] Direct Wi-Fi client can issue every defined car command.
+- [x] BLE and Wi-Fi feed the same device-command processing path.
+- [x] Per-source ordering and cross-source arbitration are documented.
+- [x] Queue-full, stale-input, stop-priority, disconnect, and reconnect behavior are observed and recorded.
+- [x] Watchdog refresh and timeout behavior are independent of queue backlog.
 - [ ] Wi-Fi mode, client setup, authentication/access policy, latency, and recovery behavior are specified and tested against that specification.
 
 ### Software verification (not hardware results)
@@ -133,4 +133,66 @@ observations have been reviewed. Add a Results section only after actual bench w
    Repeat the latency run during concurrent BLE traffic to characterize coexistence.
 
 For each run record observed pass/fail, expected behavior, log filenames and any
-missing evidence. Physical acceptance is pending for every item above.
+missing evidence.
+
+### Results (2026-10-04)
+
+**Setup.** Firmware from `d630e26`; the firmware is unchanged by the result commit,
+which only fixes `client.py`. Board: ESP32-S3 rev v0.2, 16 MB flash, via the CH343 UART
+USB port (`/dev/ttyACM0`), flashed with espflash 4.4.0. Client host: `blade`,
+NixOS, Linux 7.2.8, Python 3.13.15, NetworkManager 1.56.0, BlueZ 5.86, bleak 2.1.1.
+Wi-Fi client: a virtual STA (`wlrovi`) on the laptop's Intel iwlwifi radio, which
+**stayed on the home network (5 GHz ch 36) at the same time**. Both
+networks time-share one radio, which confounds the latency figures. The board was
+tethered by USB, so it was within cable length of the client, with no obstacle.
+Board-only firmware configures no motor GPIO. Motor disconnection comes from the
+operator brief and was not physically checked by the agent. Passphrase: a private
+random 20-character string, kept outside the repo. A grep found it in no log. Logs,
+JSONL and helper scripts are in [`bench/2026-10-04/`](bench/2026-10-04/). BLE client:
+a scripted bleak/BlueZ driver (`tools/ble_bench.py`) instead of M2's nRF Connect;
+M2's compatibility matrix was not repeated.
+
+**Not run or not observed:**
+
+* Visual LED colors (no camera); LED effects are inferred from `OUT` lines.
+* Leaving and re-entering range, and the distance/obstacle latency run.
+* Phone/OS onboarding; only Linux NetworkManager was tested.
+* `--send-delay 3` in step 5: the firmware's 2 s TCP socket timeout closes the
+  idle socket first (`serial-wifi-stale-senddelay.log`). Substituted
+  `forward ping --ttl 1000 --send-delay 1.5`.
+
+| Step | Result | Evidence |
+| --- | --- | --- |
+| 1 Boot | **Pass.** AP `Rovi M3` WPA2 ch 1 seen by scan; BLE advertising at 932 ms; no allocation failure | `serial-boot.log` |
+| 1 Access | **Pass.** Wrong passphrase: 4-way handshake failed (`WRONG_KEY`). Open profile: never associated. Correct passphrase: joined in 341 ms, TCP discovery OK | `access-journal.log`, `serial-wifi-default.log` |
+| 1 Recovery | **Pass.** TCP reopen, Wi-Fi toggle (×3: 305–4312 ms to associate, ≤0.6 s to fresh-session commands after association), link departure and board reset each gave a new session; no pre-loss entry applied. After reset, the client noticed AP loss in ~2 s and re-associated ~6 s after boot | `recover-*`, `serial-wifi-reset.log` |
+| 2 Commands | **Fail, then pass after client fix.** First run: all four commands ACKed `Stale`. Client power save delivered the banner ~240 ms late (up to 116 ms on later fresh joins), so the client's 125 ms horizon was already past. `--reconnect-replay` was refused 3/3 (board listener gap). After the fixes, 3/3 fresh joins: stop/forward/reverse/ping ACKed, `Apply`/`Safety` matched, ping caused no output, replay got `status=Session` | `wifi-every-prefix-stale.jsonl`, `wifi-replay-prefix-refused.err`, `wifi-every-*`, `wifi-replay-*`, `serial-wifi-every.log` |
+| 3 Latency, near | **Pass** (PS on, OS default). 200/200 `Queued`. ACK RTT median 42.8 / p95 65.7 / max 68.2 ms. Queue latency median 11 / p95 19 / max 19 ms | `latency-near-ps-on.jsonl` |
+| 3 Latency, PS off | **Fail.** p95 135.3 / max 236.4 ms; 9/200 `Stale` at admission, 1 stale at dequeue. Likely the shared-radio confound; not repeated on a dedicated client | `latency-near-ps-off.jsonl` |
+| 3 Latency, distance | **Not run** | — |
+| 4 Shared ingress | **Pass.** BLE and Wi-Fi overlapped for 12 s. Per-session sequence increased strictly; global admission order increased strictly across sources; 204 `Apply` in FIFO order (199 Wi-Fi, 5 BLE). Opposing commands alternated (e.g. Wi-Fi Reverse order 44, then BLE Forward 45). BLE stop at depth 0 | `serial-shared-run.log`, `shared-*.jsonl` |
+| 5 Full/stop | **Pass.** Wi-Fi burst: depth 8, 92 `Full`, stop admitted at depth 0, `purged: 8`, observed 6 ms after ingress despite the 5 s drain. BLE: 8 queued, 3 `Full`, BLE `00` purged 8 in 2 ms. Mixed: BLE `00` purged 3 Wi-Fi + 2 BLE entries | `serial-wifi-full-stop.log`, `serial-ble-C-full-stop.log`, `serial-mixed-stop.log` |
+| 5 Stale | **Pass.** With pings every 0.5 s, entries dequeued as `Stale` (Wi-Fi 3/4, BLE 3/4). `--ttl -1` and in-transit delay gave `Stale` at admission | `serial-wifi-stale-*.log`, `serial-ble-D-stale.log` |
+| 6 Watchdog | **Pass.** 1 s watchdog with 5 s drain/age. Timeout at last admitted input +1005 to +1009 ms with 8 queued, for: Wi-Fi burst `--hold 2`, and floods of `Full`, invalid `255`, version 2, duplicate ping (`Sequence`), expired frames and a partial frame. Same for BLE (`Full`, invalid write). Pings every 0.2 s (Wi-Fi) or ~0.29 s (BLE) kept full-queue sessions alive (12.6 s, 4 s) | `serial-timeout.log`, `serial-flood-*.log`, `serial-ble-{E,F,G,H}-*.log` |
+| 7 Per-transport loss | **Pass.** BLE disconnect purged both sources' entries (3), advertising resumed, the new session's fresh intent applied. Wi-Fi link departure purged 4 (2+2) within 10 ms while BLE kept pinging. Silent Wi-Fi socket closed after 2.08 s although BLE pinged. Silent BLE timed out at +10008 ms (10 s build) while Wi-Fi pinged; a forced BLE disconnect stopped at once. No old-session entry applied after any reconnect | `serial-loss*.log`, `loss*.jsonl` |
+| 7 Coexistence latency | **Pass.** With concurrent BLE: ACK RTT median 51.9 / p95 65.8 / max 75.9 ms; queue p95 18 ms | `shared-wifi.jsonl` |
+
+**Findings:**
+
+* **Client clock anchor (fixed, test-first).** The banner-based anchor made commands
+  stale under client power save. The client now anchors on a calibration ping.
+* **Reconnect race (fixed in client, test-first).** The board's single listener
+  refuses connections during teardown; the client now retries for up to 1 s.
+  The firmware still refuses during that window.
+* **`--hold` crash (fixed, test-first).** The board aborts expired sessions with RST,
+  and the client crashed on it. The client now reports `socket_closed`.
+* **2 s TCP socket timeout (firmware, not changed).** It caps Wi-Fi silence at ~2 s
+  even when `ROVI_WATCHDOG_MS` is larger. This is the safe direction, but the
+  configured watchdog is not what governs Wi-Fi.
+* **BLE initial lease.** With the default 1 s watchdog, BlueZ service discovery
+  (>1 s on a first or uncached connection) lost the initial lease before the first
+  write, as the README predicts. Cached reconnects fit within 1 s.
+
+**Wi-Fi acceptance item left open:** range/recovery-by-distance, the distance latency run
+and phone onboarding are untested. Latency was measured only on a shared-radio
+client. Wi-Fi silence is governed by the 2 s socket timeout, not the specified watchdog.

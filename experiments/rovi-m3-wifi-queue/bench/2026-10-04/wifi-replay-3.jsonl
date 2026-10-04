@@ -1,0 +1,6 @@
+{"discovery": {"version": "1", "session": "45608403140644", "now_ms": "317075", "max_age_ms": "250", "watchdog_ms": "1000", "commands": "0=stop,1=forward,2=reverse,3=ping"}}
+{"session": 45608403140644, "seq": 1, "tx_ns": 6620842129806, "ack_ns": 6620849302752, "rtt_ms": 7.172946, "response": "ACK seq=1 status=Ping order=49 rx_ms=317080 depth=0"}
+{"session": 45608403140644, "seq": 2, "tx_ns": 6620849393570, "ack_ns": 6620874567923, "rtt_ms": 25.174353, "response": "ACK seq=2 status=Stop order=50 rx_ms=317087 depth=0"}
+{"discovery": {"version": "1", "session": "45608403140645", "now_ms": "317245", "max_age_ms": "250", "watchdog_ms": "1000", "commands": "0=stop,1=forward,2=reverse,3=ping"}}
+{"session": 45608403140645, "seq": 1, "tx_ns": 6621011723791, "ack_ns": 6621016735945, "rtt_ms": 5.012154, "response": "ACK seq=1 status=Ping order=51 rx_ms=317249 depth=0"}
+{"session": 45608403140645, "seq": 2, "tx_ns": 6621016777610, "ack_ns": 6621056846229, "rtt_ms": 40.068619, "response": "ACK seq=2 status=Session order=0 rx_ms=317255 depth=0"}

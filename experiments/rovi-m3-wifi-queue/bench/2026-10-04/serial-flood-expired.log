@@ -1,0 +1,26 @@
+CONNECT src=Wifi session=199940270129157 at_ms=27967
+RX src=Wifi session=199940270129157 seq=1 cmd=Ping rx_ms=27971 expires_ms=30467 order=40 depth=0 status=Ping
+RX src=Wifi session=199940270129157 seq=2 cmd=Forward rx_ms=27976 expires_ms=30475 order=41 depth=1 status=Queued
+RX src=Wifi session=199940270129157 seq=3 cmd=Forward rx_ms=27987 expires_ms=30483 order=42 depth=2 status=Queued
+RX src=Wifi session=199940270129157 seq=4 cmd=Forward rx_ms=28067 expires_ms=30567 order=43 depth=3 status=Queued
+RX src=Wifi session=199940270129157 seq=5 cmd=Forward rx_ms=28073 expires_ms=30571 order=44 depth=4 status=Queued
+RX src=Wifi session=199940270129157 seq=6 cmd=Forward rx_ms=28080 expires_ms=30579 order=45 depth=5 status=Queued
+RX src=Wifi session=199940270129157 seq=7 cmd=Forward rx_ms=28090 expires_ms=30589 order=46 depth=6 status=Queued
+RX src=Wifi session=199940270129157 seq=8 cmd=Forward rx_ms=28100 expires_ms=30599 order=47 depth=7 status=Queued
+RX src=Wifi session=199940270129157 seq=9 cmd=Forward rx_ms=28167 expires_ms=30609 order=48 depth=8 status=Queued
+RX src=Wifi session=199940270129157 seq=10 cmd=Ping rx_ms=28172 expires_ms=30672 order=49 depth=8 status=Ping
+RX src=Wifi session=199940270129157 seq=11 cmd=Forward rx_ms=28184 expires_ms=28181 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=12 cmd=Forward rx_ms=28257 expires_ms=28242 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=13 cmd=Forward rx_ms=28371 expires_ms=28324 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=14 cmd=Forward rx_ms=28425 expires_ms=28424 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=15 cmd=Forward rx_ms=28503 expires_ms=28478 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=16 cmd=Forward rx_ms=28608 expires_ms=28558 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=17 cmd=Forward rx_ms=28674 expires_ms=28662 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=18 cmd=Forward rx_ms=28729 expires_ms=28728 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=19 cmd=Forward rx_ms=28813 expires_ms=28782 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=20 cmd=Forward rx_ms=28912 expires_ms=28866 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=21 cmd=Forward rx_ms=29017 expires_ms=28967 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=22 cmd=Forward rx_ms=29072 expires_ms=29070 order=0 depth=8 status=Stale
+RX src=Wifi session=199940270129157 seq=23 cmd=Forward rx_ms=29138 expires_ms=29134 order=0 depth=8 status=Stale
+OUT at_ms=29181 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 29181, purged: 8, entry: None }
+DISCONNECT src=Wifi session=199940270129157 at_ms=29191

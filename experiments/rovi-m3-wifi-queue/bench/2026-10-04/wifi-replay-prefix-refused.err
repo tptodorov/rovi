@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/home/todor/.paseo/worktrees/08pcg0yd/feat-m3-wifi-queue/experiments/rovi-m3-wifi-queue/client.py", line 102, in <module>
+    main()
+    ~~~~^^
+  File "/home/todor/.paseo/worktrees/08pcg0yd/feat-m3-wifi-queue/experiments/rovi-m3-wifi-queue/client.py", line 93, in main
+    client = Client(args.host)
+  File "/home/todor/.paseo/worktrees/08pcg0yd/feat-m3-wifi-queue/experiments/rovi-m3-wifi-queue/client.py", line 12, in __init__
+    self.socket = socket.create_connection((host, 7777), timeout=3)
+                  ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/k0ymzcw694pf800n028nv3ysgamqnndc-python3-3.13.15-env/lib/python3.13/socket.py", line 868, in create_connection
+    raise exceptions[0]
+  File "/nix/store/k0ymzcw694pf800n028nv3ysgamqnndc-python3-3.13.15-env/lib/python3.13/socket.py", line 853, in create_connection
+    sock.connect(sa)
+    ~~~~~~~~~~~~^^^^
+ConnectionRefusedError: [Errno 111] Connection refused

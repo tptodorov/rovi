@@ -1,9 +1,10 @@
 # Rovi M3: direct Wi-Fi and shared command ingress
 
-**Status: implemented; physical acceptance pending.** Board-only ESP32-S3 firmware,
+**Status: hardware-validated 2026-10-04, except range/distance runs and visual LED checks;
+5 of 6 acceptance items met.** Board-only ESP32-S3 firmware,
 independent of M1/M2. No motor GPIO, driver, motor supply, or motor is used.
 Only the onboard GPIO48 RGB LED changes: forward green, reverse red, stop off.
-See [MILESTONE.md](MILESTONE.md) for software evidence and outstanding bench work.
+See [MILESTONE.md](MILESTONE.md) for bench results and outstanding work.
 
 ## Build and flash
 
@@ -53,6 +54,11 @@ measurement. The radio crate enables Wi-Fi/BLE coexistence. The firmware reserve
 * One active TCP controller; other sockets are not serviced while it owns the
   connection. Disconnect it before starting another client. A silent, malformed,
   or half-open controller loses its lease and the socket is closed.
+* The firmware's 2 s TCP socket timeout also closes a silent Wi-Fi controller after
+  about 2 s, which counts as a disconnect. So Wi-Fi silence is bounded by
+  `min(ROVI_WATCHDOG_MS, ~2000)`. BLE silence is bounded only by the watchdog.
+* While it tears down a session, the board briefly refuses new TCP connections
+  (`ECONNREFUSED`). The client retries for up to 1 s.
 * Existing-network **station mode is excluded**: it depends on external
   infrastructure and does not prove a remote joins the car's network. AP+STA,
   phone hotspots and Wi-Fi Direct/P2P are outside this experiment; no mode
@@ -81,9 +87,12 @@ versions fail closed. Requests are **22 bytes**, little-endian (`<BBQIQ`):
 version u8, command u8, session u64, sequence u32, expiry in board uptime ms u64.
 Use a new sequence starting at 1 for every attempt, including rejected attempts.
 Expiry must be strictly after receive time and at most `max_age_ms` ahead.
-The client estimates board time from discovery and uses half the advertised age
-as its default horizon; this is not synchronized-clock one-way radio timing.
-Reconnect for a fresh clock anchor during long runs.
+The client sends a calibration ping (sequence 1) on connect and anchors board
+time on that ping's `rx_ms`, not on the discovery banner. Client Wi-Fi power save
+delivered the banner up to ~240 ms late on the bench, which made default-horizon
+commands stale. Default horizon: half the advertised age. This is not
+synchronized-clock one-way radio timing. Reconnect for a fresh clock anchor
+during long runs.
 
 Each response is a newline-delimited `ACK seq=… status=… order=… rx_ms=… depth=…`
 or `ERR malformed`. `Queued` acknowledges admission, **not application**.
@@ -129,7 +138,8 @@ proven by M2; M3 tests only coexistence and shared ingress.
 
 ## Client and evidence
 
-Python 3, standard library only; connect to the AP before running:
+Python 3, standard library only; connect to the AP before running. Records include
+the calibration ping as `seq` 1:
 
 ```sh
 python3 client.py                         # every command
@@ -139,7 +149,7 @@ python3 client.py forward --ttl -1         # expired before admission
 python3 client.py forward --send-delay .4 # expires in transit
 python3 client.py 255                     # unknown command
 python3 client.py ping --version 2        # unknown protocol
-python3 client.py forward --hold 2        # default watchdog closes silent socket
+python3 client.py forward --hold 2        # reports socket_closed after watchdog/abort
 python3 client.py stop --reconnect-replay # old session must be rejected
 ```
 

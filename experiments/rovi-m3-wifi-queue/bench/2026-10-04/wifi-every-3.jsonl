@@ -1,0 +1,6 @@
+{"discovery": {"version": "1", "session": "45608403140643", "now_ms": "316591", "max_age_ms": "250", "watchdog_ms": "1000", "commands": "0=stop,1=forward,2=reverse,3=ping"}}
+{"session": 45608403140643, "seq": 1, "tx_ns": 6620357845621, "ack_ns": 6620369273290, "rtt_ms": 11.427669, "response": "ACK seq=1 status=Ping order=44 rx_ms=316598 depth=0"}
+{"session": 45608403140643, "seq": 2, "tx_ns": 6620369354911, "ack_ns": 6620431560174, "rtt_ms": 62.205263, "response": "ACK seq=2 status=Queued order=45 rx_ms=316663 depth=1"}
+{"session": 45608403140643, "seq": 3, "tx_ns": 6620481804812, "ack_ns": 6620529504112, "rtt_ms": 47.6993, "response": "ACK seq=3 status=Queued order=46 rx_ms=316762 depth=1"}
+{"session": 45608403140643, "seq": 4, "tx_ns": 6620579760814, "ack_ns": 6620599467423, "rtt_ms": 19.706609, "response": "ACK seq=4 status=Stop order=47 rx_ms=316832 depth=0"}
+{"session": 45608403140643, "seq": 5, "tx_ns": 6620649701113, "ack_ns": 6620655232430, "rtt_ms": 5.531317, "response": "ACK seq=5 status=Ping order=48 rx_ms=316887 depth=0"}

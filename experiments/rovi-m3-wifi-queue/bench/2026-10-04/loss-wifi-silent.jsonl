@@ -1,0 +1,14 @@
+{"discovery": {"version": "1", "session": "68258251931652", "now_ms": "64118", "max_age_ms": "250", "watchdog_ms": "10000", "commands": "0=stop,1=forward,2=reverse,3=ping"}}
+{"session": 68258251931652, "seq": 1, "tx_ns": 6874806244969, "ack_ns": 6874813250883, "rtt_ms": 7.005914, "response": "ACK seq=1 status=Ping order=214 rx_ms=64129 depth=0"}
+{"session": 68258251931652, "seq": 2, "tx_ns": 6874813326801, "ack_ns": 6874822121706, "rtt_ms": 8.794905, "response": "ACK seq=2 status=Queued order=215 rx_ms=64134 depth=1"}
+Traceback (most recent call last):
+  File "/home/todor/.paseo/worktrees/08pcg0yd/feat-m3-wifi-queue/experiments/rovi-m3-wifi-queue/client.py", line 117, in <module>
+    main()
+    ~~~~^^
+  File "/home/todor/.paseo/worktrees/08pcg0yd/feat-m3-wifi-queue/experiments/rovi-m3-wifi-queue/client.py", line 105, in main
+    print(json.dumps({"idle_s": args.hold, "socket_eof": client.reader.read(1) == b""}), flush=True)
+                                                         ~~~~~~~~~~~~~~~~~~^^^
+  File "/nix/store/k0ymzcw694pf800n028nv3ysgamqnndc-python3-3.13.15-env/lib/python3.13/socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer

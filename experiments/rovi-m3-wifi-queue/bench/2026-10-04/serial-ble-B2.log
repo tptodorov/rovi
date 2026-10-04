@@ -1,0 +1,8 @@
+CONNECT src=Ble session=107572945747971 at_ms=36234
+RX src=Ble session=107572945747971 seq=1 cmd=Reverse rx_ms=36691 expires_ms=36941 order=8 depth=1 status=Queued
+OUT at_ms=36693 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 107572945747971, seq: 1, expires_ms: 36941, command: Reverse }, order: 8, received_ms: 36691 })
+RX src=Ble session=107572945747971 seq=2 cmd=Stop rx_ms=36961 expires_ms=37211 order=9 depth=0 status=Stop
+OUT at_ms=36966 depth=0 event=Safety { reason: Stop, at_ms: 36961, purged: 0, entry: Some(Entry { input: Input { source: Ble, session: 107572945747971, seq: 2, expires_ms: 37211, command: Stop }, order: 9, received_ms: 36961 }) }
+DISCONNECT src=Ble session=107572945747971 at_ms=38986
+BLE advertising at_ms=38986
+OUT at_ms=38987 depth=0 event=Safety { reason: Disconnect(Ble), at_ms: 38986, purged: 0, entry: None }
