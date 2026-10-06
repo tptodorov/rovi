@@ -15,7 +15,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 
 ### Next: software only (laptop)
 
-1. **S1 spike** (planned) — can the Rust/embassy firmware be a micro-ROS node? Build [nano-ros](https://github.com/NEWSLabNTU/nano-ros) for `xtensa-esp32s3-none-elf` on embassy-net UDP, and check interop against a micro-ROS agent from a host build. The fallback is FFI to the Micro XRCE-DDS client library. The answer decides M8's `ros` feature. See [command best practices](research/rc-car-command-communication-best-practices.md).
+1. **S1 spike** (done 2026-10-06, laptop only) — yes, with conditions. nano-ros's XRCE backend cross-compiles for the S3, links next to Rovi's stack, and interoperates with ROS 2 Jazzy via the micro-ROS agent. Rovi would own the S3 port (13 platform symbols; blocking UDP must be bridged to embassy-net). Footprint and on-board behaviour are untested; M8 decides nano-ros vs the direct XRCE client. See [S1 findings](research/s1-micro-ros-nano-ros-spike.md).
 2. **M8** (design in progress) — direct UDP setpoint protocol with exclusive single ownership and optional micro-ROS:
    * Setpoints are body velocity shaped like `TwistStamped`.
    * The latest setpoint wins; there is no queue. Each valid setpoint renews the watchdog lease.
