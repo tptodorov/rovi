@@ -1,6 +1,6 @@
 # Rovi M8: setpoint protocol, single owner, optional ROS 2
 
-**Status: design approved 2026-10-06; not implemented.** Board-only ESP32-S3 firmware (no motors). It supersedes M3's TCP+FIFO design ([ADR-0004](../../docs/adr/0004-single-owner-latest-setpoint.md)). The ROS 2 backend is described in [ADR-0005](../../docs/adr/0005-zenoh-nostd-ros-backend.md). Terms are as defined in [`GLOSSARY.md`](../../GLOSSARY.md). Open items are in [PLAN](../../docs/PLAN.md#open-questions-and-decisions).
+**Status: design approved 2026-10-06; not implemented.** Board-only ESP32-S3 firmware (no motors). It supersedes M3's TCP+FIFO design ([ADR-0004](../../docs/adr/0004-single-owner-latest-setpoint.md)). The setpoint format is set by [ADR-0006](../../docs/adr/0006-twiststamped-cdr-setpoint.md), and the ROS 2 backend by [ADR-0005](../../docs/adr/0005-zenoh-nostd-ros-backend.md). Terms are as defined in [`GLOSSARY.md`](../../GLOSSARY.md). Open items are in [PLAN](../../docs/PLAN.md#open-questions-and-decisions).
 
 ## Architecture
 
