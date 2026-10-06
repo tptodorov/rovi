@@ -1,0 +1,16 @@
+CONNECT src=Ble session=107572945747969 at_ms=7548
+RX src=Ble session=107572945747969 seq=1 cmd=Forward rx_ms=8791 expires_ms=9041 order=1 depth=1 status=Queued
+OUT at_ms=8803 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 107572945747969, seq: 1, expires_ms: 9041, command: Forward }, order: 1, received_ms: 8791 })
+RX src=Ble session=107572945747969 seq=2 cmd=Reverse rx_ms=9061 expires_ms=9311 order=2 depth=1 status=Queued
+OUT at_ms=9068 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 107572945747969, seq: 2, expires_ms: 9311, command: Reverse }, order: 2, received_ms: 9061 })
+RX src=Ble session=107572945747969 seq=3 cmd=Ping rx_ms=9331 expires_ms=9581 order=3 depth=0 status=Ping
+RX src=Ble session=107572945747969 seq=4 cmd=Stop rx_ms=9601 expires_ms=9851 order=4 depth=0 status=Stop
+OUT at_ms=9606 depth=0 event=Safety { reason: Stop, at_ms: 9601, purged: 0, entry: Some(Entry { input: Input { source: Ble, session: 107572945747969, seq: 4, expires_ms: 9851, command: Stop }, order: 4, received_ms: 9601 }) }
+RX src=Ble session=107572945747969 seq=5 cmd=Forward rx_ms=9871 expires_ms=10121 order=5 depth=1 status=Queued
+OUT at_ms=9871 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 107572945747969, seq: 5, expires_ms: 10121, command: Forward }, order: 5, received_ms: 9871 })
+INVALID src=Ble at_ms=10141
+INVALID src=Ble at_ms=10411
+RX src=Ble session=107572945747969 seq=6 cmd=Ping rx_ms=10681 expires_ms=10931 order=6 depth=0 status=Ping
+DISCONNECT src=Ble session=107572945747969 at_ms=13021
+BLE advertising at_ms=13021
+OUT at_ms=13024 depth=0 event=Safety { reason: Disconnect(Ble), at_ms: 13021, purged: 0, entry: None }

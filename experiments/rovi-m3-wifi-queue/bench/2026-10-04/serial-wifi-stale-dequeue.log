@@ -1,0 +1,44 @@
+CONNECT src=Wifi session=170192753655812 at_ms=40853
+RX src=Wifi session=170192753655812 seq=1 cmd=Ping rx_ms=40858 expires_ms=43353 order=28 depth=0 status=Ping
+RX src=Wifi session=170192753655812 seq=2 cmd=Forward rx_ms=40863 expires_ms=43362 order=29 depth=1 status=Queued
+RX src=Wifi session=170192753655812 seq=3 cmd=Reverse rx_ms=40870 expires_ms=43370 order=30 depth=2 status=Queued
+RX src=Wifi session=170192753655812 seq=4 cmd=Forward rx_ms=40880 expires_ms=43380 order=31 depth=3 status=Queued
+RX src=Wifi session=170192753655812 seq=5 cmd=Reverse rx_ms=40907 expires_ms=43390 order=32 depth=4 status=Queued
+OUT at_ms=40980 depth=3 event=Apply(Entry { input: Input { source: Wifi, session: 170192753655812, seq: 2, expires_ms: 43362, command: Forward }, order: 29, received_ms: 40863 })
+RX src=Wifi session=170192753655812 seq=6 cmd=Ping rx_ms=41465 expires_ms=43911 order=33 depth=3 status=Ping
+RX src=Wifi session=170192753655812 seq=7 cmd=Ping rx_ms=41988 expires_ms=44470 order=34 depth=3 status=Ping
+RX src=Wifi session=170192753655812 seq=8 cmd=Ping rx_ms=42497 expires_ms=44993 order=35 depth=3 status=Ping
+RX src=Wifi session=170192753655812 seq=9 cmd=Ping rx_ms=43028 expires_ms=45501 order=36 depth=3 status=Ping
+RX src=Wifi session=170192753655812 seq=10 cmd=Ping rx_ms=43536 expires_ms=46032 order=37 depth=3 status=Ping
+RX src=Wifi session=170192753655812 seq=11 cmd=Ping rx_ms=44044 expires_ms=46541 order=38 depth=3 status=Ping
+RX src=Wifi session=170192753655812 seq=12 cmd=Ping rx_ms=44553 expires_ms=47049 order=39 depth=3 status=Ping
+RX src=Wifi session=170192753655812 seq=13 cmd=Ping rx_ms=45061 expires_ms=47557 order=40 depth=3 status=Ping
+RX src=Wifi session=170192753655812 seq=14 cmd=Ping rx_ms=45571 expires_ms=48067 order=41 depth=3 status=Ping
+OUT at_ms=45989 depth=2 event=Stale(Entry { input: Input { source: Wifi, session: 170192753655812, seq: 3, expires_ms: 43370, command: Reverse }, order: 30, received_ms: 40870 })
+RX src=Wifi session=170192753655812 seq=15 cmd=Ping rx_ms=46084 expires_ms=48576 order=42 depth=2 status=Ping
+RX src=Wifi session=170192753655812 seq=16 cmd=Ping rx_ms=46594 expires_ms=49090 order=43 depth=2 status=Ping
+RX src=Wifi session=170192753655812 seq=17 cmd=Ping rx_ms=47117 expires_ms=49599 order=44 depth=2 status=Ping
+RX src=Wifi session=170192753655812 seq=18 cmd=Ping rx_ms=47625 expires_ms=50122 order=45 depth=2 status=Ping
+RX src=Wifi session=170192753655812 seq=19 cmd=Ping rx_ms=48133 expires_ms=50630 order=46 depth=2 status=Ping
+RX src=Wifi session=170192753655812 seq=20 cmd=Ping rx_ms=48648 expires_ms=51144 order=47 depth=2 status=Ping
+RX src=Wifi session=170192753655812 seq=21 cmd=Ping rx_ms=49160 expires_ms=51653 order=48 depth=2 status=Ping
+RX src=Wifi session=170192753655812 seq=22 cmd=Ping rx_ms=49671 expires_ms=52165 order=49 depth=2 status=Ping
+RX src=Wifi session=170192753655812 seq=23 cmd=Ping rx_ms=50180 expires_ms=52676 order=50 depth=2 status=Ping
+RX src=Wifi session=170192753655812 seq=24 cmd=Ping rx_ms=50690 expires_ms=53185 order=51 depth=2 status=Ping
+OUT at_ms=50989 depth=1 event=Stale(Entry { input: Input { source: Wifi, session: 170192753655812, seq: 4, expires_ms: 43380, command: Forward }, order: 31, received_ms: 40880 })
+RX src=Wifi session=170192753655812 seq=25 cmd=Ping rx_ms=51203 expires_ms=53696 order=52 depth=1 status=Ping
+RX src=Wifi session=170192753655812 seq=26 cmd=Ping rx_ms=51714 expires_ms=54208 order=53 depth=1 status=Ping
+RX src=Wifi session=170192753655812 seq=27 cmd=Ping rx_ms=52228 expires_ms=54720 order=54 depth=1 status=Ping
+RX src=Wifi session=170192753655812 seq=28 cmd=Ping rx_ms=52742 expires_ms=55237 order=55 depth=1 status=Ping
+RX src=Wifi session=170192753655812 seq=29 cmd=Ping rx_ms=53255 expires_ms=55747 order=56 depth=1 status=Ping
+RX src=Wifi session=170192753655812 seq=30 cmd=Ping rx_ms=53764 expires_ms=56259 order=57 depth=1 status=Ping
+RX src=Wifi session=170192753655812 seq=31 cmd=Ping rx_ms=54276 expires_ms=56770 order=58 depth=1 status=Ping
+RX src=Wifi session=170192753655812 seq=32 cmd=Ping rx_ms=54783 expires_ms=57281 order=59 depth=1 status=Ping
+RX src=Wifi session=170192753655812 seq=33 cmd=Ping rx_ms=55300 expires_ms=57787 order=60 depth=1 status=Ping
+RX src=Wifi session=170192753655812 seq=34 cmd=Ping rx_ms=55810 expires_ms=58305 order=61 depth=1 status=Ping
+OUT at_ms=55989 depth=0 event=Stale(Entry { input: Input { source: Wifi, session: 170192753655812, seq: 5, expires_ms: 43390, command: Reverse }, order: 32, received_ms: 40907 })
+RX src=Wifi session=170192753655812 seq=35 cmd=Ping rx_ms=56324 expires_ms=58816 order=62 depth=0 status=Ping
+RX src=Wifi session=170192753655812 seq=36 cmd=Ping rx_ms=56833 expires_ms=59329 order=63 depth=0 status=Ping
+RX src=Wifi session=170192753655812 seq=37 cmd=Ping rx_ms=57348 expires_ms=59837 order=64 depth=0 status=Ping
+DISCONNECT src=Wifi session=170192753655812 at_ms=57354
+OUT at_ms=57362 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 57354, purged: 0, entry: None }

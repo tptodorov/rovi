@@ -1,0 +1,25 @@
+{"t_ns": 6199030616300, "event": "connected", "connect_ms": 819.543837, "address": "FF:E4:05:1A:9F:FF"}
+{"t_ns": 6199087338152, "write": "01", "ok": true, "rtt_ms": 56.65203}
+{"t_ns": 6199175931938, "write": "01", "ok": true, "rtt_ms": 88.504953}
+{"t_ns": 6199268306335, "write": "01", "ok": true, "rtt_ms": 92.313157}
+{"t_ns": 6199359114296, "write": "01", "ok": true, "rtt_ms": 90.744808}
+{"t_ns": 6199448307958, "write": "01", "ok": true, "rtt_ms": 89.131811}
+{"t_ns": 6199538686431, "write": "01", "ok": true, "rtt_ms": 90.315479}
+{"t_ns": 6199627346646, "write": "01", "ok": true, "rtt_ms": 88.595508}
+{"t_ns": 6199718146241, "write": "01", "ok": true, "rtt_ms": 90.729678}
+{"t_ns": 6199987569594, "write": "03", "ok": true, "rtt_ms": 69.022418}
+{"t_ns": 6200257564513, "write": "03", "ok": true, "rtt_ms": 69.460027}
+{"t_ns": 6200528595185, "write": "03", "ok": true, "rtt_ms": 70.632673}
+{"t_ns": 6200797661877, "write": "03", "ok": true, "rtt_ms": 68.623768}
+{"t_ns": 6201067484040, "write": "03", "ok": true, "rtt_ms": 69.229638}
+{"t_ns": 6201338533147, "write": "03", "ok": true, "rtt_ms": 70.646541}
+{"t_ns": 6201607525084, "write": "03", "ok": true, "rtt_ms": 68.613304}
+{"t_ns": 6201878501627, "write": "03", "ok": true, "rtt_ms": 70.571958}
+{"t_ns": 6202147624716, "write": "03", "ok": true, "rtt_ms": 68.650286}
+{"t_ns": 6202417465718, "write": "03", "ok": true, "rtt_ms": 69.429434}
+{"t_ns": 6202687500176, "write": "03", "ok": true, "rtt_ms": 69.633517}
+{"t_ns": 6202957504107, "write": "03", "ok": true, "rtt_ms": 69.592013}
+{"t_ns": 6203227411851, "write": "03", "ok": true, "rtt_ms": 69.500602}
+{"t_ns": 6203498680996, "write": "03", "ok": true, "rtt_ms": 70.879465}
+{"t_ns": 6203767448741, "write": "03", "ok": true, "rtt_ms": 68.310059}
+{"t_ns": 6205768169947, "event": "peer_disconnected_before", "step": "03"}

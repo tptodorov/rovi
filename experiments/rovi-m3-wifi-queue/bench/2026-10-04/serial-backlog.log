@@ -1,0 +1,126 @@
+[2026-10-04T18:18:34Z INFO ] 🚀 A new version of espflash is available: v4.6.0
+[2026-10-04T18:18:34Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-04T18:18:34Z INFO ] Connecting...
+[2026-10-04T18:18:34Z INFO ] Using flash stub
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x158c
+load:0x403c8700,len:0xd24
+load:0x403cb700,len:0x2f34
+entry 0x403c8924
+I (29) boot: ESP-IDF v5.5.1-838-gd66ebb86d2e 2nd stage bootloader
+I (30) boot: compile time Nov 26 2025 12:27:56
+I (30) boot: Multicore bootloader
+I (31) boot: chip revision: v0.2
+I (34) boot: efuse block revision: v1.4
+I (38) boot.esp32s3: Boot SPI Speed : 40MHz
+I (42) boot.esp32s3: SPI Mode       : DIO
+I (45) boot.esp32s3: SPI Flash Size : 16MB
+I (49) boot: Enabling RNG early entropy source...
+I (54) boot: Partition Table:
+I (56) boot: ## Label            Usage          Type ST Offset   Length
+I (63) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (69) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (76) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (82) boot: End of partition table
+I (86) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=1774ch ( 96076) map
+I (116) esp_image: segment 1: paddr=00027774 vaddr=3fc97958 size=04c18h ( 19480) load
+I (122) esp_image: segment 2: paddr=0002c394 vaddr=40378000 size=03c84h ( 15492) load
+I (127) esp_image: segment 3: paddr=00030020 vaddr=42020020 size=7bbfch (506876) map
+I (252) esp_image: segment 4: paddr=000abc24 vaddr=4037bc84 size=0bcd4h ( 48340) load
+I (273) boot: Loaded app from partition at offset 0x10000
+I (273) boot: Disabling RNG early entropy source...
+M3 board-only AP=Rovi M3 ip=192.168.4.1:7777 WPA2 channel=1 watchdog_ms=1000 max_age_ms=5000 consumer_ms=5000 capacity=8
+BLE advertising at_ms=932
+CONNECT src=Ble session=110591898288129 at_ms=4749
+OUT at_ms=5756 depth=0 event=Safety { reason: Timeout(Ble), at_ms: 5756, purged: 0, entry: None }
+DISCONNECT src=Ble session=110591898288129 at_ms=5760
+BLE advertising at_ms=5761
+CONNECT src=Ble session=110591898288130 at_ms=12543
+RX src=Ble session=110591898288130 seq=1 cmd=Forward rx_ms=13015 expires_ms=18015 order=1 depth=1 status=Queued
+RX src=Ble session=110591898288130 seq=2 cmd=Forward rx_ms=13105 expires_ms=18105 order=2 depth=2 status=Queued
+RX src=Ble session=110591898288130 seq=3 cmd=Forward rx_ms=13195 expires_ms=18195 order=3 depth=3 status=Queued
+RX src=Ble session=110591898288130 seq=4 cmd=Forward rx_ms=13285 expires_ms=18285 order=4 depth=4 status=Queued
+RX src=Ble session=110591898288130 seq=5 cmd=Forward rx_ms=13375 expires_ms=18375 order=5 depth=5 status=Queued
+RX src=Ble session=110591898288130 seq=6 cmd=Forward rx_ms=13510 expires_ms=18510 order=6 depth=6 status=Queued
+RX src=Ble session=110591898288130 seq=7 cmd=Forward rx_ms=13600 expires_ms=18600 order=7 depth=7 status=Queued
+RX src=Ble session=110591898288130 seq=8 cmd=Forward rx_ms=13690 expires_ms=18690 order=8 depth=8 status=Queued
+OUT at_ms=14692 depth=0 event=Safety { reason: Timeout(Ble), at_ms: 14692, purged: 8, entry: None }
+DISCONNECT src=Ble session=110591898288130 at_ms=14695
+BLE advertising at_ms=14695
+CONNECT src=Ble session=110591898288131 at_ms=27591
+RX src=Ble session=110591898288131 seq=1 cmd=Forward rx_ms=28045 expires_ms=33045 order=9 depth=1 status=Queued
+RX src=Ble session=110591898288131 seq=2 cmd=Forward rx_ms=28135 expires_ms=33135 order=10 depth=2 status=Queued
+RX src=Ble session=110591898288131 seq=3 cmd=Forward rx_ms=28225 expires_ms=33225 order=11 depth=3 status=Queued
+RX src=Ble session=110591898288131 seq=4 cmd=Forward rx_ms=28315 expires_ms=33315 order=12 depth=4 status=Queued
+RX src=Ble session=110591898288131 seq=5 cmd=Forward rx_ms=28405 expires_ms=33405 order=13 depth=5 status=Queued
+RX src=Ble session=110591898288131 seq=6 cmd=Forward rx_ms=28495 expires_ms=33495 order=14 depth=6 status=Queued
+RX src=Ble session=110591898288131 seq=7 cmd=Forward rx_ms=28585 expires_ms=33585 order=15 depth=7 status=Queued
+RX src=Ble session=110591898288131 seq=8 cmd=Forward rx_ms=28675 expires_ms=33675 order=16 depth=8 status=Queued
+RX src=Ble session=110591898288131 seq=9 cmd=Forward rx_ms=28765 expires_ms=33765 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=10 cmd=Forward rx_ms=28855 expires_ms=33855 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=11 cmd=Forward rx_ms=28945 expires_ms=33945 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=12 cmd=Forward rx_ms=29035 expires_ms=34035 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=13 cmd=Forward rx_ms=29125 expires_ms=34125 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=14 cmd=Forward rx_ms=29215 expires_ms=34215 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=15 cmd=Forward rx_ms=29305 expires_ms=34305 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=16 cmd=Forward rx_ms=29440 expires_ms=34440 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=17 cmd=Forward rx_ms=29530 expires_ms=34530 order=0 depth=8 status=Full
+RX src=Ble session=110591898288131 seq=18 cmd=Forward rx_ms=29620 expires_ms=34620 order=0 depth=8 status=Full
+OUT at_ms=29684 depth=0 event=Safety { reason: Timeout(Ble), at_ms: 29684, purged: 8, entry: None }
+DISCONNECT src=Ble session=110591898288131 at_ms=29692
+BLE advertising at_ms=29693
+CONNECT src=Ble session=110591898288132 at_ms=40919
+RX src=Ble session=110591898288132 seq=1 cmd=Forward rx_ms=41410 expires_ms=46410 order=17 depth=1 status=Queued
+RX src=Ble session=110591898288132 seq=2 cmd=Forward rx_ms=41500 expires_ms=46500 order=18 depth=2 status=Queued
+RX src=Ble session=110591898288132 seq=3 cmd=Forward rx_ms=41590 expires_ms=46590 order=19 depth=3 status=Queued
+RX src=Ble session=110591898288132 seq=4 cmd=Forward rx_ms=41681 expires_ms=46681 order=20 depth=4 status=Queued
+RX src=Ble session=110591898288132 seq=5 cmd=Forward rx_ms=41770 expires_ms=46770 order=21 depth=5 status=Queued
+RX src=Ble session=110591898288132 seq=6 cmd=Forward rx_ms=41860 expires_ms=46860 order=22 depth=6 status=Queued
+RX src=Ble session=110591898288132 seq=7 cmd=Forward rx_ms=41950 expires_ms=46950 order=23 depth=7 status=Queued
+RX src=Ble session=110591898288132 seq=8 cmd=Forward rx_ms=42041 expires_ms=47040 order=24 depth=8 status=Queued
+INVALID src=Ble at_ms=42130
+INVALID src=Ble at_ms=42220
+INVALID src=Ble at_ms=42310
+INVALID src=Ble at_ms=42445
+INVALID src=Ble at_ms=42535
+INVALID src=Ble at_ms=42625
+INVALID src=Ble at_ms=42715
+INVALID src=Ble at_ms=42805
+INVALID src=Ble at_ms=42895
+INVALID src=Ble at_ms=42985
+OUT at_ms=43050 depth=0 event=Safety { reason: Timeout(Ble), at_ms: 43050, purged: 8, entry: None }
+DISCONNECT src=Ble session=110591898288132 at_ms=43057
+BLE advertising at_ms=43057
+CONNECT src=Ble session=110591898288133 at_ms=46345
+RX src=Ble session=110591898288133 seq=1 cmd=Forward rx_ms=46855 expires_ms=51855 order=25 depth=1 status=Queued
+RX src=Ble session=110591898288133 seq=2 cmd=Forward rx_ms=46946 expires_ms=51946 order=26 depth=2 status=Queued
+RX src=Ble session=110591898288133 seq=3 cmd=Forward rx_ms=47035 expires_ms=52035 order=27 depth=3 status=Queued
+RX src=Ble session=110591898288133 seq=4 cmd=Forward rx_ms=47125 expires_ms=52125 order=28 depth=4 status=Queued
+RX src=Ble session=110591898288133 seq=5 cmd=Forward rx_ms=47215 expires_ms=52215 order=29 depth=5 status=Queued
+RX src=Ble session=110591898288133 seq=6 cmd=Forward rx_ms=47305 expires_ms=52305 order=30 depth=6 status=Queued
+RX src=Ble session=110591898288133 seq=7 cmd=Forward rx_ms=47395 expires_ms=52395 order=31 depth=7 status=Queued
+RX src=Ble session=110591898288133 seq=8 cmd=Forward rx_ms=47485 expires_ms=52485 order=32 depth=8 status=Queued
+RX src=Ble session=110591898288133 seq=9 cmd=Ping rx_ms=47755 expires_ms=52755 order=33 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=10 cmd=Ping rx_ms=48025 expires_ms=53025 order=34 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=11 cmd=Ping rx_ms=48295 expires_ms=53295 order=35 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=12 cmd=Ping rx_ms=48565 expires_ms=53565 order=36 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=13 cmd=Ping rx_ms=48835 expires_ms=53835 order=37 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=14 cmd=Ping rx_ms=49105 expires_ms=54105 order=38 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=15 cmd=Ping rx_ms=49375 expires_ms=54375 order=39 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=16 cmd=Ping rx_ms=49646 expires_ms=54646 order=40 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=17 cmd=Ping rx_ms=49915 expires_ms=54915 order=41 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=18 cmd=Ping rx_ms=50185 expires_ms=55185 order=42 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=19 cmd=Ping rx_ms=50455 expires_ms=55455 order=43 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=20 cmd=Ping rx_ms=50725 expires_ms=55725 order=44 depth=8 status=Ping
+OUT at_ms=50980 depth=7 event=Apply(Entry { input: Input { source: Ble, session: 110591898288133, seq: 1, expires_ms: 51855, command: Forward }, order: 25, received_ms: 46855 })
+RX src=Ble session=110591898288133 seq=21 cmd=Ping rx_ms=50996 expires_ms=55996 order=45 depth=7 status=Ping
+RX src=Ble session=110591898288133 seq=22 cmd=Ping rx_ms=51265 expires_ms=56265 order=46 depth=7 status=Ping
+RX src=Ble session=110591898288133 seq=23 cmd=Ping rx_ms=51535 expires_ms=56535 order=47 depth=7 status=Ping
+OUT at_ms=52542 depth=0 event=Safety { reason: Timeout(Ble), at_ms: 52542, purged: 7, entry: None }
+DISCONNECT src=Ble session=110591898288133 at_ms=52549
+BLE advertising at_ms=52550
+Terminated                 espflash monitor --non-interactive --port /dev/ttyACM0

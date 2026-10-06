@@ -1,0 +1,12 @@
+{"t_ns": 6818417199750, "event": "connected", "connect_ms": 1821.085655, "address": "FF:E4:05:1A:9F:FF"}
+{"t_ns": 6818661647998, "write": "02", "ok": true, "rtt_ms": 244.370316}
+{"t_ns": 6819111731157, "write": "01", "ok": true, "rtt_ms": 49.509448}
+{"t_ns": 6819561517555, "write": "02", "ok": true, "rtt_ms": 49.425054}
+{"t_ns": 6820057400972, "write": "00", "ok": true, "rtt_ms": 95.256898}
+{"t_ns": 6820507429715, "write": "01", "ok": true, "rtt_ms": 49.380271}
+{"t_ns": 6820956503823, "write": "02", "ok": true, "rtt_ms": 48.412054}
+{"t_ns": 6821316426855, "write": "03", "ok": true, "rtt_ms": 59.439617}
+{"t_ns": 6824377428963, "write": "03", "ok": true, "rtt_ms": 58.260319}
+{"t_ns": 6827481498832, "write": "03", "ok": true, "rtt_ms": 101.396191}
+{"t_ns": 6830541483840, "write": "03", "ok": true, "rtt_ms": 57.381277}
+{"t_ns": 6830541543482, "event": "steps_done", "connected": true}

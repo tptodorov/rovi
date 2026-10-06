@@ -1,0 +1,28 @@
+CONNECT src=Ble session=110591898288133 at_ms=46345
+RX src=Ble session=110591898288133 seq=1 cmd=Forward rx_ms=46855 expires_ms=51855 order=25 depth=1 status=Queued
+RX src=Ble session=110591898288133 seq=2 cmd=Forward rx_ms=46946 expires_ms=51946 order=26 depth=2 status=Queued
+RX src=Ble session=110591898288133 seq=3 cmd=Forward rx_ms=47035 expires_ms=52035 order=27 depth=3 status=Queued
+RX src=Ble session=110591898288133 seq=4 cmd=Forward rx_ms=47125 expires_ms=52125 order=28 depth=4 status=Queued
+RX src=Ble session=110591898288133 seq=5 cmd=Forward rx_ms=47215 expires_ms=52215 order=29 depth=5 status=Queued
+RX src=Ble session=110591898288133 seq=6 cmd=Forward rx_ms=47305 expires_ms=52305 order=30 depth=6 status=Queued
+RX src=Ble session=110591898288133 seq=7 cmd=Forward rx_ms=47395 expires_ms=52395 order=31 depth=7 status=Queued
+RX src=Ble session=110591898288133 seq=8 cmd=Forward rx_ms=47485 expires_ms=52485 order=32 depth=8 status=Queued
+RX src=Ble session=110591898288133 seq=9 cmd=Ping rx_ms=47755 expires_ms=52755 order=33 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=10 cmd=Ping rx_ms=48025 expires_ms=53025 order=34 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=11 cmd=Ping rx_ms=48295 expires_ms=53295 order=35 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=12 cmd=Ping rx_ms=48565 expires_ms=53565 order=36 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=13 cmd=Ping rx_ms=48835 expires_ms=53835 order=37 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=14 cmd=Ping rx_ms=49105 expires_ms=54105 order=38 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=15 cmd=Ping rx_ms=49375 expires_ms=54375 order=39 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=16 cmd=Ping rx_ms=49646 expires_ms=54646 order=40 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=17 cmd=Ping rx_ms=49915 expires_ms=54915 order=41 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=18 cmd=Ping rx_ms=50185 expires_ms=55185 order=42 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=19 cmd=Ping rx_ms=50455 expires_ms=55455 order=43 depth=8 status=Ping
+RX src=Ble session=110591898288133 seq=20 cmd=Ping rx_ms=50725 expires_ms=55725 order=44 depth=8 status=Ping
+OUT at_ms=50980 depth=7 event=Apply(Entry { input: Input { source: Ble, session: 110591898288133, seq: 1, expires_ms: 51855, command: Forward }, order: 25, received_ms: 46855 })
+RX src=Ble session=110591898288133 seq=21 cmd=Ping rx_ms=50996 expires_ms=55996 order=45 depth=7 status=Ping
+RX src=Ble session=110591898288133 seq=22 cmd=Ping rx_ms=51265 expires_ms=56265 order=46 depth=7 status=Ping
+RX src=Ble session=110591898288133 seq=23 cmd=Ping rx_ms=51535 expires_ms=56535 order=47 depth=7 status=Ping
+OUT at_ms=52542 depth=0 event=Safety { reason: Timeout(Ble), at_ms: 52542, purged: 7, entry: None }
+DISCONNECT src=Ble session=110591898288133 at_ms=52549
+BLE advertising at_ms=52550

@@ -1,0 +1,10 @@
+{"t_ns": 6165166828405, "event": "connected", "connect_ms": 923.928734, "address": "FF:E4:05:1A:9F:FF"}
+{"t_ns": 6165247456945, "write": "01", "ok": true, "rtt_ms": 80.544006}
+{"t_ns": 6165335781520, "write": "01", "ok": true, "rtt_ms": 88.243209}
+{"t_ns": 6165427311044, "write": "01", "ok": true, "rtt_ms": 91.447795}
+{"t_ns": 6165518322069, "write": "01", "ok": true, "rtt_ms": 90.932477}
+{"t_ns": 6165652521667, "write": "01", "ok": true, "rtt_ms": 134.131225}
+{"t_ns": 6165743607250, "write": "01", "ok": true, "rtt_ms": 91.011756}
+{"t_ns": 6165832330172, "write": "01", "ok": true, "rtt_ms": 88.648334}
+{"t_ns": 6165922411182, "write": "01", "ok": true, "rtt_ms": 90.007912}
+{"t_ns": 6168924718607, "event": "peer_disconnected_before", "step": "01"}

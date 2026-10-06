@@ -1,0 +1,26 @@
+CONNECT src=Ble session=170192753655810 at_ms=22904
+CONNECT src=Wifi session=170192753655811 at_ms=25289
+RX src=Wifi session=170192753655811 seq=1 cmd=Ping rx_ms=25295 expires_ms=27790 order=11 depth=0 status=Ping
+RX src=Wifi session=170192753655811 seq=2 cmd=Forward rx_ms=25302 expires_ms=27802 order=12 depth=1 status=Queued
+RX src=Wifi session=170192753655811 seq=3 cmd=Reverse rx_ms=25307 expires_ms=27808 order=13 depth=2 status=Queued
+RX src=Wifi session=170192753655811 seq=4 cmd=Forward rx_ms=25320 expires_ms=27818 order=14 depth=3 status=Queued
+RX src=Wifi session=170192753655811 seq=5 cmd=Reverse rx_ms=25379 expires_ms=27879 order=15 depth=4 status=Queued
+RX src=Wifi session=170192753655811 seq=6 cmd=Ping rx_ms=25890 expires_ms=28384 order=16 depth=4 status=Ping
+OUT at_ms=25967 depth=3 event=Apply(Entry { input: Input { source: Wifi, session: 170192753655811, seq: 2, expires_ms: 27802, command: Forward }, order: 12, received_ms: 25302 })
+RX src=Wifi session=170192753655811 seq=7 cmd=Ping rx_ms=26402 expires_ms=28896 order=17 depth=3 status=Ping
+RX src=Ble session=170192753655810 seq=1 cmd=Forward rx_ms=26470 expires_ms=31470 order=18 depth=4 status=Queued
+RX src=Ble session=170192753655810 seq=2 cmd=Reverse rx_ms=26560 expires_ms=31560 order=19 depth=5 status=Queued
+RX src=Wifi session=170192753655811 seq=8 cmd=Ping rx_ms=26914 expires_ms=29407 order=20 depth=5 status=Ping
+RX src=Ble session=170192753655810 seq=3 cmd=Stop rx_ms=27055 expires_ms=32055 order=21 depth=0 status=Stop
+OUT at_ms=27058 depth=0 event=Safety { reason: Stop, at_ms: 27055, purged: 5, entry: Some(Entry { input: Input { source: Ble, session: 170192753655810, seq: 3, expires_ms: 32055, command: Stop }, order: 21, received_ms: 27055 }) }
+RX src=Wifi session=170192753655811 seq=9 cmd=Ping rx_ms=27427 expires_ms=29920 order=22 depth=0 status=Ping
+RX src=Wifi session=170192753655811 seq=10 cmd=Ping rx_ms=27969 expires_ms=30432 order=23 depth=0 status=Ping
+RX src=Wifi session=170192753655811 seq=11 cmd=Ping rx_ms=28477 expires_ms=30974 order=24 depth=0 status=Ping
+RX src=Ble session=170192753655810 seq=4 cmd=Ping rx_ms=28630 expires_ms=33630 order=25 depth=0 status=Ping
+RX src=Wifi session=170192753655811 seq=12 cmd=Ping rx_ms=28986 expires_ms=31483 order=26 depth=0 status=Ping
+RX src=Wifi session=170192753655811 seq=13 cmd=Ping rx_ms=29494 expires_ms=31993 order=27 depth=0 status=Ping
+DISCONNECT src=Wifi session=170192753655811 at_ms=29500
+OUT at_ms=29508 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 29500, purged: 0, entry: None }
+DISCONNECT src=Ble session=170192753655810 at_ms=30970
+BLE advertising at_ms=30970
+OUT at_ms=30973 depth=0 event=Safety { reason: Disconnect(Ble), at_ms: 30970, purged: 0, entry: None }

@@ -1,0 +1,20 @@
+CONNECT src=Ble session=115451706408961 at_ms=7838
+RX src=Ble session=115451706408961 seq=1 cmd=Forward rx_ms=9114 expires_ms=14114 order=1 depth=1 status=Queued
+RX src=Ble session=115451706408961 seq=2 cmd=Forward rx_ms=9204 expires_ms=14204 order=2 depth=2 status=Queued
+RX src=Ble session=115451706408961 seq=3 cmd=Forward rx_ms=9294 expires_ms=14294 order=3 depth=3 status=Queued
+RX src=Ble session=115451706408961 seq=4 cmd=Forward rx_ms=9384 expires_ms=14384 order=4 depth=4 status=Queued
+RX src=Ble session=115451706408961 seq=5 cmd=Forward rx_ms=9474 expires_ms=14474 order=5 depth=5 status=Queued
+RX src=Ble session=115451706408961 seq=6 cmd=Forward rx_ms=9564 expires_ms=14564 order=6 depth=6 status=Queued
+RX src=Ble session=115451706408961 seq=7 cmd=Forward rx_ms=9654 expires_ms=14654 order=7 depth=7 status=Queued
+RX src=Ble session=115451706408961 seq=8 cmd=Forward rx_ms=9744 expires_ms=14744 order=8 depth=8 status=Queued
+RX src=Ble session=115451706408961 seq=9 cmd=Forward rx_ms=9879 expires_ms=14879 order=0 depth=8 status=Full
+RX src=Ble session=115451706408961 seq=10 cmd=Forward rx_ms=9969 expires_ms=14969 order=0 depth=8 status=Full
+RX src=Ble session=115451706408961 seq=11 cmd=Reverse rx_ms=10059 expires_ms=15059 order=0 depth=8 status=Full
+RX src=Ble session=115451706408961 seq=12 cmd=Stop rx_ms=10149 expires_ms=15149 order=9 depth=0 status=Stop
+OUT at_ms=10151 depth=0 event=Safety { reason: Stop, at_ms: 10149, purged: 8, entry: Some(Entry { input: Input { source: Ble, session: 115451706408961, seq: 12, expires_ms: 15149, command: Stop }, order: 9, received_ms: 10149 }) }
+RX src=Ble session=115451706408961 seq=13 cmd=Forward rx_ms=10419 expires_ms=15419 order=10 depth=1 status=Queued
+RX src=Ble session=115451706408961 seq=14 cmd=Ping rx_ms=10689 expires_ms=15689 order=11 depth=1 status=Ping
+OUT at_ms=10950 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 115451706408961, seq: 13, expires_ms: 15419, command: Forward }, order: 10, received_ms: 10419 })
+DISCONNECT src=Ble session=115451706408961 at_ms=13299
+BLE advertising at_ms=13299
+OUT at_ms=13303 depth=0 event=Safety { reason: Disconnect(Ble), at_ms: 13299, purged: 0, entry: None }

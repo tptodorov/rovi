@@ -1,0 +1,23 @@
+CONNECT src=Wifi session=199940270129155 at_ms=22971
+RX src=Wifi session=199940270129155 seq=1 cmd=Ping rx_ms=23049 expires_ms=25472 order=20 depth=0 status=Ping
+RX src=Wifi session=199940270129155 seq=2 cmd=Forward rx_ms=23054 expires_ms=25554 order=21 depth=1 status=Queued
+RX src=Wifi session=199940270129155 seq=3 cmd=Forward rx_ms=23062 expires_ms=25561 order=22 depth=2 status=Queued
+RX src=Wifi session=199940270129155 seq=4 cmd=Forward rx_ms=23072 expires_ms=25571 order=23 depth=3 status=Queued
+RX src=Wifi session=199940270129155 seq=5 cmd=Forward rx_ms=23082 expires_ms=25582 order=24 depth=4 status=Queued
+RX src=Wifi session=199940270129155 seq=6 cmd=Forward rx_ms=23149 expires_ms=25592 order=25 depth=5 status=Queued
+RX src=Wifi session=199940270129155 seq=7 cmd=Forward rx_ms=23155 expires_ms=25654 order=26 depth=6 status=Queued
+RX src=Wifi session=199940270129155 seq=8 cmd=Forward rx_ms=23163 expires_ms=25662 order=27 depth=7 status=Queued
+RX src=Wifi session=199940270129155 seq=9 cmd=Forward rx_ms=23172 expires_ms=25672 order=28 depth=8 status=Queued
+RX src=Wifi session=199940270129155 seq=10 cmd=Ping rx_ms=23184 expires_ms=25684 order=29 depth=8 status=Ping
+INVALID src=Wifi at_ms=23252
+INVALID src=Wifi at_ms=23342
+INVALID src=Wifi at_ms=23457
+INVALID src=Wifi at_ms=23559
+INVALID src=Wifi at_ms=23662
+INVALID src=Wifi at_ms=23751
+INVALID src=Wifi at_ms=23866
+INVALID src=Wifi at_ms=23968
+INVALID src=Wifi at_ms=24071
+INVALID src=Wifi at_ms=24162
+OUT at_ms=24191 depth=0 event=Safety { reason: Timeout(Wifi), at_ms: 24191, purged: 8, entry: None }
+DISCONNECT src=Wifi session=199940270129155 at_ms=24196

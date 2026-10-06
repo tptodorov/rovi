@@ -1,0 +1,4 @@
+{"t_ns": 7162399131429, "event": "connected", "connect_ms": 1375.407994, "address": "FF:E4:05:1A:9F:FF"}
+{"t_ns": 7164991716217, "write": "01", "ok": true, "rtt_ms": 80.593309}
+{"t_ns": 7165081643632, "write": "02", "ok": true, "rtt_ms": 89.861878}
+{"t_ns": 7168050610207, "event": "disconnected_by_client"}

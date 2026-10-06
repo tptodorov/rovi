@@ -1,0 +1,22 @@
+{"discovery": {"version": "1", "session": "199940270129155", "now_ms": "22972", "max_age_ms": "5000", "watchdog_ms": "1000", "commands": "0=stop,1=forward,2=reverse,3=ping"}}
+{"session": 199940270129155, "seq": 1, "tx_ns": 7294306475253, "ack_ns": 7294311493142, "rtt_ms": 5.017889, "response": "ACK seq=1 status=Ping order=20 rx_ms=23049 depth=0"}
+{"session": 199940270129155, "seq": 2, "tx_ns": 7294311582858, "ack_ns": 7294319251080, "rtt_ms": 7.668222, "response": "ACK seq=2 status=Queued order=21 rx_ms=23054 depth=1"}
+{"session": 199940270129155, "seq": 3, "tx_ns": 7294319379075, "ack_ns": 7294328950056, "rtt_ms": 9.570981, "response": "ACK seq=3 status=Queued order=22 rx_ms=23062 depth=2"}
+{"session": 199940270129155, "seq": 4, "tx_ns": 7294329061802, "ack_ns": 7294339405861, "rtt_ms": 10.344059, "response": "ACK seq=4 status=Queued order=23 rx_ms=23072 depth=3"}
+{"session": 199940270129155, "seq": 5, "tx_ns": 7294339498541, "ack_ns": 7294349426091, "rtt_ms": 9.92755, "response": "ACK seq=5 status=Queued order=24 rx_ms=23082 depth=4"}
+{"session": 199940270129155, "seq": 6, "tx_ns": 7294349529419, "ack_ns": 7294411997619, "rtt_ms": 62.4682, "response": "ACK seq=6 status=Queued order=25 rx_ms=23149 depth=5"}
+{"session": 199940270129155, "seq": 7, "tx_ns": 7294412086135, "ack_ns": 7294420391979, "rtt_ms": 8.305844, "response": "ACK seq=7 status=Queued order=26 rx_ms=23155 depth=6"}
+{"session": 199940270129155, "seq": 8, "tx_ns": 7294420437588, "ack_ns": 7294429539163, "rtt_ms": 9.101575, "response": "ACK seq=8 status=Queued order=27 rx_ms=23163 depth=7"}
+{"session": 199940270129155, "seq": 9, "tx_ns": 7294429577012, "ack_ns": 7294441698175, "rtt_ms": 12.121163, "response": "ACK seq=9 status=Queued order=28 rx_ms=23172 depth=8"}
+{"session": 199940270129155, "seq": 10, "tx_ns": 7294441743710, "ack_ns": 7294450112659, "rtt_ms": 8.368949, "response": "ACK seq=10 status=Ping order=29 rx_ms=23184 depth=8"}
+{"session": 199940270129155, "seq": 11, "tx_ns": 7294450162555, "ack_ns": 7294514058060, "rtt_ms": 63.895505, "response": "ERR malformed"}
+{"session": 199940270129155, "seq": 12, "tx_ns": 7294564248894, "ack_ns": 7294604677933, "rtt_ms": 40.429039, "response": "ERR malformed"}
+{"session": 199940270129155, "seq": 13, "tx_ns": 7294654860262, "ack_ns": 7294718474129, "rtt_ms": 63.613867, "response": "ERR malformed"}
+{"session": 199940270129155, "seq": 14, "tx_ns": 7294768664840, "ack_ns": 7294820616433, "rtt_ms": 51.951593, "response": "ERR malformed"}
+{"session": 199940270129155, "seq": 15, "tx_ns": 7294870875049, "ack_ns": 7294923479664, "rtt_ms": 52.604615, "response": "ERR malformed"}
+{"session": 199940270129155, "seq": 16, "tx_ns": 7294973730937, "ack_ns": 7295014051259, "rtt_ms": 40.320322, "response": "ERR malformed"}
+{"session": 199940270129155, "seq": 17, "tx_ns": 7295064297420, "ack_ns": 7295127711992, "rtt_ms": 63.414572, "response": "ERR malformed"}
+{"session": 199940270129155, "seq": 18, "tx_ns": 7295177979005, "ack_ns": 7295230177599, "rtt_ms": 52.198594, "response": "ERR malformed"}
+{"session": 199940270129155, "seq": 19, "tx_ns": 7295280443314, "ack_ns": 7295332689911, "rtt_ms": 52.246597, "response": "ERR malformed"}
+{"session": 199940270129155, "seq": 20, "tx_ns": 7295382899365, "ack_ns": 7295430231008, "rtt_ms": 47.331643, "response": "ERR malformed"}
+{"closed_after_ms": 1030.348905, "error": "ConnectionResetError"}

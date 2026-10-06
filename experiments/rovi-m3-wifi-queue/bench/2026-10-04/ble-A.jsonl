@@ -1,0 +1,10 @@
+{"t_ns": 5910600311384, "event": "connected", "connect_ms": 1352.437118, "address": "FF:E4:05:1A:9F:FF"}
+{"t_ns": 5910861706051, "write": "01", "ok": true, "rtt_ms": 261.311238}
+{"t_ns": 5911130533531, "write": "02", "ok": true, "rtt_ms": 68.346751}
+{"t_ns": 5911402038251, "write": "03", "ok": true, "rtt_ms": 71.099747}
+{"t_ns": 5911672268015, "write": "00", "ok": true, "rtt_ms": 69.837991}
+{"t_ns": 5911941391656, "write": "01", "ok": true, "rtt_ms": 68.750719}
+{"t_ns": 5912210430842, "write": "ff", "ok": false, "rtt_ms": 68.639736, "error": "[org.bluez.Error.Failed] Operation failed with ATT error: 0x13 (Value Not Allowed)"}
+{"t_ns": 5912480465771, "write": "0101", "ok": false, "rtt_ms": 69.620323, "error": "[org.bluez.Error.Failed] Operation failed with ATT error: 0x13 (Value Not Allowed)"}
+{"t_ns": 5912751359502, "write": "03", "ok": true, "rtt_ms": 70.480223}
+{"t_ns": 5912751425097, "event": "steps_done", "connected": true}

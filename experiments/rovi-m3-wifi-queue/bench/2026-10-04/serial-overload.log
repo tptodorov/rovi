@@ -1,0 +1,104 @@
+[2026-10-04T18:16:23Z INFO ] 🚀 A new version of espflash is available: v4.6.0
+[2026-10-04T18:16:23Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-04T18:16:23Z INFO ] Connecting...
+[2026-10-04T18:16:23Z INFO ] Using flash stub
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x158c
+load:0x403c8700,len:0xd24
+load:0x403cb700,len:0x2f34
+entry 0x403c8924
+I (29) boot: ESP-IDF v5.5.1-838-gd66ebb86d2e 2nd stage bootloader
+I (30) boot: compile time Nov 26 2025 12:27:56
+I (30) boot: Multicore bootloader
+I (31) boot: chip revision: v0.2
+I (34) boot: efuse block revision: v1.4
+I (38) boot.esp32s3: Boot SPI Speed : 40MHz
+I (42) boot.esp32s3: SPI Mode       : DIO
+I (45) boot.esp32s3: SPI Flash Size : 16MB
+I (49) boot: Enabling RNG early entropy source...
+I (54) boot: Partition Table:
+I (56) boot: ## Label            Usage          Type ST Offset   Length
+I (63) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (69) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (76) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (82) boot: End of partition table
+I (86) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=1774ch ( 96076) map
+I (116) esp_image: segment 1: paddr=00027774 vaddr=3fc97958 size=04c18h ( 19480) load
+I (122) esp_image: segment 2: paddr=0002c394 vaddr=40378000 size=03c84h ( 15492) load
+I (127) esp_image: segment 3: paddr=00030020 vaddr=42020020 size=7bbf4h (506868) map
+I (252) esp_image: segment 4: paddr=000abc1c vaddr=4037bc84 size=0bcd4h ( 48340) load
+I (273) boot: Loaded app from partition at offset 0x10000
+I (273) boot: Disabling RNG early entropy source...
+M3 board-only AP=Rovi M3 ip=192.168.4.1:7777 WPA2 channel=1 watchdog_ms=10000 max_age_ms=5000 consumer_ms=5000 capacity=8
+BLE advertising at_ms=931
+CONNECT src=Ble session=115451706408961 at_ms=7838
+RX src=Ble session=115451706408961 seq=1 cmd=Forward rx_ms=9114 expires_ms=14114 order=1 depth=1 status=Queued
+RX src=Ble session=115451706408961 seq=2 cmd=Forward rx_ms=9204 expires_ms=14204 order=2 depth=2 status=Queued
+RX src=Ble session=115451706408961 seq=3 cmd=Forward rx_ms=9294 expires_ms=14294 order=3 depth=3 status=Queued
+RX src=Ble session=115451706408961 seq=4 cmd=Forward rx_ms=9384 expires_ms=14384 order=4 depth=4 status=Queued
+RX src=Ble session=115451706408961 seq=5 cmd=Forward rx_ms=9474 expires_ms=14474 order=5 depth=5 status=Queued
+RX src=Ble session=115451706408961 seq=6 cmd=Forward rx_ms=9564 expires_ms=14564 order=6 depth=6 status=Queued
+RX src=Ble session=115451706408961 seq=7 cmd=Forward rx_ms=9654 expires_ms=14654 order=7 depth=7 status=Queued
+RX src=Ble session=115451706408961 seq=8 cmd=Forward rx_ms=9744 expires_ms=14744 order=8 depth=8 status=Queued
+RX src=Ble session=115451706408961 seq=9 cmd=Forward rx_ms=9879 expires_ms=14879 order=0 depth=8 status=Full
+RX src=Ble session=115451706408961 seq=10 cmd=Forward rx_ms=9969 expires_ms=14969 order=0 depth=8 status=Full
+RX src=Ble session=115451706408961 seq=11 cmd=Reverse rx_ms=10059 expires_ms=15059 order=0 depth=8 status=Full
+RX src=Ble session=115451706408961 seq=12 cmd=Stop rx_ms=10149 expires_ms=15149 order=9 depth=0 status=Stop
+OUT at_ms=10151 depth=0 event=Safety { reason: Stop, at_ms: 10149, purged: 8, entry: Some(Entry { input: Input { source: Ble, session: 115451706408961, seq: 12, expires_ms: 15149, command: Stop }, order: 9, received_ms: 10149 }) }
+RX src=Ble session=115451706408961 seq=13 cmd=Forward rx_ms=10419 expires_ms=15419 order=10 depth=1 status=Queued
+RX src=Ble session=115451706408961 seq=14 cmd=Ping rx_ms=10689 expires_ms=15689 order=11 depth=1 status=Ping
+OUT at_ms=10950 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 115451706408961, seq: 13, expires_ms: 15419, command: Forward }, order: 10, received_ms: 10419 })
+DISCONNECT src=Ble session=115451706408961 at_ms=13299
+BLE advertising at_ms=13299
+OUT at_ms=13303 depth=0 event=Safety { reason: Disconnect(Ble), at_ms: 13299, purged: 0, entry: None }
+CONNECT src=Ble session=115451706408962 at_ms=25518
+RX src=Ble session=115451706408962 seq=1 cmd=Forward rx_ms=25989 expires_ms=30989 order=12 depth=1 status=Queued
+RX src=Ble session=115451706408962 seq=2 cmd=Reverse rx_ms=26079 expires_ms=31079 order=13 depth=2 status=Queued
+RX src=Ble session=115451706408962 seq=3 cmd=Forward rx_ms=26169 expires_ms=31169 order=14 depth=3 status=Queued
+RX src=Ble session=115451706408962 seq=4 cmd=Reverse rx_ms=26259 expires_ms=31259 order=15 depth=4 status=Queued
+RX src=Ble session=115451706408962 seq=5 cmd=Ping rx_ms=26844 expires_ms=31844 order=16 depth=4 status=Ping
+RX src=Ble session=115451706408962 seq=6 cmd=Ping rx_ms=27429 expires_ms=32429 order=17 depth=4 status=Ping
+RX src=Ble session=115451706408962 seq=7 cmd=Ping rx_ms=28014 expires_ms=33014 order=18 depth=4 status=Ping
+RX src=Ble session=115451706408962 seq=8 cmd=Ping rx_ms=28599 expires_ms=33599 order=19 depth=4 status=Ping
+RX src=Ble session=115451706408962 seq=9 cmd=Ping rx_ms=29184 expires_ms=34184 order=20 depth=4 status=Ping
+RX src=Ble session=115451706408962 seq=10 cmd=Ping rx_ms=29769 expires_ms=34769 order=21 depth=4 status=Ping
+RX src=Ble session=115451706408962 seq=11 cmd=Ping rx_ms=30354 expires_ms=35354 order=22 depth=4 status=Ping
+RX src=Ble session=115451706408962 seq=12 cmd=Ping rx_ms=30939 expires_ms=35939 order=23 depth=4 status=Ping
+OUT at_ms=30963 depth=3 event=Apply(Entry { input: Input { source: Ble, session: 115451706408962, seq: 1, expires_ms: 30989, command: Forward }, order: 12, received_ms: 25989 })
+RX src=Ble session=115451706408962 seq=13 cmd=Ping rx_ms=31524 expires_ms=36524 order=24 depth=3 status=Ping
+RX src=Ble session=115451706408962 seq=14 cmd=Ping rx_ms=32109 expires_ms=37109 order=25 depth=3 status=Ping
+RX src=Ble session=115451706408962 seq=15 cmd=Ping rx_ms=32694 expires_ms=37694 order=26 depth=3 status=Ping
+RX src=Ble session=115451706408962 seq=16 cmd=Ping rx_ms=33279 expires_ms=38279 order=27 depth=3 status=Ping
+RX src=Ble session=115451706408962 seq=17 cmd=Ping rx_ms=33864 expires_ms=38864 order=28 depth=3 status=Ping
+RX src=Ble session=115451706408962 seq=18 cmd=Ping rx_ms=34449 expires_ms=39449 order=29 depth=3 status=Ping
+RX src=Ble session=115451706408962 seq=19 cmd=Ping rx_ms=35034 expires_ms=40034 order=30 depth=3 status=Ping
+RX src=Ble session=115451706408962 seq=20 cmd=Ping rx_ms=35619 expires_ms=40619 order=31 depth=3 status=Ping
+OUT at_ms=35972 depth=2 event=Stale(Entry { input: Input { source: Ble, session: 115451706408962, seq: 2, expires_ms: 31079, command: Reverse }, order: 13, received_ms: 26079 })
+RX src=Ble session=115451706408962 seq=21 cmd=Ping rx_ms=36204 expires_ms=41204 order=32 depth=2 status=Ping
+RX src=Ble session=115451706408962 seq=22 cmd=Ping rx_ms=36789 expires_ms=41789 order=33 depth=2 status=Ping
+RX src=Ble session=115451706408962 seq=23 cmd=Ping rx_ms=37374 expires_ms=42374 order=34 depth=2 status=Ping
+RX src=Ble session=115451706408962 seq=24 cmd=Ping rx_ms=37959 expires_ms=42959 order=35 depth=2 status=Ping
+RX src=Ble session=115451706408962 seq=25 cmd=Ping rx_ms=38544 expires_ms=43544 order=36 depth=2 status=Ping
+RX src=Ble session=115451706408962 seq=26 cmd=Ping rx_ms=39129 expires_ms=44129 order=37 depth=2 status=Ping
+RX src=Ble session=115451706408962 seq=27 cmd=Ping rx_ms=39714 expires_ms=44714 order=38 depth=2 status=Ping
+RX src=Ble session=115451706408962 seq=28 cmd=Ping rx_ms=40299 expires_ms=45299 order=39 depth=2 status=Ping
+RX src=Ble session=115451706408962 seq=29 cmd=Ping rx_ms=40884 expires_ms=45884 order=40 depth=2 status=Ping
+OUT at_ms=40976 depth=1 event=Stale(Entry { input: Input { source: Ble, session: 115451706408962, seq: 3, expires_ms: 31169, command: Forward }, order: 14, received_ms: 26169 })
+RX src=Ble session=115451706408962 seq=30 cmd=Ping rx_ms=41469 expires_ms=46469 order=41 depth=1 status=Ping
+RX src=Ble session=115451706408962 seq=31 cmd=Ping rx_ms=42054 expires_ms=47054 order=42 depth=1 status=Ping
+RX src=Ble session=115451706408962 seq=32 cmd=Ping rx_ms=42639 expires_ms=47639 order=43 depth=1 status=Ping
+RX src=Ble session=115451706408962 seq=33 cmd=Ping rx_ms=43224 expires_ms=48224 order=44 depth=1 status=Ping
+RX src=Ble session=115451706408962 seq=34 cmd=Ping rx_ms=43809 expires_ms=48809 order=45 depth=1 status=Ping
+RX src=Ble session=115451706408962 seq=35 cmd=Ping rx_ms=44394 expires_ms=49394 order=46 depth=1 status=Ping
+RX src=Ble session=115451706408962 seq=36 cmd=Ping rx_ms=44979 expires_ms=49979 order=47 depth=1 status=Ping
+RX src=Ble session=115451706408962 seq=37 cmd=Ping rx_ms=45564 expires_ms=50564 order=48 depth=1 status=Ping
+OUT at_ms=45984 depth=0 event=Stale(Entry { input: Input { source: Ble, session: 115451706408962, seq: 4, expires_ms: 31259, command: Reverse }, order: 15, received_ms: 26259 })
+RX src=Ble session=115451706408962 seq=38 cmd=Ping rx_ms=46149 expires_ms=51149 order=49 depth=0 status=Ping
+DISCONNECT src=Ble session=115451706408962 at_ms=48309
+BLE advertising at_ms=48309
+OUT at_ms=48316 depth=0 event=Safety { reason: Disconnect(Ble), at_ms: 48309, purged: 0, entry: None }
+Terminated                 espflash monitor --non-interactive --port /dev/ttyACM0

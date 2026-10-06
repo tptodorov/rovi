@@ -1,0 +1,423 @@
+CONNECT src=Wifi session=68258251931649 at_ms=4196
+RX src=Wifi session=68258251931649 seq=1 cmd=Ping rx_ms=4201 expires_ms=4322 order=1 depth=0 status=Ping
+RX src=Wifi session=68258251931649 seq=2 cmd=Forward rx_ms=4206 expires_ms=4330 order=2 depth=1 status=Queued
+OUT at_ms=4219 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 2, expires_ms: 4330, command: Forward }, order: 2, received_ms: 4206 })
+RX src=Wifi session=68258251931649 seq=3 cmd=Reverse rx_ms=4289 expires_ms=4388 order=3 depth=1 status=Queued
+OUT at_ms=4304 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 3, expires_ms: 4388, command: Reverse }, order: 3, received_ms: 4289 })
+RX src=Wifi session=68258251931649 seq=4 cmd=Forward rx_ms=4391 expires_ms=4472 order=4 depth=1 status=Queued
+OUT at_ms=4391 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 4, expires_ms: 4472, command: Forward }, order: 4, received_ms: 4391 })
+RX src=Wifi session=68258251931649 seq=5 cmd=Reverse rx_ms=4492 expires_ms=4583 order=5 depth=1 status=Queued
+OUT at_ms=4495 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 5, expires_ms: 4583, command: Reverse }, order: 5, received_ms: 4492 })
+RX src=Wifi session=68258251931649 seq=6 cmd=Forward rx_ms=4595 expires_ms=4672 order=6 depth=1 status=Queued
+OUT at_ms=4598 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 6, expires_ms: 4672, command: Forward }, order: 6, received_ms: 4595 })
+RX src=Wifi session=68258251931649 seq=7 cmd=Reverse rx_ms=4697 expires_ms=4775 order=7 depth=1 status=Queued
+OUT at_ms=4700 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 7, expires_ms: 4775, command: Reverse }, order: 7, received_ms: 4697 })
+RX src=Wifi session=68258251931649 seq=8 cmd=Forward rx_ms=4800 expires_ms=4877 order=8 depth=1 status=Queued
+OUT at_ms=4803 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 8, expires_ms: 4877, command: Forward }, order: 8, received_ms: 4800 })
+RX src=Wifi session=68258251931649 seq=9 cmd=Reverse rx_ms=4902 expires_ms=4980 order=9 depth=1 status=Queued
+OUT at_ms=4905 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 9, expires_ms: 4980, command: Reverse }, order: 9, received_ms: 4902 })
+RX src=Wifi session=68258251931649 seq=10 cmd=Forward rx_ms=5004 expires_ms=5082 order=10 depth=1 status=Queued
+OUT at_ms=5008 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 10, expires_ms: 5082, command: Forward }, order: 10, received_ms: 5004 })
+RX src=Wifi session=68258251931649 seq=11 cmd=Reverse rx_ms=5107 expires_ms=5184 order=11 depth=1 status=Queued
+OUT at_ms=5110 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 11, expires_ms: 5184, command: Reverse }, order: 11, received_ms: 5107 })
+RX src=Wifi session=68258251931649 seq=12 cmd=Forward rx_ms=5210 expires_ms=5287 order=12 depth=1 status=Queued
+OUT at_ms=5213 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 12, expires_ms: 5287, command: Forward }, order: 12, received_ms: 5210 })
+RX src=Wifi session=68258251931649 seq=13 cmd=Reverse rx_ms=5312 expires_ms=5390 order=13 depth=1 status=Queued
+OUT at_ms=5315 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 13, expires_ms: 5390, command: Reverse }, order: 13, received_ms: 5312 })
+RX src=Wifi session=68258251931649 seq=14 cmd=Forward rx_ms=5417 expires_ms=5492 order=14 depth=1 status=Queued
+OUT at_ms=5418 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 14, expires_ms: 5492, command: Forward }, order: 14, received_ms: 5417 })
+RX src=Wifi session=68258251931649 seq=15 cmd=Reverse rx_ms=5516 expires_ms=5610 order=15 depth=1 status=Queued
+OUT at_ms=5521 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 15, expires_ms: 5610, command: Reverse }, order: 15, received_ms: 5516 })
+RX src=Wifi session=68258251931649 seq=16 cmd=Forward rx_ms=5620 expires_ms=5696 order=16 depth=1 status=Queued
+OUT at_ms=5633 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 16, expires_ms: 5696, command: Forward }, order: 16, received_ms: 5620 })
+RX src=Wifi session=68258251931649 seq=17 cmd=Reverse rx_ms=5721 expires_ms=5800 order=17 depth=1 status=Queued
+OUT at_ms=5739 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 17, expires_ms: 5800, command: Reverse }, order: 17, received_ms: 5721 })
+RX src=Wifi session=68258251931649 seq=18 cmd=Forward rx_ms=5824 expires_ms=5901 order=18 depth=1 status=Queued
+OUT at_ms=5827 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 18, expires_ms: 5901, command: Forward }, order: 18, received_ms: 5824 })
+RX src=Wifi session=68258251931649 seq=19 cmd=Reverse rx_ms=5926 expires_ms=6004 order=19 depth=1 status=Queued
+OUT at_ms=5929 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 19, expires_ms: 6004, command: Reverse }, order: 19, received_ms: 5926 })
+RX src=Wifi session=68258251931649 seq=20 cmd=Forward rx_ms=6028 expires_ms=6107 order=20 depth=1 status=Queued
+OUT at_ms=6033 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 20, expires_ms: 6107, command: Forward }, order: 20, received_ms: 6028 })
+RX src=Wifi session=68258251931649 seq=21 cmd=Reverse rx_ms=6132 expires_ms=6208 order=21 depth=1 status=Queued
+OUT at_ms=6145 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 21, expires_ms: 6208, command: Reverse }, order: 21, received_ms: 6132 })
+RX src=Wifi session=68258251931649 seq=22 cmd=Forward rx_ms=6233 expires_ms=6312 order=22 depth=1 status=Queued
+OUT at_ms=6251 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 22, expires_ms: 6312, command: Forward }, order: 22, received_ms: 6233 })
+RX src=Wifi session=68258251931649 seq=23 cmd=Reverse rx_ms=6336 expires_ms=6413 order=23 depth=1 status=Queued
+OUT at_ms=6339 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 23, expires_ms: 6413, command: Reverse }, order: 23, received_ms: 6336 })
+RX src=Wifi session=68258251931649 seq=24 cmd=Forward rx_ms=6438 expires_ms=6516 order=24 depth=1 status=Queued
+OUT at_ms=6441 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 24, expires_ms: 6516, command: Forward }, order: 24, received_ms: 6438 })
+RX src=Wifi session=68258251931649 seq=25 cmd=Reverse rx_ms=6541 expires_ms=6618 order=25 depth=1 status=Queued
+OUT at_ms=6544 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 25, expires_ms: 6618, command: Reverse }, order: 25, received_ms: 6541 })
+CONNECT src=Ble session=68258251931650 at_ms=6575
+RX src=Wifi session=68258251931649 seq=26 cmd=Forward rx_ms=6643 expires_ms=6720 order=26 depth=1 status=Queued
+OUT at_ms=6646 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 26, expires_ms: 6720, command: Forward }, order: 26, received_ms: 6643 })
+RX src=Wifi session=68258251931649 seq=27 cmd=Reverse rx_ms=6746 expires_ms=6823 order=27 depth=1 status=Queued
+OUT at_ms=6749 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 27, expires_ms: 6823, command: Reverse }, order: 27, received_ms: 6746 })
+RX src=Wifi session=68258251931649 seq=28 cmd=Forward rx_ms=6853 expires_ms=6926 order=28 depth=1 status=Queued
+OUT at_ms=6871 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 28, expires_ms: 6926, command: Forward }, order: 28, received_ms: 6853 })
+RX src=Wifi session=68258251931649 seq=29 cmd=Reverse rx_ms=6951 expires_ms=7034 order=29 depth=1 status=Queued
+OUT at_ms=6958 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 29, expires_ms: 7034, command: Reverse }, order: 29, received_ms: 6951 })
+RX src=Wifi session=68258251931649 seq=30 cmd=Forward rx_ms=7053 expires_ms=7131 order=30 depth=1 status=Queued
+OUT at_ms=7066 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 30, expires_ms: 7131, command: Forward }, order: 30, received_ms: 7053 })
+RX src=Wifi session=68258251931649 seq=31 cmd=Reverse rx_ms=7155 expires_ms=7233 order=31 depth=1 status=Queued
+OUT at_ms=7172 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 31, expires_ms: 7233, command: Reverse }, order: 31, received_ms: 7155 })
+RX src=Wifi session=68258251931649 seq=32 cmd=Forward rx_ms=7258 expires_ms=7336 order=32 depth=1 status=Queued
+OUT at_ms=7259 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 32, expires_ms: 7336, command: Forward }, order: 32, received_ms: 7258 })
+RX src=Wifi session=68258251931649 seq=33 cmd=Reverse rx_ms=7360 expires_ms=7452 order=33 depth=1 status=Queued
+OUT at_ms=7364 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 33, expires_ms: 7452, command: Reverse }, order: 33, received_ms: 7360 })
+RX src=Wifi session=68258251931649 seq=34 cmd=Forward rx_ms=7463 expires_ms=7540 order=34 depth=1 status=Queued
+OUT at_ms=7466 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 34, expires_ms: 7540, command: Forward }, order: 34, received_ms: 7463 })
+RX src=Wifi session=68258251931649 seq=35 cmd=Reverse rx_ms=7565 expires_ms=7643 order=35 depth=1 status=Queued
+OUT at_ms=7568 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 35, expires_ms: 7643, command: Reverse }, order: 35, received_ms: 7565 })
+RX src=Wifi session=68258251931649 seq=36 cmd=Forward rx_ms=7669 expires_ms=7745 order=36 depth=1 status=Queued
+OUT at_ms=7672 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 36, expires_ms: 7745, command: Forward }, order: 36, received_ms: 7669 })
+RX src=Wifi session=68258251931649 seq=37 cmd=Reverse rx_ms=7770 expires_ms=7849 order=37 depth=1 status=Queued
+OUT at_ms=7773 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 37, expires_ms: 7849, command: Reverse }, order: 37, received_ms: 7770 })
+RX src=Wifi session=68258251931649 seq=38 cmd=Forward rx_ms=7873 expires_ms=7951 order=38 depth=1 status=Queued
+OUT at_ms=7876 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 38, expires_ms: 7951, command: Forward }, order: 38, received_ms: 7873 })
+RX src=Ble session=68258251931650 seq=1 cmd=Reverse rx_ms=7935 expires_ms=8185 order=39 depth=1 status=Queued
+OUT at_ms=7938 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 68258251931650, seq: 1, expires_ms: 8185, command: Reverse }, order: 39, received_ms: 7935 })
+RX src=Wifi session=68258251931649 seq=39 cmd=Reverse rx_ms=7975 expires_ms=8053 order=40 depth=1 status=Queued
+OUT at_ms=7980 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 39, expires_ms: 8053, command: Reverse }, order: 40, received_ms: 7975 })
+RX src=Wifi session=68258251931649 seq=40 cmd=Forward rx_ms=8077 expires_ms=8155 order=41 depth=1 status=Queued
+OUT at_ms=8089 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 40, expires_ms: 8155, command: Forward }, order: 41, received_ms: 8077 })
+RX src=Wifi session=68258251931649 seq=41 cmd=Reverse rx_ms=8179 expires_ms=8258 order=42 depth=1 status=Queued
+OUT at_ms=8195 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 41, expires_ms: 8258, command: Reverse }, order: 42, received_ms: 8179 })
+RX src=Wifi session=68258251931649 seq=42 cmd=Forward rx_ms=8281 expires_ms=8359 order=43 depth=1 status=Queued
+OUT at_ms=8301 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 42, expires_ms: 8359, command: Forward }, order: 43, received_ms: 8281 })
+RX src=Wifi session=68258251931649 seq=43 cmd=Reverse rx_ms=8384 expires_ms=8463 order=44 depth=1 status=Queued
+RX src=Ble session=68258251931650 seq=2 cmd=Forward rx_ms=8386 expires_ms=8636 order=45 depth=2 status=Queued
+OUT at_ms=8393 depth=1 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 43, expires_ms: 8463, command: Reverse }, order: 44, received_ms: 8384 })
+OUT at_ms=8419 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 68258251931650, seq: 2, expires_ms: 8636, command: Forward }, order: 45, received_ms: 8386 })
+RX src=Wifi session=68258251931649 seq=44 cmd=Forward rx_ms=8487 expires_ms=8588 order=46 depth=1 status=Queued
+OUT at_ms=8504 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 44, expires_ms: 8588, command: Forward }, order: 46, received_ms: 8487 })
+RX src=Wifi session=68258251931649 seq=45 cmd=Reverse rx_ms=8589 expires_ms=8667 order=47 depth=1 status=Queued
+OUT at_ms=8590 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 45, expires_ms: 8667, command: Reverse }, order: 47, received_ms: 8589 })
+RX src=Wifi session=68258251931649 seq=46 cmd=Forward rx_ms=8701 expires_ms=8785 order=48 depth=1 status=Queued
+OUT at_ms=8717 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 46, expires_ms: 8785, command: Forward }, order: 48, received_ms: 8701 })
+RX src=Wifi session=68258251931649 seq=47 cmd=Reverse rx_ms=8793 expires_ms=8882 order=49 depth=1 status=Queued
+OUT at_ms=8802 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 47, expires_ms: 8882, command: Reverse }, order: 49, received_ms: 8793 })
+RX src=Ble session=68258251931650 seq=3 cmd=Reverse rx_ms=8835 expires_ms=9085 order=50 depth=1 status=Queued
+OUT at_ms=8848 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 68258251931650, seq: 3, expires_ms: 9085, command: Reverse }, order: 50, received_ms: 8835 })
+RX src=Wifi session=68258251931649 seq=48 cmd=Forward rx_ms=8896 expires_ms=8975 order=51 depth=1 status=Queued
+OUT at_ms=8913 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 48, expires_ms: 8975, command: Forward }, order: 51, received_ms: 8896 })
+RX src=Wifi session=68258251931649 seq=49 cmd=Reverse rx_ms=8998 expires_ms=9076 order=52 depth=1 status=Queued
+OUT at_ms=8999 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 49, expires_ms: 9076, command: Reverse }, order: 52, received_ms: 8998 })
+RX src=Wifi session=68258251931649 seq=50 cmd=Forward rx_ms=9101 expires_ms=9192 order=53 depth=1 status=Queued
+OUT at_ms=9105 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 50, expires_ms: 9192, command: Forward }, order: 53, received_ms: 9101 })
+RX src=Wifi session=68258251931649 seq=51 cmd=Reverse rx_ms=9203 expires_ms=9293 order=54 depth=1 status=Queued
+OUT at_ms=9206 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 51, expires_ms: 9293, command: Reverse }, order: 54, received_ms: 9203 })
+RX src=Ble session=68258251931650 seq=4 cmd=Stop rx_ms=9285 expires_ms=9535 order=55 depth=0 status=Stop
+OUT at_ms=9288 depth=0 event=Safety { reason: Stop, at_ms: 9285, purged: 0, entry: Some(Entry { input: Input { source: Ble, session: 68258251931650, seq: 4, expires_ms: 9535, command: Stop }, order: 55, received_ms: 9285 }) }
+RX src=Wifi session=68258251931649 seq=52 cmd=Forward rx_ms=9306 expires_ms=9383 order=56 depth=1 status=Queued
+OUT at_ms=9313 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 52, expires_ms: 9383, command: Forward }, order: 56, received_ms: 9306 })
+RX src=Wifi session=68258251931649 seq=53 cmd=Reverse rx_ms=9408 expires_ms=9509 order=57 depth=1 status=Queued
+OUT at_ms=9421 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 53, expires_ms: 9509, command: Reverse }, order: 57, received_ms: 9408 })
+RX src=Wifi session=68258251931649 seq=54 cmd=Forward rx_ms=9511 expires_ms=9588 order=58 depth=1 status=Queued
+OUT at_ms=9526 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 54, expires_ms: 9588, command: Forward }, order: 58, received_ms: 9511 })
+RX src=Wifi session=68258251931649 seq=55 cmd=Reverse rx_ms=9613 expires_ms=9691 order=59 depth=1 status=Queued
+OUT at_ms=9613 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 55, expires_ms: 9691, command: Reverse }, order: 59, received_ms: 9613 })
+RX src=Wifi session=68258251931649 seq=56 cmd=Forward rx_ms=9715 expires_ms=9806 order=60 depth=1 status=Queued
+OUT at_ms=9718 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 56, expires_ms: 9806, command: Forward }, order: 60, received_ms: 9715 })
+RX src=Ble session=68258251931650 seq=5 cmd=Forward rx_ms=9781 expires_ms=10031 order=61 depth=1 status=Queued
+OUT at_ms=9799 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 68258251931650, seq: 5, expires_ms: 10031, command: Forward }, order: 61, received_ms: 9781 })
+RX src=Wifi session=68258251931649 seq=57 cmd=Reverse rx_ms=9818 expires_ms=9895 order=62 depth=1 status=Queued
+OUT at_ms=9824 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 57, expires_ms: 9895, command: Reverse }, order: 62, received_ms: 9818 })
+RX src=Wifi session=68258251931649 seq=58 cmd=Forward rx_ms=9920 expires_ms=9998 order=63 depth=1 status=Queued
+OUT at_ms=9934 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 58, expires_ms: 9998, command: Forward }, order: 63, received_ms: 9920 })
+RX src=Wifi session=68258251931649 seq=59 cmd=Reverse rx_ms=10022 expires_ms=10101 order=64 depth=1 status=Queued
+OUT at_ms=10040 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 59, expires_ms: 10101, command: Reverse }, order: 64, received_ms: 10022 })
+RX src=Wifi session=68258251931649 seq=60 cmd=Forward rx_ms=10125 expires_ms=10204 order=65 depth=1 status=Queued
+OUT at_ms=10126 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 60, expires_ms: 10204, command: Forward }, order: 65, received_ms: 10125 })
+RX src=Wifi session=68258251931649 seq=61 cmd=Reverse rx_ms=10227 expires_ms=10320 order=66 depth=1 status=Queued
+RX src=Ble session=68258251931650 seq=6 cmd=Reverse rx_ms=10232 expires_ms=10482 order=67 depth=2 status=Queued
+OUT at_ms=10236 depth=1 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 61, expires_ms: 10320, command: Reverse }, order: 66, received_ms: 10227 })
+OUT at_ms=10262 depth=0 event=Apply(Entry { input: Input { source: Ble, session: 68258251931650, seq: 6, expires_ms: 10482, command: Reverse }, order: 67, received_ms: 10232 })
+RX src=Wifi session=68258251931649 seq=62 cmd=Forward rx_ms=10330 expires_ms=10407 order=68 depth=1 status=Queued
+OUT at_ms=10347 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 62, expires_ms: 10407, command: Forward }, order: 68, received_ms: 10330 })
+RX src=Wifi session=68258251931649 seq=63 cmd=Reverse rx_ms=10432 expires_ms=10510 order=69 depth=1 status=Queued
+OUT at_ms=10435 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 63, expires_ms: 10510, command: Reverse }, order: 69, received_ms: 10432 })
+RX src=Wifi session=68258251931649 seq=64 cmd=Forward rx_ms=10534 expires_ms=10612 order=70 depth=1 status=Queued
+OUT at_ms=10537 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 64, expires_ms: 10612, command: Forward }, order: 70, received_ms: 10534 })
+RX src=Ble session=68258251931650 seq=7 cmd=Ping rx_ms=10591 expires_ms=10841 order=71 depth=0 status=Ping
+RX src=Wifi session=68258251931649 seq=65 cmd=Reverse rx_ms=10639 expires_ms=10717 order=72 depth=1 status=Queued
+OUT at_ms=10643 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 65, expires_ms: 10717, command: Reverse }, order: 72, received_ms: 10639 })
+RX src=Wifi session=68258251931649 seq=66 cmd=Forward rx_ms=10739 expires_ms=10819 order=73 depth=1 status=Queued
+OUT at_ms=10744 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 66, expires_ms: 10819, command: Forward }, order: 73, received_ms: 10739 })
+RX src=Wifi session=68258251931649 seq=67 cmd=Reverse rx_ms=10841 expires_ms=10919 order=74 depth=1 status=Queued
+OUT at_ms=10855 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 67, expires_ms: 10919, command: Reverse }, order: 74, received_ms: 10841 })
+RX src=Wifi session=68258251931649 seq=68 cmd=Forward rx_ms=10944 expires_ms=11022 order=75 depth=1 status=Queued
+OUT at_ms=10960 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 68, expires_ms: 11022, command: Forward }, order: 75, received_ms: 10944 })
+RX src=Wifi session=68258251931649 seq=69 cmd=Reverse rx_ms=11046 expires_ms=11124 order=76 depth=1 status=Queued
+OUT at_ms=11047 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 69, expires_ms: 11124, command: Reverse }, order: 76, received_ms: 11046 })
+RX src=Wifi session=68258251931649 seq=70 cmd=Forward rx_ms=11148 expires_ms=11241 order=77 depth=1 status=Queued
+OUT at_ms=11153 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 70, expires_ms: 11241, command: Forward }, order: 77, received_ms: 11148 })
+RX src=Wifi session=68258251931649 seq=71 cmd=Reverse rx_ms=11251 expires_ms=11328 order=78 depth=1 status=Queued
+OUT at_ms=11254 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 71, expires_ms: 11328, command: Reverse }, order: 78, received_ms: 11251 })
+RX src=Wifi session=68258251931649 seq=72 cmd=Forward rx_ms=11354 expires_ms=11431 order=79 depth=1 status=Queued
+OUT at_ms=11357 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 72, expires_ms: 11431, command: Forward }, order: 79, received_ms: 11354 })
+RX src=Wifi session=68258251931649 seq=73 cmd=Reverse rx_ms=11456 expires_ms=11534 order=80 depth=1 status=Queued
+OUT at_ms=11459 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 73, expires_ms: 11534, command: Reverse }, order: 80, received_ms: 11456 })
+RX src=Wifi session=68258251931649 seq=74 cmd=Forward rx_ms=11558 expires_ms=11636 order=81 depth=1 status=Queued
+OUT at_ms=11561 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 74, expires_ms: 11636, command: Forward }, order: 81, received_ms: 11558 })
+RX src=Wifi session=68258251931649 seq=75 cmd=Reverse rx_ms=11660 expires_ms=11738 order=82 depth=1 status=Queued
+OUT at_ms=11664 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 75, expires_ms: 11738, command: Reverse }, order: 82, received_ms: 11660 })
+RX src=Wifi session=68258251931649 seq=76 cmd=Forward rx_ms=11763 expires_ms=11841 order=83 depth=1 status=Queued
+OUT at_ms=11766 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 76, expires_ms: 11841, command: Forward }, order: 83, received_ms: 11763 })
+RX src=Wifi session=68258251931649 seq=77 cmd=Reverse rx_ms=11865 expires_ms=11943 order=84 depth=1 status=Queued
+OUT at_ms=11869 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 77, expires_ms: 11943, command: Reverse }, order: 84, received_ms: 11865 })
+RX src=Wifi session=68258251931649 seq=78 cmd=Forward rx_ms=11970 expires_ms=12046 order=85 depth=1 status=Queued
+OUT at_ms=11971 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 78, expires_ms: 12046, command: Forward }, order: 85, received_ms: 11970 })
+RX src=Wifi session=68258251931649 seq=79 cmd=Reverse rx_ms=12070 expires_ms=12164 order=86 depth=1 status=Queued
+OUT at_ms=12075 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 79, expires_ms: 12164, command: Reverse }, order: 86, received_ms: 12070 })
+RX src=Wifi session=68258251931649 seq=80 cmd=Forward rx_ms=12173 expires_ms=12250 order=87 depth=1 status=Queued
+OUT at_ms=12177 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 80, expires_ms: 12250, command: Forward }, order: 87, received_ms: 12173 })
+RX src=Wifi session=68258251931649 seq=81 cmd=Reverse rx_ms=12275 expires_ms=12354 order=88 depth=1 status=Queued
+OUT at_ms=12280 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 81, expires_ms: 12354, command: Reverse }, order: 88, received_ms: 12275 })
+RX src=Wifi session=68258251931649 seq=82 cmd=Forward rx_ms=12378 expires_ms=12455 order=89 depth=1 status=Queued
+OUT at_ms=12381 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 82, expires_ms: 12455, command: Forward }, order: 89, received_ms: 12378 })
+RX src=Wifi session=68258251931649 seq=83 cmd=Reverse rx_ms=12480 expires_ms=12558 order=90 depth=1 status=Queued
+OUT at_ms=12483 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 83, expires_ms: 12558, command: Reverse }, order: 90, received_ms: 12480 })
+RX src=Wifi session=68258251931649 seq=84 cmd=Forward rx_ms=12582 expires_ms=12660 order=91 depth=1 status=Queued
+OUT at_ms=12585 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 84, expires_ms: 12660, command: Forward }, order: 91, received_ms: 12582 })
+RX src=Wifi session=68258251931649 seq=85 cmd=Reverse rx_ms=12685 expires_ms=12764 order=92 depth=1 status=Queued
+OUT at_ms=12690 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 85, expires_ms: 12764, command: Reverse }, order: 92, received_ms: 12685 })
+RX src=Wifi session=68258251931649 seq=86 cmd=Forward rx_ms=12787 expires_ms=12865 order=93 depth=1 status=Queued
+OUT at_ms=12801 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 86, expires_ms: 12865, command: Forward }, order: 93, received_ms: 12787 })
+RX src=Wifi session=68258251931649 seq=87 cmd=Reverse rx_ms=12890 expires_ms=12967 order=94 depth=1 status=Queued
+OUT at_ms=12907 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 87, expires_ms: 12967, command: Reverse }, order: 94, received_ms: 12890 })
+RX src=Wifi session=68258251931649 seq=88 cmd=Forward rx_ms=12992 expires_ms=13070 order=95 depth=1 status=Queued
+OUT at_ms=12993 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 88, expires_ms: 13070, command: Forward }, order: 95, received_ms: 12992 })
+RX src=Wifi session=68258251931649 seq=89 cmd=Reverse rx_ms=13094 expires_ms=13186 order=96 depth=1 status=Queued
+OUT at_ms=13097 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 89, expires_ms: 13186, command: Reverse }, order: 96, received_ms: 13094 })
+RX src=Wifi session=68258251931649 seq=90 cmd=Forward rx_ms=13197 expires_ms=13274 order=97 depth=1 status=Queued
+OUT at_ms=13200 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 90, expires_ms: 13274, command: Forward }, order: 97, received_ms: 13197 })
+RX src=Wifi session=68258251931649 seq=91 cmd=Reverse rx_ms=13299 expires_ms=13377 order=98 depth=1 status=Queued
+OUT at_ms=13304 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 91, expires_ms: 13377, command: Reverse }, order: 98, received_ms: 13299 })
+RX src=Wifi session=68258251931649 seq=92 cmd=Forward rx_ms=13402 expires_ms=13479 order=99 depth=1 status=Queued
+OUT at_ms=13415 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 92, expires_ms: 13479, command: Forward }, order: 99, received_ms: 13402 })
+RX src=Wifi session=68258251931649 seq=93 cmd=Reverse rx_ms=13513 expires_ms=13582 order=100 depth=1 status=Queued
+OUT at_ms=13520 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 93, expires_ms: 13582, command: Reverse }, order: 100, received_ms: 13513 })
+RX src=Wifi session=68258251931649 seq=94 cmd=Forward rx_ms=13621 expires_ms=13694 order=101 depth=1 status=Queued
+OUT at_ms=13629 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 94, expires_ms: 13694, command: Forward }, order: 101, received_ms: 13621 })
+RX src=Ble session=68258251931650 seq=8 cmd=Ping rx_ms=13650 expires_ms=13900 order=102 depth=0 status=Ping
+RX src=Wifi session=68258251931649 seq=95 cmd=Reverse rx_ms=13709 expires_ms=13801 order=103 depth=1 status=Queued
+OUT at_ms=13716 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 95, expires_ms: 13801, command: Reverse }, order: 103, received_ms: 13709 })
+RX src=Wifi session=68258251931649 seq=96 cmd=Forward rx_ms=13811 expires_ms=13889 order=104 depth=1 status=Queued
+OUT at_ms=13825 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 96, expires_ms: 13889, command: Forward }, order: 104, received_ms: 13811 })
+RX src=Wifi session=68258251931649 seq=97 cmd=Reverse rx_ms=13914 expires_ms=13991 order=105 depth=1 status=Queued
+OUT at_ms=13931 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 97, expires_ms: 13991, command: Reverse }, order: 105, received_ms: 13914 })
+RX src=Wifi session=68258251931649 seq=98 cmd=Forward rx_ms=14016 expires_ms=14094 order=106 depth=1 status=Queued
+OUT at_ms=14019 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 98, expires_ms: 14094, command: Forward }, order: 106, received_ms: 14016 })
+RX src=Wifi session=68258251931649 seq=99 cmd=Reverse rx_ms=14118 expires_ms=14196 order=107 depth=1 status=Queued
+OUT at_ms=14122 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 99, expires_ms: 14196, command: Reverse }, order: 107, received_ms: 14118 })
+RX src=Wifi session=68258251931649 seq=100 cmd=Forward rx_ms=14221 expires_ms=14298 order=108 depth=1 status=Queued
+OUT at_ms=14224 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 100, expires_ms: 14298, command: Forward }, order: 108, received_ms: 14221 })
+RX src=Wifi session=68258251931649 seq=101 cmd=Reverse rx_ms=14324 expires_ms=14401 order=109 depth=1 status=Queued
+OUT at_ms=14327 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 101, expires_ms: 14401, command: Reverse }, order: 109, received_ms: 14324 })
+RX src=Wifi session=68258251931649 seq=102 cmd=Forward rx_ms=14426 expires_ms=14504 order=110 depth=1 status=Queued
+OUT at_ms=14429 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 102, expires_ms: 14504, command: Forward }, order: 110, received_ms: 14426 })
+RX src=Wifi session=68258251931649 seq=103 cmd=Reverse rx_ms=14528 expires_ms=14606 order=111 depth=1 status=Queued
+OUT at_ms=14532 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 103, expires_ms: 14606, command: Reverse }, order: 111, received_ms: 14528 })
+RX src=Wifi session=68258251931649 seq=104 cmd=Forward rx_ms=14630 expires_ms=14708 order=112 depth=1 status=Queued
+OUT at_ms=14635 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 104, expires_ms: 14708, command: Forward }, order: 112, received_ms: 14630 })
+RX src=Wifi session=68258251931649 seq=105 cmd=Reverse rx_ms=14733 expires_ms=14810 order=113 depth=1 status=Queued
+OUT at_ms=14736 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 105, expires_ms: 14810, command: Reverse }, order: 113, received_ms: 14733 })
+RX src=Wifi session=68258251931649 seq=106 cmd=Forward rx_ms=14835 expires_ms=14913 order=114 depth=1 status=Queued
+OUT at_ms=14838 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 106, expires_ms: 14913, command: Forward }, order: 114, received_ms: 14835 })
+RX src=Wifi session=68258251931649 seq=107 cmd=Reverse rx_ms=14938 expires_ms=15015 order=115 depth=1 status=Queued
+OUT at_ms=14941 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 107, expires_ms: 15015, command: Reverse }, order: 115, received_ms: 14938 })
+RX src=Wifi session=68258251931649 seq=108 cmd=Forward rx_ms=15041 expires_ms=15117 order=116 depth=1 status=Queued
+OUT at_ms=15044 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 108, expires_ms: 15117, command: Forward }, order: 116, received_ms: 15041 })
+RX src=Wifi session=68258251931649 seq=109 cmd=Reverse rx_ms=15142 expires_ms=15220 order=117 depth=1 status=Queued
+OUT at_ms=15148 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 109, expires_ms: 15220, command: Reverse }, order: 117, received_ms: 15142 })
+RX src=Wifi session=68258251931649 seq=110 cmd=Forward rx_ms=15245 expires_ms=15322 order=118 depth=1 status=Queued
+OUT at_ms=15258 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 110, expires_ms: 15322, command: Forward }, order: 118, received_ms: 15245 })
+RX src=Wifi session=68258251931649 seq=111 cmd=Reverse rx_ms=15347 expires_ms=15425 order=119 depth=1 status=Queued
+OUT at_ms=15365 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 111, expires_ms: 15425, command: Reverse }, order: 119, received_ms: 15347 })
+RX src=Wifi session=68258251931649 seq=112 cmd=Forward rx_ms=15450 expires_ms=15527 order=120 depth=1 status=Queued
+OUT at_ms=15451 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 112, expires_ms: 15527, command: Forward }, order: 120, received_ms: 15450 })
+RX src=Wifi session=68258251931649 seq=113 cmd=Reverse rx_ms=15552 expires_ms=15644 order=121 depth=1 status=Queued
+OUT at_ms=15556 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 113, expires_ms: 15644, command: Reverse }, order: 121, received_ms: 15552 })
+RX src=Wifi session=68258251931649 seq=114 cmd=Forward rx_ms=15655 expires_ms=15732 order=122 depth=1 status=Queued
+OUT at_ms=15658 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 114, expires_ms: 15732, command: Forward }, order: 122, received_ms: 15655 })
+RX src=Wifi session=68258251931649 seq=115 cmd=Reverse rx_ms=15757 expires_ms=15835 order=123 depth=1 status=Queued
+OUT at_ms=15762 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 115, expires_ms: 15835, command: Reverse }, order: 123, received_ms: 15757 })
+RX src=Wifi session=68258251931649 seq=116 cmd=Forward rx_ms=15813 expires_ms=15937 order=124 depth=1 status=Queued
+OUT at_ms=15824 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 116, expires_ms: 15937, command: Forward }, order: 124, received_ms: 15813 })
+RX src=Wifi session=68258251931649 seq=117 cmd=Reverse rx_ms=15882 expires_ms=15993 order=125 depth=1 status=Queued
+OUT at_ms=15889 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 117, expires_ms: 15993, command: Reverse }, order: 125, received_ms: 15882 })
+RX src=Wifi session=68258251931649 seq=118 cmd=Forward rx_ms=15937 expires_ms=16062 order=126 depth=1 status=Queued
+OUT at_ms=15938 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 118, expires_ms: 16062, command: Forward }, order: 126, received_ms: 15937 })
+RX src=Wifi session=68258251931649 seq=119 cmd=Reverse rx_ms=16082 expires_ms=16157 order=127 depth=1 status=Queued
+OUT at_ms=16086 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 119, expires_ms: 16157, command: Reverse }, order: 127, received_ms: 16082 })
+RX src=Wifi session=68258251931649 seq=120 cmd=Forward rx_ms=16185 expires_ms=16263 order=128 depth=1 status=Queued
+OUT at_ms=16189 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 120, expires_ms: 16263, command: Forward }, order: 128, received_ms: 16185 })
+RX src=Wifi session=68258251931649 seq=121 cmd=Reverse rx_ms=16288 expires_ms=16365 order=129 depth=1 status=Queued
+OUT at_ms=16291 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 121, expires_ms: 16365, command: Reverse }, order: 129, received_ms: 16288 })
+RX src=Wifi session=68258251931649 seq=122 cmd=Forward rx_ms=16390 expires_ms=16468 order=130 depth=1 status=Queued
+OUT at_ms=16394 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 122, expires_ms: 16468, command: Forward }, order: 130, received_ms: 16390 })
+RX src=Wifi session=68258251931649 seq=123 cmd=Reverse rx_ms=16492 expires_ms=16571 order=131 depth=1 status=Queued
+OUT at_ms=16496 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 123, expires_ms: 16571, command: Reverse }, order: 131, received_ms: 16492 })
+RX src=Wifi session=68258251931649 seq=124 cmd=Forward rx_ms=16594 expires_ms=16673 order=132 depth=1 status=Queued
+OUT at_ms=16598 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 124, expires_ms: 16673, command: Forward }, order: 132, received_ms: 16594 })
+RX src=Wifi session=68258251931649 seq=125 cmd=Reverse rx_ms=16697 expires_ms=16775 order=133 depth=1 status=Queued
+OUT at_ms=16701 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 125, expires_ms: 16775, command: Reverse }, order: 133, received_ms: 16697 })
+RX src=Ble session=68258251931650 seq=9 cmd=Ping rx_ms=16755 expires_ms=17005 order=134 depth=0 status=Ping
+RX src=Wifi session=68258251931649 seq=126 cmd=Forward rx_ms=16801 expires_ms=16877 order=135 depth=1 status=Queued
+OUT at_ms=16805 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 126, expires_ms: 16877, command: Forward }, order: 135, received_ms: 16801 })
+RX src=Wifi session=68258251931649 seq=127 cmd=Reverse rx_ms=16902 expires_ms=16981 order=136 depth=1 status=Queued
+OUT at_ms=16907 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 127, expires_ms: 16981, command: Reverse }, order: 136, received_ms: 16902 })
+RX src=Wifi session=68258251931649 seq=128 cmd=Forward rx_ms=17004 expires_ms=17082 order=137 depth=1 status=Queued
+OUT at_ms=17008 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 128, expires_ms: 17082, command: Forward }, order: 137, received_ms: 17004 })
+RX src=Wifi session=68258251931649 seq=129 cmd=Reverse rx_ms=17107 expires_ms=17184 order=138 depth=1 status=Queued
+OUT at_ms=17110 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 129, expires_ms: 17184, command: Reverse }, order: 138, received_ms: 17107 })
+RX src=Wifi session=68258251931649 seq=130 cmd=Forward rx_ms=17209 expires_ms=17287 order=139 depth=1 status=Queued
+OUT at_ms=17213 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 130, expires_ms: 17287, command: Forward }, order: 139, received_ms: 17209 })
+RX src=Wifi session=68258251931649 seq=131 cmd=Reverse rx_ms=17311 expires_ms=17391 order=140 depth=1 status=Queued
+OUT at_ms=17317 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 131, expires_ms: 17391, command: Reverse }, order: 140, received_ms: 17311 })
+RX src=Wifi session=68258251931649 seq=132 cmd=Forward rx_ms=17414 expires_ms=17492 order=141 depth=1 status=Queued
+OUT at_ms=17429 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 132, expires_ms: 17492, command: Forward }, order: 141, received_ms: 17414 })
+RX src=Wifi session=68258251931649 seq=133 cmd=Reverse rx_ms=17517 expires_ms=17596 order=142 depth=1 status=Queued
+OUT at_ms=17535 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 133, expires_ms: 17596, command: Reverse }, order: 142, received_ms: 17517 })
+RX src=Wifi session=68258251931649 seq=134 cmd=Forward rx_ms=17619 expires_ms=17698 order=143 depth=1 status=Queued
+OUT at_ms=17623 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 134, expires_ms: 17698, command: Forward }, order: 143, received_ms: 17619 })
+RX src=Wifi session=68258251931649 seq=135 cmd=Reverse rx_ms=17721 expires_ms=17800 order=144 depth=1 status=Queued
+OUT at_ms=17725 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 135, expires_ms: 17800, command: Reverse }, order: 144, received_ms: 17721 })
+RX src=Wifi session=68258251931649 seq=136 cmd=Forward rx_ms=17823 expires_ms=17902 order=145 depth=1 status=Queued
+OUT at_ms=17829 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 136, expires_ms: 17902, command: Forward }, order: 145, received_ms: 17823 })
+RX src=Wifi session=68258251931649 seq=137 cmd=Reverse rx_ms=17927 expires_ms=18004 order=146 depth=1 status=Queued
+OUT at_ms=17940 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 137, expires_ms: 18004, command: Reverse }, order: 146, received_ms: 17927 })
+RX src=Wifi session=68258251931649 seq=138 cmd=Forward rx_ms=18029 expires_ms=18107 order=147 depth=1 status=Queued
+OUT at_ms=18046 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 138, expires_ms: 18107, command: Forward }, order: 147, received_ms: 18029 })
+RX src=Wifi session=68258251931649 seq=139 cmd=Reverse rx_ms=18130 expires_ms=18209 order=148 depth=1 status=Queued
+OUT at_ms=18132 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 139, expires_ms: 18209, command: Reverse }, order: 148, received_ms: 18130 })
+RX src=Wifi session=68258251931649 seq=140 cmd=Forward rx_ms=18233 expires_ms=18324 order=149 depth=1 status=Queued
+OUT at_ms=18236 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 140, expires_ms: 18324, command: Forward }, order: 149, received_ms: 18233 })
+RX src=Wifi session=68258251931649 seq=141 cmd=Reverse rx_ms=18343 expires_ms=18413 order=150 depth=1 status=Queued
+OUT at_ms=18360 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 141, expires_ms: 18413, command: Reverse }, order: 150, received_ms: 18343 })
+RX src=Wifi session=68258251931649 seq=142 cmd=Forward rx_ms=18439 expires_ms=18523 order=151 depth=1 status=Queued
+OUT at_ms=18446 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 142, expires_ms: 18523, command: Forward }, order: 151, received_ms: 18439 })
+RX src=Wifi session=68258251931649 seq=143 cmd=Reverse rx_ms=18541 expires_ms=18620 order=152 depth=1 status=Queued
+OUT at_ms=18556 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 143, expires_ms: 18620, command: Reverse }, order: 152, received_ms: 18541 })
+RX src=Wifi session=68258251931649 seq=144 cmd=Forward rx_ms=18643 expires_ms=18721 order=153 depth=1 status=Queued
+OUT at_ms=18662 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 144, expires_ms: 18721, command: Forward }, order: 153, received_ms: 18643 })
+RX src=Wifi session=68258251931649 seq=145 cmd=Reverse rx_ms=18745 expires_ms=18824 order=154 depth=1 status=Queued
+OUT at_ms=18749 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 145, expires_ms: 18824, command: Reverse }, order: 154, received_ms: 18745 })
+RX src=Wifi session=68258251931649 seq=146 cmd=Forward rx_ms=18848 expires_ms=18925 order=155 depth=1 status=Queued
+OUT at_ms=18851 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 146, expires_ms: 18925, command: Forward }, order: 155, received_ms: 18848 })
+RX src=Wifi session=68258251931649 seq=147 cmd=Reverse rx_ms=18949 expires_ms=19028 order=156 depth=1 status=Queued
+OUT at_ms=18955 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 147, expires_ms: 19028, command: Reverse }, order: 156, received_ms: 18949 })
+RX src=Wifi session=68258251931649 seq=148 cmd=Forward rx_ms=19053 expires_ms=19130 order=157 depth=1 status=Queued
+OUT at_ms=19066 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 148, expires_ms: 19130, command: Forward }, order: 157, received_ms: 19053 })
+RX src=Wifi session=68258251931649 seq=149 cmd=Reverse rx_ms=19155 expires_ms=19233 order=158 depth=1 status=Queued
+OUT at_ms=19173 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 149, expires_ms: 19233, command: Reverse }, order: 158, received_ms: 19155 })
+RX src=Wifi session=68258251931649 seq=150 cmd=Forward rx_ms=19257 expires_ms=19337 order=159 depth=1 status=Queued
+OUT at_ms=19261 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 150, expires_ms: 19337, command: Forward }, order: 159, received_ms: 19257 })
+RX src=Wifi session=68258251931649 seq=151 cmd=Reverse rx_ms=19360 expires_ms=19438 order=160 depth=1 status=Queued
+OUT at_ms=19363 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 151, expires_ms: 19438, command: Reverse }, order: 160, received_ms: 19360 })
+RX src=Wifi session=68258251931649 seq=152 cmd=Forward rx_ms=19461 expires_ms=19540 order=161 depth=1 status=Queued
+OUT at_ms=19465 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 152, expires_ms: 19540, command: Forward }, order: 161, received_ms: 19461 })
+RX src=Wifi session=68258251931649 seq=153 cmd=Reverse rx_ms=19564 expires_ms=19642 order=162 depth=1 status=Queued
+OUT at_ms=19568 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 153, expires_ms: 19642, command: Reverse }, order: 162, received_ms: 19564 })
+RX src=Wifi session=68258251931649 seq=154 cmd=Forward rx_ms=19620 expires_ms=19745 order=163 depth=1 status=Queued
+OUT at_ms=19630 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 154, expires_ms: 19745, command: Forward }, order: 163, received_ms: 19620 })
+RX src=Wifi session=68258251931649 seq=155 cmd=Reverse rx_ms=19675 expires_ms=19800 order=164 depth=1 status=Queued
+OUT at_ms=19676 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 155, expires_ms: 19800, command: Reverse }, order: 164, received_ms: 19675 })
+RX src=Wifi session=68258251931649 seq=156 cmd=Forward rx_ms=19768 expires_ms=19869 order=165 depth=1 status=Queued
+OUT at_ms=19783 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 156, expires_ms: 19869, command: Forward }, order: 165, received_ms: 19768 })
+RX src=Ble session=68258251931650 seq=10 cmd=Ping rx_ms=19815 expires_ms=20065 order=166 depth=0 status=Ping
+RX src=Wifi session=68258251931649 seq=157 cmd=Reverse rx_ms=19828 expires_ms=19951 order=167 depth=1 status=Queued
+OUT at_ms=19828 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 157, expires_ms: 19951, command: Reverse }, order: 167, received_ms: 19828 })
+RX src=Wifi session=68258251931649 seq=158 cmd=Forward rx_ms=19923 expires_ms=20048 order=168 depth=1 status=Queued
+OUT at_ms=19934 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 158, expires_ms: 20048, command: Forward }, order: 168, received_ms: 19923 })
+RX src=Wifi session=68258251931649 seq=159 cmd=Reverse rx_ms=19979 expires_ms=20103 order=169 depth=1 status=Queued
+OUT at_ms=19982 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 159, expires_ms: 20103, command: Reverse }, order: 169, received_ms: 19979 })
+RX src=Wifi session=68258251931649 seq=160 cmd=Forward rx_ms=20034 expires_ms=20159 order=170 depth=1 status=Queued
+OUT at_ms=20045 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 160, expires_ms: 20159, command: Forward }, order: 170, received_ms: 20034 })
+RX src=Wifi session=68258251931649 seq=161 cmd=Reverse rx_ms=20128 expires_ms=20253 order=171 depth=1 status=Queued
+OUT at_ms=20131 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 161, expires_ms: 20253, command: Reverse }, order: 171, received_ms: 20128 })
+RX src=Wifi session=68258251931649 seq=162 cmd=Forward rx_ms=20183 expires_ms=20308 order=172 depth=1 status=Queued
+OUT at_ms=20194 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 162, expires_ms: 20308, command: Forward }, order: 172, received_ms: 20183 })
+RX src=Wifi session=68258251931649 seq=163 cmd=Reverse rx_ms=20239 expires_ms=20364 order=173 depth=1 status=Queued
+OUT at_ms=20241 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 163, expires_ms: 20364, command: Reverse }, order: 173, received_ms: 20239 })
+RX src=Wifi session=68258251931649 seq=164 cmd=Forward rx_ms=20333 expires_ms=20458 order=174 depth=1 status=Queued
+OUT at_ms=20346 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 164, expires_ms: 20458, command: Forward }, order: 174, received_ms: 20333 })
+RX src=Wifi session=68258251931649 seq=165 cmd=Reverse rx_ms=20388 expires_ms=20513 order=175 depth=1 status=Queued
+OUT at_ms=20392 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 165, expires_ms: 20513, command: Reverse }, order: 175, received_ms: 20388 })
+RX src=Wifi session=68258251931649 seq=166 cmd=Forward rx_ms=20444 expires_ms=20569 order=176 depth=1 status=Queued
+OUT at_ms=20455 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 166, expires_ms: 20569, command: Forward }, order: 176, received_ms: 20444 })
+RX src=Wifi session=68258251931649 seq=167 cmd=Reverse rx_ms=20537 expires_ms=20662 order=177 depth=1 status=Queued
+OUT at_ms=20540 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 167, expires_ms: 20662, command: Reverse }, order: 177, received_ms: 20537 })
+RX src=Wifi session=68258251931649 seq=168 cmd=Forward rx_ms=20592 expires_ms=20717 order=178 depth=1 status=Queued
+OUT at_ms=20603 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 168, expires_ms: 20717, command: Forward }, order: 178, received_ms: 20592 })
+RX src=Wifi session=68258251931649 seq=169 cmd=Reverse rx_ms=20648 expires_ms=20772 order=179 depth=1 status=Queued
+OUT at_ms=20651 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 169, expires_ms: 20772, command: Reverse }, order: 179, received_ms: 20648 })
+RX src=Wifi session=68258251931649 seq=170 cmd=Forward rx_ms=20703 expires_ms=20828 order=180 depth=1 status=Queued
+OUT at_ms=20714 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 170, expires_ms: 20828, command: Forward }, order: 180, received_ms: 20703 })
+RX src=Wifi session=68258251931649 seq=171 cmd=Reverse rx_ms=20793 expires_ms=20884 order=181 depth=1 status=Queued
+OUT at_ms=20799 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 171, expires_ms: 20884, command: Reverse }, order: 181, received_ms: 20793 })
+RX src=Wifi session=68258251931649 seq=172 cmd=Forward rx_ms=20849 expires_ms=20973 order=182 depth=1 status=Queued
+OUT at_ms=20850 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 172, expires_ms: 20973, command: Forward }, order: 182, received_ms: 20849 })
+RX src=Wifi session=68258251931649 seq=173 cmd=Reverse rx_ms=20949 expires_ms=21072 order=183 depth=1 status=Queued
+OUT at_ms=20957 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 173, expires_ms: 21072, command: Reverse }, order: 183, received_ms: 20949 })
+RX src=Wifi session=68258251931649 seq=174 cmd=Forward rx_ms=21004 expires_ms=21129 order=184 depth=1 status=Queued
+OUT at_ms=21005 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 174, expires_ms: 21129, command: Forward }, order: 184, received_ms: 21004 })
+RX src=Wifi session=68258251931649 seq=175 cmd=Reverse rx_ms=21100 expires_ms=21198 order=185 depth=1 status=Queued
+OUT at_ms=21111 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 175, expires_ms: 21198, command: Reverse }, order: 185, received_ms: 21100 })
+RX src=Wifi session=68258251931649 seq=176 cmd=Forward rx_ms=21156 expires_ms=21281 order=186 depth=1 status=Queued
+OUT at_ms=21156 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 176, expires_ms: 21281, command: Forward }, order: 186, received_ms: 21156 })
+RX src=Wifi session=68258251931649 seq=177 cmd=Reverse rx_ms=21254 expires_ms=21379 order=187 depth=1 status=Queued
+OUT at_ms=21263 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 177, expires_ms: 21379, command: Reverse }, order: 187, received_ms: 21254 })
+RX src=Wifi session=68258251931649 seq=178 cmd=Forward rx_ms=21309 expires_ms=21434 order=188 depth=1 status=Queued
+OUT at_ms=21310 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 178, expires_ms: 21434, command: Forward }, order: 188, received_ms: 21309 })
+RX src=Wifi session=68258251931649 seq=179 cmd=Reverse rx_ms=21407 expires_ms=21503 order=189 depth=1 status=Queued
+OUT at_ms=21415 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 179, expires_ms: 21503, command: Reverse }, order: 189, received_ms: 21407 })
+RX src=Wifi session=68258251931649 seq=180 cmd=Forward rx_ms=21463 expires_ms=21587 order=190 depth=1 status=Queued
+OUT at_ms=21463 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 180, expires_ms: 21587, command: Forward }, order: 190, received_ms: 21463 })
+RX src=Wifi session=68258251931649 seq=181 cmd=Reverse rx_ms=21561 expires_ms=21686 order=191 depth=1 status=Queued
+OUT at_ms=21569 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 181, expires_ms: 21686, command: Reverse }, order: 191, received_ms: 21561 })
+RX src=Wifi session=68258251931649 seq=182 cmd=Forward rx_ms=21616 expires_ms=21741 order=192 depth=1 status=Queued
+OUT at_ms=21617 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 182, expires_ms: 21741, command: Forward }, order: 192, received_ms: 21616 })
+RX src=Wifi session=68258251931649 seq=183 cmd=Reverse rx_ms=21714 expires_ms=21810 order=193 depth=1 status=Queued
+OUT at_ms=21722 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 183, expires_ms: 21810, command: Reverse }, order: 193, received_ms: 21714 })
+RX src=Wifi session=68258251931649 seq=184 cmd=Forward rx_ms=21770 expires_ms=21895 order=194 depth=1 status=Queued
+OUT at_ms=21771 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 184, expires_ms: 21895, command: Forward }, order: 194, received_ms: 21770 })
+RX src=Wifi session=68258251931649 seq=185 cmd=Reverse rx_ms=21869 expires_ms=21994 order=195 depth=1 status=Queued
+OUT at_ms=21877 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 185, expires_ms: 21994, command: Reverse }, order: 195, received_ms: 21869 })
+RX src=Wifi session=68258251931649 seq=186 cmd=Forward rx_ms=21924 expires_ms=22049 order=196 depth=1 status=Queued
+OUT at_ms=21925 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 186, expires_ms: 22049, command: Forward }, order: 196, received_ms: 21924 })
+RX src=Wifi session=68258251931649 seq=187 cmd=Reverse rx_ms=22022 expires_ms=22118 order=197 depth=1 status=Queued
+OUT at_ms=22030 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 187, expires_ms: 22118, command: Reverse }, order: 197, received_ms: 22022 })
+RX src=Wifi session=68258251931649 seq=188 cmd=Forward rx_ms=22077 expires_ms=22203 order=198 depth=1 status=Queued
+OUT at_ms=22078 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 188, expires_ms: 22203, command: Forward }, order: 198, received_ms: 22077 })
+RX src=Wifi session=68258251931649 seq=189 cmd=Reverse rx_ms=22176 expires_ms=22301 order=199 depth=1 status=Queued
+OUT at_ms=22184 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 189, expires_ms: 22301, command: Reverse }, order: 199, received_ms: 22176 })
+RX src=Wifi session=68258251931649 seq=190 cmd=Forward rx_ms=22233 expires_ms=22357 order=200 depth=1 status=Queued
+OUT at_ms=22251 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 190, expires_ms: 22357, command: Forward }, order: 200, received_ms: 22233 })
+RX src=Wifi session=68258251931649 seq=191 cmd=Reverse rx_ms=22329 expires_ms=22421 order=201 depth=1 status=Queued
+DISCONNECT src=Ble session=68258251931650 at_ms=22336
+BLE advertising at_ms=22337
+OUT at_ms=22338 depth=0 event=Safety { reason: Disconnect(Ble), at_ms: 22336, purged: 1, entry: None }
+RX src=Wifi session=68258251931649 seq=192 cmd=Forward rx_ms=22385 expires_ms=22510 order=202 depth=1 status=Queued
+OUT at_ms=22386 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 192, expires_ms: 22510, command: Forward }, order: 202, received_ms: 22385 })
+RX src=Wifi session=68258251931649 seq=193 cmd=Reverse rx_ms=22485 expires_ms=22608 order=203 depth=1 status=Queued
+OUT at_ms=22493 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 193, expires_ms: 22608, command: Reverse }, order: 203, received_ms: 22485 })
+RX src=Wifi session=68258251931649 seq=194 cmd=Forward rx_ms=22540 expires_ms=22665 order=204 depth=1 status=Queued
+OUT at_ms=22541 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 194, expires_ms: 22665, command: Forward }, order: 204, received_ms: 22540 })
+RX src=Wifi session=68258251931649 seq=195 cmd=Reverse rx_ms=22636 expires_ms=22734 order=205 depth=1 status=Queued
+OUT at_ms=22647 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 195, expires_ms: 22734, command: Reverse }, order: 205, received_ms: 22636 })
+RX src=Wifi session=68258251931649 seq=196 cmd=Forward rx_ms=22693 expires_ms=22817 order=206 depth=1 status=Queued
+OUT at_ms=22694 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 196, expires_ms: 22817, command: Forward }, order: 206, received_ms: 22693 })
+RX src=Wifi session=68258251931649 seq=197 cmd=Reverse rx_ms=22790 expires_ms=22915 order=207 depth=1 status=Queued
+OUT at_ms=22799 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 197, expires_ms: 22915, command: Reverse }, order: 207, received_ms: 22790 })
+RX src=Wifi session=68258251931649 seq=198 cmd=Forward rx_ms=22846 expires_ms=22970 order=208 depth=1 status=Queued
+OUT at_ms=22847 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 198, expires_ms: 22970, command: Forward }, order: 208, received_ms: 22846 })
+RX src=Wifi session=68258251931649 seq=199 cmd=Reverse rx_ms=22943 expires_ms=23041 order=209 depth=1 status=Queued
+OUT at_ms=22951 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 199, expires_ms: 23041, command: Reverse }, order: 209, received_ms: 22943 })
+RX src=Wifi session=68258251931649 seq=200 cmd=Forward rx_ms=22999 expires_ms=23124 order=210 depth=1 status=Queued
+OUT at_ms=22999 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 200, expires_ms: 23124, command: Forward }, order: 210, received_ms: 22999 })
+RX src=Wifi session=68258251931649 seq=201 cmd=Reverse rx_ms=23097 expires_ms=23223 order=211 depth=1 status=Queued
+OUT at_ms=23105 depth=0 event=Apply(Entry { input: Input { source: Wifi, session: 68258251931649, seq: 201, expires_ms: 23223, command: Reverse }, order: 211, received_ms: 23097 })
+DISCONNECT src=Wifi session=68258251931649 at_ms=23154
+OUT at_ms=23155 depth=0 event=Safety { reason: Disconnect(Wifi), at_ms: 23154, purged: 0, entry: None }
