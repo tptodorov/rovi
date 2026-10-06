@@ -16,11 +16,12 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 ### Next: software only (laptop)
 
 1. **S1 spike** (done 2026-10-06, laptop only) — yes, with conditions. nano-ros's XRCE backend cross-compiles for the S3, links next to Rovi's stack, and interoperates with ROS 2 Jazzy via the micro-ROS agent. Rovi would own the S3 port (13 platform symbols; blocking UDP must be bridged to embassy-net). Footprint and on-board behaviour are untested; M8 decides nano-ros vs the direct XRCE client. See [S1 findings](research/s1-micro-ros-nano-ros-spike.md).
+   * **S2 spike** (done 2026-10-06, laptop only): native Rust/embassy [zenoh-nostd](https://github.com/eclipse-zenoh/zenoh-nostd) + `rmw_zenoh`. ROS 2 ↔ car data works in both directions over UDP, and a real session links into M3 at +101 KiB flash. The car is invisible to the ROS graph until liveliness tokens are added. The project is early-stage. It is the preferred path for M8's `ros` feature. See [S2 findings](research/s2-zenoh-nostd-spike.md).
 2. **M8** (design in progress) — direct UDP setpoint protocol with exclusive single ownership and optional micro-ROS:
    * Setpoints are body velocity shaped like `TwistStamped`.
    * The latest setpoint wins; there is no queue. Each valid setpoint renews the watchdog lease.
    * The first client on BLE, UDP or the micro-ROS agent owns the car, and the other radio is shut down. When ownership is released, both reopen.
-   * The car runs an AP only. micro-ROS is enabled by a compile-time `ros` feature.
+   * The car runs an AP only. ROS 2 is enabled by a compile-time `ros` feature (zenoh-nostd preferred per S2; XRCE fallback per S1).
    * Mecanum kinematics feed a `WheelOutput` trait.
    * The core is host-tested now; board acceptance waits for hardware.
 3. **M6** (planned) — the low-level four-wheel API proposal (OpenSpec), using the M8 setpoint/ownership model and leaving the measured motor limits open until M4/M5.
