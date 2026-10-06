@@ -65,4 +65,5 @@ Considered and deliberately set aside — revisit only if the premise changes:
 * **Autonomy** is not a committed near-term goal. The low-level API shouldn't preclude it, but nothing is architected around it yet.
 * **Splitting the platform into its own repo** is deferred until a second real hardware application (boat, drone, etc.) needs to consume it independently of this car.
 * **Video teleoperation, cameras and onboard Linux compute.** M7 was dropped on 2026-10-06 (not a priority), and its experiment folder was removed. The ESP32-S3 stays the car's only network endpoint. Recover it from git history if video returns.
+* **An RTOS or ESP-IDF** is not used; firmware is bare-metal Rust on Embassy ([ADR-0007](adr/0007-rust-embassy-no-rtos.md)).
 * **A Cargo workspace** for shared firmware code is deferred until the low-level API work actually starts — `experiments/` stays independent packages until then.
