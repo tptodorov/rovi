@@ -94,6 +94,9 @@ A short, throwaway feasibility investigation (S1, S2, …) whose output is a rec
 **Bench**:
 The physical test setup with the real board, and the procedures run on it. Only bench evidence proves hardware behaviour.
 
+**Sim car**:
+The device firmware's core and adapters running as a laptop program against real clients. It is development evidence, never hardware acceptance.
+
 **Board-only**:
 A milestone run on the bare ESP32-S3 board, with no motor hardware connected.
 
