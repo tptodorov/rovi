@@ -15,9 +15,8 @@ After bench-testing a milestone, add a `## Results` section to its `MILESTONE.md
 
 * ✅ [`rovi-m1-tb6612/`](rovi-m1-tb6612/) — ESP32-S3-N16R8 + one TB6612FNG channel, single-motor bring-up. Bench-tested successfully; see its `MILESTONE.md` results.
 * ✅ [`rovi-m2-ble/`](rovi-m2-ble/) — ESP32-S3 BLE peripheral and custom GATT drive-command write. Bench-tested successfully; see its `MILESTONE.md` results.
-* 🔧 [`rovi-m3-wifi-queue/`](rovi-m3-wifi-queue/) — direct Wi-Fi and shared command ingress implemented and software-verified; physical acceptance pending, motors disconnected.
+* ✅ [`rovi-m3-wifi-queue/`](rovi-m3-wifi-queue/) — direct Wi-Fi car AP and shared BLE/Wi-Fi command ingress. Hardware-validated 2026-10-04 (5 of 6 acceptance items); M8 supersedes its TCP+FIFO design.
 * 📝 [`rovi-m4-four-motor-safety/`](rovi-m4-four-motor-safety/) — motor/driver/power qualification and hardware fail-safe; one integrated four-motor bench setup.
 * 📝 [`rovi-m5-mecanum-motion/`](rovi-m5-mecanum-motion/) — mecanum mapping and feedback characterization; reuse M4's setup.
-* 📝 [`rovi-m7-video-teleop/`](rovi-m7-video-teleop/) — end-to-end video and direct control; gated on choosing camera/compute hardware and reuses the M4 car setup.
 
 M6 is the spec-driven low-level API milestone, not a hardware experiment; it is tracked in [`../docs/PLAN.md`](../docs/PLAN.md#roadmap).

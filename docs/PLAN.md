@@ -38,11 +38,34 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 * **M2** (complete, bench-tested 2026-10-02) — ESP32-S3 as a BLE peripheral: advertises a custom GATT service, a generic BLE client writes drive commands, firmware reacts observably (LED/serial). Bare board, no motor hardware — independent of M1. See [`experiments/rovi-m2-ble/`](../experiments/rovi-m2-ble/).
 * **M3** (hardware-validated 2026-10-04; 5 of 6 acceptance items) — direct WPA2 car AP and shared BLE/Wi-Fi command ingress, board-only. Shared ingress, queue/stale/stop, watchdog-under-backlog and per-transport loss pass on the board. A 2 s TCP socket timeout caps Wi-Fi silence below the configured watchdog. M8 supersedes its TCP+FIFO design. See [`experiments/rovi-m3-wifi-queue/`](../experiments/rovi-m3-wifi-queue/).
 
+## Open questions and decisions
+
+Living list. Close an item when it is decided, move hard-to-reverse outcomes into an [ADR](adr/), and delete it here. Owner: **you** = project decision; **M8** = settled by the M8 design or bench.
+
+| # | Question / decision | Options / current lean | Settled by |
+| --- | --- | --- | --- |
+| Q1 | ROS 2 backend for M8's `ros` feature | zenoh-nostd + `rmw_zenoh` (lean, [S2](research/s2-zenoh-nostd-spike.md)) vs XRCE via nano-ros or direct FFI ([S1](research/s1-micro-ros-nano-ros-spike.md)) | M8 design, after Q2 |
+| Q2 | Can the car be visible in the ROS 2 graph with zenoh-nostd? | Implement `rmw_zenoh` liveliness tokens: patch a fork or upstream. If impractical, choose XRCE | M8 first risk item |
+| Q3 | Re-arm after a safety stop | Explicit operator arm (research recommendation) vs auto-clear on the next valid setpoint (M3 behaviour) | you, M8 design |
+| Q4 | Ownership handover | First-connect owner; on loss, both radios reopen (agreed). Open: should an expired BLE lease keep the connection (stop and disarm only) to avoid slow BlueZ rediscovery? Is there a grace period before the other radio shuts down? | M8 design |
+| Q5 | UDP setpoint protocol details | Framing, session handshake, sequence, deadline vs relative TTL, setpoint rate, lease length, discovery of max speeds. TwistStamped-shaped body velocity in SI units (agreed) | M8 design |
+| Q6 | UDP access control | WPA2 on the car AP only (as M3) vs a per-session token or message signing | you, M8 design |
+| Q7 | BLE security | M2/M3 unpaired bench access vs LE Secure Connections bonding | you; deferred until there is a product milestone |
+| Q8 | Fate of M3's TCP protocol v1 and `client.py` | Retire once M8 UDP lands (lean) vs keep for comparison | M8 |
+| Q9 | iPhone client for M8 acceptance | Build an iOS app, use a generic UDP/BLE tool, or accept with a laptop client first and add the iPhone later | you |
+| Q10 | Max speeds and units before M5 calibration | Treat max speed as full duty (placeholder) until M5 measures it | M8 design / M5 |
+| Q11 | Open-loop vs closed-loop wheel control; ros2_control wheel-velocity mode | Depends on whether encoders exist | M5 |
+| Q12 | Station mode (car joins an existing network) | Excluded for M8; revisit with an ADR if ROS on the lab network matters | you, after M8 |
+| Q13 | Runtime vs compile-time configuration | Compile-time `ros` feature for M8 (agreed); runtime config later | after M8 |
+| Q14 | M3 remainder (range, phone onboarding, dedicated-radio latency) | Run against M8's UDP firmware instead of M3, so effort isn't spent on the superseded TCP path | you |
+| Q15 | `VISION.md` drift | Still says "shared command queue" and "teleoperation with a video stream". Update once the M8 design is approved | after M8 design |
+| Q16 | zenoh-nostd patches | Carry a fork vs upstream: optional `defmt`, `embassy-sync` 0.8, larger sample storage | M8 |
+
 ## Deferred decisions (non-goals for now)
 
 Considered and deliberately set aside — revisit only if the premise changes:
 
 * **Autonomy** is not a committed near-term goal. The low-level API shouldn't preclude it, but nothing is architected around it yet.
 * **Splitting the platform into its own repo** is deferred until a second real hardware application (boat, drone, etc.) needs to consume it independently of this car.
-* **M7: video teleoperation, and any camera or onboard Linux compute** (decided 2026-10-06: none planned at this stage). The ESP32-S3 stays the car's only network endpoint. [`experiments/rovi-m7-video-teleop/`](../experiments/rovi-m7-video-teleop/) is kept for when this changes.
+* **Video teleoperation, cameras and onboard Linux compute.** M7 was dropped on 2026-10-06 (not a priority), and its experiment folder was removed. The ESP32-S3 stays the car's only network endpoint. Recover it from git history if video returns.
 * **A Cargo workspace** for shared firmware code is deferred until the low-level API work actually starts — `experiments/` stays independent packages until then.
