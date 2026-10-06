@@ -52,16 +52,29 @@ The transport through which a controller's input arrived (BLE, Wi-Fi or ROS 2).
 One connection of one controller, from connect until disconnect or timeout. Input from an earlier session is never valid in a later one.
 
 **Owner**:
-The single controller allowed to command the device at a given time. The first controller to connect becomes the owner.
+The single controller allowed to command the device at a given time. The first controller to make a claim becomes the owner.
+
+**Claim**:
+A controller's request to become the owner: connecting over BLE, a UDP hello, or the first valid ROS setpoint. A claim is refused while another owner exists.
+
+**Claim window**:
+The period after a claim in which the new owner must send its first setpoint or arm. If it doesn't, ownership is released.
+
+**Armed**:
+The state in which the owner's setpoints move the device. A new owner starts disarmed, and every safety stop disarms. Only the owner's explicit arm command arms the device.
+_Avoid_: Enabled, active
+
+**Reclaim window**:
+The period after a lease expires in which the same owner can resume by arming again without reconnecting. When it ends, ownership is released.
 
 **Lease**:
-The owner's right to keep commanding the device, renewed only by its valid commands or pings.
+The owner's right to keep commanding the device, renewed only by its valid setpoints. The setpoint stream is the heartbeat.
 
 **Watchdog timeout**:
 The safety event raised when a lease expires without renewal.
 
 **Safety stop**:
-The latched state in which all motion is stopped and motor drivers are put in standby, entered on stop, timeout or controller loss.
+The latched state in which all motion is stopped, motor drivers are put in standby and the device is disarmed. It is entered on stop, lease expiry, owner loss or an out-of-limits setpoint.
 _Avoid_: E-stop (it is not a certified emergency stop)
 
 **Stale command**:
