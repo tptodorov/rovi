@@ -2,7 +2,7 @@
 
 ## M7: direct teleoperation with video
 
-**Status:** proposed; gated on camera and compute-placement decision
+**Status:** deferred (2026-10-06) — no camera or onboard Linux planned at this stage; see [PLAN](../../docs/PLAN.md)
 **Setup count:** reuse M3/M4 equipment and connection mode; add the selected camera/video hardware only
 
 ### Goal
