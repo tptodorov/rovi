@@ -1,0 +1,10 @@
+[package]
+name = "rovi-m8-setpoint-ros"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "M8: setpoint protocol, single owner, optional ROS 2 (host-tested core)"
+
+[dependencies]
+libm = "0.2"
