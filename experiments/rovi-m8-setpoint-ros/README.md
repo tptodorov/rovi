@@ -228,3 +228,11 @@ cargo clippy --lib --tests -- -D warnings
 ```
 
 The CDR golden vectors in `src/setpoint.rs` were captured from ROS 2 Jazzy (`rmw_zenoh_cpp` 0.2.10). ROS leaves CDR padding bytes non-zero, so the decoder ignores padding. The kinematics follow the Jazzy `mecanum_drive_controller` source. The laptop ROS graph check is `sim/graph-check.sh`.
+
+The sim car (`src/bin/simcar.rs`) runs the same device core on a laptop UDP socket. `sim/udp_scenarios.py` drives it over real sockets (claim, busy, arm, stream, stop, lease expiry and reclaim, claim window, bye, non-owner input):
+
+```sh
+cargo build --bin simcar && python3 sim/udp_scenarios.py
+```
+
+This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)); acceptance needs the board.

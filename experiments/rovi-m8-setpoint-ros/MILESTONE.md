@@ -44,6 +44,12 @@ Real hardware only; no motor hardware is connected for this milestone.
 
 Bench results (date, commit, board, clients, settings, logs, pass/fail) are added after bench testing. Laptop results are development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)).
 
+#### Laptop: core and UDP scenarios, 2026-10-07 — pass
+
+* **Host tests:** 48 pass (`cargo test --lib`): CDR codec against real ROS bytes, kinematics against the `mecanum_drive_controller` formulas, the arbiter (ownership, lease, arm, claim and reclaim windows, limits), UDP framing and the device core, and the `rmw_zenoh` keys, liveliness tokens, entity gid and attachment against a live Jazzy graph (gid `1b8f09d3…` reproduced).
+* **Sim car over real UDP sockets:** 6 scenarios pass (`sim/udp_scenarios.py`).
+* **Not yet:** the ROS adapter in the sim, the BLE adapter, the S3 firmware shell, and everything on the board.
+
 #### Laptop: ROS graph visibility (test-plan step 1), 2026-10-07 — pass
 
 * **Setup:** zenoh-nostd fork [`tptodorov/zenoh-nostd@rovi/liveliness-token`](https://github.com/tptodorov/zenoh-nostd/tree/rovi/liveliness-token) (`ac96994`) on the std platform, as a client of `rmw_zenohd` (ROS 2 Jazzy, `rmw_zenoh_cpp` 0.2.10 in Docker). The fork adds `Session::declare_token` and `TransportLinkManager::zid()`. The example `z_ros_node` declares node `/rovi` and a best-effort `/cmd_vel` `TwistStamped` subscription. Reproduce with [`sim/graph-check.sh`](sim/graph-check.sh).
