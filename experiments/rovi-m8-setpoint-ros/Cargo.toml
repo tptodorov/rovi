@@ -8,3 +8,4 @@ description = "M8: setpoint protocol, single owner, optional ROS 2 (host-tested 
 
 [dependencies]
 libm = "0.2"
+xxhash-rust = { version = "0.8", default-features = false, features = ["xxh3"] }
