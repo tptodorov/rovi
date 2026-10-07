@@ -23,7 +23,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
    * The first controller to claim the car (BLE connect, UDP hello, or first ROS setpoint) owns it, and the other radio shuts down until release.
    * Motion needs an explicit arm, and every safety stop disarms. Claim and reclaim windows apply.
    * The car runs an AP only. ROS 2 runs over zenoh-nostd behind a compile-time `ros` feature; graph visibility is the first risk item.
-   * The core and a sim car are tested on the laptop now; board acceptance waits for hardware.
+   * The core and a sim car are tested on the laptop now; board acceptance waits for hardware. Graph visibility (the first risk item) passed on the laptop on 2026-10-07.
 3. **M6** (planned) — the low-level four-wheel API proposal (OpenSpec), using the M8 setpoint/ownership model and leaving the measured motor limits open until M4/M5.
 
 ### Hardware (resume when the bench setup is available)
@@ -44,12 +44,12 @@ Living list. Close an item when it is decided, move hard-to-reverse outcomes int
 
 | # | Question / decision | Options / current lean | Settled by |
 | --- | --- | --- | --- |
-| Q2 | Can the car be visible in the ROS 2 graph with zenoh-nostd? | Implement `rmw_zenoh` liveliness tokens: patch a fork or upstream. If impractical, revisit ADR-0005 (XRCE fallback) | M8 first risk item |
+| Q2 | Can the car be visible in the ROS 2 graph with zenoh-nostd? | **Passed on the laptop (2026-10-07)** with a fork patch: `ros2 node list`, `topic info -v` and plain `ros2 topic pub` all work ([M8 results](../experiments/rovi-m8-setpoint-ros/MILESTONE.md#results)). Remaining: confirm on the S3 build and on the board, then close | M8 S3 build, bench |
 | Q8 | When to retire M3's TCP protocol v1 and `client.py` | Retire once M8's UDP protocol passes on the bench (ADR-0004) | M8 bench |
 | Q9 | iPhone client | M8 is accepted with laptop clients (BLE via bleak, a Python UDP client, ROS 2). Open: when and how to build the iPhone app. Decide after M8 bench results for Q18/Q19 | you, after M8 |
 | Q11 | Open-loop vs closed-loop wheel control; ros2_control wheel-velocity mode | Depends on whether encoders exist | M5 |
 | Q13 | Runtime vs compile-time configuration | Compile-time `ros` feature for M8 (agreed); runtime config later | after M8 |
-| Q16 | zenoh-nostd patches | A pinned fork with optional `defmt`, `embassy-sync` 0.8 and a liveliness API (decided, ADR-0005). Open: whether upstream accepts them | M8 |
+| Q16 | zenoh-nostd patches | A pinned fork with optional `defmt`, `embassy-sync` 0.8 and a liveliness API (decided, ADR-0005). The liveliness patch exists at `tptodorov/zenoh-nostd@rovi/liveliness-token`. Open: the `defmt` and `embassy-sync` patches, and whether upstream accepts them | M8 |
 | Q17 | Clock sync for setpoint stamps | Without sync, staleness is judged by receive time and sequence. With sync, stamp-age checks could match `reference_timeout` | M8 bench, later |
 | Q18 | BLE ATT MTU | CDR setpoints need MTU ≥ 75. Verify the negotiated value on iPhone and BlueZ with trouble-host; fall back to a compact 16-byte setpoint if it's unreliable | M8 bench |
 | Q19 | BLE streaming rate | Check that iOS gives a connection interval suitable for 20 Hz setpoints | M8 bench, iPhone |

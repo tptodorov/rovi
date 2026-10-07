@@ -2,7 +2,7 @@
 
 ## M8: setpoint protocol, single owner, optional ROS 2
 
-**Status:** design approved 2026-10-06; not implemented
+**Status:** design approved 2026-10-06; implementation started 2026-10-07 (laptop only; first risk item cleared)
 **Setup count:** one, ESP32-S3 board only; motor hardware disconnected
 
 ### Goal
@@ -42,4 +42,14 @@ Real hardware only; no motor hardware is connected for this milestone.
 
 ### Results
 
-Add after bench testing: date, commit, board, clients, settings, logs, pass/fail observations.
+Bench results (date, commit, board, clients, settings, logs, pass/fail) are added after bench testing. Laptop results are development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)).
+
+#### Laptop: ROS graph visibility (test-plan step 1), 2026-10-07 — pass
+
+* **Setup:** zenoh-nostd fork [`tptodorov/zenoh-nostd@rovi/liveliness-token`](https://github.com/tptodorov/zenoh-nostd/tree/rovi/liveliness-token) (`ac96994`) on the std platform, as a client of `rmw_zenohd` (ROS 2 Jazzy, `rmw_zenoh_cpp` 0.2.10 in Docker). The fork adds `Session::declare_token` and `TransportLinkManager::zid()`. The example `z_ros_node` declares node `/rovi` and a best-effort `/cmd_vel` `TwistStamped` subscription. Reproduce with [`sim/graph-check.sh`](sim/graph-check.sh).
+* **Result:**
+  * `ros2 node list` shows `/rovi`.
+  * `ros2 topic info -v /cmd_vel` shows one subscription from node `rovi`, type hash `RIHS01_5f0fcd4f…`, QoS best-effort, depth 1.
+  * Plain `ros2 topic pub -r 5 /cmd_vel geometry_msgs/msg/TwistStamped` (no `-w 0`) starts at once, and the node receives 68-byte CDR payloads, matching the design.
+* **Liveliness key** (verified against a real ROS 2 node): `@ros2_lv/<domain>/<zid>/<nid>/<id>/<NN|MS|MP>/%/%/<node>[/<%topic>/<type>/<hash>/<qos>]`. The `source_gid` in a publisher's attachment is the XXH3-128 hash of its own liveliness key, which the car must reproduce for non-owner gid filtering.
+* **Not yet checked:** the S3 build and footprint with the patch, the board's own zid (it must be stable, so it comes from the MAC), reconnect re-declaration of tokens, and the publisher tokens for `/rovi/status`.
