@@ -217,3 +217,14 @@ flowchart LR
 * BLE security and UDP signing ([ADR-0008](../../docs/adr/0008-local-link-security-baseline.md)).
 * Video, Nav2 and odometry.
 * An iPhone app: M8 is accepted with laptop clients (Q9).
+
+## Core library: build and test
+
+The host-tested core lives in `src/` (`setpoint`, `kinematics`, `arbiter`) and builds on the host with no board or ROS install. Run from this directory:
+
+```sh
+cargo test --lib
+cargo clippy --lib --tests -- -D warnings
+```
+
+The CDR golden vectors in `src/setpoint.rs` were captured from ROS 2 Jazzy (`rmw_zenoh_cpp` 0.2.10). ROS leaves CDR padding bytes non-zero, so the decoder ignores padding. The kinematics follow the Jazzy `mecanum_drive_controller` source. The laptop ROS graph check is `sim/graph-check.sh`.

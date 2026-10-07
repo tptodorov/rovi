@@ -52,7 +52,9 @@ impl Setpoint {
         if body.len() < twist + 48 {
             return Err(DecodeError::Truncated);
         }
-        let f = |i: usize| f64::from_le_bytes(body[twist + 8 * i..twist + 8 * i + 8].try_into().unwrap());
+        let f = |i: usize| {
+            f64::from_le_bytes(body[twist + 8 * i..twist + 8 * i + 8].try_into().unwrap())
+        };
         let [vx, vy, lz, ax, ay, wz] = [f(0), f(1), f(2), f(3), f(4), f(5)];
         if lz != 0.0 || ax != 0.0 || ay != 0.0 {
             return Err(DecodeError::OutOfPlane);
@@ -60,7 +62,13 @@ impl Setpoint {
         if !(vx.is_finite() && vy.is_finite() && wz.is_finite()) {
             return Err(DecodeError::NotFinite);
         }
-        Ok(Self { sec, nanosec, vx, vy, wz })
+        Ok(Self {
+            sec,
+            nanosec,
+            vx,
+            vy,
+            wz,
+        })
     }
 
     /// Encodes with an empty `frame_id`. Returns the length, or `None` if `out` is too small.
@@ -71,7 +79,7 @@ impl Setpoint {
         out[4..8].copy_from_slice(&self.sec.to_le_bytes());
         out[8..12].copy_from_slice(&self.nanosec.to_le_bytes());
         out[12..16].copy_from_slice(&1u32.to_le_bytes()); // empty string: just the NUL
-        // Twist at data offset 16 (abs 20): linear x, y, z, angular x, y, z.
+                                                          // Twist at data offset 16 (abs 20): linear x, y, z, angular x, y, z.
         out[20..28].copy_from_slice(&self.vx.to_le_bytes());
         out[28..36].copy_from_slice(&self.vy.to_le_bytes());
         out[60..68].copy_from_slice(&self.wz.to_le_bytes());
@@ -103,7 +111,16 @@ mod tests {
         let (b, n) = hex(EMPTY_FRAME);
         assert_eq!(n, MIN_LEN);
         let sp = Setpoint::decode(&b[..n]).unwrap();
-        assert_eq!(sp, Setpoint { sec: 0, nanosec: 0, vx: 0.1, vy: 0.0, wz: 0.0 });
+        assert_eq!(
+            sp,
+            Setpoint {
+                sec: 0,
+                nanosec: 0,
+                vx: 0.1,
+                vy: 0.0,
+                wz: 0.0
+            }
+        );
     }
 
     #[test]
@@ -111,7 +128,16 @@ mod tests {
         let (b, n) = hex(BASE_LINK);
         assert_eq!(n, 76);
         let sp = Setpoint::decode(&b[..n]).unwrap();
-        assert_eq!(sp, Setpoint { sec: 1, nanosec: 2, vx: 0.5, vy: -0.25, wz: 1.5 });
+        assert_eq!(
+            sp,
+            Setpoint {
+                sec: 1,
+                nanosec: 2,
+                vx: 0.5,
+                vy: -0.25,
+                wz: 1.5
+            }
+        );
     }
 
     #[test]
@@ -126,7 +152,10 @@ mod tests {
         assert_eq!(Setpoint::decode(&b[..n - 1]), Err(DecodeError::Truncated));
         assert_eq!(Setpoint::decode(&[]), Err(DecodeError::Truncated));
         b[1] = 0x00; // big-endian CDR is not supported
-        assert_eq!(Setpoint::decode(&b[..n]), Err(DecodeError::BadEncapsulation));
+        assert_eq!(
+            Setpoint::decode(&b[..n]),
+            Err(DecodeError::BadEncapsulation)
+        );
     }
 
     #[test]
@@ -143,7 +172,13 @@ mod tests {
 
     #[test]
     fn rejects_non_finite_velocity() {
-        let sp = Setpoint { sec: 0, nanosec: 0, vx: f64::NAN, vy: 0.0, wz: 0.0 };
+        let sp = Setpoint {
+            sec: 0,
+            nanosec: 0,
+            vx: f64::NAN,
+            vy: 0.0,
+            wz: 0.0,
+        };
         let mut b = [0u8; MIN_LEN];
         sp.encode(&mut b).unwrap();
         assert_eq!(Setpoint::decode(&b), Err(DecodeError::NotFinite));
@@ -151,7 +186,13 @@ mod tests {
 
     #[test]
     fn encode_matches_ros_for_empty_frame_id_up_to_padding() {
-        let sp = Setpoint { sec: 0, nanosec: 0, vx: 0.1, vy: 0.0, wz: 0.0 };
+        let sp = Setpoint {
+            sec: 0,
+            nanosec: 0,
+            vx: 0.1,
+            vy: 0.0,
+            wz: 0.0,
+        };
         let mut b = [0xAAu8; 80];
         assert_eq!(sp.encode(&mut b), Some(MIN_LEN));
         let (ros, _) = hex(EMPTY_FRAME);
@@ -163,7 +204,13 @@ mod tests {
 
     #[test]
     fn encode_rejects_short_buffer() {
-        let sp = Setpoint { sec: 0, nanosec: 0, vx: 0.0, vy: 0.0, wz: 0.0 };
+        let sp = Setpoint {
+            sec: 0,
+            nanosec: 0,
+            vx: 0.0,
+            vy: 0.0,
+            wz: 0.0,
+        };
         assert_eq!(sp.encode(&mut [0u8; MIN_LEN - 1]), None);
     }
 }

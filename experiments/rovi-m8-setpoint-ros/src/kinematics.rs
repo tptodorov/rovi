@@ -23,7 +23,12 @@ pub fn inverse(g: &Geometry, vx: f64, vy: f64, wz: f64) -> [f64; 4] {
     let cy = s * vx + c * vy - g.offset_x * wz;
     let l = g.center_projection_sum * wz;
     let k = 1.0 / g.wheels_radius;
-    [k * (cx - cy - l), k * (cx + cy + l), k * (cx - cy + l), k * (cx + cy - l)]
+    [
+        k * (cx - cy - l),
+        k * (cx + cy + l),
+        k * (cx - cy + l),
+        k * (cx + cy - l),
+    ]
 }
 
 /// Normalises wheel speeds to wheel commands in -1.0..=1.0, saturating.
@@ -68,20 +73,33 @@ mod tests {
     #[test]
     fn base_frame_offset_translation() {
         // Controller: vx_c = vx + off_y*wz, vy_c = vy - off_x*wz.
-        let g = Geometry { offset_x: 0.1, offset_y: 0.05, ..G };
+        let g = Geometry {
+            offset_x: 0.1,
+            offset_y: 0.05,
+            ..G
+        };
         close(inverse(&g, 1.0, 0.0, 1.0), [19.0, 23.0, 27.0, 15.0]);
     }
 
     #[test]
     fn base_frame_offset_rotation() {
         // A 90 degree offset makes body-forward look like strafe-left.
-        let g = Geometry { offset_theta: core::f64::consts::FRAC_PI_2, ..G };
+        let g = Geometry {
+            offset_theta: core::f64::consts::FRAC_PI_2,
+            ..G
+        };
         close(inverse(&g, 1.0, 0.0, 0.0), [-20.0, 20.0, -20.0, 20.0]);
     }
 
     #[test]
     fn normalise_scales_and_saturates() {
-        assert_eq!(normalise(&G, [20.0, -10.0, 0.0, 40.0]), [0.5, -0.25, 0.0, 1.0]);
-        assert_eq!(normalise(&G, [80.0, -80.0, 0.0, 0.0]), [1.0, -1.0, 0.0, 0.0]);
+        assert_eq!(
+            normalise(&G, [20.0, -10.0, 0.0, 40.0]),
+            [0.5, -0.25, 0.0, 1.0]
+        );
+        assert_eq!(
+            normalise(&G, [80.0, -80.0, 0.0, 0.0]),
+            [1.0, -1.0, 0.0, 0.0]
+        );
     }
 }
