@@ -213,7 +213,7 @@ flowchart LR
 ## Not in M8
 
 * Motors, encoders, closed-loop control, and the `ros2_control` hardware (wheel-velocity) mode.
-* Station mode and runtime configuration.
-* BLE security.
+* Station mode ([ADR-0008](../../docs/adr/0008-local-link-security-baseline.md)) and runtime configuration.
+* BLE security and UDP signing ([ADR-0008](../../docs/adr/0008-local-link-security-baseline.md)).
 * Video, Nav2 and odometry.
 * An iPhone app: M8 is accepted with laptop clients (Q9).

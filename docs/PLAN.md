@@ -28,7 +28,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 
 ### Hardware (resume when the bench setup is available)
 
-* **M8 bench**: board-only acceptance of the above. **M3 remainder**: range/distance runs, phone onboarding, dedicated-radio latency.
+* **M8 bench**: board-only acceptance of the above, plus the M3 remainder run against M8's UDP firmware: range/distance runs, phone onboarding, dedicated-radio latency ([ADR-0008](adr/0008-local-link-security-baseline.md)).
 * **M4** (proposed) — qualify four-motor electrical limits, power integrity, and standby fail-safe in one integrated bench setup. Highest physical risk; gates all motion. See [`experiments/rovi-m4-four-motor-safety/`](../experiments/rovi-m4-four-motor-safety/).
 * **M5** (proposed) — characterize mecanum wheel mapping, open-loop behavior, and available feedback (encoders decide open- vs closed-loop) using the M4 setup. See [`experiments/rovi-m5-mecanum-motion/`](../experiments/rovi-m5-mecanum-motion/).
 
@@ -45,14 +45,10 @@ Living list. Close an item when it is decided, move hard-to-reverse outcomes int
 | # | Question / decision | Options / current lean | Settled by |
 | --- | --- | --- | --- |
 | Q2 | Can the car be visible in the ROS 2 graph with zenoh-nostd? | Implement `rmw_zenoh` liveliness tokens: patch a fork or upstream. If impractical, revisit ADR-0005 (XRCE fallback) | M8 first risk item |
-| Q6 | UDP access control | WPA2 on the car AP only (as M3) vs a per-session token or message signing | you, M8 design |
-| Q7 | BLE security | M2/M3 unpaired bench access vs LE Secure Connections bonding | you; deferred until there is a product milestone |
 | Q8 | When to retire M3's TCP protocol v1 and `client.py` | Retire once M8's UDP protocol passes on the bench (ADR-0004) | M8 bench |
-| Q9 | iPhone client | M8 is accepted with laptop clients (BLE via bleak, a Python UDP client, ROS 2). Open: when and how to build the iPhone app | you, after M8 |
+| Q9 | iPhone client | M8 is accepted with laptop clients (BLE via bleak, a Python UDP client, ROS 2). Open: when and how to build the iPhone app. Decide after M8 bench results for Q18/Q19 | you, after M8 |
 | Q11 | Open-loop vs closed-loop wheel control; ros2_control wheel-velocity mode | Depends on whether encoders exist | M5 |
-| Q12 | Station mode (car joins an existing network) | Excluded for M8; revisit with an ADR if ROS on the lab network matters | you, after M8 |
 | Q13 | Runtime vs compile-time configuration | Compile-time `ros` feature for M8 (agreed); runtime config later | after M8 |
-| Q14 | M3 remainder (range, phone onboarding, dedicated-radio latency) | Run against M8's UDP firmware instead of M3, so effort isn't spent on the superseded TCP path | you |
 | Q16 | zenoh-nostd patches | A pinned fork with optional `defmt`, `embassy-sync` 0.8 and a liveliness API (decided, ADR-0005). Open: whether upstream accepts them | M8 |
 | Q17 | Clock sync for setpoint stamps | Without sync, staleness is judged by receive time and sequence. With sync, stamp-age checks could match `reference_timeout` | M8 bench, later |
 | Q18 | BLE ATT MTU | CDR setpoints need MTU ≥ 75. Verify the negotiated value on iPhone and BlueZ with trouble-host; fall back to a compact 16-byte setpoint if it's unreliable | M8 bench |
