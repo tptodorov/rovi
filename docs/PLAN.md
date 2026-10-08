@@ -44,12 +44,12 @@ Living list. Close an item when it is decided, move hard-to-reverse outcomes int
 
 | # | Question / decision | Options / current lean | Settled by |
 | --- | --- | --- | --- |
-| Q2 | Can the car be visible in the ROS 2 graph with zenoh-nostd? | **Passed on the laptop (2026-10-07)** with a fork patch: `ros2 node list`, `topic info -v` and plain `ros2 topic pub` all work ([M8 results](../experiments/rovi-m8-setpoint-ros/MILESTONE.md#results)). Remaining: confirm on the S3 build and on the board, then close | M8 S3 build, bench |
+| Q2 | Can the car be visible in the ROS 2 graph with zenoh-nostd? | **Passed on the laptop (2026-10-07)** with a fork patch: `ros2 node list`, `topic info -v` and plain `ros2 topic pub` all work ([M8 results](../experiments/rovi-m8-setpoint-ros/MILESTONE.md#results)). The S3 build with the ROS feature now links (+154 KB flash). Remaining: confirm on the board, then close | M8 S3 build, bench |
 | Q8 | When to retire M3's TCP protocol v1 and `client.py` | Retire once M8's UDP protocol passes on the bench (ADR-0004) | M8 bench |
 | Q9 | iPhone client | M8 is accepted with laptop clients (BLE via bleak, a Python UDP client, ROS 2). Open: when and how to build the iPhone app. Decide after M8 bench results for Q18/Q19 | you, after M8 |
 | Q11 | Open-loop vs closed-loop wheel control; ros2_control wheel-velocity mode | Depends on whether encoders exist | M5 |
 | Q13 | Runtime vs compile-time configuration | Compile-time `ros` feature for M8 (agreed); runtime config later | after M8 |
-| Q16 | zenoh-nostd patches | A pinned fork with optional `defmt`, `embassy-sync` 0.8 and a liveliness API (decided, ADR-0005). The fork at `tptodorov/zenoh-nostd@rovi/liveliness-token` carries liveliness tokens, a liveliness subscriber, sample attachments and the zid accessor. Open: the `defmt` and `embassy-sync` patches, per-reliability sequence numbers, and whether upstream accepts them | M8 |
+| Q16 | zenoh-nostd patches | A pinned fork with optional `defmt`, `embassy-sync` 0.8 and a liveliness API (decided, ADR-0005). The fork at `tptodorov/zenoh-nostd@rovi/liveliness-token` carries liveliness tokens, a liveliness subscriber, sample attachments and the zid accessor. The optional-`defmt` and `embassy-sync` 0.8 patches are in too. Open: per-reliability sequence numbers, session reconnect, and whether upstream accepts the patches | M8 |
 | Q17 | Clock sync for setpoint stamps | Without sync, staleness is judged by receive time and sequence. With sync, stamp-age checks could match `reference_timeout` | M8 bench, later |
 | Q18 | BLE ATT MTU | CDR setpoints need MTU ≥ 75. Verify the negotiated value on iPhone and BlueZ with trouble-host; fall back to a compact 16-byte setpoint if it's unreliable | M8 bench |
 | Q19 | BLE streaming rate | Check that iOS gives a connection interval suitable for 20 Hz setpoints | M8 bench, iPhone |

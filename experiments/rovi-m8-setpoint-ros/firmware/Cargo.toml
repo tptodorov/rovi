@@ -32,6 +32,14 @@ smart-leds = "0.4.0"
 static_cell = "2.1.1" # Required by trouble-host GATT derive.
 trouble-host = { version = "0.8.0", features = ["peripheral", "gatt", "derive"] }
 
+# Optional ROS 2 over zenoh-nostd (the tptodorov fork), on embassy-net.
+zenoh-nostd = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "e1267a8", default-features = false, features = ["alloc"], optional = true }
+zenoh-embassy = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "e1267a8", optional = true }
+getrandom = { version = "0.2", features = ["custom"], optional = true }
+
+[features]
+ros = ["dep:zenoh-nostd", "dep:zenoh-embassy", "dep:getrandom"]
+
 [profile.dev.package.esp-radio]
 opt-level = 3
 

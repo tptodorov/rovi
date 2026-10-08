@@ -4,7 +4,7 @@
 use core::cell::RefCell;
 use embassy_executor::Spawner;
 use embassy_futures::{
-    join::join4,
+    join::join5,
     select::{select, select3, Either, Either3},
 };
 use embassy_net::{
@@ -25,6 +25,18 @@ use smart_leds::{SmartLedsWrite, RGB8};
 use trouble_host::prelude::*;
 
 esp_bootloader_esp_idf::esp_app_desc!();
+
+#[cfg(feature = "ros")]
+#[path = "ros.rs"]
+mod ros;
+
+#[cfg(feature = "ros")]
+getrandom::register_custom_getrandom!(random_bytes);
+#[cfg(feature = "ros")]
+fn random_bytes(bytes: &mut [u8]) -> Result<(), getrandom::Error> {
+    Rng::new().read(bytes);
+    Ok(())
+}
 
 const UDP_PORT: u16 = 7777;
 
@@ -149,7 +161,8 @@ async fn main(_spawner: Spawner) -> ! {
             )),
     ))
     .unwrap();
-    let mut resources = StackResources::<2>::new();
+    static RESOURCES: static_cell::StaticCell<StackResources<6>> = static_cell::StaticCell::new();
+    let resources = RESOURCES.init(StackResources::new());
     let (net, mut net_runner) = embassy_net::new(
         wifi::Interface::access_point(),
         NetConfig::ipv4_static(StaticConfigV4 {
@@ -157,7 +170,7 @@ async fn main(_spawner: Spawner) -> ! {
             gateway: None,
             dns_servers: Default::default(),
         }),
-        &mut resources,
+        resources,
         seed,
     );
 
@@ -344,12 +357,17 @@ async fn main(_spawner: Spawner) -> ! {
             }
         }
     };
+    #[cfg(feature = "ros")]
+    let ros = ros::run(&dev, net);
+    #[cfg(not(feature = "ros"))]
+    let ros = core::future::pending::<()>();
     let _ = select(
-        join4(
+        join5(
             net_runner.run(),
             udp,
             control,
             select(ble_runner.run(), ble),
+            ros,
         ),
         core::future::pending::<()>(),
     )
