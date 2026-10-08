@@ -59,30 +59,75 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
     static CMD: StaticCell<Chan> = StaticCell::new();
     static ARM: StaticCell<Chan> = StaticCell::new();
     static TOKENS: StaticCell<TokenChan> = StaticCell::new();
+    static CONFIG: StaticCell<RosConfig> = StaticCell::new();
     let cmd: &'static Chan = CMD.init(Channel::new());
     let arm: &'static Chan = ARM.init(Channel::new());
     let lv_chan: &'static TokenChan = TOKENS.init(Channel::new());
-
     let router =
         leak(std::env::var("ROVI_ZENOH_ROUTER").unwrap_or_else(|_| "tcp/127.0.0.1:7447".into()));
-    static CONFIG: StaticCell<RosConfig> = StaticCell::new();
-    static RESOURCES: StaticCell<Resources<'static, RosConfig>> = StaticCell::new();
-    static SESSION: StaticCell<Session<'static, RosConfig>> = StaticCell::new();
     let config: &'static RosConfig = CONFIG.init(RosConfig {
         transports: TransportLinkManager::from(LinkManager),
     });
     let zid = format!("{:?}", config.transports().zid());
-    // ROS mixes reliable and best-effort traffic, which zenoh sequences separately, but
-    // zenoh-nostd tracks one sequence number and would drop frames. So skip the check.
-    let session: &'static Session<'static, RosConfig> = SESSION.init(
-        zenoh::connect_ignore_invalid_sn(
-            RESOURCES.init(Resources::default()),
+
+    // One session per connection. Each gets heap storage that is reclaimed once it has ended, so
+    // the adapter can reconnect for as long as the car runs.
+    loop {
+        let resources: *mut Resources<'static, RosConfig> =
+            Box::into_raw(Box::new(Resources::default()));
+        // ROS mixes reliable and best-effort traffic, which zenoh sequences separately, but
+        // zenoh-nostd tracks one sequence number and would drop frames. So skip the check.
+        // SAFETY: `resources` is a live allocation that nothing else references.
+        let connected = zenoh::connect_ignore_invalid_sn(
+            unsafe { &mut *resources },
             config,
             Endpoint::try_from(router)?,
         )
-        .await?,
-    );
+        .await;
+        let Ok(session) = connected else {
+            // SAFETY: a failed connect did not keep the resources.
+            drop(unsafe { Box::from_raw(resources) });
+            println!("ros: router {router} not reachable, retrying");
+            embassy_time::Timer::after_secs(2).await;
+            continue;
+        };
+        let session: *mut Session<'static, RosConfig> = Box::into_raw(Box::new(session));
+        // SAFETY: the session lives until reclaimed below.
+        let result = serve(
+            &dev,
+            t0,
+            unsafe { &*session },
+            &zid,
+            router,
+            cmd,
+            arm,
+            lv_chan,
+        )
+        .await;
+        println!("ros session ended ({:?}), reconnecting", result.err());
+        // SAFETY: `serve` returned, so every borrow of the session (tokens, subscribers,
+        // publisher) is gone. The session points into the resources, so it goes first.
+        drop(unsafe { Box::from_raw(session) });
+        drop(unsafe { Box::from_raw(resources) });
+        // Samples queued by the old session are stale.
+        while cmd.try_receive().is_ok() {}
+        while arm.try_receive().is_ok() {}
+        while lv_chan.try_receive().is_ok() {}
+        embassy_time::Timer::after_secs(2).await;
+    }
+}
 
+#[allow(clippy::too_many_arguments)]
+async fn serve(
+    dev: &Shared,
+    t0: Instant,
+    session: &'static Session<'static, RosConfig>,
+    zid: &str,
+    router: &str,
+    cmd: &'static Chan,
+    arm: &'static Chan,
+    lv_chan: &'static TokenChan,
+) -> zenoh::ZResult<()> {
     let cmd_vel = Topic {
         name: "cmd_vel",
         ty: rmw::TWIST_STAMPED.0,
@@ -100,7 +145,7 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
     };
 
     // Liveliness: the node, then each endpoint, so the car shows up in the ROS graph.
-    let node = rmw::node_token(DOMAIN, &zid, NODE).unwrap();
+    let node = rmw::node_token(DOMAIN, zid, NODE).unwrap();
     let _node = session
         .declare_token(zenoh::keyexpr::new(node.as_str())?)
         .await?;
@@ -110,7 +155,7 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
         (3, Kind::Publisher, &status_t, rmw::QOS_DEFAULT_10),
     ]
     .map(|(id, kind, topic, qos)| {
-        rmw::endpoint_token(DOMAIN, &zid, id, kind, NODE, topic, qos).unwrap()
+        rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
     });
     let mut _held = Vec::new();
     for t in &tokens {
@@ -145,7 +190,7 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
         .await?;
     println!("ros node /{NODE} up, zid {zid}, router {router}");
 
-    let (d1, d2, d3, d4) = (dev.clone(), dev.clone(), dev.clone(), dev);
+    let (d1, d2, d3, d4) = (dev.clone(), dev.clone(), dev.clone(), dev.clone());
     select5(
         session.run(),
         async {

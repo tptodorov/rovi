@@ -55,11 +55,9 @@ fn leak(s: alloc::string::String) -> &'static str {
 }
 
 /// Runs forever: connects to the router (retrying until it is up), declares the node and its
-/// endpoints, and feeds the samples to the device.
+/// endpoints, feeds the samples to the device, and starts over when the session ends.
 pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
     static CONFIG: StaticCell<RosConfig> = StaticCell::new();
-    static RESOURCES: StaticCell<Resources<'static, RosConfig>> = StaticCell::new();
-    static SESSION: StaticCell<Session<'static, RosConfig>> = StaticCell::new();
     static CMD: StaticCell<Chan> = StaticCell::new();
     static ARM: StaticCell<Chan> = StaticCell::new();
     static TOKENS: StaticCell<TokenChan> = StaticCell::new();
@@ -68,33 +66,48 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
         transports: TransportLinkManager::from(Link::new(stack)),
     });
     let zid = alloc::format!("{:?}", config.transports().zid());
-    let mut transport = loop {
-        let endpoint = Endpoint::try_from(ROUTER).expect("ROVI_ZENOH_ROUTER endpoint");
-        match config.transports().connect(endpoint, config.buff()).await {
-            Ok(t) => break t,
-            Err(_) => {
-                println!("ros: router {} not reachable, retrying", ROUTER);
-                Timer::after_secs(2).await;
-            }
-        }
-    };
-    // ROS mixes reliable and best-effort traffic, which zenoh sequences separately, but
-    // zenoh-nostd tracks one sequence number and would drop frames. So skip the check.
-    transport.transport_mut().rx.ignore_invalid_sn();
-    let session: &'static Session<'static, RosConfig> = SESSION.init(Session::new(
-        RESOURCES.init(Resources::default()).init(transport),
-    ));
     let (cmd, arm, tokens) = (
         CMD.init(Channel::new()),
         ARM.init(Channel::new()),
         TOKENS.init(Channel::new()),
     );
 
-    let err = declare_and_serve(dev, session, &zid, cmd, arm, tokens).await;
-    println!("ros adapter stopped: {:?}", err.err());
-    // The session cannot be reopened in place; a reboot reconnects.
+    // One session per connection. Each gets heap storage that is reclaimed once it has ended
+    // (the link frees its buffer slot when dropped), so the car can reconnect indefinitely.
     loop {
-        Timer::after_secs(3600).await;
+        let mut transport = loop {
+            let endpoint = Endpoint::try_from(ROUTER).expect("ROVI_ZENOH_ROUTER endpoint");
+            match config.transports().connect(endpoint, config.buff()).await {
+                Ok(t) => break t,
+                Err(_) => {
+                    println!("ros: router {} not reachable, retrying", ROUTER);
+                    Timer::after_secs(2).await;
+                }
+            }
+        };
+        // ROS mixes reliable and best-effort traffic, which zenoh sequences separately, but
+        // zenoh-nostd tracks one sequence number and would drop frames. So skip the check.
+        transport.transport_mut().rx.ignore_invalid_sn();
+        let resources: *mut Resources<'static, RosConfig> =
+            alloc::boxed::Box::into_raw(alloc::boxed::Box::new(Resources::default()));
+        // SAFETY: `resources` is a live allocation that nothing else references; the session
+        // below is dropped before it is freed.
+        let link = unsafe { &mut *resources }.init(transport);
+        let session: *mut Session<'static, RosConfig> =
+            alloc::boxed::Box::into_raw(alloc::boxed::Box::new(Session::new(link)));
+        // SAFETY: the session lives until it is reclaimed below.
+        let result = declare_and_serve(dev, unsafe { &*session }, &zid, cmd, arm, tokens).await;
+        println!("ros session ended ({:?}), reconnecting", result.err());
+        // SAFETY: `declare_and_serve` returned, so every borrow of the session (tokens,
+        // subscribers, publisher) is gone. The session points into the resources, so it goes
+        // first.
+        drop(unsafe { alloc::boxed::Box::from_raw(session) });
+        drop(unsafe { alloc::boxed::Box::from_raw(resources) });
+        // Samples queued by the old session are stale.
+        while cmd.try_receive().is_ok() {}
+        while arm.try_receive().is_ok() {}
+        while tokens.try_receive().is_ok() {}
+        Timer::after_secs(2).await;
     }
 }
 
