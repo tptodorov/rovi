@@ -11,8 +11,8 @@ libm = "0.2"
 xxhash-rust = { version = "0.8", default-features = false, features = ["xxh3"] }
 
 # The optional ROS 2 sim adapter runs the zenoh-nostd fork (liveliness tokens, sample attachments).
-zenoh-nostd = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "b853f72", features = ["alloc", "log"], optional = true }
-zenoh-std = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "b853f72", optional = true }
+zenoh-nostd = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "4ec6181", features = ["alloc", "log"], optional = true }
+zenoh-std = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "4ec6181", optional = true }
 embassy-executor = { version = "0.9.1", features = ["arch-std", "executor-thread"], optional = true }
 embassy-futures = { version = "0.1.2", optional = true }
 embassy-sync = { version = "0.7.2", optional = true }

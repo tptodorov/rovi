@@ -46,7 +46,10 @@ fn udp_loop(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
     let (mut buf, mut out) = ([0u8; 1500], [0u8; 128]);
     loop {
         let (n, from) = sock.recv_from(&mut buf)?;
-        let r = dev.lock().unwrap().on_udp(ms(t0), peer_id(from), &buf[..n], &mut out);
+        let r = dev
+            .lock()
+            .unwrap()
+            .on_udp(ms(t0), peer_id(from), &buf[..n], &mut out);
         if r.len > 0 {
             sock.send_to(&out[..r.len], from)?;
         }

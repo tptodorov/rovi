@@ -138,7 +138,7 @@ The car is a zenoh-nostd client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (default 
   * Payload: CDR.
   * Attachment: 33 bytes (`seq` i64, timestamp i64, LEB128 `16`, 16-byte gid).
 * **Type hashes:** copied from a ROS 2 Jazzy install and checked against a live router.
-* **Ownership:** the owner is identified by its publisher gid, and other gids are ignored.
+* **Ownership:** the owner is the ROS *node* of the publisher. Samples carry only a publisher gid, which is a hash of the publisher's liveliness key, and `/cmd_vel` and `/rovi/arm` are separate publishers with different gids. So the car subscribes to the graph's liveliness tokens, maps each publisher gid to its node (`zid/nid`), and ignores samples from other nodes and from publishers it has not seen announced.
 * **Graph visibility:** the node `/rovi` and its topics are announced with `rmw_zenoh` liveliness tokens. This is M8's first risk item (Q2).
 
 ```mermaid
@@ -207,7 +207,15 @@ flowchart LR
    * Kinematics vectors from the `mecanum_drive_controller` formulas.
    * `rmw_zenoh` keys, attachments and liveliness keys.
    * The ownership and lease state machine.
-2. **Sim car on the laptop.** The same core and adapters run on std UDP and zenoh-nostd's std platform, and are driven by `rmw_zenohd`, the ROS 2 CLI or `teleop_twist_keyboard` (stamped), and a Python UDP client. This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)).
+2. **Sim car on the laptop.** The same core and adapters run on std UDP and zenoh-nostd's std platform, and are driven by `rmw_zenohd`, the ROS 2 CLI or `teleop_twist_keyboard` (stamped), and a Python UDP client. With `--features ros` the sim car is also a ROS 2 node on the zenoh-nostd fork. `sim/ros-scenarios.sh` runs a real ROS 2 controller (one node with `/cmd_vel` and `/rovi/arm` publishers, plus an intruder node) against it in Docker and checks claim, arm, ownership and stop:
+
+```sh
+cargo build --bin simcar --features ros && sim/ros-scenarios.sh
+```
+
+Fork findings (`tptodorov/zenoh-nostd`): it needed liveliness tokens and a liveliness subscriber, the sample attachment on received data, and the zid accessor. zenoh-nostd also tracks one sequence number for reliable and best-effort traffic, which zenoh sequences separately, and drops frames with "Inconsistent SN"; the sim connects with `connect_ignore_invalid_sn`. A proper per-reliability fix is for upstream or the fork before the board.
+
+This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)).
 3. **S3 cross-build and clippy** at every step. Then, once hardware is available, bench acceptance as listed in [MILESTONE.md](MILESTONE.md).
 
 ## Not in M8

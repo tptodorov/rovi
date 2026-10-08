@@ -48,7 +48,9 @@ Bench results (date, commit, board, clients, settings, logs, pass/fail) are adde
 
 * **Host tests:** 48 pass (`cargo test --lib`): CDR codec against real ROS bytes, kinematics against the `mecanum_drive_controller` formulas, the arbiter (ownership, lease, arm, claim and reclaim windows, limits), UDP framing and the device core, and the `rmw_zenoh` keys, liveliness tokens, entity gid and attachment against a live Jazzy graph (gid `1b8f09d3…` reproduced).
 * **Sim car over real UDP sockets:** 6 scenarios pass (`sim/udp_scenarios.py`).
-* **Not yet:** the ROS adapter in the sim, the BLE adapter, the S3 firmware shell, and everything on the board.
+* **ROS 2 sim car (real Jazzy controller in Docker, `sim/ros-scenarios.sh`):** pass. The first `/cmd_vel` claims the car, an arm from a second publisher of the same node arms it, an intruder node's setpoint and stop are ignored, arm false stops, and `/rovi/status` reaches `ros2`. 58 host tests pass.
+* **Design change found by this test:** an owner identified by publisher gid cannot work, because `/cmd_vel` and `/rovi/arm` are different publishers with different gids. The car now learns publisher gid to ROS node from liveliness tokens and treats the node as the controller. This needed a liveliness subscriber in the zenoh-nostd fork.
+* **Not yet:** the BLE adapter, the S3 firmware shell, token-drop handling (dropped tokens without a key are skipped, so stale gid entries age out by eviction), per-reliability sequence numbers in zenoh-nostd, and everything on the board.
 
 #### Laptop: ROS graph visibility (test-plan step 1), 2026-10-07 — pass
 

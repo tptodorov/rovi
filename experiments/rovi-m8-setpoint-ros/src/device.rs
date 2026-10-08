@@ -2,6 +2,7 @@
 //! adapters will feed the same arbiter. Time is passed in; the firmware shell owns the sockets.
 
 use crate::arbiter::{Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason};
+use crate::graph::Graph;
 use crate::kinematics::{self, Geometry};
 use crate::rmw::Attachment;
 use crate::setpoint::Setpoint;
@@ -24,6 +25,7 @@ pub struct Device {
     cfg: Config,
     geometry: Geometry,
     arbiter: Arbiter,
+    graph: Graph<16>,
 }
 
 impl Device {
@@ -32,6 +34,7 @@ impl Device {
             cfg,
             geometry,
             arbiter: Arbiter::new(cfg),
+            graph: Graph::new(),
         }
     }
 
@@ -114,16 +117,29 @@ impl Device {
         Reply { len, effects }
     }
 
+    /// A liveliness token appeared (`alive`) or went away. Samples are attributed to a ROS node
+    /// through the publisher tokens learned here; samples from unknown publishers are dropped.
+    pub fn on_ros_liveliness(&mut self, key: &str, alive: bool) {
+        self.graph.on_token(key, alive);
+    }
+
+    fn ros_claimant(&self, att: &Attachment) -> Option<Claimant> {
+        let id = self.graph.node_of(&att.gid)?;
+        Some(Claimant {
+            source: Source::Ros,
+            id,
+        })
+    }
+
     /// A sample on the `cmd_vel` topic. The first valid one from a free device claims it, and the
-    /// owner is the publisher gid in the attachment. Input from other gids is ignored.
+    /// owner is the ROS node of the publisher gid in the attachment. Input from other nodes is ignored.
     pub fn on_ros_cmd_vel(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
         let (Some(att), Ok(sp)) = (Attachment::decode(attachment), Setpoint::decode(payload))
         else {
             return Effects::default();
         };
-        let who = Claimant {
-            source: Source::Ros,
-            id: u128::from_le_bytes(att.gid),
+        let Some(who) = self.ros_claimant(&att) else {
+            return Effects::default();
         };
         let Ok(mut fx) = self.arbiter.claim(now, who) else {
             return Effects::default();
@@ -142,9 +158,8 @@ impl Device {
         if payload.len() < 5 || payload[..4] != [0, 1, 0, 0] {
             return Effects::default();
         }
-        let who = Claimant {
-            source: Source::Ros,
-            id: u128::from_le_bytes(att.gid),
+        let Some(who) = self.ros_claimant(&att) else {
+            return Effects::default();
         };
         if payload[4] != 0 {
             let _ = self.arbiter.arm(now, who);
@@ -241,6 +256,7 @@ fn stop_code(r: StopReason) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::format;
 
     const GEOMETRY: Geometry = Geometry {
         wheels_radius: 0.05,
@@ -423,11 +439,16 @@ mod tests {
         assert_eq!(r.unwrap().0.session, s + 1);
     }
 
-    fn ros(gid: u8, seq: i64) -> [u8; 33] {
+    /// Registers a fake publisher `id` of node `nid` and returns its attachment for `seq`.
+    fn publisher(d: &mut Device, nid: u8, id: u8, seq: i64) -> [u8; 33] {
+        let key = format!(
+            "@ros2_lv/0/9ad20db4c929c8189ca587de2f90c2e2/{nid}/{id}/MP/%/%/n{nid}/%t{id}/std_msgs::msg::dds_::Bool_/RIHS01_x/::,10:,:,:,,"
+        );
+        d.on_ros_liveliness(&key, true);
         Attachment {
             seq,
             timestamp: 0,
-            gid: [gid; 16],
+            gid: crate::rmw::gid(&key),
         }
         .encode()
     }
@@ -437,31 +458,28 @@ mod tests {
     }
 
     #[test]
-    fn first_ros_setpoint_claims_then_arm_drives() {
+    fn first_ros_setpoint_claims_then_arm_from_another_publisher_of_the_node_drives() {
         let mut d = dev();
-        let fx = d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(1.0));
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        let fx = d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
         assert_eq!(fx.claimed, Some(Source::Ros));
         assert_eq!(d.wheels(0), [0.0; 4], "claimed but not armed");
-        d.on_ros_arm(5, &ros(1, 2), &bool_cdr(true));
+        d.on_ros_arm(5, &arm, &bool_cdr(true));
         assert_eq!(d.wheels(5), [0.5; 4]);
-        let fx = d.on_ros_arm(6, &ros(1, 3), &bool_cdr(false));
+        let fx = d.on_ros_arm(6, &arm, &bool_cdr(false));
         assert_eq!(fx.stop, Some(StopReason::Stop));
         assert_eq!(d.wheels(6), [0.0; 4]);
     }
 
     #[test]
-    fn other_ros_gid_is_ignored_while_owned() {
+    fn another_ros_node_is_ignored_while_owned() {
         let mut d = dev();
-        d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(0.5));
-        d.on_ros_arm(1, &ros(1, 2), &bool_cdr(true));
-        assert_eq!(
-            d.on_ros_cmd_vel(2, &ros(2, 1), &cdr(-1.0)),
-            Effects::default()
-        );
-        assert_eq!(
-            d.on_ros_arm(2, &ros(2, 1), &bool_cdr(false)),
-            Effects::default()
-        );
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        let (cmd2, arm2) = (publisher(&mut d, 2, 1, 1), publisher(&mut d, 2, 2, 1));
+        d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        d.on_ros_arm(1, &arm, &bool_cdr(true));
+        assert_eq!(d.on_ros_cmd_vel(2, &cmd2, &cdr(-1.0)), Effects::default());
+        assert_eq!(d.on_ros_arm(2, &arm2, &bool_cdr(false)), Effects::default());
         assert_eq!(
             d.wheels(2),
             [0.25; 4],
@@ -470,15 +488,30 @@ mod tests {
     }
 
     #[test]
+    fn unknown_publishers_cannot_claim_and_forgotten_ones_stop_counting() {
+        let mut d = dev();
+        let unknown = Attachment {
+            seq: 1,
+            timestamp: 0,
+            gid: [9; 16],
+        }
+        .encode();
+        assert_eq!(d.on_ros_cmd_vel(0, &unknown, &cdr(0.5)), Effects::default());
+        assert_eq!(d.arbiter().state(), State::Open);
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        assert_eq!(d.arbiter().state(), State::Claimed);
+    }
+
+    #[test]
     fn udp_owner_blocks_ros_and_ros_owner_blocks_udp() {
         let mut d = dev();
         send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
-        assert_eq!(
-            d.on_ros_cmd_vel(1, &ros(1, 1), &cdr(0.5)),
-            Effects::default()
-        );
+        let cmd = publisher(&mut d, 1, 1, 1);
+        assert_eq!(d.on_ros_cmd_vel(1, &cmd, &cdr(0.5)), Effects::default());
         let mut d = dev();
-        d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(0.5));
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
         let (r, _) = send(&mut d, 1, A, Kind::Hello, 0, 1, &[]);
         assert_eq!(r.unwrap().0.kind, Kind::Busy);
     }
@@ -486,17 +519,15 @@ mod tests {
     #[test]
     fn malformed_ros_input_is_dropped() {
         let mut d = dev();
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 2));
         assert_eq!(
             d.on_ros_cmd_vel(0, &[1, 2, 3], &cdr(0.5)),
             Effects::default()
         );
-        assert_eq!(
-            d.on_ros_cmd_vel(0, &ros(1, 1), &[1, 2, 3]),
-            Effects::default()
-        );
+        assert_eq!(d.on_ros_cmd_vel(0, &cmd, &[1, 2, 3]), Effects::default());
         assert_eq!(d.arbiter().state(), State::Open, "nothing claimed");
-        d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(0.5));
-        assert_eq!(d.on_ros_arm(1, &ros(1, 2), &[0, 1, 0]), Effects::default());
+        d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        assert_eq!(d.on_ros_arm(1, &arm, &[0, 1, 0]), Effects::default());
         assert_eq!(d.arbiter().state(), State::Claimed);
     }
 
@@ -513,8 +544,9 @@ mod tests {
             core::str::from_utf8(&b[8..7 + len]).unwrap(),
             "state=open session=0"
         );
-        d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(0.5));
-        d.on_ros_arm(1, &ros(1, 2), &bool_cdr(true));
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 2));
+        d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        d.on_ros_arm(1, &arm, &bool_cdr(true));
         let n = d.status_cdr(&mut b);
         let len = u32::from_le_bytes(b[4..8].try_into().unwrap()) as usize;
         assert_eq!(
