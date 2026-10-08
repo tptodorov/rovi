@@ -57,7 +57,7 @@ Bench results (date, commit, board, clients, settings, logs, pass/fail) are adde
   * Sequence numbers: fixed in the fork (per priority and reliability, with a wrap-around test). The adapters no longer ignore the check, and the ROS, reconnect and stale-session scenarios show no "Inconsistent SN" errors.
   * Why a session ended: now logged (`LinkTxFailed` after a router kill).
   * Duplicate zid: `sim/ros-stale-session.sh` drops a UDP session silently and rejoins with the same zid. The first attempt failed with the router still holding the old session, and a retry succeeded.
-* **Finding:** `esp-radio` 1.0.0-beta.1 has no public Wi-Fi AP stop, so the Wi-Fi radio cannot be switched off while BLE owns the car. Exclusivity is enforced by the arbiter (`BUSY`), and the physical radio-off is left for the bench. Espressif rates SoftAP-connected plus BLE-connected as unstable, so this matters.
+* **Wi-Fi radio-off:** `esp-radio` 1.0.0-beta.1 (the latest) has no public AP stop, so the firmware uses a `set_config` mode switch (AP to an idle station config and back) while BLE owns the car. Core rule `Device::wifi_allowed` is tested (UDP and ROS share the AP). The firmware builds and passes clippy (text 664,677 B without ROS, 823,025 B with). Whether the switch is clean on the board, and next to a live BLE link, is a bench item. Espressif rates SoftAP plus BLE connected as unstable, so this is the reason to switch the AP off.
 * **Not yet:**  token-drop handling (dropped tokens without a key are skipped, so stale gid entries age out by eviction), per-reliability sequence numbers in zenoh-nostd, and everything on the board.
 
 #### Laptop: ROS graph visibility (test-plan step 1), 2026-10-07 — pass

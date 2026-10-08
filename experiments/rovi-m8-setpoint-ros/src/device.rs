@@ -43,6 +43,11 @@ impl Device {
         self.arbiter.owner().is_none_or(|o| o.source == source)
     }
 
+    /// May the Wi-Fi AP be up? UDP and ROS share it, so it is off only while BLE owns the car.
+    pub fn wifi_allowed(&self) -> bool {
+        self.arbiter.owner().is_none_or(|o| o.source != Source::Ble)
+    }
+
     /// Is `conn` still the BLE owner?
     pub fn ble_owns(&self, conn: u16) -> bool {
         self.arbiter.owner() == Some(ble(conn))
@@ -699,5 +704,23 @@ mod tests {
         assert!(d.ble_owns(7) && !d.ble_owns(8));
         d.on_ble_disconnect(1, 7);
         assert!(d.radio_allowed(Source::Udp) && !d.ble_owns(7));
+    }
+
+    #[test]
+    fn wifi_is_off_only_while_ble_owns_the_car() {
+        let mut d = dev();
+        assert!(d.wifi_allowed());
+        send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
+        assert!(d.wifi_allowed(), "UDP owns the car, so the AP stays up");
+        d.on_udp(1, A, &[], &mut [0u8; 8]);
+        let mut d = dev();
+        d.on_ble_connect(0, 1).unwrap();
+        assert!(!d.wifi_allowed());
+        d.on_ble_disconnect(1, 1);
+        assert!(d.wifi_allowed());
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        assert!(d.wifi_allowed(), "ROS rides on the AP");
     }
 }

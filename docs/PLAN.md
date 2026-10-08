@@ -44,6 +44,7 @@ Living list. Close an item when it is decided, move hard-to-reverse outcomes int
 
 | # | Question / decision | Options / current lean | Settled by |
 | --- | --- | --- | --- |
+| Q20 | Does the Wi-Fi AP go off and come back cleanly next to a live BLE link? | The firmware switches Wi-Fi AP to an idle station config and back (esp-radio has no AP stop). If the switch is unreliable, fall back to arbiter-only exclusion (`BUSY`) and keep BLE and the AP as separate sessions | M8 bench |
 | Q2 | Can the car be visible in the ROS 2 graph with zenoh-nostd? | **Passed on the laptop (2026-10-07)** with a fork patch: `ros2 node list`, `topic info -v` and plain `ros2 topic pub` all work ([M8 results](../experiments/rovi-m8-setpoint-ros/MILESTONE.md#results)). The S3 build with the ROS feature now links (+154 KB flash). Remaining: confirm on the board, then close | M8 S3 build, bench |
 | Q8 | When to retire M3's TCP protocol v1 and `client.py` | Retire once M8's UDP protocol passes on the bench (ADR-0004) | M8 bench |
 | Q9 | iPhone client | M8 is accepted with laptop clients (BLE via bleak, a Python UDP client, ROS 2). Open: when and how to build the iPhone app. Decide after M8 bench results for Q18/Q19 | you, after M8 |

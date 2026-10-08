@@ -4,7 +4,7 @@
 use core::cell::RefCell;
 use embassy_executor::Spawner;
 use embassy_futures::{
-    join::join5,
+    join::{join, join5},
     select::{select, select3, Either, Either3},
 };
 use embassy_net::{
@@ -74,6 +74,26 @@ const GEOMETRY: Geometry = Geometry {
     offset_theta: 0.0,
     max_wheel_speed: 40.0,
 };
+
+fn ap_config(password: &'static str) -> wifi::Config {
+    wifi::Config::AccessPoint(
+        AccessPointConfig::default()
+            .with_ssid("Rovi M8".try_into().unwrap())
+            .with_channel(1)
+            .with_max_connections(1)
+            .with_authentication(AuthenticationMethodConfig::Wpa2Personal(
+                password.try_into().unwrap(),
+            )),
+    )
+}
+
+/// esp-radio has no AP stop, but a mode change stops the driver: an idle station config (never
+/// connected) is how the AP goes off while BLE owns the car.
+fn ap_off_config() -> wifi::Config {
+    wifi::Config::Station(
+        wifi::sta::StationConfig::default().with_ssid("rovi-off".try_into().unwrap()),
+    )
+}
 
 fn now() -> u64 {
     Instant::now().as_millis()
@@ -151,16 +171,7 @@ async fn main(_spawner: Spawner) -> ! {
     led.write([RGB8 { r: 0, g: 0, b: 0 }]).unwrap();
 
     let mut wifi = WifiController::new(p.WIFI, Default::default()).unwrap();
-    wifi.set_config(&wifi::Config::AccessPoint(
-        AccessPointConfig::default()
-            .with_ssid("Rovi M8".try_into().unwrap())
-            .with_channel(1)
-            .with_max_connections(1)
-            .with_authentication(AuthenticationMethodConfig::Wpa2Personal(
-                password.try_into().unwrap(),
-            )),
-    ))
-    .unwrap();
+    wifi.set_config(&ap_config(password)).unwrap();
     static RESOURCES: static_cell::StaticCell<StackResources<6>> = static_cell::StaticCell::new();
     let resources = RESOURCES.init(StackResources::new());
     let (net, mut net_runner) = embassy_net::new(
@@ -357,6 +368,23 @@ async fn main(_spawner: Spawner) -> ! {
             }
         }
     };
+    // Wi-Fi is off while BLE owns the car and back when the car is released.
+    let wifi_gate = async {
+        let mut up = true;
+        loop {
+            until(|| dev.borrow().wifi_allowed() != up).await;
+            up = !up;
+            let config = if up {
+                ap_config(password)
+            } else {
+                ap_off_config()
+            };
+            match wifi.set_config(&config) {
+                Ok(()) => println!("wifi AP {} at_ms={}", if up { "on" } else { "off" }, now()),
+                Err(e) => println!("wifi AP switch failed: {:?} at_ms={}", e, now()),
+            }
+        }
+    };
     #[cfg(feature = "ros")]
     let ros = ros::run(&dev, net);
     #[cfg(not(feature = "ros"))]
@@ -367,7 +395,7 @@ async fn main(_spawner: Spawner) -> ! {
             udp,
             control,
             select(ble_runner.run(), ble),
-            ros,
+            join(ros, wifi_gate),
         ),
         core::future::pending::<()>(),
     )

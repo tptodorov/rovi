@@ -260,7 +260,7 @@ Add `cargo clippy ... -- -D warnings` the same way. The core (`cargo test` in th
 
 BLE service `d47a0010-45b2-4d19-8db0-6bd87e9c0001`: Setpoint (`…0011`, write without response, `seq u32` + 68-byte CDR = 72 bytes, needs ATT MTU >= 75), Control (`…0012`, write, 1 = ARM, 2 = STOP), Capabilities (`…0013`, read), Status (`…0014`, read + notify).
 
-`esp-radio` 1.0.0-beta.1 has no public Wi-Fi AP stop/start, so the "other radio shuts down" rule is only partly implemented: BLE stops advertising while another source owns the car, but the AP stays up and the arbiter answers a second UDP `HELLO` with `BUSY`. The single-owner safety property holds; the radio-off part needs a newer esp-radio or a peripheral re-init, and bench time.
+`esp-radio` 1.0.0-beta.1 (the latest release) has no public Wi-Fi AP stop/start, but `set_config` stops the driver when the mode changes. So while BLE owns the car, the firmware switches Wi-Fi to an idle station config (the AP goes away and its client is dropped) and switches back to the AP when the car is released; the log says `wifi AP off`/`wifi AP on`. BLE stops advertising while UDP or ROS owns the car. The arbiter also answers a second UDP `HELLO` with `BUSY`, so exclusivity does not depend on the radios. The mode switch is built and linted but unproven on a board: whether the stop and restart are clean next to a live BLE link is a bench item.
 
 ### ROS 2 on the board
 
