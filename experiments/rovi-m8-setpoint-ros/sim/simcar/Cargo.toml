@@ -15,8 +15,8 @@ rovi-m8-setpoint-ros = { path = "../.." }
 
 # ROS 2 over zenoh-nostd: the tptodorov fork (liveliness tokens and subscriber, sample attachments,
 # optional defmt, embassy-sync 0.8).
-zenoh-nostd = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "e1267a8", features = ["alloc", "log"], optional = true }
-zenoh-std = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "e1267a8", optional = true }
+zenoh-nostd = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "e6791c2", features = ["alloc", "log"], optional = true }
+zenoh-std = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "e6791c2", optional = true }
 embassy-executor = { version = "0.9.1", features = ["arch-std", "executor-thread"], optional = true }
 embassy-futures = { version = "0.1.2", optional = true }
 embassy-sync = { version = "0.8.0", optional = true }

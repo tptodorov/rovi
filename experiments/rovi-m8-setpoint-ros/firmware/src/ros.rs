@@ -5,7 +5,7 @@ extern crate alloc;
 
 use super::{log, now};
 use core::cell::RefCell;
-use embassy_futures::select::select5;
+use embassy_futures::select::{select5, Either5};
 use embassy_net::Stack;
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
 use embassy_time::Timer;
@@ -75,7 +75,7 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
     // One session per connection. Each gets heap storage that is reclaimed once it has ended
     // (the link frees its buffer slot when dropped), so the car can reconnect indefinitely.
     loop {
-        let mut transport = loop {
+        let transport = loop {
             let endpoint = Endpoint::try_from(ROUTER).expect("ROVI_ZENOH_ROUTER endpoint");
             match config.transports().connect(endpoint, config.buff()).await {
                 Ok(t) => break t,
@@ -85,9 +85,6 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
                 }
             }
         };
-        // ROS mixes reliable and best-effort traffic, which zenoh sequences separately, but
-        // zenoh-nostd tracks one sequence number and would drop frames. So skip the check.
-        transport.transport_mut().rx.ignore_invalid_sn();
         let resources: *mut Resources<'static, RosConfig> =
             alloc::boxed::Box::into_raw(alloc::boxed::Box::new(Resources::default()));
         // SAFETY: `resources` is a live allocation that nothing else references; the session
@@ -179,7 +176,7 @@ async fn declare_and_serve(
         .await?;
     println!("ros node /{} up, zid {}, router {}", NODE, zid, ROUTER);
 
-    select5(
+    let ended = select5(
         session.run(),
         async {
             while let Some(s) = cmd_sub.recv().await {
@@ -224,5 +221,9 @@ async fn declare_and_serve(
         },
     )
     .await;
+    // Only the session loop ends on its own; say why it did.
+    if let Either5::First(Err(e)) = ended {
+        return Err(e.into());
+    }
     Ok(())
 }

@@ -2517,7 +2517,7 @@ checksum = "550a2b930b62486a393c52d5c3b84bff264b28aa437ed64694d31e93b1757af7"
 [[package]]
 name = "zenoh-derive"
 version = "0.1.0"
-source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e1267a8#e1267a85961de29841e30edb2e9573276f4a24c3"
+source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e6791c2#e6791c209be69799b491444e453ad87499022949"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2527,7 +2527,7 @@ dependencies = [
 [[package]]
 name = "zenoh-embassy"
 version = "0.1.0"
-source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e1267a8#e1267a85961de29841e30edb2e9573276f4a24c3"
+source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e6791c2#e6791c209be69799b491444e453ad87499022949"
 dependencies = [
  "embassy-net",
  "embedded-io-async 0.7.0",
@@ -2538,7 +2538,7 @@ dependencies = [
 [[package]]
 name = "zenoh-nostd"
 version = "0.1.0"
-source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e1267a8#e1267a85961de29841e30edb2e9573276f4a24c3"
+source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e6791c2#e6791c209be69799b491444e453ad87499022949"
 dependencies = [
  "dyn-utils",
  "embassy-futures",
@@ -2554,7 +2554,7 @@ dependencies = [
 [[package]]
 name = "zenoh-proto"
 version = "0.1.0"
-source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e1267a8#e1267a85961de29841e30edb2e9573276f4a24c3"
+source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e6791c2#e6791c209be69799b491444e453ad87499022949"
 dependencies = [
  "sha3",
  "uhlc",
@@ -2564,7 +2564,7 @@ dependencies = [
 [[package]]
 name = "zenoh-sansio"
 version = "0.1.0"
-source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e1267a8#e1267a85961de29841e30edb2e9573276f4a24c3"
+source = "git+https://github.com/tptodorov/zenoh-nostd?rev=e6791c2#e6791c209be69799b491444e453ad87499022949"
 dependencies = [
  "sha3",
  "zenoh-proto",

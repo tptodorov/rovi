@@ -2,7 +2,7 @@
 //! device. Subscribes `/cmd_vel` (TwistStamped) and `/rovi/arm` (Bool), publishes `/rovi/status`.
 
 use crate::{log_effects, ms, Shared};
-use embassy_futures::select::select5;
+use embassy_futures::select::{select5, Either5};
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
 use rovi_m8_setpoint_ros::rmw::{self, Attachment, Endpoint as Kind, Topic};
 use static_cell::StaticCell;
@@ -75,10 +75,8 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
     loop {
         let resources: *mut Resources<'static, RosConfig> =
             Box::into_raw(Box::new(Resources::default()));
-        // ROS mixes reliable and best-effort traffic, which zenoh sequences separately, but
-        // zenoh-nostd tracks one sequence number and would drop frames. So skip the check.
         // SAFETY: `resources` is a live allocation that nothing else references.
-        let connected = zenoh::connect_ignore_invalid_sn(
+        let connected = zenoh::connect(
             unsafe { &mut *resources },
             config,
             Endpoint::try_from(router)?,
@@ -93,7 +91,7 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
         };
         let session: *mut Session<'static, RosConfig> = Box::into_raw(Box::new(session));
         // SAFETY: the session lives until reclaimed below.
-        let result = serve(
+        let serving = serve(
             &dev,
             t0,
             unsafe { &*session },
@@ -102,8 +100,23 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
             cmd,
             arm,
             lv_chan,
-        )
-        .await;
+        );
+        // Test hook: abandon a healthy session after N seconds, as a silent link loss would
+        // (over UDP the router keeps the old session until its lease runs out).
+        let result = match std::env::var("ROVI_SIM_ABANDON_AFTER_S")
+            .ok()
+            .and_then(|v| v.parse().ok())
+        {
+            Some(n) => {
+                match embassy_futures::select::select(serving, embassy_time::Timer::after_secs(n))
+                    .await
+                {
+                    embassy_futures::select::Either::First(r) => r,
+                    embassy_futures::select::Either::Second(()) => Ok(()),
+                }
+            }
+            None => serving.await,
+        };
         println!("ros session ended ({:?}), reconnecting", result.err());
         // SAFETY: `serve` returned, so every borrow of the session (tokens, subscribers,
         // publisher) is gone. The session points into the resources, so it goes first.
@@ -191,7 +204,7 @@ async fn serve(
     println!("ros node /{NODE} up, zid {zid}, router {router}");
 
     let (d1, d2, d3, d4) = (dev.clone(), dev.clone(), dev.clone(), dev.clone());
-    select5(
+    let ended = select5(
         session.run(),
         async {
             while let Some(s) = cmd_sub.recv().await {
@@ -239,5 +252,9 @@ async fn serve(
         },
     )
     .await;
+    // Only the session loop ends on its own; say why it did.
+    if let Either5::First(Err(e)) = ended {
+        return Err(e.into());
+    }
     Ok(())
 }
