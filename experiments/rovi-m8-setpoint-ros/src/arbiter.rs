@@ -54,6 +54,8 @@ pub enum Error {
     NotOwner,
     /// Arming needs a valid lease, so a setpoint must have arrived recently.
     NotReady,
+    /// A malformed or unknown command.
+    Invalid,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -109,6 +111,10 @@ impl Arbiter {
             lease_until: None,
             deadline: 0,
         }
+    }
+
+    pub fn owner(&self) -> Option<Claimant> {
+        self.owner
     }
 
     pub fn state(&self) -> State {
@@ -211,7 +217,7 @@ impl Arbiter {
             .flatten()
     }
 
-    fn check_owner(&self, who: Claimant) -> Result<(), Error> {
+    pub fn check_owner(&self, who: Claimant) -> Result<(), Error> {
         if self.owner == Some(who) {
             Ok(())
         } else {

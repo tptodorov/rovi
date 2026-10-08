@@ -38,6 +38,16 @@ impl Device {
         }
     }
 
+    /// May `source`'s radio be on? While one source owns the car, the others' radios are off.
+    pub fn radio_allowed(&self, source: Source) -> bool {
+        self.arbiter.owner().is_none_or(|o| o.source == source)
+    }
+
+    /// Is `conn` still the BLE owner?
+    pub fn ble_owns(&self, conn: u16) -> bool {
+        self.arbiter.owner() == Some(ble(conn))
+    }
+
     pub fn arbiter(&self) -> &Arbiter {
         &self.arbiter
     }
@@ -115,6 +125,43 @@ impl Device {
         };
         let len = udp::write(out, header, &self.status(error)).unwrap_or(0);
         Reply { len, effects }
+    }
+
+    /// A BLE central connected: that is the claim.
+    pub fn on_ble_connect(&mut self, now: u64, conn: u16) -> Result<Effects, Error> {
+        self.arbiter.claim(now, ble(conn))
+    }
+
+    /// A write to the Setpoint characteristic: `seq u32` (LE) then the CDR `TwistStamped`.
+    pub fn on_ble_setpoint(&mut self, now: u64, conn: u16, data: &[u8]) -> Effects {
+        let Some((seq, cdr)) = data.split_first_chunk::<4>() else {
+            return Effects::default();
+        };
+        let Ok(sp) = Setpoint::decode(cdr) else {
+            return Effects::default();
+        };
+        match self
+            .arbiter
+            .setpoint(now, ble(conn), u32::from_le_bytes(*seq), sp)
+        {
+            Ok((_, effects)) => effects,
+            Err(_) => Effects::default(),
+        }
+    }
+
+    /// A write to the Control characteristic: 1 = ARM, 2 = STOP. An error rejects the write.
+    pub fn on_ble_control(&mut self, now: u64, conn: u16, cmd: u8) -> Result<Effects, Error> {
+        let who = ble(conn);
+        match cmd {
+            1 => self.arbiter.arm(now, who).map(|()| Effects::default()),
+            2 => self.arbiter.stop(now, who),
+            _ => self.arbiter.check_owner(who).and(Err(Error::Invalid)),
+        }
+    }
+
+    /// The central disconnected.
+    pub fn on_ble_disconnect(&mut self, now: u64, conn: u16) -> Effects {
+        self.arbiter.release(now, ble(conn)).unwrap_or_default()
     }
 
     /// A liveliness token appeared (`alive`) or went away. Samples are attributed to a ROS node
@@ -208,7 +255,8 @@ impl Device {
         }
     }
 
-    fn capabilities(&self) -> [u8; CAPABILITIES_LEN] {
+    /// The Capabilities characteristic (and the `HELLO_ACK` payload).
+    pub fn capabilities(&self) -> [u8; CAPABILITIES_LEN] {
         let mut b = [0u8; CAPABILITIES_LEN];
         b[0] = udp::VERSION;
         let f = [
@@ -227,7 +275,8 @@ impl Device {
         b
     }
 
-    fn status(&self, error: Option<Error>) -> [u8; STATUS_LEN] {
+    /// The Status characteristic (and the `STATUS` payload).
+    pub fn status(&self, error: Option<Error>) -> [u8; STATUS_LEN] {
         let (state, reason) = match self.arbiter.state() {
             State::Open => (0, 0),
             State::Claimed => (1, 0),
@@ -239,8 +288,16 @@ impl Device {
             Some(Error::Busy) => 1,
             Some(Error::NotOwner) => 2,
             Some(Error::NotReady) => 3,
+            Some(Error::Invalid) => 4,
         };
         [state, reason, error]
+    }
+}
+
+fn ble(conn: u16) -> Claimant {
+    Claimant {
+        source: Source::Ble,
+        id: conn as u128,
     }
 }
 
@@ -554,5 +611,93 @@ mod tests {
             "state=armed session=1"
         );
         assert_eq!(n, 8 + len);
+    }
+
+    #[test]
+    fn ble_connect_claims_and_excludes_others() {
+        let mut d = dev();
+        assert_eq!(d.on_ble_connect(0, 1).unwrap().claimed, Some(Source::Ble));
+        assert_eq!(d.on_ble_connect(1, 2), Err(Error::Busy));
+        let (r, _) = send(&mut d, 1, A, Kind::Hello, 0, 1, &[]);
+        assert_eq!(r.unwrap().0.kind, Kind::Busy);
+    }
+
+    fn ble_sp(seq: u32, vx: f64) -> [u8; 72] {
+        let mut b = [0u8; 72];
+        b[..4].copy_from_slice(&seq.to_le_bytes());
+        b[4..].copy_from_slice(&cdr(vx));
+        b
+    }
+
+    #[test]
+    fn ble_setpoint_then_arm_drives_and_stop_disarms() {
+        let mut d = dev();
+        d.on_ble_connect(0, 1).unwrap();
+        assert_eq!(
+            d.on_ble_control(1, 1, 1),
+            Err(Error::NotReady),
+            "arm needs a setpoint"
+        );
+        d.on_ble_setpoint(2, 1, &ble_sp(1, 1.0));
+        assert_eq!(d.on_ble_control(3, 1, 1), Ok(Effects::default()));
+        assert_eq!(d.wheels(3), [0.5; 4]);
+        d.on_ble_setpoint(4, 1, &ble_sp(2, -1.0));
+        assert_eq!(d.wheels(4), [-0.5; 4]);
+        assert_eq!(
+            d.on_ble_control(5, 1, 2).unwrap().stop,
+            Some(StopReason::Stop)
+        );
+        assert_eq!(d.wheels(5), [0.0; 4]);
+    }
+
+    #[test]
+    fn ble_non_owner_malformed_and_unknown_input_is_ignored() {
+        let mut d = dev();
+        d.on_ble_connect(0, 1).unwrap();
+        assert_eq!(d.on_ble_setpoint(1, 2, &ble_sp(1, 1.0)), Effects::default());
+        assert_eq!(d.on_ble_control(1, 2, 1), Err(Error::NotOwner));
+        assert_eq!(d.on_ble_setpoint(1, 1, &[1, 2, 3]), Effects::default());
+        assert_eq!(
+            d.on_ble_control(1, 1, 9),
+            Err(Error::Invalid),
+            "unknown command"
+        );
+        assert_eq!(d.arbiter().state(), State::Claimed);
+    }
+
+    #[test]
+    fn ble_disconnect_while_armed_stops_and_reopens() {
+        let mut d = dev();
+        d.on_ble_connect(0, 1).unwrap();
+        d.on_ble_setpoint(1, 1, &ble_sp(1, 1.0));
+        d.on_ble_control(2, 1, 1).unwrap();
+        let fx = d.on_ble_disconnect(3, 1);
+        assert!(fx.released);
+        assert_eq!(fx.stop, Some(StopReason::OwnerLost));
+        assert_eq!(
+            d.on_ble_disconnect(4, 1),
+            Effects::default(),
+            "not the owner any more"
+        );
+        assert_eq!(d.on_ble_connect(5, 2).unwrap().claimed, Some(Source::Ble));
+    }
+
+    #[test]
+    fn radio_allowed_follows_the_owner() {
+        let mut d = dev();
+        assert!(
+            d.radio_allowed(Source::Ble)
+                && d.radio_allowed(Source::Udp)
+                && d.radio_allowed(Source::Ros)
+        );
+        d.on_ble_connect(0, 7).unwrap();
+        assert!(
+            d.radio_allowed(Source::Ble)
+                && !d.radio_allowed(Source::Udp)
+                && !d.radio_allowed(Source::Ros)
+        );
+        assert!(d.ble_owns(7) && !d.ble_owns(8));
+        d.on_ble_disconnect(1, 7);
+        assert!(d.radio_allowed(Source::Udp) && !d.ble_owns(7));
     }
 }

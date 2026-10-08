@@ -244,3 +244,19 @@ cargo build --bin simcar && python3 sim/udp_scenarios.py
 ```
 
 This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)); acceptance needs the board.
+
+## Firmware (ESP32-S3, board-only)
+
+`src/main.rs` + `src/fw.rs` are the firmware shell around the host-tested `Device` core: the car AP (WPA2, `192.168.4.1`), the UDP adapter on port 7777, the BLE GATT adapter, the 10 ms control tick and the RGB LED indicator. No motor GPIO is configured. The ROS adapter is not in the firmware yet.
+
+```sh
+source ~/export-esp.sh
+ROVI_WIFI_PASSWORD=<8..63 ASCII chars> cargo build --release --bin rovi-m8-setpoint-ros \
+  --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+```
+
+Add `cargo clippy ... -- -D warnings` the same way. Host tests and the sim car use the default target (`cargo +stable` if your shell has `rust-toolchain.toml` forcing `esp`).
+
+BLE service `d47a0010-45b2-4d19-8db0-6bd87e9c0001`: Setpoint (`…0011`, write without response, `seq u32` + 68-byte CDR = 72 bytes, needs ATT MTU >= 75), Control (`…0012`, write, 1 = ARM, 2 = STOP), Capabilities (`…0013`, read), Status (`…0014`, read + notify).
+
+`esp-radio` 1.0.0-beta.1 has no public Wi-Fi AP stop/start, so the "other radio shuts down" rule is only partly implemented: BLE stops advertising while another source owns the car, but the AP stays up and the arbiter answers a second UDP `HELLO` with `BUSY`. The single-owner safety property holds; the radio-off part needs a newer esp-radio or a peripheral re-init, and bench time.

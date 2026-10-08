@@ -28,7 +28,8 @@ esp-radio = { version = "=1.0.0-beta.1", features = ["esp32s3", "ble", "wifi", "
 esp-rtos = { version = "0.4.0", features = ["esp32s3", "esp-radio", "esp-alloc", "embassy"] }
 esp-println = { version = "0.18.0", features = ["esp32s3"] }
 smart-leds = "0.4.0"
-static_cell = "2.1.1"
+static_cell = "2.1.1" # Required by trouble-host GATT derive.
+trouble-host = { version = "0.8.0", features = ["peripheral", "gatt", "derive"] }
 
 [profile.dev.package.esp-radio]
 opt-level = 3

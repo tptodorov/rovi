@@ -3,7 +3,10 @@
 
 use core::cell::RefCell;
 use embassy_executor::Spawner;
-use embassy_futures::{join::join3, select::select};
+use embassy_futures::{
+    join::join4,
+    select::{select, select3, Either, Either3},
+};
 use embassy_net::{
     udp::{PacketMetadata, UdpSocket},
     Config as NetConfig, IpAddress, IpEndpoint, Ipv4Address, Ipv4Cidr, StackResources,
@@ -15,14 +18,41 @@ use esp_hal::{clock::CpuClock, ram, rmt::Rmt, rng::Rng, time::Rate, timer::timg:
 use esp_hal_smartled::{buffer_size, color_order, RmtSmartLeds};
 use esp_println::println;
 use esp_radio::wifi::{self, ap::AccessPointConfig, AuthenticationMethodConfig, WifiController};
-use rovi_m8_setpoint_ros::arbiter::{Config, Effects, State};
+use rovi_m8_setpoint_ros::arbiter::{Config, Effects, Error, Source, State};
 use rovi_m8_setpoint_ros::device::Device;
 use rovi_m8_setpoint_ros::kinematics::Geometry;
 use smart_leds::{SmartLedsWrite, RGB8};
+use trouble_host::prelude::*;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
 const UDP_PORT: u16 = 7777;
+
+/// New UUIDs; not M2-compatible. The Setpoint value is `seq u32` + the 68-byte CDR (72 bytes),
+/// which needs an ATT MTU of at least 75.
+#[gatt_server]
+struct RoviServer {
+    rovi: RoviService,
+}
+#[gatt_service(uuid = "d47a0010-45b2-4d19-8db0-6bd87e9c0001")]
+struct RoviService {
+    #[characteristic(uuid = "d47a0011-45b2-4d19-8db0-6bd87e9c0001", write_without_response, value = [0; 72])]
+    setpoint: [u8; 72],
+    /// 1 = ARM, 2 = STOP.
+    #[characteristic(uuid = "d47a0012-45b2-4d19-8db0-6bd87e9c0001", write, value = 0)]
+    control: u8,
+    #[characteristic(uuid = "d47a0013-45b2-4d19-8db0-6bd87e9c0001", read, value = [0; 27])]
+    capabilities: [u8; 27],
+    /// State, stop reason, last error.
+    #[characteristic(uuid = "d47a0014-45b2-4d19-8db0-6bd87e9c0001", read, notify, value = [0; 3])]
+    status: [u8; 3],
+}
+
+async fn until(mut cond: impl FnMut() -> bool) {
+    while !cond() {
+        Timer::after_millis(20).await;
+    }
+}
 /// Placeholder chassis numbers until M5 measures them.
 const GEOMETRY: Geometry = Geometry {
     wheels_radius: 0.05,
@@ -63,8 +93,16 @@ fn color(state: State, wheels: [f32; 4]) -> RGB8 {
     match state {
         State::Open => RGB8 { r: 0, g: 0, b: 0 },
         State::Claimed => RGB8 { r: 0, g: 0, b: 12 },
-        State::Armed if avg > 0.01 => RGB8 { r: 0, g: level(avg), b: 0 },
-        State::Armed if avg < -0.01 => RGB8 { r: level(avg), g: 0, b: 0 },
+        State::Armed if avg > 0.01 => RGB8 {
+            r: 0,
+            g: level(avg),
+            b: 0,
+        },
+        State::Armed if avg < -0.01 => RGB8 {
+            r: level(avg),
+            g: 0,
+            b: 0,
+        },
         State::Armed => RGB8 { r: 0, g: 6, b: 6 },
         State::Stopped(_) => RGB8 { r: 12, g: 0, b: 0 },
     }
@@ -123,6 +161,21 @@ async fn main(_spawner: Spawner) -> ! {
         seed,
     );
 
+    let connector =
+        esp_radio::ble::controller::BleConnector::new(p.BT, Default::default()).unwrap();
+    let controller = ExternalController::<_, 20>::new(connector);
+    let mut ble_resources: HostResources<DefaultPacketPool, 1, 1> = HostResources::new();
+    let stack = trouble_host::new(controller, &mut ble_resources)
+        .set_random_address(Address::random([0xff, 0x9f, 0x1a, 0x05, 0xe4, 0xfe]))
+        .build();
+    let mut ble_runner = stack.runner();
+    let mut peripheral = stack.peripheral();
+    let server = RoviServer::new_with_config(GapConfig::Peripheral(PeripheralConfig {
+        name: "Rovi M8",
+        appearance: &appearance::UNKNOWN,
+    }))
+    .unwrap();
+
     let dev = RefCell::new(Device::new(Config::DEFAULT, GEOMETRY));
     println!(
         "M8 board-only AP=Rovi M8 udp=192.168.4.1:{} WPA2 channel=1 lease_ms={}",
@@ -149,6 +202,129 @@ async fn main(_spawner: Spawner) -> ! {
             log(r.effects);
         }
     };
+    // BLE: connecting is the claim. While another source owns the car, do not advertise (the
+    // Wi-Fi side is refused by the arbiter, since esp-radio has no AP stop in this beta).
+    let ble = async {
+        let mut adv_data = [0; 31];
+        let adv_len = AdStructure::encode_slice(
+            &[AdStructure::Flags(
+                LE_GENERAL_DISCOVERABLE | BR_EDR_NOT_SUPPORTED,
+            )],
+            &mut adv_data,
+        )
+        .unwrap();
+        let mut scan_data = [0; 31];
+        let scan_len = AdStructure::encode_slice(
+            &[AdStructure::CompleteLocalName(b"Rovi M8")],
+            &mut scan_data,
+        )
+        .unwrap();
+        loop {
+            until(|| dev.borrow().radio_allowed(Source::Ble)).await;
+            let accepted = select(
+                async {
+                    let advertiser = peripheral
+                        .advertise(
+                            &Default::default(),
+                            Advertisement::ConnectableScannableUndirected {
+                                adv_data: &adv_data[..adv_len],
+                                scan_data: &scan_data[..scan_len],
+                            },
+                        )
+                        .await
+                        .ok()?;
+                    advertiser.accept().await.ok()
+                },
+                until(|| !dev.borrow().radio_allowed(Source::Ble)),
+            )
+            .await;
+            let Either::First(Some(raw)) = accepted else {
+                continue;
+            };
+            let Ok(conn) = raw.with_attribute_server(&server) else {
+                continue;
+            };
+            let id = conn.raw().handle().raw();
+            let claim = dev.borrow_mut().on_ble_connect(now(), id);
+            match claim {
+                Ok(fx) => log(fx),
+                Err(_) => {
+                    conn.raw().disconnect();
+                    continue;
+                }
+            }
+            println!("BLE connected id={} att_mtu={}", id, conn.raw().att_mtu());
+            let caps = dev.borrow().capabilities();
+            let _ = conn.set(&server.rovi.capabilities, &caps);
+            let mut last_status = [255u8; 3];
+            loop {
+                match select3(
+                    conn.next(),
+                    until(|| !dev.borrow().ble_owns(id)),
+                    Timer::after_millis(100),
+                )
+                .await
+                {
+                    Either3::First(GattConnectionEvent::Disconnected { .. }) => break,
+                    Either3::First(GattConnectionEvent::Gatt {
+                        event: GattEvent::Write(w),
+                    }) => {
+                        let handle = w.handle();
+                        if handle == server.rovi.setpoint.handle {
+                            let mut data = [0u8; 80];
+                            let n = w.with_data(|off, b| {
+                                if off == 0 && b.len() <= data.len() {
+                                    data[..b.len()].copy_from_slice(b);
+                                    b.len()
+                                } else {
+                                    0
+                                }
+                            });
+                            let fx = dev.borrow_mut().on_ble_setpoint(now(), id, &data[..n]);
+                            log(fx);
+                            if let Ok(reply) = w.accept() {
+                                reply.send().await;
+                            }
+                        } else if handle == server.rovi.control.handle {
+                            let cmd =
+                                w.with_data(|off, b| (off == 0 && b.len() == 1).then(|| b[0]));
+                            let res = cmd
+                                .ok_or(Error::Invalid)
+                                .and_then(|c| dev.borrow_mut().on_ble_control(now(), id, c));
+                            match res {
+                                Ok(fx) => {
+                                    log(fx);
+                                    if let Ok(reply) = w.accept() {
+                                        reply.send().await;
+                                    }
+                                }
+                                Err(_) => {
+                                    if let Ok(reply) = w.reject(AttErrorCode::VALUE_NOT_ALLOWED) {
+                                        reply.send().await;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Either3::First(_) => {}
+                    Either3::Second(()) => {
+                        conn.raw().disconnect();
+                        break;
+                    }
+                    Either3::Third(()) => {
+                        let status = dev.borrow().status(None);
+                        if status != last_status {
+                            last_status = status;
+                            let _ = server.rovi.status.notify(&conn, &status, true).await;
+                        }
+                    }
+                }
+            }
+            let fx = dev.borrow_mut().on_ble_disconnect(now(), id);
+            log(fx);
+            println!("BLE disconnected id={} at_ms={}", id, now());
+        }
+    };
     let control = async {
         let mut last = (State::Open, [0.0f32; 4]);
         loop {
@@ -168,6 +344,15 @@ async fn main(_spawner: Spawner) -> ! {
             }
         }
     };
-    let _ = select(join3(net_runner.run(), udp, control), core::future::pending::<()>()).await;
+    let _ = select(
+        join4(
+            net_runner.run(),
+            udp,
+            control,
+            select(ble_runner.run(), ble),
+        ),
+        core::future::pending::<()>(),
+    )
+    .await;
     panic!("runner exited");
 }
