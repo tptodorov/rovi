@@ -20,6 +20,6 @@ check grep -q "wheels \[0.5, 0.5, 0.5, 0.5\]" /tmp/rovi-sim.log
 check grep -q "stop Stop" /tmp/rovi-sim.log
 check grep -q "state=armed" /tmp/rovi-status.log
 check grep -q "state=stopped" /tmp/rovi-status.log
-check ! grep -q "wheels \[-" /tmp/rovi-sim.log   # the intruder node never drove the car
+if grep -q "wheels \[-" /tmp/rovi-sim.log; then echo "FAIL: the intruder node drove the car"; fail=1; fi
 [ $fail = 0 ] && echo "ros scenarios: ok"
 exit $fail
