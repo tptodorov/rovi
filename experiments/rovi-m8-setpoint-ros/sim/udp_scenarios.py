@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Runs the M8 UDP scenarios against the sim car on real sockets (development evidence only).
 
-    cargo build --bin simcar && python3 sim/udp_scenarios.py
+    (cd sim/simcar && cargo build) && python3 sim/udp_scenarios.py
 """
 import socket, struct, subprocess, sys, time, unittest, pathlib
 
 PORT = 17777
 HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY = 1, 2, 3, 4, 5, 6, 7, 8
 LEASE, CLAIM, RECLAIM = 400, 1500, 800  # ms, short so the tests are quick
-BIN = pathlib.Path(__file__).resolve().parent.parent / "target/debug/simcar"
+BIN = pathlib.Path(__file__).resolve().parent.parent / "sim/simcar/target/debug/simcar"
 
 
 def cdr(vx=0.0, vy=0.0, wz=0.0):

@@ -210,7 +210,7 @@ flowchart LR
 2. **Sim car on the laptop.** The same core and adapters run on std UDP and zenoh-nostd's std platform, and are driven by `rmw_zenohd`, the ROS 2 CLI or `teleop_twist_keyboard` (stamped), and a Python UDP client. With `--features ros` the sim car is also a ROS 2 node on the zenoh-nostd fork. `sim/ros-scenarios.sh` runs a real ROS 2 controller (one node with `/cmd_vel` and `/rovi/arm` publishers, plus an intruder node) against it in Docker and checks claim, arm, ownership and stop:
 
 ```sh
-cargo build --bin simcar --features ros && sim/ros-scenarios.sh
+(cd sim/simcar && cargo build --features ros) && sim/ros-scenarios.sh
 ```
 
 Fork findings (`tptodorov/zenoh-nostd`): it needed liveliness tokens and a liveliness subscriber, the sample attachment on received data, and the zid accessor. zenoh-nostd also tracks one sequence number for reliable and best-effort traffic, which zenoh sequences separately, and drops frames with "Inconsistent SN"; the sim connects with `connect_ignore_invalid_sn`. A proper per-reliability fix is for upstream or the fork before the board.
@@ -237,25 +237,26 @@ cargo clippy --lib --tests -- -D warnings
 
 The CDR golden vectors in `src/setpoint.rs` were captured from ROS 2 Jazzy (`rmw_zenoh_cpp` 0.2.10). ROS leaves CDR padding bytes non-zero, so the decoder ignores padding. The kinematics follow the Jazzy `mecanum_drive_controller` source. The laptop ROS graph check is `sim/graph-check.sh`.
 
-The sim car (`src/bin/simcar.rs`) runs the same device core on a laptop UDP socket. `sim/udp_scenarios.py` drives it over real sockets (claim, busy, arm, stream, stop, lease expiry and reclaim, claim window, bye, non-owner input):
+The sim car (`sim/simcar/`) runs the same device core on a laptop UDP socket. `sim/udp_scenarios.py` drives it over real sockets (claim, busy, arm, stream, stop, lease expiry and reclaim, claim window, bye, non-owner input):
 
 ```sh
-cargo build --bin simcar && python3 sim/udp_scenarios.py
+(cd sim/simcar && cargo build) && python3 sim/udp_scenarios.py
 ```
 
 This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)); acceptance needs the board.
 
 ## Firmware (ESP32-S3, board-only)
 
-`src/main.rs` + `src/fw.rs` are the firmware shell around the host-tested `Device` core: the car AP (WPA2, `192.168.4.1`), the UDP adapter on port 7777, the BLE GATT adapter, the 10 ms control tick and the RGB LED indicator. No motor GPIO is configured. The ROS adapter is not in the firmware yet.
+`firmware/` is the firmware shell around the host-tested `Device` core: the car AP (WPA2, `192.168.4.1`), the UDP adapter on port 7777, the BLE GATT adapter, the 10 ms control tick and the RGB LED indicator. No motor GPIO is configured. The ROS adapter is not in the firmware yet.
 
 ```sh
 source ~/export-esp.sh
-ROVI_WIFI_PASSWORD=<8..63 ASCII chars> cargo build --release --bin rovi-m8-setpoint-ros \
+cd firmware
+ROVI_WIFI_PASSWORD=<8..63 ASCII chars> cargo build --release \
   --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
 ```
 
-Add `cargo clippy ... -- -D warnings` the same way. Host tests and the sim car use the default target (`cargo +stable` if your shell has `rust-toolchain.toml` forcing `esp`).
+Add `cargo clippy ... -- -D warnings` the same way. The core (`cargo test` in this directory) and the sim car are separate packages with their own lockfiles, because the sim's `wtx`/`sha1` needs a pre-release `digest` that `esp-hal` cannot share a lock with.
 
 BLE service `d47a0010-45b2-4d19-8db0-6bd87e9c0001`: Setpoint (`…0011`, write without response, `seq u32` + 68-byte CDR = 72 bytes, needs ATT MTU >= 75), Control (`…0012`, write, 1 = ARM, 2 = STOP), Capabilities (`…0013`, read), Status (`…0014`, read + notify).
 

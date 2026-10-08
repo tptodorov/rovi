@@ -1,0 +1,28 @@
+[package]
+name = "rovi-m8-simcar"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "M8 sim car: the device core on laptop sockets, optionally a ROS 2 node (development evidence only)"
+
+[[bin]]
+name = "simcar"
+path = "src/main.rs"
+
+[dependencies]
+rovi-m8-setpoint-ros = { path = "../.." }
+
+# ROS 2 over zenoh-nostd: the tptodorov fork (liveliness tokens and subscriber, sample attachments,
+# optional defmt, embassy-sync 0.8).
+zenoh-nostd = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "e1267a8", features = ["alloc", "log"], optional = true }
+zenoh-std = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "e1267a8", optional = true }
+embassy-executor = { version = "0.9.1", features = ["arch-std", "executor-thread"], optional = true }
+embassy-futures = { version = "0.1.2", optional = true }
+embassy-sync = { version = "0.8.0", optional = true }
+embassy-time = { version = "0.5.0", features = ["std"], optional = true }
+static_cell = { version = "2.1.1", optional = true }
+env_logger = { version = "0.11", optional = true }
+
+[features]
+ros = ["dep:zenoh-nostd", "dep:zenoh-std", "dep:embassy-executor", "dep:embassy-futures", "dep:embassy-sync", "dep:embassy-time", "dep:static_cell", "dep:env_logger"]
