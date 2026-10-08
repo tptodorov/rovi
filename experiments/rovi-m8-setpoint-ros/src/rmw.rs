@@ -10,8 +10,14 @@ pub struct Key<const N: usize> {
     len: usize,
 }
 
+impl<const N: usize> Default for Key<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const N: usize> Key<N> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             buf: [0; N],
             len: 0,

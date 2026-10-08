@@ -3,6 +3,7 @@
 
 use crate::arbiter::{Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason};
 use crate::kinematics::{self, Geometry};
+use crate::rmw::Attachment;
 use crate::setpoint::Setpoint;
 use crate::udp::{self, Header, Kind};
 
@@ -111,6 +112,69 @@ impl Device {
         };
         let len = udp::write(out, header, &self.status(error)).unwrap_or(0);
         Reply { len, effects }
+    }
+
+    /// A sample on the `cmd_vel` topic. The first valid one from a free device claims it, and the
+    /// owner is the publisher gid in the attachment. Input from other gids is ignored.
+    pub fn on_ros_cmd_vel(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
+        let (Some(att), Ok(sp)) = (Attachment::decode(attachment), Setpoint::decode(payload))
+        else {
+            return Effects::default();
+        };
+        let who = Claimant {
+            source: Source::Ros,
+            id: u128::from_le_bytes(att.gid),
+        };
+        let Ok(mut fx) = self.arbiter.claim(now, who) else {
+            return Effects::default();
+        };
+        if let Ok((_, e)) = self.arbiter.setpoint(now, who, att.seq as u32, sp) {
+            fx.stop = e.stop;
+        }
+        fx
+    }
+
+    /// A sample on `rovi/arm` (`std_msgs/Bool`): true arms, false stops.
+    pub fn on_ros_arm(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
+        let Some(att) = Attachment::decode(attachment) else {
+            return Effects::default();
+        };
+        if payload.len() < 5 || payload[..4] != [0, 1, 0, 0] {
+            return Effects::default();
+        }
+        let who = Claimant {
+            source: Source::Ros,
+            id: u128::from_le_bytes(att.gid),
+        };
+        if payload[4] != 0 {
+            let _ = self.arbiter.arm(now, who);
+            Effects::default()
+        } else {
+            self.arbiter.stop(now, who).unwrap_or_default()
+        }
+    }
+
+    /// Writes the `rovi/status` sample (`std_msgs/String` CDR) and returns its length.
+    pub fn status_cdr(&self, out: &mut [u8]) -> usize {
+        use core::fmt::Write;
+        let state = match self.arbiter.state() {
+            State::Open => "open",
+            State::Claimed => "claimed",
+            State::Armed => "armed",
+            State::Stopped(_) => "stopped",
+        };
+        let mut text = crate::rmw::Key::<48>::new();
+        let _ = write!(text, "state={state} session={}", self.arbiter.session());
+        let text = text.as_str().as_bytes();
+        let len = 8 + text.len() + 1;
+        let Some(out) = out.get_mut(..len) else {
+            return 0;
+        };
+        out[..4].copy_from_slice(&[0, 1, 0, 0]);
+        out[4..8].copy_from_slice(&(text.len() as u32 + 1).to_le_bytes());
+        out[8..len - 1].copy_from_slice(text);
+        out[len - 1] = 0;
+        len
     }
 
     /// Call every control tick (10 ms).
@@ -357,5 +421,106 @@ mod tests {
         assert_eq!(fx.stop, Some(StopReason::OwnerLost));
         let (r, _) = send(&mut d, 6, B, Kind::Hello, 0, 1, &[]);
         assert_eq!(r.unwrap().0.session, s + 1);
+    }
+
+    fn ros(gid: u8, seq: i64) -> [u8; 33] {
+        Attachment {
+            seq,
+            timestamp: 0,
+            gid: [gid; 16],
+        }
+        .encode()
+    }
+
+    fn bool_cdr(v: bool) -> [u8; 5] {
+        [0, 1, 0, 0, v as u8]
+    }
+
+    #[test]
+    fn first_ros_setpoint_claims_then_arm_drives() {
+        let mut d = dev();
+        let fx = d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(1.0));
+        assert_eq!(fx.claimed, Some(Source::Ros));
+        assert_eq!(d.wheels(0), [0.0; 4], "claimed but not armed");
+        d.on_ros_arm(5, &ros(1, 2), &bool_cdr(true));
+        assert_eq!(d.wheels(5), [0.5; 4]);
+        let fx = d.on_ros_arm(6, &ros(1, 3), &bool_cdr(false));
+        assert_eq!(fx.stop, Some(StopReason::Stop));
+        assert_eq!(d.wheels(6), [0.0; 4]);
+    }
+
+    #[test]
+    fn other_ros_gid_is_ignored_while_owned() {
+        let mut d = dev();
+        d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(0.5));
+        d.on_ros_arm(1, &ros(1, 2), &bool_cdr(true));
+        assert_eq!(
+            d.on_ros_cmd_vel(2, &ros(2, 1), &cdr(-1.0)),
+            Effects::default()
+        );
+        assert_eq!(
+            d.on_ros_arm(2, &ros(2, 1), &bool_cdr(false)),
+            Effects::default()
+        );
+        assert_eq!(
+            d.wheels(2),
+            [0.25; 4],
+            "owner's setpoint and arm are untouched"
+        );
+    }
+
+    #[test]
+    fn udp_owner_blocks_ros_and_ros_owner_blocks_udp() {
+        let mut d = dev();
+        send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
+        assert_eq!(
+            d.on_ros_cmd_vel(1, &ros(1, 1), &cdr(0.5)),
+            Effects::default()
+        );
+        let mut d = dev();
+        d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(0.5));
+        let (r, _) = send(&mut d, 1, A, Kind::Hello, 0, 1, &[]);
+        assert_eq!(r.unwrap().0.kind, Kind::Busy);
+    }
+
+    #[test]
+    fn malformed_ros_input_is_dropped() {
+        let mut d = dev();
+        assert_eq!(
+            d.on_ros_cmd_vel(0, &[1, 2, 3], &cdr(0.5)),
+            Effects::default()
+        );
+        assert_eq!(
+            d.on_ros_cmd_vel(0, &ros(1, 1), &[1, 2, 3]),
+            Effects::default()
+        );
+        assert_eq!(d.arbiter().state(), State::Open, "nothing claimed");
+        d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(0.5));
+        assert_eq!(d.on_ros_arm(1, &ros(1, 2), &[0, 1, 0]), Effects::default());
+        assert_eq!(d.arbiter().state(), State::Claimed);
+    }
+
+    #[test]
+    fn status_is_a_cdr_string() {
+        let mut d = dev();
+        let mut b = [0u8; 64];
+        let n = d.status_cdr(&mut b);
+        let len = u32::from_le_bytes(b[4..8].try_into().unwrap()) as usize;
+        assert_eq!(&b[..4], &[0, 1, 0, 0]);
+        assert_eq!(n, 8 + len);
+        assert_eq!(b[8 + len - 1], 0, "NUL terminated");
+        assert_eq!(
+            core::str::from_utf8(&b[8..7 + len]).unwrap(),
+            "state=open session=0"
+        );
+        d.on_ros_cmd_vel(0, &ros(1, 1), &cdr(0.5));
+        d.on_ros_arm(1, &ros(1, 2), &bool_cdr(true));
+        let n = d.status_cdr(&mut b);
+        let len = u32::from_le_bytes(b[4..8].try_into().unwrap()) as usize;
+        assert_eq!(
+            core::str::from_utf8(&b[8..7 + len]).unwrap(),
+            "state=armed session=1"
+        );
+        assert_eq!(n, 8 + len);
     }
 }
