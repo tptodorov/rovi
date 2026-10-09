@@ -20,6 +20,7 @@ use esp_println::println;
 use esp_radio::wifi::{self, ap::AccessPointConfig, AuthenticationMethodConfig, WifiController};
 use rovi_m8_setpoint_ros::arbiter::{Config, Effects, Error, Source, State};
 use rovi_m8_setpoint_ros::device::Device;
+use rovi_m8_setpoint_ros::events;
 use rovi_m8_setpoint_ros::kinematics::Geometry;
 use smart_leds::{SmartLedsWrite, RGB8};
 use trouble_host::prelude::*;
@@ -105,17 +106,9 @@ fn peer_id(e: IpEndpoint) -> u128 {
     }
 }
 
-/// One line per event, in the same words as the sim car's log.
+/// One `ev=` line per event, the same format as the sim car's log (`events.rs`).
 fn log(fx: Effects) {
-    if let Some(s) = fx.claimed {
-        println!("claimed {:?} at_ms={}", s, now());
-    }
-    if let Some(r) = fx.stop {
-        println!("stop {:?} at_ms={}", r, now());
-    }
-    if fx.released {
-        println!("released at_ms={}", now());
-    }
+    events::effects(fx, now(), |l| println!("{}", l));
 }
 
 /// The indicator shows the state, and while driving the direction and speed.
@@ -361,7 +354,7 @@ async fn main(_spawner: Spawner) -> ! {
             };
             log(fx);
             if (state, wheels) != last {
-                println!("state {:?} wheels {:?} at_ms={}", state, wheels, at);
+                events::state(state, wheels, at, |l| println!("{}", l));
                 // Only this loop touches the indicator.
                 led.write([color(state, wheels)]).unwrap();
                 last = (state, wheels);

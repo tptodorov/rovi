@@ -213,7 +213,7 @@ async fn serve(
                     s.attachment().unwrap_or(&[]),
                     s.payload(),
                 );
-                log_effects(fx);
+                log_effects(fx, t0);
             }
         },
         async {
@@ -223,7 +223,7 @@ async fn serve(
                     s.attachment().unwrap_or(&[]),
                     s.payload(),
                 );
-                log_effects(fx);
+                log_effects(fx, t0);
             }
         },
         async {

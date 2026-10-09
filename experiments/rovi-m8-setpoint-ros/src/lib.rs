@@ -5,6 +5,7 @@ extern crate std;
 
 pub mod arbiter;
 pub mod device;
+pub mod events;
 pub mod graph;
 pub mod kinematics;
 pub mod rmw;

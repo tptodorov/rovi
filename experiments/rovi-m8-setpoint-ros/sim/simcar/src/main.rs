@@ -2,14 +2,15 @@
 //! over zenoh), for development against real clients. Development evidence only, never hardware
 //! acceptance (ADR-0002).
 //!
-//! `simcar [port] [lease_ms claim_window_ms reclaim_window_ms]`. Logs one line per event.
+//! `simcar [port] [lease_ms claim_window_ms reclaim_window_ms]`. Logs one `ev=` line per event (`events.rs`).
 //! With `ros`, the router endpoint is `ROVI_ZENOH_ROUTER` (default `tcp/127.0.0.1:7447`).
 
 #[cfg(feature = "ros")]
 mod ros;
 
-use rovi_m8_setpoint_ros::arbiter::{Config, Effects};
+use rovi_m8_setpoint_ros::arbiter::{Config, Effects, State};
 use rovi_m8_setpoint_ros::device::Device;
+use rovi_m8_setpoint_ros::events;
 use rovi_m8_setpoint_ros::kinematics::Geometry;
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{Arc, Mutex};
@@ -21,16 +22,8 @@ pub fn ms(t0: Instant) -> u64 {
     t0.elapsed().as_millis() as u64
 }
 
-pub fn log_effects(fx: Effects) {
-    if let Some(s) = fx.claimed {
-        println!("claimed {s:?}");
-    }
-    if let Some(r) = fx.stop {
-        println!("stop {r:?}");
-    }
-    if fx.released {
-        println!("released");
-    }
+pub fn log_effects(fx: Effects, t0: Instant) {
+    events::effects(fx, ms(t0), |l| println!("{l}"));
 }
 
 fn peer_id(a: SocketAddr) -> u128 {
@@ -53,23 +46,23 @@ fn udp_loop(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
         if r.len > 0 {
             sock.send_to(&out[..r.len], from)?;
         }
-        log_effects(r.effects);
+        log_effects(r.effects, t0);
     }
 }
 
 fn control_loop(dev: Shared, t0: Instant) {
-    let mut last = [0.0f32; 4];
+    let mut last = (State::Open, [0.0f32; 4]);
     loop {
         std::thread::sleep(Duration::from_millis(10));
-        let (fx, wheels) = {
+        let (fx, state, wheels) = {
             let mut d = dev.lock().unwrap();
             let fx = d.tick(ms(t0));
-            (fx, d.wheels(ms(t0)))
+            (fx, d.arbiter().state(), d.wheels(ms(t0)))
         };
-        log_effects(fx);
-        if wheels != last {
-            println!("wheels {wheels:?}");
-            last = wheels;
+        log_effects(fx, t0);
+        if (state, wheels) != last {
+            events::state(state, wheels, ms(t0), |l| println!("{l}"));
+            last = (state, wheels);
         }
     }
 }

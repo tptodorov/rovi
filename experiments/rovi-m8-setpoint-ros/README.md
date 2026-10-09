@@ -237,11 +237,14 @@ cargo clippy --lib --tests -- -D warnings
 
 The CDR golden vectors in `src/setpoint.rs` were captured from ROS 2 Jazzy (`rmw_zenoh_cpp` 0.2.10). ROS leaves CDR padding bytes non-zero, so the decoder ignores padding. The kinematics follow the Jazzy `mecanum_drive_controller` source. The laptop ROS graph check is `sim/graph-check.sh`.
 
-The sim car (`sim/simcar/`) runs the same device core on a laptop UDP socket. `sim/udp_scenarios.py` drives it over real sockets (claim, busy, arm, stream, stop, lease expiry and reclaim, claim window, bye, non-owner input):
+The sim car (`sim/simcar/`) runs the same device core on a laptop UDP socket. `sim/udp_scenarios.py` drives it over real sockets (claim, busy, arm, stream, stop, lease expiry and reclaim, claim window, bye, non-owner input, setpoint-to-wheel signs). Each scenario also checks the car's own log:
 
 ```sh
 (cd sim/simcar && cargo build) && python3 sim/udp_scenarios.py
+ROVI_TARGET=192.168.4.1:7777 python3 sim/udp_scenarios.py   # the same suite against a running car (the board)
 ```
+
+The firmware and the sim car log one `ev=<name> key=value ... at_ms=<n>` line per event (`src/events.rs`). `sim/carlog.py` parses and checks them, `sim/bench.sh` runs scenarios plus the log check into `bench/<name>/`, and `sim/plot_car.py` plots the commanded wheels and path. See [`docs/FEEDBACK-LOOPS.md`](../../docs/FEEDBACK-LOOPS.md).
 
 This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)); acceptance needs the board.
 
