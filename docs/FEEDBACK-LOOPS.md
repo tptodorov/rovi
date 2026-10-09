@@ -2,24 +2,26 @@
 
 How an agent (or you) sees Rovi's work run and iterates on it, ranked by impact and ease. Status as of 2026-10-09; update it as loops land. Simulation never counts as hardware acceptance ([ADR-0002](adr/0002-simulation-never-proves-hardware.md)); the sim loops speed up iteration, the board loops produce the evidence.
 
+Status: **DONE** means built and verified on the laptop. Nothing here counts as board evidence yet.
+
 Impact is the judgment of how many real bugs or open decisions a loop catches (Q18-Q20, M4's fail-safe, M5's wheel mapping). Ease covers setup effort and purchases.
 
-| Rank | Channel | Impact | Ease | Needs | Status |
-| --- | --- | --- | --- | --- | --- |
-| 1 | **One scenario suite for sim and board.** `sim/udp_scenarios.py` takes `ROVI_TARGET` | High | Easy | Laptop | **Done.** Sim and running-car modes verified on the laptop; board untested |
-| 2 | **`ev=` event lines from the firmware and sim car, plus `sim/carlog.py`** (logfmt, not JSONL: one shared formatter, no serializer on the S3) | High | Easy-medium | Laptop | **Done.** Firmware builds and passes clippy; its serial output is not yet seen on a board |
-| 3 | **Bench script** `sim/bench.sh`: scenarios, log check, optional camera, into `bench/<name>/` | High | Medium | Board | **Done for the sim.** The board run is the same script with `ROVI_TARGET`; flashing and joining the AP stay manual |
-| 4 | **Laptop camera frames** `scripts/cam.sh`, named by wall-clock µs | Medium-high | Easy | Laptop camera | **Done.** 30 fps MJPEG verified; the car is not in view yet |
-| 5 | **Native USB port** (USB-Serial-JTAG) for logs and button-free reset | Medium | Easy | Board, cable | Blocked on the bench. `esp-println` `auto` already prints there. Confirm which connector it is (`303a:1001`) |
-| 6 | **Round-trip latency echo** over BLE and UDP (Q18, Q19, ADR-0008) | Medium-high | Easy-medium | Board | Not started |
-| 7 | **Current and voltage logging** (INA226 on the rail, or a USB meter with serial output) | High | Medium | About €5-15 | Buy before M4 |
-| 8 | **Logic analyzer with `sigrok-cli`** (PWM, STBY, stop-to-brake latency) | High | Medium | About €10-20 | Buy before M4 |
-| 9 | **Commanded-motion plot** `sim/plot_car.py` (wheel commands and integrated path from a car log) | Low-medium | Easy | Laptop | **Done.** Checked against a forward, rotate, strafe drive |
-| 10 | **probe-rs JTAG debugging** | Medium | Medium | Board | Tools in `shell.nix` (`probe-rs` 0.31.0 lists `esp32s3`). The udev rule in `~/mycfg` and RTT on the board are untested |
-| 11 | **Marker tracking on the laptop camera** (OpenCV ArUco) for relative motion. An overhead webcam only if the laptop view is not enough | High | Medium-hard | Marker, calibration | Needed for M5; not started |
-| 12 | **Per-port USB power switch** (`uhubctl`) for power-cycle tests | Low-medium | Easy-medium | A hub with per-port switching | Later |
-| 13 | **Wokwi** (PWM and watchdog timing only; no BLE or TB6612; needs a token and a config) | Low | Medium | Token | Skip |
-| 14 | **IMU or encoders** | High if M5 picks closed-loop | Hard | Hardware change | Defer until Q11 |
+| Rank | Channel | How it works | Impact | Ease | Needs | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | **One scenario suite for sim and board** (`sim/udp_scenarios.py`) | Seven `unittest` scenarios talk UDP over real sockets. By default each test starts a fresh `simcar` with short lease/claim/reclaim windows. With `ROVI_TARGET=host:port` they use a running car instead: wait until it is free, send `BYE` afterwards, take the windows from `ROVI_*_MS`. Each scenario also asserts events in the car's log (rank 2) | High | Easy | Laptop | **DONE.** Sim and running-car modes verified; board untested |
+| 2 | **`ev=` event lines from the firmware and sim car, plus `sim/carlog.py`** (logfmt, not JSONL: one shared formatter, no serializer on the S3) | `src/events.rs` formats `claimed`, `stop`, `released` and `state` (with the four wheel commands) as `ev=<name> key=value at_ms=<n>`; firmware and sim car both print them. `carlog.parse()` reads a sim stdout or a serial capture and ignores other lines and cut-off ones. Scenarios poll it for up to 1 s (`saw()`); `python3 sim/carlog.py FILE` checks that claim and release alternate per boot and that there is no panic | High | Easy-medium | Laptop | **DONE.** Firmware builds and passes clippy; its serial output is not yet seen on a board |
+| 3 | **Bench script** (`sim/bench.sh`) | Makes `bench/<name>/`, runs the scenarios into `scenarios.txt`, keeps the car log as `car.log` (sim: written by the sim car; board: copied from `ROVI_CARLOG`), runs the `carlog.py` check into `carlog.txt`, and exits non-zero if either fails. `BENCH_CAM=<s>` records camera frames alongside (rank 4) | High | Medium | Board | **DONE for the sim.** The board run is the same script with `ROVI_TARGET`; flashing and joining the AP stay manual |
+| 4 | **Laptop camera frames** (`scripts/cam.sh`) | `ffmpeg` copies the camera's 1280x720 30 fps MJPEG frames, without re-encoding, into `frames/<epoch µs>.jpg` (the name is the wall-clock capture time), then tiles 12 evenly spaced frames into `sheet.jpg` for a quick look | Medium-high | Easy | Laptop camera | **DONE.** Frame rate and naming verified; the car is not in view yet |
+| 5 | **Native USB port** (USB-Serial-JTAG) for logs and button-free reset | `esp-println` `auto` switches to the native port once it sees USB traffic (SOF), otherwise it uses UART0; `espflash` resets and enters download mode over it | Medium | Easy | Board, cable | **BLOCKED** on the bench. Confirm which connector it is (`303a:1001`) |
+| 6 | **Round-trip latency echo** over BLE and UDP (Q18, Q19, ADR-0008) | Planned: the firmware echoes a client timestamp and the client times the round trip | Medium-high | Easy-medium | Board | Not started |
+| 7 | **Current and voltage logging** (INA226 on the rail, or a USB meter with serial output) | Planned: log rail current and voltage next to the `ev=` lines | High | Medium | About €5-15 | Buy before M4 |
+| 8 | **Logic analyzer with `sigrok-cli`** (PWM, STBY, stop-to-brake latency) | Planned: probe the TB6612 inputs and decode captures on the laptop | High | Medium | About €10-20 | Buy before M4 |
+| 9 | **Commanded-motion plot** (`sim/plot_car.py`) | Takes the last boot in a car log, reads the `ev=state` events, holds each wheel command until the next event, and integrates the mecanum forward kinematics (wheel order FL, FR, RR, RL) into a pose. The PNG shows wheel commands over time and the path. It is commanded motion, not measured motion | Low-medium | Easy | Laptop | **DONE.** Checked against a forward, rotate, strafe drive (1.5 rad/s for 1 s gave 87 degrees) |
+| 10 | **probe-rs JTAG debugging** | `probe-rs run --chip esp32s3` over the native USB port for breakpoints, memory reads and a GDB server | Medium | Medium | Board | Tools in `shell.nix` (`probe-rs` 0.31.0 lists `esp32s3`). The udev rule in `~/mycfg` and RTT on the board are untested |
+| 11 | **Marker tracking on the laptop camera** (OpenCV ArUco) for relative motion. An overhead webcam only if the laptop view is not enough | Planned: a marker on the car, detected in the frames from rank 4 | High | Medium-hard | Marker, calibration | Needed for M5; not started |
+| 12 | **Per-port USB power switch** (`uhubctl`) for power-cycle tests | Planned: switch the board's hub port off and on from the script | Low-medium | Easy-medium | A hub with per-port switching | Later |
+| 13 | **Wokwi** (PWM and watchdog timing only; no BLE or TB6612; needs a token and a config) | - | Low | Medium | Token | Skip |
+| 14 | **IMU or encoders** | - | High if M5 picks closed-loop | Hard | Hardware change | Defer until Q11 |
 
 ## Running the done loops
 
