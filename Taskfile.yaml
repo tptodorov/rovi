@@ -13,6 +13,20 @@ tasks:
     cmds:
       - cargo run --release
 
+  m8:test:
+    desc: "M8: core unit tests and the car-log parser tests"
+    dir: experiments/rovi-m8-setpoint-ros
+    cmds:
+      - cargo test --lib
+      - python3 -m unittest discover -s sim -p 'test_*.py'
+
+  m8:bench:
+    desc: "M8: sim bench run (UDP scenarios + car log check) into bench/sim-<time>/; see docs/FEEDBACK-LOOPS.md"
+    dir: experiments/rovi-m8-setpoint-ros
+    cmds:
+      - cd sim/simcar && cargo build
+      - sim/bench.sh
+
   worktree:prepare:
     desc: Prepare a fresh worktree (install third-party skills from skills-lock.json)
     sources:

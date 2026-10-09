@@ -12,3 +12,7 @@ __pycache__
 /graft/
 /experiments/*/firmware/target/
 /experiments/*/sim/*/target/
+
+# bench runs: sim runs are throwaway; raw camera frames are never committed (they show the room)
+/experiments/*/bench/sim-*/
+/experiments/*/bench/*/cam/frames/
