@@ -138,7 +138,7 @@ The car is a zenoh-nostd client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (default 
   * Payload: CDR.
   * Attachment: 33 bytes (`seq` i64, timestamp i64, LEB128 `16`, 16-byte gid).
 * **Type hashes:** copied from a ROS 2 Jazzy install and checked against a live router.
-* **Ownership:** the owner is identified by its publisher gid, and other gids are ignored.
+* **Ownership:** the owner is the ROS *node* of the publisher. Samples carry only a publisher gid, which is a hash of the publisher's liveliness key, and `/cmd_vel` and `/rovi/arm` are separate publishers with different gids. So the car subscribes to the graph's liveliness tokens, maps each publisher gid to its node (`zid/nid`), and ignores samples from other nodes and from publishers it has not seen announced.
 * **Graph visibility:** the node `/rovi` and its topics are announced with `rmw_zenoh` liveliness tokens. This is M8's first risk item (Q2).
 
 ```mermaid
@@ -207,7 +207,15 @@ flowchart LR
    * Kinematics vectors from the `mecanum_drive_controller` formulas.
    * `rmw_zenoh` keys, attachments and liveliness keys.
    * The ownership and lease state machine.
-2. **Sim car on the laptop.** The same core and adapters run on std UDP and zenoh-nostd's std platform, and are driven by `rmw_zenohd`, the ROS 2 CLI or `teleop_twist_keyboard` (stamped), and a Python UDP client. This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)).
+2. **Sim car on the laptop.** The same core and adapters run on std UDP and zenoh-nostd's std platform, and are driven by `rmw_zenohd`, the ROS 2 CLI or `teleop_twist_keyboard` (stamped), and a Python UDP client. With `--features ros` the sim car is also a ROS 2 node on the zenoh-nostd fork. `sim/ros-scenarios.sh` runs a real ROS 2 controller (one node with `/cmd_vel` and `/rovi/arm` publishers, plus an intruder node) against it in Docker and checks claim, arm, ownership and stop:
+
+```sh
+(cd sim/simcar && cargo build --features ros) && sim/ros-scenarios.sh
+```
+
+Fork findings (`tptodorov/zenoh-nostd`): it needed liveliness tokens and a liveliness subscriber, the sample attachment on received data, the zid accessor, and frame sequence numbers tracked per priority and reliability (it used one counter and dropped interleaved reliable and best-effort frames with "Inconsistent SN"). The adapters run with the sequence check on.
+
+This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)).
 3. **S3 cross-build and clippy** at every step. Then, once hardware is available, bench acceptance as listed in [MILESTONE.md](MILESTONE.md).
 
 ## Not in M8
@@ -217,3 +225,46 @@ flowchart LR
 * BLE security and UDP signing ([ADR-0008](../../docs/adr/0008-local-link-security-baseline.md)).
 * Video, Nav2 and odometry.
 * An iPhone app: M8 is accepted with laptop clients (Q9).
+
+## Core library: build and test
+
+The host-tested core lives in `src/` (`setpoint`, `kinematics`, `arbiter`) and builds on the host with no board or ROS install. Run from this directory:
+
+```sh
+cargo test --lib
+cargo clippy --lib --tests -- -D warnings
+```
+
+The CDR golden vectors in `src/setpoint.rs` were captured from ROS 2 Jazzy (`rmw_zenoh_cpp` 0.2.10). ROS leaves CDR padding bytes non-zero, so the decoder ignores padding. The kinematics follow the Jazzy `mecanum_drive_controller` source. The laptop ROS graph check is `sim/graph-check.sh`.
+
+The sim car (`sim/simcar/`) runs the same device core on a laptop UDP socket. `sim/udp_scenarios.py` drives it over real sockets (claim, busy, arm, stream, stop, lease expiry and reclaim, claim window, bye, non-owner input, setpoint-to-wheel signs). Each scenario also checks the car's own log:
+
+```sh
+(cd sim/simcar && cargo build) && python3 sim/udp_scenarios.py
+ROVI_TARGET=192.168.4.1:7777 python3 sim/udp_scenarios.py   # the same suite against a running car (the board)
+```
+
+The firmware and the sim car log one `ev=<name> key=value ... at_ms=<n>` line per event (`src/events.rs`, standard in [`docs/LOGGING.md`](../../docs/LOGGING.md)). `sim/carlog.py` parses and checks them, `sim/bench.sh` runs scenarios plus the log check into `bench/<name>/`, and `sim/plot_car.py` plots the commanded wheels and path. See [`docs/FEEDBACK-LOOPS.md`](../../docs/FEEDBACK-LOOPS.md).
+
+This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)); acceptance needs the board.
+
+## Firmware (ESP32-S3, board-only)
+
+`firmware/` is the firmware shell around the host-tested `Device` core: the car AP (WPA2, `192.168.4.1`), the UDP adapter on port 7777, the BLE GATT adapter, the 10 ms control tick and the RGB LED indicator. No motor GPIO is configured. The ROS adapter is an optional `ros` feature (`cargo build --release --features ros ...`).
+
+```sh
+source ~/export-esp.sh
+cd firmware
+ROVI_WIFI_PASSWORD=<8..63 ASCII chars> cargo build --release \
+  --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+```
+
+Add `cargo clippy ... -- -D warnings` the same way. The core (`cargo test` in this directory) and the sim car are separate packages with their own lockfiles, because the sim's `wtx`/`sha1` needs a pre-release `digest` that `esp-hal` cannot share a lock with.
+
+BLE service `d47a0010-45b2-4d19-8db0-6bd87e9c0001`: Setpoint (`…0011`, write without response, `seq u32` + 68-byte CDR = 72 bytes, needs ATT MTU >= 75), Control (`…0012`, write, 1 = ARM, 2 = STOP), Capabilities (`…0013`, read), Status (`…0014`, read + notify).
+
+`esp-radio` 1.0.0-beta.1 (the latest release) has no public Wi-Fi AP stop/start, but `set_config` stops the driver when the mode changes. So while BLE owns the car, the firmware switches Wi-Fi to an idle station config (the AP goes away and its client is dropped) and switches back to the AP when the car is released; the log says `wifi AP off`/`wifi AP on`. BLE stops advertising while UDP or ROS owns the car. The arbiter also answers a second UDP `HELLO` with `BUSY`, so exclusivity does not depend on the radios. The mode switch is built and linted but unproven on a board: whether the stop and restart are clean next to a live BLE link is a bench item.
+
+### ROS 2 on the board
+
+With `--features ros` the car is a zenoh client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (build-time, default `udp/192.168.4.2:7448`): a laptop that joined the car AP with the static address `192.168.4.2`. The default `rmw_zenohd` listens on TCP only, so add a UDP listener to the router config, for example `listen/endpoints: ["tcp/[::]:7447", "udp/0.0.0.0:7448"]` in `DEFAULT_RMW_ZENOH_ROUTER_CONFIG.json5`. The adapter retries until the router is up and rejoins whenever the session ends (router restart, link loss, lease expiry), after a 2 s pause. The log says why it ended. If the router still holds the old session when the car returns (the zenoh id is fixed per boot), the connect fails until that session's lease runs out, and the adapter keeps retrying; `sim/ros-stale-session.sh` checks this over UDP. Each connection gets its own heap-allocated session that is freed when it ends. `sim/ros-reconnect.sh` checks three router restarts in a row against the sim car.

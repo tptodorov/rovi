@@ -2,7 +2,7 @@
 
 ## M8: setpoint protocol, single owner, optional ROS 2
 
-**Status:** design approved 2026-10-06; not implemented
+**Status:** design approved 2026-10-06; implementation started 2026-10-07 (laptop only; first risk item cleared)
 **Setup count:** one, ESP32-S3 board only; motor hardware disconnected
 
 ### Goal
@@ -42,4 +42,30 @@ Real hardware only; no motor hardware is connected for this milestone.
 
 ### Results
 
-Add after bench testing: date, commit, board, clients, settings, logs, pass/fail observations.
+Bench results (date, commit, board, clients, settings, logs, pass/fail) are added after bench testing. Laptop results are development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)).
+
+#### Laptop: core and UDP scenarios, 2026-10-07 — pass
+
+* **Host tests:** 48 pass (`cargo test --lib`): CDR codec against real ROS bytes, kinematics against the `mecanum_drive_controller` formulas, the arbiter (ownership, lease, arm, claim and reclaim windows, limits), UDP framing and the device core, and the `rmw_zenoh` keys, liveliness tokens, entity gid and attachment against a live Jazzy graph (gid `1b8f09d3…` reproduced).
+* **Sim car over real UDP sockets:** 6 scenarios pass (`sim/udp_scenarios.py`).
+* **ROS 2 sim car (real Jazzy controller in Docker, `sim/ros-scenarios.sh`):** pass. The first `/cmd_vel` claims the car, an arm from a second publisher of the same node arms it, an intruder node's setpoint and stop are ignored, arm false stops, and `/rovi/status` reaches `ros2`. 58 host tests pass.
+* **Design change found by this test:** an owner identified by publisher gid cannot work, because `/cmd_vel` and `/rovi/arm` are different publishers with different gids. The car now learns publisher gid to ROS node from liveliness tokens and treats the node as the controller. This needed a liveliness subscriber in the zenoh-nostd fork.
+* **S3 firmware, cross-build (test-plan step 4):** pass for AP + UDP + BLE GATT + control tick + LED. `cargo build --release` and `cargo clippy -D warnings` are clean. Footprint: text 663,197 B, data 18,668 B, bss 519,688 B (static buffers). Not flashed, because no board was available.
+* **S3 firmware with ROS (`--features ros`):** cross-builds and passes clippy. text 817,481 B (+154 KB over the build without ROS), data 18,928 B, bss 519,468 B. The fork needed optional `defmt` in `zenoh-embassy` and `embassy-sync` 0.8. Not flashed.
+* **ROS reconnect, 2026-10-08:** reproduced first (the car never rejoined after a router restart: `session.run()` returned `TransportClosed`, the adapter ignored it, and the static session cells could not be reopened). Fixed with a reconnect loop and one heap-allocated session per connection. `sim/ros-reconnect.sh` passes three router restarts in a row, and the ROS scenario still passes. The firmware has the same loop (flash +3.7 KB, text 821,145 B); on the board it relies on the UDP link freeing its buffer slot when dropped, which is read from the code, not run.
+* **Open issues worked, 2026-10-08:**
+  * Sequence numbers: fixed in the fork (per priority and reliability, with a wrap-around test). The adapters no longer ignore the check, and the ROS, reconnect and stale-session scenarios show no "Inconsistent SN" errors.
+  * Why a session ended: now logged (`LinkTxFailed` after a router kill).
+  * Duplicate zid: `sim/ros-stale-session.sh` drops a UDP session silently and rejoins with the same zid. The first attempt failed with the router still holding the old session, and a retry succeeded.
+* **Wi-Fi radio-off:** `esp-radio` 1.0.0-beta.1 (the latest) has no public AP stop, so the firmware uses a `set_config` mode switch (AP to an idle station config and back) while BLE owns the car. Core rule `Device::wifi_allowed` is tested (UDP and ROS share the AP). The firmware builds and passes clippy (text 664,677 B without ROS, 823,025 B with). Whether the switch is clean on the board, and next to a live BLE link, is a bench item. Espressif rates SoftAP plus BLE connected as unstable, so this is the reason to switch the AP off.
+* **Not yet:**  token-drop handling (dropped tokens without a key are skipped, so stale gid entries age out by eviction), per-reliability sequence numbers in zenoh-nostd, and everything on the board.
+
+#### Laptop: ROS graph visibility (test-plan step 1), 2026-10-07 — pass
+
+* **Setup:** zenoh-nostd fork [`tptodorov/zenoh-nostd@rovi/liveliness-token`](https://github.com/tptodorov/zenoh-nostd/tree/rovi/liveliness-token) (`ac96994`) on the std platform, as a client of `rmw_zenohd` (ROS 2 Jazzy, `rmw_zenoh_cpp` 0.2.10 in Docker). The fork adds `Session::declare_token` and `TransportLinkManager::zid()`. The example `z_ros_node` declares node `/rovi` and a best-effort `/cmd_vel` `TwistStamped` subscription. Reproduce with [`sim/graph-check.sh`](sim/graph-check.sh).
+* **Result:**
+  * `ros2 node list` shows `/rovi`.
+  * `ros2 topic info -v /cmd_vel` shows one subscription from node `rovi`, type hash `RIHS01_5f0fcd4f…`, QoS best-effort, depth 1.
+  * Plain `ros2 topic pub -r 5 /cmd_vel geometry_msgs/msg/TwistStamped` (no `-w 0`) starts at once, and the node receives 68-byte CDR payloads, matching the design.
+* **Liveliness key** (verified against a real ROS 2 node): `@ros2_lv/<domain>/<zid>/<nid>/<id>/<NN|MS|MP>/%/%/<node>[/<%topic>/<type>/<hash>/<qos>]`. The `source_gid` in a publisher's attachment is the XXH3-128 hash of its own liveliness key, which the car must reproduce for non-owner gid filtering.
+* **Not yet checked:** the S3 build and footprint with the patch, the board's own zid (it must be stable, so it comes from the MAC), reconnect re-declaration of tokens, and the publisher tokens for `/rovi/status`.
