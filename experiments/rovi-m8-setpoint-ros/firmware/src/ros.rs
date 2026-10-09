@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use super::{log, now};
+use super::{log, logger::emit, now};
 use core::cell::RefCell;
 use embassy_futures::select::{select5, Either5};
 use embassy_net::Stack;
@@ -11,6 +11,7 @@ use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
 use embassy_time::Timer;
 use esp_println::println;
 use rovi_m8_setpoint_ros::device::Device;
+use rovi_m8_setpoint_ros::events::{Event, Link as RosLink};
 use rovi_m8_setpoint_ros::rmw::{self, Attachment, Endpoint as Kind, Topic};
 use static_cell::StaticCell;
 use zenoh_embassy::EmbassyLinkManager;
@@ -81,6 +82,7 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
                 Ok(t) => break t,
                 Err(_) => {
                     println!("ros: router {} not reachable, retrying", ROUTER);
+                    emit(Event::Ros(RosLink::Retry));
                     Timer::after_secs(2).await;
                 }
             }
@@ -95,6 +97,7 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
         // SAFETY: the session lives until it is reclaimed below.
         let result = declare_and_serve(dev, unsafe { &*session }, &zid, cmd, arm, tokens).await;
         println!("ros session ended ({:?}), reconnecting", result.err());
+        emit(Event::Ros(RosLink::Down));
         // SAFETY: `declare_and_serve` returned, so every borrow of the session (tokens,
         // subscribers, publisher) is gone. The session points into the resources, so it goes
         // first.
@@ -175,6 +178,7 @@ async fn declare_and_serve(
         .finish()
         .await?;
     println!("ros node /{} up, zid {}, router {}", NODE, zid, ROUTER);
+    emit(Event::Ros(RosLink::Up));
 
     let ended = select5(
         session.run(),

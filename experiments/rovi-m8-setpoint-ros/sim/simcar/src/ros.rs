@@ -1,9 +1,10 @@
 //! The ROS 2 sim adapter: node `/rovi` over zenoh-nostd and `rmw_zenohd`, feeding the shared
 //! device. Subscribes `/cmd_vel` (TwistStamped) and `/rovi/arm` (Bool), publishes `/rovi/status`.
 
-use crate::{log_effects, ms, Shared};
+use crate::{log, log_effects, ms, Shared};
 use embassy_futures::select::{select5, Either5};
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
+use rovi_m8_setpoint_ros::events::{Event, Link};
 use rovi_m8_setpoint_ros::rmw::{self, Attachment, Endpoint as Kind, Topic};
 use static_cell::StaticCell;
 use std::time::Instant;
@@ -86,6 +87,7 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
             // SAFETY: a failed connect did not keep the resources.
             drop(unsafe { Box::from_raw(resources) });
             println!("ros: router {router} not reachable, retrying");
+            log(Event::Ros(Link::Retry), t0);
             embassy_time::Timer::after_secs(2).await;
             continue;
         };
@@ -118,6 +120,7 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
             None => serving.await,
         };
         println!("ros session ended ({:?}), reconnecting", result.err());
+        log(Event::Ros(Link::Down), t0);
         // SAFETY: `serve` returned, so every borrow of the session (tokens, subscribers,
         // publisher) is gone. The session points into the resources, so it goes first.
         drop(unsafe { Box::from_raw(session) });
@@ -202,6 +205,7 @@ async fn serve(
         .finish()
         .await?;
     println!("ros node /{NODE} up, zid {zid}, router {router}");
+    log(Event::Ros(Link::Up), t0);
 
     let (d1, d2, d3, d4) = (dev.clone(), dev.clone(), dev.clone(), dev.clone());
     let ended = select5(

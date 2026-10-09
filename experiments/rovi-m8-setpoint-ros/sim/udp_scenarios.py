@@ -173,7 +173,7 @@ class Scenarios(unittest.TestCase):
             for _ in range(10):
                 self.a.send(SETPOINT, cdr(vx, vy, wz))
                 time.sleep(0.02)
-            self.saw(lambda e: e.get("ev") == "state" and e["state"] == "Armed" and signs(e["wheels"]) == want)
+            self.saw(lambda e: e.get("ev") == "state" and e["state"] == "Armed" and signs(e["wheels_pm"]) == want)
 
 
 if __name__ == "__main__":

@@ -21,15 +21,8 @@ def body_velocity(w):
     return R / 4 * (a + b + c + d), R / 4 * (-a + b - c + d), R / (4 * L) * (-a + b + c - d)
 
 
-def last_boot(path):
-    with open(path, errors="replace") as f:
-        text = f.read()
-    cut = max(text.rfind(b) for b in carlog.BOOT)
-    return [e for e in map(carlog.parse, text[max(cut, 0):].splitlines()) if e]
-
-
 def main(path, out):
-    every = last_boot(path)
+    every = carlog.segments(carlog.read(path))[-1]  # the last boot
     ev = [e for e in every if e["ev"] == "state"]
     if not ev:
         sys.exit("no state events in the log")
@@ -38,7 +31,7 @@ def main(path, out):
     x = y = th = 0.0
     path_xy = [(0.0, 0.0)]
     for e, nxt in zip(ev, t[1:] + [(end - t0) / 1000]):  # wheels hold between state events
-        vx, vy, wz = body_velocity(e["wheels"])
+        vx, vy, wz = body_velocity([w / 1000 for w in e["wheels_pm"]])
         dt = nxt - (e["at_ms"] - t0) / 1000
         x += (vx * math.cos(th) - vy * math.sin(th)) * dt
         y += (vx * math.sin(th) + vy * math.cos(th)) * dt
@@ -46,7 +39,7 @@ def main(path, out):
         path_xy.append((x, y))
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
     for i, name in enumerate(("FL", "FR", "RR", "RL")):
-        ax1.step(t + [(end - t0) / 1000], [e["wheels"][i] for e in ev] + [ev[-1]["wheels"][i]], where="post",
+        ax1.step(t + [(end - t0) / 1000], [e["wheels_pm"][i] / 1000 for e in ev] + [ev[-1]["wheels_pm"][i] / 1000], where="post",
                  label=name, ls=("-", "--", ":", "-.")[i], lw=2)
     ax1.set(xlabel="s", ylabel="wheel command", title="wheel commands"), ax1.legend()
     ax2.plot(*zip(*path_xy), marker=".")

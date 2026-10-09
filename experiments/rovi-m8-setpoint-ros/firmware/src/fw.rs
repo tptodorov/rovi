@@ -4,7 +4,7 @@
 use core::cell::RefCell;
 use embassy_executor::Spawner;
 use embassy_futures::{
-    join::{join, join5},
+    join::{join3, join5},
     select::{select, select3, Either, Either3},
 };
 use embassy_net::{
@@ -20,13 +20,15 @@ use esp_println::println;
 use esp_radio::wifi::{self, ap::AccessPointConfig, AuthenticationMethodConfig, WifiController};
 use rovi_m8_setpoint_ros::arbiter::{Config, Effects, Error, Source, State};
 use rovi_m8_setpoint_ros::device::Device;
-use rovi_m8_setpoint_ros::events;
+use rovi_m8_setpoint_ros::events::{self, Event, Fault};
 use rovi_m8_setpoint_ros::kinematics::Geometry;
 use smart_leds::{SmartLedsWrite, RGB8};
 use trouble_host::prelude::*;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
+#[path = "logger.rs"]
+mod logger;
 #[cfg(feature = "ros")]
 #[path = "ros.rs"]
 mod ros;
@@ -106,9 +108,9 @@ fn peer_id(e: IpEndpoint) -> u128 {
     }
 }
 
-/// One `ev=` line per event, the same format as the sim car's log (`events.rs`).
+/// Queues the events of `fx` for the log (`logger.rs`, same lines as the sim car's).
 fn log(fx: Effects) {
-    events::effects(fx, now(), |l| println!("{}", l));
+    events::effects(fx, logger::emit);
 }
 
 /// The indicator shows the state, and while driving the direction and speed.
@@ -199,6 +201,7 @@ async fn main(_spawner: Spawner) -> ! {
         UDP_PORT,
         Config::DEFAULT.lease_ms
     );
+    logger::emit(Event::Boot);
 
     let udp = async {
         let (mut rx_meta, mut tx_meta) = ([PacketMetadata::EMPTY; 4], [PacketMetadata::EMPTY; 4]);
@@ -270,7 +273,10 @@ async fn main(_spawner: Spawner) -> ! {
                     continue;
                 }
             }
-            println!("BLE connected id={} att_mtu={}", id, conn.raw().att_mtu());
+            logger::emit(Event::Ble {
+                id,
+                mtu: Some(conn.raw().att_mtu()),
+            });
             let caps = dev.borrow().capabilities();
             let _ = conn.set(&server.rovi.capabilities, &caps);
             let mut last_status = [255u8; 3];
@@ -339,7 +345,7 @@ async fn main(_spawner: Spawner) -> ! {
             }
             let fx = dev.borrow_mut().on_ble_disconnect(now(), id);
             log(fx);
-            println!("BLE disconnected id={} at_ms={}", id, now());
+            logger::emit(Event::Ble { id, mtu: None });
         }
     };
     let control = async {
@@ -354,7 +360,10 @@ async fn main(_spawner: Spawner) -> ! {
             };
             log(fx);
             if (state, wheels) != last {
-                events::state(state, wheels, at, |l| println!("{}", l));
+                logger::emit(Event::State {
+                    state,
+                    wheels_pm: events::permille(wheels),
+                });
                 // Only this loop touches the indicator.
                 led.write([color(state, wheels)]).unwrap();
                 last = (state, wheels);
@@ -373,8 +382,11 @@ async fn main(_spawner: Spawner) -> ! {
                 ap_off_config()
             };
             match wifi.set_config(&config) {
-                Ok(()) => println!("wifi AP {} at_ms={}", if up { "on" } else { "off" }, now()),
-                Err(e) => println!("wifi AP switch failed: {:?} at_ms={}", e, now()),
+                Ok(()) => logger::emit(Event::Wifi { ap_on: up }),
+                Err(e) => {
+                    println!("wifi AP switch failed: {:?}", e);
+                    logger::emit(Event::Fault(Fault::WifiAp));
+                }
             }
         }
     };
@@ -388,7 +400,7 @@ async fn main(_spawner: Spawner) -> ! {
             udp,
             control,
             select(ble_runner.run(), ble),
-            join(ros, wifi_gate),
+            join3(ros, wifi_gate, logger::run()),
         ),
         core::future::pending::<()>(),
     )

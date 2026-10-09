@@ -10,7 +10,7 @@ mod ros;
 
 use rovi_m8_setpoint_ros::arbiter::{Config, Effects, State};
 use rovi_m8_setpoint_ros::device::Device;
-use rovi_m8_setpoint_ros::events;
+use rovi_m8_setpoint_ros::events::{self, Event, Record};
 use rovi_m8_setpoint_ros::kinematics::Geometry;
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{Arc, Mutex};
@@ -22,8 +22,19 @@ pub fn ms(t0: Instant) -> u64 {
     t0.elapsed().as_millis() as u64
 }
 
+/// One `ev=` line on stdout (spec: docs/LOGGING.md).
+pub fn log(ev: Event, t0: Instant) {
+    println!(
+        "{}",
+        Record {
+            at_ms: ms(t0) as u32,
+            ev
+        }
+    );
+}
+
 pub fn log_effects(fx: Effects, t0: Instant) {
-    events::effects(fx, ms(t0), |l| println!("{l}"));
+    events::effects(fx, |e| log(e, t0));
 }
 
 fn peer_id(a: SocketAddr) -> u128 {
@@ -61,7 +72,13 @@ fn control_loop(dev: Shared, t0: Instant) {
         };
         log_effects(fx, t0);
         if (state, wheels) != last {
-            events::state(state, wheels, ms(t0), |l| println!("{l}"));
+            log(
+                Event::State {
+                    state,
+                    wheels_pm: events::permille(wheels),
+                },
+                t0,
+            );
             last = (state, wheels);
         }
     }
@@ -87,6 +104,7 @@ fn main() -> std::io::Result<()> {
     };
     let dev: Shared = Arc::new(Mutex::new(Device::new(cfg, geometry)));
     let t0 = Instant::now();
+    log(Event::Boot, t0);
 
     let (d, u) = (dev.clone(), dev.clone());
     std::thread::spawn(move || control_loop(d, t0));

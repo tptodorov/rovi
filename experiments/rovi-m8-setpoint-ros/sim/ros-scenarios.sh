@@ -16,10 +16,10 @@ echo "--- sim car log"; cat /tmp/rovi-sim.log
 fail=0
 check() { if ! "$@"; then echo "FAIL: $*"; fail=1; fi; }
 check grep -q "ev=claimed source=Ros" /tmp/rovi-sim.log
-check grep -q "wheels=0.5,0.5,0.5,0.5" /tmp/rovi-sim.log
+check grep -q "wheels_pm=500,500,500,500" /tmp/rovi-sim.log
 check grep -q "ev=stop reason=Stop" /tmp/rovi-sim.log
 check grep -q "state=armed" /tmp/rovi-status.log
 check grep -q "state=stopped" /tmp/rovi-status.log
-if grep -q "wheels=-" /tmp/rovi-sim.log; then echo "FAIL: the intruder node drove the car"; fail=1; fi
+if grep -q "wheels_pm=-" /tmp/rovi-sim.log; then echo "FAIL: the intruder node drove the car"; fail=1; fi
 [ $fail = 0 ] && echo "ros scenarios: ok"
 exit $fail
