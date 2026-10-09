@@ -244,7 +244,7 @@ The sim car (`sim/simcar/`) runs the same device core on a laptop UDP socket. `s
 ROVI_TARGET=192.168.4.1:7777 python3 sim/udp_scenarios.py   # the same suite against a running car (the board)
 ```
 
-The firmware and the sim car log one `ev=<name> key=value ... at_ms=<n>` line per event (`src/events.rs`). `sim/carlog.py` parses and checks them, `sim/bench.sh` runs scenarios plus the log check into `bench/<name>/`, and `sim/plot_car.py` plots the commanded wheels and path. See [`docs/FEEDBACK-LOOPS.md`](../../docs/FEEDBACK-LOOPS.md).
+The firmware and the sim car log one `ev=<name> key=value ... at_ms=<n>` line per event (`src/events.rs`, standard in [`docs/LOGGING.md`](../../docs/LOGGING.md)). `sim/carlog.py` parses and checks them, `sim/bench.sh` runs scenarios plus the log check into `bench/<name>/`, and `sim/plot_car.py` plots the commanded wheels and path. See [`docs/FEEDBACK-LOOPS.md`](../../docs/FEEDBACK-LOOPS.md).
 
 This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)); acceptance needs the board.
 
