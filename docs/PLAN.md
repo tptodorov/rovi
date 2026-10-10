@@ -5,7 +5,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 ## Current state (2026-10-06)
 
 * Hardware parts package: received (2026-09-26) — see root [README.md](../README.md#hardware) for the part list and datasheets. The bench setup is not currently available, so only software work is scheduled.
-* Product software: the ESP32-S3 bring-up experiments exist; the low-level 4-wheel API and layered application are not implemented yet. Spec-driven product work starts after M1 as described in the root README; the API proposal can start now, while M3-M5 hardware evidence will constrain its final requirements and implementation.
+* Product software: the ESP32-S3 bring-up experiments exist; the low-level 4-wheel API is proposed ([M6](../spec/changes/add-four-wheel-api/proposal.md)) but not implemented, and the layered application is not started. Spec-driven product work starts after M1 as described in the root README; the API proposal can start now, while M3-M5 hardware evidence will constrain its final requirements and implementation.
 * Preliminary current observation: one motor drew 120 mA from a 5 V power bank labeled 6500 mAh. Conditions are incomplete; see the [M4 results](../experiments/rovi-m4-four-motor-safety/MILESTONE.md#results) and [mecanum reference](reference/mecanum-car/README.md#preliminary-measurement). It does not yet establish operating limits or runtime.
 
 ## Roadmap
@@ -24,7 +24,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
    * Motion needs an explicit arm, and every safety stop disarms. Claim and reclaim windows apply.
    * The car runs an AP only. ROS 2 runs over zenoh-nostd behind a compile-time `ros` feature; graph visibility is the first risk item.
    * The core and a sim car are tested on the laptop now; board acceptance waits for hardware. Graph visibility (the first risk item) passed on the laptop on 2026-10-07.
-3. **M6** (planned) — the low-level four-wheel API proposal (OpenSpec), using the M8 setpoint/ownership model and leaving the measured motor limits open until M4/M5.
+3. **M6** (proposal written 2026-10-10; not accepted, not implemented) — the low-level four-wheel API as an OpenSpec change: [`spec/changes/add-four-wheel-api/`](../spec/changes/add-four-wheel-api/proposal.md). It adds a `motor-control` layer (four normalised wheel commands, standby, limits) under M8's setpoint/ownership model. Motor limits, maximum wheel speed, open- vs closed-loop, brake mode and standby latency are OPEN (O1-O8) until M4/M5.
 
 ### Hardware (resume when the bench setup is available)
 
@@ -48,7 +48,7 @@ Living list. Close an item when it is decided, move hard-to-reverse outcomes int
 | Q2 | Can the car be visible in the ROS 2 graph with zenoh-nostd? | **Passed on the laptop (2026-10-07)** with a fork patch: `ros2 node list`, `topic info -v` and plain `ros2 topic pub` all work ([M8 results](../experiments/rovi-m8-setpoint-ros/MILESTONE.md#results)). The S3 build with the ROS feature now links (+154 KB flash). Remaining: confirm on the board, then close | M8 S3 build, bench |
 | Q8 | When to retire M3's TCP protocol v1 and `client.py` | Retire once M8's UDP protocol passes on the bench (ADR-0004) | M8 bench |
 | Q9 | iPhone client | M8 is accepted with laptop clients (BLE via bleak, a Python UDP client, ROS 2). Open: when and how to build the iPhone app. Decide after M8 bench results for Q18/Q19 | you, after M8 |
-| Q11 | Open-loop vs closed-loop wheel control; ros2_control wheel-velocity mode | Depends on whether encoders exist | M5 |
+| Q11 | Open-loop vs closed-loop wheel control; ros2_control wheel-velocity mode | Depends on whether encoders exist. M6's normalised wheel command fits both (O3) | M5 |
 | Q13 | Runtime vs compile-time configuration | Compile-time `ros` feature for M8 (agreed); runtime config later | after M8 |
 | Q16 | zenoh-nostd patches | A pinned fork with optional `defmt`, `embassy-sync` 0.8 and a liveliness API (decided, ADR-0005). The fork at `tptodorov/zenoh-nostd@rovi/liveliness-token` carries liveliness tokens, a liveliness subscriber, sample attachments and the zid accessor. The optional-`defmt` and `embassy-sync` 0.8 patches are in too. Per-priority/reliability sequence numbers are in too. Open: whether upstream accepts the patches | M8 |
 | Q17 | Clock sync for setpoint stamps | Without sync, staleness is judged by receive time and sequence. With sync, stamp-age checks could match `reference_timeout` | M8 bench, later |
