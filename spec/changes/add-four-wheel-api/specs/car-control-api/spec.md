@@ -204,9 +204,9 @@ The car SHALL give its capabilities on every source: protocol version, `wheels_r
 - **WHEN** a BLE, a UDP and a ROS 2 controller each read the capabilities
 - **THEN** every value is identical
 
-### Requirement: ROS 2 capabilities topic (proposed)
+### Requirement: ROS 2 capabilities topic
 
-A ROS 2 controller claims with its first setpoint, so ROS 2 SHALL give the capabilities without a claim. **Proposed mechanism**, to confirm in implementation: the car SHALL publish its capabilities on `/rovi/capabilities` as `std_msgs/String` of space-separated `key=value` pairs. The topic SHALL be latched: reliable, transient local, depth 1, so a node that subscribes late still gets the last sample. **OPEN (O9, M6 implementation):** whether zenoh-nostd can serve it as latched.
+A ROS 2 controller claims with its first setpoint, so ROS 2 SHALL give the capabilities without a claim. The car SHALL publish them on `/rovi/capabilities` as `std_msgs/String` of space-separated `key=value` pairs, latched: reliable, transient local, depth 1. Whether zenoh-nostd can serve the latching is OPEN (O9); the fallback below applies if it cannot.
 
 #### Scenario: Late subscriber gets the capabilities
 
@@ -226,7 +226,7 @@ A ROS 2 controller claims with its first setpoint, so ROS 2 SHALL give the capab
 - **WHEN** a ROS 2 node reads `/rovi/capabilities`
 - **THEN** the car stays open and every radio stays up
 
-### Requirement: ROS 2 capabilities republish fallback (proposed)
+### Requirement: ROS 2 capabilities republish fallback
 
 If O9 shows that zenoh-nostd cannot serve transient-local late joiners, the car SHALL instead republish `/rovi/capabilities` periodically and on every claim and release. **OPEN (O9):** the period.
 
@@ -251,6 +251,28 @@ The car SHALL report its status to the owner on every source (BLE Status charact
 - **GIVEN** a BLE controller has just connected
 - **WHEN** it reads Status before any other write
 - **THEN** the status reports claimed with no error
+
+### Requirement: ROS 2 status topic
+
+The car SHALL publish `/rovi/status` as `std_msgs/String` of space-separated `key=value` pairs with the same content as the other sources' status: `state` (open, claimed, armed or stopped), `reason` (the stop reason, while stopped), `error` (the last command error, if any) and `session`. It SHALL publish on every change of any of these and at least once a second, so a late subscriber sees the current status within a second.
+
+#### Scenario: Stop reason on ROS 2
+
+- **GIVEN** the car is armed under a ROS 2 owner
+- **WHEN** the lease expires
+- **THEN** the next `/rovi/status` has `state=stopped` and `reason=lease-expired`
+
+#### Scenario: Refused arm on ROS 2
+
+- **GIVEN** a new ROS 2 owner that has sent no setpoint
+- **WHEN** it publishes arm
+- **THEN** the next `/rovi/status` has `state=claimed` and `error=not-ready`
+
+#### Scenario: Status on a change
+
+- **GIVEN** a node subscribed to `/rovi/status`
+- **WHEN** the state changes
+- **THEN** it receives the new status without waiting for the next periodic publish
 
 ### Requirement: Last command error
 
