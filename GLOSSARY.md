@@ -65,7 +65,7 @@ The state in which the owner's setpoints move the device. A new owner starts dis
 _Avoid_: Enabled, active
 
 **Reclaim window**:
-The period after a lease expires in which the same owner can resume by arming again without reconnecting. When it ends, ownership is released.
+The period after a lease expires in which the same owner can resume by arming again without reconnecting. When it ends, ownership is released. After a stop or an out-of-limits setpoint the owner is kept while it keeps streaming, and the window starts when its lease lapses.
 
 **Lease**:
 The owner's right to keep commanding the device, renewed only by its valid setpoints. The setpoint stream is the heartbeat.

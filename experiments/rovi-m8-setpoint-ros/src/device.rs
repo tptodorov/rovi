@@ -34,6 +34,9 @@ pub struct Device {
     geometry: Geometry,
     arbiter: Arbiter,
     graph: Graph<16>,
+    /// The last error a BLE control write got, shown in the Status last-error byte until the
+    /// next control write that succeeds.
+    ble_error: Option<Error>,
 }
 
 impl Device {
@@ -43,6 +46,7 @@ impl Device {
             geometry,
             arbiter: Arbiter::new(cfg),
             graph: Graph::new(),
+            ble_error: None,
         }
     }
 
@@ -146,7 +150,9 @@ impl Device {
 
     /// A BLE central connected: that is the claim.
     pub fn on_ble_connect(&mut self, now: u64, conn: u16) -> Result<Effects, Error> {
-        self.arbiter.claim(now, ble(conn))
+        let fx = self.arbiter.claim(now, ble(conn))?;
+        self.ble_error = None;
+        Ok(fx)
     }
 
     /// A write to the Setpoint characteristic: `seq u32` (LE) then the CDR `TwistStamped`.
@@ -169,11 +175,23 @@ impl Device {
     /// A write to the Control characteristic: 1 = ARM, 2 = STOP. An error rejects the write.
     pub fn on_ble_control(&mut self, now: u64, conn: u16, cmd: u8) -> Result<Effects, Error> {
         let who = ble(conn);
-        match cmd {
+        let result = match cmd {
             1 => self.arbiter.arm(now, who).map(|()| Effects::default()),
             2 => self.arbiter.stop(now, who),
             _ => self.arbiter.check_owner(who).and(Err(Error::Invalid)),
+        };
+        // Only the owner's writes show in Status.
+        match result {
+            Ok(_) => self.ble_error = None,
+            Err(Error::NotOwner) => {}
+            Err(e) => self.ble_error = Some(e),
         }
+        result
+    }
+
+    /// The Status characteristic for the BLE owner: the state and the last control error.
+    pub fn ble_status(&self) -> [u8; STATUS_LEN] {
+        self.status(self.ble_error)
     }
 
     /// The central disconnected.
@@ -790,5 +808,50 @@ mod tests {
         let cmd = publisher(&mut d, 1, 1, 1);
         d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
         assert!(d.wifi_allowed(), "ROS rides on the AP");
+    }
+
+    #[test]
+    fn ble_status_carries_the_last_control_error_until_a_control_write_succeeds() {
+        let mut d = dev();
+        d.on_ble_connect(0, 1).unwrap();
+        assert_eq!(
+            d.ble_status(),
+            [1, 0, 0],
+            "claimed, no error, readable right after connect"
+        );
+        assert_eq!(d.on_ble_control(1, 1, 1), Err(Error::NotReady));
+        assert_eq!(
+            d.ble_status(),
+            [1, 0, 3],
+            "a refused ARM shows as NotReady, as over UDP"
+        );
+        assert_eq!(d.on_ble_control(2, 1, 9), Err(Error::Invalid));
+        assert_eq!(d.ble_status(), [1, 0, 4]);
+        d.on_ble_setpoint(3, 1, &ble_sp(1, 1.0));
+        assert_eq!(d.ble_status(), [1, 0, 4], "a setpoint does not clear it");
+        d.on_ble_control(4, 1, 1).unwrap();
+        assert_eq!(
+            d.ble_status(),
+            [2, 0, 0],
+            "a control write that succeeds clears it"
+        );
+    }
+
+    #[test]
+    fn a_new_ble_connection_starts_without_an_error() {
+        let mut d = dev();
+        d.on_ble_connect(0, 1).unwrap();
+        let _ = d.on_ble_control(1, 1, 1);
+        d.on_ble_disconnect(2, 1);
+        d.on_ble_connect(3, 2).unwrap();
+        assert_eq!(d.ble_status(), [1, 0, 0]);
+    }
+
+    #[test]
+    fn a_non_owner_write_does_not_change_the_owners_status() {
+        let mut d = dev();
+        d.on_ble_connect(0, 1).unwrap();
+        assert_eq!(d.on_ble_control(1, 2, 1), Err(Error::NotOwner));
+        assert_eq!(d.ble_status(), [1, 0, 0]);
     }
 }
