@@ -20,6 +20,11 @@ tasks:
       - cargo test --lib
       - python3 -m unittest discover -s sim -p 'test_*.py'
 
+  scripts:test:
+    desc: "Marker tracking and camera calibration tests on synthetic frames (no camera, no car)"
+    cmds:
+      - python3 -m unittest discover -s scripts -p 'test_*.py'
+
   m8:bench:
     desc: "M8: sim bench run (UDP scenarios + car log check) into bench/sim-<time>/; see docs/FEEDBACK-LOOPS.md"
     dir: experiments/rovi-m8-setpoint-ros
