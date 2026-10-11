@@ -60,6 +60,14 @@ Bench results (date, commit, board, clients, settings, logs, pass/fail) are adde
 * **Wi-Fi radio-off:** `esp-radio` 1.0.0-beta.1 (the latest) has no public AP stop, so the firmware uses a `set_config` mode switch (AP to an idle station config and back) while BLE owns the car. Core rule `Device::wifi_allowed` is tested (UDP and ROS share the AP). The firmware builds and passes clippy (text 664,677 B without ROS, 823,025 B with). Whether the switch is clean on the board, and next to a live BLE link, is a bench item. Espressif rates SoftAP plus BLE connected as unstable, so this is the reason to switch the AP off.
 * **Not yet:**  token-drop handling (dropped tokens without a key are skipped, so stale gid entries age out by eviction), per-reliability sequence numbers in zenoh-nostd, and everything on the board.
 
+#### Laptop: latency echo, 2026-10-11 — pass (UDP on the sim only)
+
+* **Core:** UDP `ECHO` (kind 9) and the BLE Echo characteristic (`…0015`) send back up to 32 bytes unchanged. One rule in the core (`device::echo`), used by both. Host tests: a non-owner's echo works, the arbiter state and lease are untouched (the lease still expires), and oversize payloads are dropped. 72 host tests pass.
+* **Sim car:** a UDP scenario checks echo while open (not a claim), a non-owner's 32-byte echo while another client is armed, the oversize drop, and 20 probes through `sim/latency.py`. 8 scenarios pass.
+* **Client:** `sim/latency.py` against the sim car over loopback, 100 probes at 50 Hz: count 100, loss 0 %, median 0.28 ms, p95 0.39 ms, max 0.49 ms. This only checks the tool; the bench numbers for acceptance come from the board.
+* **S3 firmware:** builds and passes clippy with and without `ros`. Text 652,985 B (+2.1 KB), 815,801 B with `ros`. Not flashed.
+* **Not yet:** the BLE variant has not been run (no board), and no UDP, BLE or ROS latency on hardware. ROS latency needs a separate echo (for example a ROS topic round trip) and is not covered.
+
 #### Laptop: ROS graph visibility (test-plan step 1), 2026-10-07 — pass
 
 * **Setup:** zenoh-nostd fork [`tptodorov/zenoh-nostd@rovi/liveliness-token`](https://github.com/tptodorov/zenoh-nostd/tree/rovi/liveliness-token) (`ac96994`) on the std platform, as a client of `rmw_zenohd` (ROS 2 Jazzy, `rmw_zenoh_cpp` 0.2.10 in Docker). The fork adds `Session::declare_token` and `TransportLinkManager::zid()`. The example `z_ros_node` declares node `/rovi` and a best-effort `/cmd_vel` `TwistStamped` subscription. Reproduce with [`sim/graph-check.sh`](sim/graph-check.sh).
