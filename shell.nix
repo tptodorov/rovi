@@ -9,7 +9,10 @@ pkgs.mkShell {
     pkgs.ffmpeg
     pkgs.go-task
     pkgs.probe-rs-tools
-    (pkgs.python3.withPackages (p: [ p.matplotlib ]))
+    (pkgs.python3.withPackages (p: [
+      p.matplotlib
+      p.opencv4
+    ]))
     pkgs.rustup
     pkgs.v4l-utils
   ];

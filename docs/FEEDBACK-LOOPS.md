@@ -1,6 +1,6 @@
 # Feedback loops
 
-How an agent (or you) sees Rovi's work run and iterates on it, ranked by impact and ease. Status as of 2026-10-09; update it as loops land. Simulation never counts as hardware acceptance ([ADR-0002](adr/0002-simulation-never-proves-hardware.md)); the sim loops speed up iteration, the board loops produce the evidence.
+How an agent (or you) sees Rovi's work run and iterates on it, ranked by impact and ease. Status as of 2026-10-11; update it as loops land. Simulation never counts as hardware acceptance ([ADR-0002](adr/0002-simulation-never-proves-hardware.md)); the sim loops speed up iteration, the board loops produce the evidence.
 
 Status: **DONE** means built and verified on the laptop. Nothing here counts as board evidence yet.
 
@@ -18,7 +18,7 @@ Impact is the judgment of how many real bugs or open decisions a loop catches (Q
 | 8 | **Logic analyzer with `sigrok-cli`** (PWM, STBY, stop-to-brake latency) | Planned: probe the TB6612 inputs and decode captures on the laptop | High | Medium | About €10-20 | Buy before M4 |
 | 9 | **Commanded-motion plot** (`sim/plot_car.py`) | Takes the last boot in a car log, reads the `ev=state` events, holds each wheel command until the next event, and integrates the mecanum forward kinematics (wheel order FL, FR, RR, RL) into a pose. The PNG shows wheel commands over time and the path. It is commanded motion, not measured motion | Low-medium | Easy | Laptop | **DONE.** Checked against a forward, rotate, strafe drive (1.5 rad/s for 1 s gave 87 degrees) |
 | 10 | **probe-rs JTAG debugging** | `probe-rs run --chip esp32s3` over the native USB port for breakpoints, memory reads and a GDB server | Medium | Medium | Board | Tools in `shell.nix` (`probe-rs` 0.31.0 lists `esp32s3`). The udev rule in `~/mycfg` and RTT on the board are untested |
-| 11 | **Marker tracking on the laptop camera** (OpenCV ArUco) for relative motion. An overhead webcam only if the laptop view is not enough | Planned: a marker on the car, detected in the frames from rank 4 | High | Medium-hard | Marker, calibration | Needed for M5; not started |
+| 11 | **Marker tracking on the laptop camera** (`scripts/track_marker.py`, `sim/compare_track.py`) for measured motion. An overhead webcam only if the laptop view is not enough | `track_marker.py` finds one ArUco marker (DICT_4X4_50, id 0) in each rank 4 frame and writes a CSV: `epoch_us` (from the file name), centre `x_px`/`y_px`, `heading_rad`, `size_px`; with `--side-m` also `x_m`/`y_m`, with `--calib` (from `scripts/calibrate_camera.py`) corners are undistorted first. Frames without the whole marker give no row. `compare_track.py` aligns the first wheel command with the first marker motion, turns the track into the car's start frame, overlays it on `plot_car.commanded_path` and prints distance and heading drift | High | Medium-hard | Printed marker, camera looking down | **DONE on synthetic frames only.** Markers drawn at known poses come back within 1.5 px and 1.5 degrees; a synthetic 0.5 m drive through JPEG frames shows 5 mm and 0.3 degrees of drift. No real car or marker has been in view; the laptop camera's oblique view is untested (see Notes) |
 | 12 | **Per-port USB power switch** (`uhubctl`) for power-cycle tests | Planned: switch the board's hub port off and on from the script | Low-medium | Easy-medium | A hub with per-port switching | Later |
 | 13 | **Wokwi** (PWM and watchdog timing only; no BLE or TB6612; needs a token and a config) | - | Low | Medium | Token | Skip |
 | 14 | **IMU or encoders** | - | High if M5 picks closed-loop | Hard | Hardware change | Defer until Q11 |
@@ -38,6 +38,15 @@ python3 sim/plot_car.py bench/sim-<time>/car.log plot.png
 BENCH_CAM=20 sim/bench.sh                     # scenarios with the camera recording meanwhile
 ```
 
+Marker tracking (from the repo root; `task scripts:test` runs its tests). Measured motion, but only as good as the view: see the notes below.
+
+```sh
+scripts/cam.sh bench/m5-fwd/cam 10            # record while the car drives
+python3 scripts/track_marker.py bench/m5-fwd/cam/frames bench/m5-fwd/track.csv --side-m 0.08 [--calib calib.json]
+python3 experiments/rovi-m8-setpoint-ros/sim/compare_track.py bench/m5-fwd/car.log bench/m5-fwd/track.csv bench/m5-fwd/compare.png
+python3 scripts/calibrate_camera.py calib.json shots/*.jpg   # once per camera and resolution, 9x6 inner-corner board
+```
+
 Board run (expected flow once the bench is back; **not yet tried**): flash the firmware, join the car AP (`192.168.4.2/24`, see the M8 README), capture the serial output to a file, then:
 
 ```sh
@@ -51,6 +60,8 @@ The scenario windows default to `Config::DEFAULT` for a board (`ROVI_LEASE_MS`, 
 
 * **Log format.** One standard for sim and board: [LOGGING.md](LOGGING.md). `at_ms` is the car's clock; the camera and client use the laptop's epoch clock, so correlating them needs one shared reference event, such as the first setpoint.
 * **S3 build.** `cargo` and `rustc` from the nix profile cannot build Xtensa. Use the esp toolchain: `source ~/export-esp.sh; PATH=~/.rustup/toolchains/esp/bin:$PATH`, then the build command in the M8 README.
-* **Camera privacy.** The camera shows the room. `bench/*/cam/frames/` and `bench/sim-*/` are gitignored; look at frames only while a test runs with the car in view. Only one program can hold the camera at a time.
+* **Camera privacy.** The camera shows the room. `bench/*/cam/frames/` and `bench/sim-*/` are gitignored; look at frames only while a test runs with the car in view. Only one program can hold the camera at a time. Track CSVs and comparison PNGs hold no imagery and can be committed; checkerboard shots also show the room, so keep them out of git.
+* **Marker print and placement.** Print id 0, for example `python3 -c "import cv2; d=cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50); cv2.imwrite('marker0.png', cv2.copyMakeBorder(cv2.aruco.generateImageMarker(d, 0, 600), 100, 100, 100, 100, cv2.BORDER_CONSTANT, value=255))"`. Make the black square 6-10 cm on matte paper, keep the white border, then measure the printed black square with a ruler and pass that as `--side-m` (printers rescale). Tape it flat on top of the car over the centre of rotation, its top edge (as printed) towards the car's front; the comparison assumes that. At 1280x720 it should span at least about 30 px in every frame.
+* **Camera geometry.** `--side-m` uses one scale for the whole image, which is right only for a camera looking straight down at the floor. A laptop camera looking across the room sees the floor at an angle: distances shrink with depth and headings skew, so treat its numbers as relative (repeatability, sign, left/right asymmetry), not absolute. Raise and tilt the laptop as far as possible, or use an overhead webcam. Calibration fixes lens distortion only, not the angle.
 * **Motion safety.** Wheels turn only with the car on blocks or you present. M4 gates all motion.
 * **Both USB ports.** `esp-println` `auto` keeps printing to the native port once it has seen USB traffic, so the CH343 port can go silent. Pick one log channel per run. Check the board schematic for backfeed before running motors from a battery with both cables attached.

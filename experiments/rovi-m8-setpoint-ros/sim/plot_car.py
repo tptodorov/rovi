@@ -21,22 +21,35 @@ def body_velocity(w):
     return R / 4 * (a + b + c + d), R / 4 * (-a + b - c + d), R / (4 * L) * (-a + b + c - d)
 
 
-def main(path, out):
-    every = carlog.segments(carlog.read(path))[-1]  # the last boot
+def commanded_path(every):
+    """(t s, x m, y m, heading rad) from the first `ev=state` of one boot's events, starting at 0; each wheel command
+    holds until the next state event, the last one until the last logged event. None without state events."""
     ev = [e for e in every if e["ev"] == "state"]
     if not ev:
-        sys.exit("no state events in the log")
-    t0, end = ev[0]["at_ms"], every[-1]["at_ms"]  # the last state holds until the last logged event
+        return None
+    t0, end = ev[0]["at_ms"], every[-1]["at_ms"]
     t = [(e["at_ms"] - t0) / 1000 for e in ev]
     x = y = th = 0.0
-    path_xy = [(0.0, 0.0)]
-    for e, nxt in zip(ev, t[1:] + [(end - t0) / 1000]):  # wheels hold between state events
+    path = [(0.0, 0.0, 0.0, 0.0)]
+    for e, nxt in zip(ev, t[1:] + [(end - t0) / 1000]):
         vx, vy, wz = body_velocity([w / 1000 for w in e["wheels_pm"]])
         dt = nxt - (e["at_ms"] - t0) / 1000
         x += (vx * math.cos(th) - vy * math.sin(th)) * dt
         y += (vx * math.sin(th) + vy * math.cos(th)) * dt
         th += wz * dt
-        path_xy.append((x, y))
+        path.append((nxt, x, y, th))
+    return path
+
+
+def main(path, out):
+    every = carlog.segments(carlog.read(path))[-1]  # the last boot
+    pose = commanded_path(every)
+    if not pose:
+        sys.exit("no state events in the log")
+    ev = [e for e in every if e["ev"] == "state"]
+    t0, end = ev[0]["at_ms"], every[-1]["at_ms"]
+    t = [(e["at_ms"] - t0) / 1000 for e in ev]
+    path_xy, th = [(x, y) for _, x, y, _ in pose], pose[-1][3]
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
     for i, name in enumerate(("FL", "FR", "RR", "RL")):
         ax1.step(t + [(end - t0) / 1000], [e["wheels_pm"][i] / 1000 for e in ev] + [ev[-1]["wheels_pm"][i] / 1000], where="post",
