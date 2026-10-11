@@ -95,8 +95,14 @@ pub struct Arbiter {
     latest: Option<Setpoint>,
     /// The lease is valid until this time; `None` before the first valid setpoint.
     lease_until: Option<u64>,
-    /// Claim window end while there has been no setpoint or arm; reclaim window end when stopped.
+    /// Claim window end while there has been no setpoint or arm.
     deadline: u64,
+    /// Reclaim window end. It starts when the lease lapses: at once for a lease expiry, and
+    /// after the owner goes quiet for a STOP or an out-of-limits setpoint, which keep the owner
+    /// for as long as it keeps streaming.
+    reclaim_until: Option<u64>,
+    /// After a STOP or an out-of-limits setpoint, arming needs a setpoint sent after it.
+    fresh_needed: bool,
 }
 
 impl Arbiter {
@@ -110,6 +116,8 @@ impl Arbiter {
             latest: None,
             lease_until: None,
             deadline: 0,
+            reclaim_until: None,
+            fresh_needed: false,
         }
     }
 
@@ -138,6 +146,8 @@ impl Arbiter {
                 self.latest = None;
                 self.lease_until = None;
                 self.deadline = now + self.cfg.claim_window_ms;
+                self.reclaim_until = None;
+                self.fresh_needed = false;
                 Ok(Effects {
                     claimed: Some(who.source),
                     ..Effects::default()
@@ -148,9 +158,10 @@ impl Arbiter {
 
     pub fn arm(&mut self, now: u64, who: Claimant) -> Result<(), Error> {
         self.check_owner(who)?;
-        if !self.lease_valid(now) {
+        if !self.lease_valid(now) || self.fresh_needed {
             return Err(Error::NotReady);
         }
+        self.reclaim_until = None;
         self.state = State::Armed;
         Ok(())
     }
@@ -175,6 +186,7 @@ impl Arbiter {
         } else {
             self.latest = Some(sp);
             self.lease_until = Some(now + self.cfg.lease_ms);
+            self.fresh_needed = false;
             Effects::default()
         };
         Ok((Applied::Applied, fx))
@@ -206,7 +218,7 @@ impl Arbiter {
                 Some(t) if now >= t => self.stop_with(now, StopReason::LeaseExpired),
                 _ => Effects::default(),
             },
-            State::Stopped(_) => self.release_at(now),
+            State::Stopped(_) => self.reclaim_tick(now),
         }
     }
 
@@ -229,22 +241,53 @@ impl Arbiter {
         self.lease_until.is_some_and(|t| now < t)
     }
 
-    /// Latches a safety stop and keeps the owner for the reclaim window. No effect if already stopped.
+    /// Latches a safety stop and keeps the owner. No effect if already stopped.
     fn stop_with(&mut self, now: u64, reason: StopReason) -> Effects {
         if matches!(self.state, State::Stopped(_)) {
             return Effects::default();
         }
         self.state = State::Stopped(reason);
         self.latest = None;
-        self.lease_until = None;
-        self.deadline = now + self.cfg.reclaim_window_ms;
+        match reason {
+            // The lease is gone, so the owner has the reclaim window from now.
+            StopReason::LeaseExpired | StopReason::OwnerLost => {
+                self.lease_until = None;
+                self.reclaim_until = Some(now + self.cfg.reclaim_window_ms);
+            }
+            // The owner is still there: the window starts only if its lease lapses.
+            StopReason::Stop | StopReason::OutOfLimits => {
+                self.reclaim_until = None;
+                self.fresh_needed = true;
+            }
+        }
         Effects {
             stop: Some(reason),
             ..Effects::default()
         }
     }
 
-    /// Ends the claim window or the reclaim window once its deadline passed.
+    /// While stopped: release at the end of the reclaim window, and start the window once the
+    /// lease has lapsed.
+    fn reclaim_tick(&mut self, now: u64) -> Effects {
+        match self.reclaim_until {
+            Some(end) if now >= end => {
+                self.open();
+                Effects {
+                    released: true,
+                    ..Effects::default()
+                }
+            }
+            Some(_) => Effects::default(),
+            None => {
+                if !self.lease_valid(now) {
+                    self.reclaim_until = Some(now + self.cfg.reclaim_window_ms);
+                }
+                Effects::default()
+            }
+        }
+    }
+
+    /// Ends the claim window once its deadline passed.
     fn release_at(&mut self, now: u64) -> Effects {
         if now < self.deadline {
             return Effects::default();
@@ -261,6 +304,8 @@ impl Arbiter {
         self.owner = None;
         self.latest = None;
         self.lease_until = None;
+        self.reclaim_until = None;
+        self.fresh_needed = false;
     }
 }
 
@@ -482,5 +527,70 @@ mod tests {
         a.setpoint(100, PHONE, 1, sp(0.1)).unwrap();
         assert_eq!(a.tick(1_100).stop, Some(StopReason::LeaseExpired));
         assert!(a.tick(6_100).released);
+    }
+
+    #[test]
+    fn stop_keeps_the_owner_while_it_keeps_streaming() {
+        let mut a = armed();
+        a.stop(10, PHONE).unwrap();
+        // The owner streams on, so no reclaim window runs and it is never released.
+        for (seq, t) in (2..).zip((500..60_000).step_by(500)) {
+            a.setpoint(t, PHONE, seq, sp(0.1)).unwrap();
+            assert_eq!(a.tick(t), Effects::default());
+        }
+        assert_eq!(a.state(), State::Stopped(StopReason::Stop));
+        assert_eq!(a.claim(60_000, LAPTOP), Err(Error::Busy));
+    }
+
+    #[test]
+    fn reclaim_window_starts_when_the_lease_lapses_after_a_stop() {
+        let mut a = armed(); // the lease is valid until 1000
+        a.stop(10, PHONE).unwrap();
+        assert_eq!(a.tick(999), Effects::default());
+        assert_eq!(
+            a.tick(1_000),
+            Effects::default(),
+            "the lease lapses here and the window starts"
+        );
+        assert_eq!(a.tick(5_999), Effects::default());
+        assert_eq!(
+            a.tick(6_000),
+            Effects {
+                released: true,
+                ..Default::default()
+            }
+        );
+    }
+
+    #[test]
+    fn out_of_limits_behaves_like_stop() {
+        let mut a = armed();
+        a.setpoint(10, PHONE, 2, sp(CFG.max_vx + 0.1)).unwrap();
+        assert_eq!(a.state(), State::Stopped(StopReason::OutOfLimits));
+        a.setpoint(900, PHONE, 3, sp(0.1)).unwrap(); // a valid setpoint renews the lease
+        assert_eq!(a.tick(1_000), Effects::default());
+        assert_eq!(
+            a.tick(1_900),
+            Effects::default(),
+            "the lease lapses, the window starts"
+        );
+        assert_eq!(a.tick(6_899), Effects::default());
+        assert_eq!(
+            a.tick(6_900),
+            Effects {
+                released: true,
+                ..Default::default()
+            }
+        );
+    }
+
+    #[test]
+    fn arming_again_after_a_stop_needs_a_setpoint_sent_after_it() {
+        let mut a = armed(); // an older setpoint still holds the lease
+        a.stop(10, PHONE).unwrap();
+        assert_eq!(a.arm(11, PHONE), Err(Error::NotReady));
+        a.setpoint(12, PHONE, 2, sp(0.2)).unwrap();
+        a.arm(12, PHONE).unwrap();
+        assert_eq!(a.drive(12), Some(sp(0.2)));
     }
 }

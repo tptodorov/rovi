@@ -121,7 +121,7 @@ The BLE connection is the session, and connecting is the claim. The service has 
 | Setpoint | write without response | `seq u32` + CDR `TwistStamped` (72 B; needs ATT MTU ≥ 75, Q18) |
 | Control | write with response | ARM / STOP |
 | Capabilities | read | as in `HELLO_ACK` (27 B) |
-| Status | read + notify | state, stop reason, last error (3 B, `src/device.rs`) |
+| Status | read + notify | state, stop reason, last error (3 bytes, as the UDP `STATUS`). Set at connect; a refused control write shows as `NotReady` or `Invalid` until the next one that succeeds |
 
 ### ROS 2 (feature `ros`)
 
@@ -168,8 +168,8 @@ sequenceDiagram
 * **Claim window.** The owner must send its first setpoint or ARM within 10 s of the claim. This covers slow BLE service discovery.
 * **Safety stop.** Triggered by STOP, lease expiry, owner loss or an out-of-limits setpoint. Wheels go to zero, drivers go to standby, and the device disarms. The control tick checks for it every 10 ms, independently of incoming traffic.
 * **Release.**
-  * STOP keeps the owner.
-  * After lease expiry, the owner has a **reclaim window** (default 5 s) to resume by arming again without reconnecting.
+  * STOP and an out-of-limits setpoint keep the owner for as long as it keeps streaming. Arming again needs a setpoint sent after the stop.
+  * When the lease lapses (at once after a lease expiry, or after the owner goes quiet following a stop), the owner has a **reclaim window** (default 5 s) to resume by arming again without reconnecting.
   * When the window ends, or on disconnect or `BYE`, ownership is released and both radios reopen.
 
 All three durations are compile-time settings.
