@@ -39,6 +39,25 @@ class CarLog(unittest.TestCase):
         problems, _, _ = check("ev=error src=wifi_ap at_ms=1\nev=dropped n=3 at_ms=2\nev=nope at_ms=3\n====== PANIC ======\n")
         self.assertEqual(len(problems), 4)
 
+    def test_ev_predicate_matches_name_and_fields(self):
+        e = carlog.parse("ev=stop reason=LeaseExpired at_ms=7")
+        self.assertTrue(carlog.ev("stop")(e))
+        self.assertTrue(carlog.ev("stop", reason="LeaseExpired")(e))
+        self.assertFalse(carlog.ev("stop", reason="Stop")(e))
+        self.assertFalse(carlog.ev("state")(e))
+
+    def test_wait_finds_events_after_the_offset_only(self):
+        with tempfile.NamedTemporaryFile("w") as f:
+            f.write("ev=released at_ms=1\n")
+            f.flush()
+            off = os.path.getsize(f.name)
+            self.assertEqual(carlog.wait(f.name, off, carlog.ev("released"), 0.1), (False, []))
+            f.write("ev=claimed source=Ble at_ms=2\n")
+            f.flush()
+            found, seen = carlog.wait(f.name, off, carlog.ev("claimed", source="Ble"), 0.1)
+            self.assertTrue(found)
+            self.assertEqual(seen[-1]["source"], "Ble")
+
     def test_catalog_matches_the_firmware_events(self):
         src = (pathlib.Path(__file__).resolve().parent.parent / "src/events.rs").read_text()
         self.assertEqual(set(re.findall(r'"ev=([a-z_]+)', src)), carlog.CATALOG)

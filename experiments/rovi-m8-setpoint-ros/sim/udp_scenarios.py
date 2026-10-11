@@ -11,6 +11,8 @@
 import os, socket, struct, subprocess, sys, tempfile, time, unittest, pathlib
 
 import carlog, latency
+from carlog import ev
+from wire import cdr
 
 HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY, ECHO = 1, 2, 3, 4, 5, 6, 7, 8, 9
 TARGET = os.environ.get("ROVI_TARGET")
@@ -21,18 +23,8 @@ LEASE, CLAIM, RECLAIM = (int(os.environ.get(k, d)) for k, d in zip(
 BIN = pathlib.Path(__file__).resolve().parent / "simcar/target/debug/simcar"
 
 
-def ev(name, **kv):
-    """Predicate for an event line with these fields."""
-    return lambda e: e.get("ev") == name and all(e.get(k) == v for k, v in kv.items())
-
-
 def signs(wheels):
     return tuple((w > 0) - (w < 0) for w in wheels)
-
-
-def cdr(vx=0.0, vy=0.0, wz=0.0):
-    """TwistStamped CDR with stamp 0, empty frame_id (NUL plus 3 pad bytes), then the twist."""
-    return b"\x00\x01\x00\x00" + struct.pack("<iiI", 0, 0, 1) + b"\x00" * 4 + struct.pack("<6d", vx, vy, 0, 0, 0, wz)
 
 
 class Client:
@@ -111,11 +103,9 @@ class Scenarios(unittest.TestCase):
         """The car's own log shows an event matching pred (within 1 s). Skipped when there is no car log."""
         if not self.logpath:
             return
-        end = time.time() + 1
-        while not any(map(pred, seen := carlog.events(self.logpath, self.off))):
-            if time.time() > end:
-                self.fail(f"car log lacks the event; last seen: {seen[-4:]}")
-            time.sleep(0.05)
+        found, seen = carlog.wait(self.logpath, self.off, pred)
+        if not found:
+            self.fail(f"car log lacks the event; last seen: {seen[-4:]}")
 
     def drive(self, c, n=1, vx=0.5):
         for _ in range(n):

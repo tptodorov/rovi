@@ -121,7 +121,7 @@ The BLE connection is the session, and connecting is the claim. The service has 
 | --- | --- | --- |
 | Setpoint | write without response | `seq u32` + CDR `TwistStamped` (72 B; needs ATT MTU ≥ 75, Q18) |
 | Control | write with response | ARM / STOP |
-| Capabilities | read | as in `HELLO_ACK` |
+| Capabilities | read | as in `HELLO_ACK` (27 B) |
 | Status | read + notify | state, stop reason, last error (3 bytes, as the UDP `STATUS`). Set at connect; a refused control write shows as `NotReady` or `Invalid` until the next one that succeeds |
 | Echo | write without response + notify | up to 32 bytes, notified back unchanged (latency) |
 
@@ -244,6 +244,12 @@ The sim car (`sim/simcar/`) runs the same device core on a laptop UDP socket. `s
 ```sh
 (cd sim/simcar && cargo build) && python3 sim/udp_scenarios.py
 ROVI_TARGET=192.168.4.1:7777 python3 sim/udp_scenarios.py   # the same suite against a running car (the board)
+```
+
+BLE has no sim car. `sim/ble_client.py` (bleak, in the repo nix shell) is the bench BLE client, and `sim/ble_scenarios.py` mirrors the UDP scenarios against a board (`ROVI_BLE_ADDR=<addr>`; skipped without it). Laptop evidence only: their unit tests run the client, the payloads (`sim/wire.py`, shared with the UDP scenarios and checked against the Rust golden vectors and status codes) and the scenario code against an in-memory fake GATT peer. The real BLE run is untried.
+
+```sh
+ROVI_BLE_ADDR=<addr> ROVI_CARLOG=<serial capture> python3 sim/ble_scenarios.py
 ```
 
 `sim/latency.py` measures the round trip over the echo. Over UDP it works while another client owns the car. **Over BLE it works only while the car is free:** connecting is the claim, so the BLE run owns the car until it disconnects. ROS has no echo yet; ROS latency is tracked in [#16](https://github.com/tptodorov/rovi/issues/16). The client sends N timestamped probes at a fixed rate (default 200 at 20 Hz) and prints sent, received, loss, median, p95 and max RTT. The echo is not logged (per-message logging costs, [LOGGING.md](../../docs/LOGGING.md#cost)):

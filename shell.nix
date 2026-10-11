@@ -10,6 +10,7 @@ pkgs.mkShell {
     pkgs.go-task
     pkgs.probe-rs-tools
     (pkgs.python3.withPackages (p: [
+      p.bleak
       p.matplotlib
       p.opencv4
     ]))
