@@ -2,7 +2,9 @@
 
 Current status, roadmap, and decisions deliberately deferred. For what Rovi is and why, see [`VISION.md`](VISION.md). For how work gets done, see the root [`README.md`](../README.md). This file is living — update it as milestones land, don't append a history; for *why* a specific hard-to-reverse decision was made, see [`adr/`](adr/).
 
-## Current state (2026-10-06)
+## Current state (2026-10-11)
+
+* M8 (setpoint protocol, single owner, optional ROS 2) is merged and verified on the laptop: host-tested core, sim car with real ROS 2 and UDP scenarios, firmware that cross-builds with and without ROS. Nothing has run on the board yet; the acceptance checklist and the bench steps are in the [M8 milestone](../experiments/rovi-m8-setpoint-ros/MILESTONE.md).
 
 * Hardware parts package: received (2026-09-26) — see root [README.md](../README.md#hardware) for the part list and datasheets. The bench setup is not currently available, so only software work is scheduled.
 * Product software: the ESP32-S3 bring-up experiments exist; the low-level 4-wheel API is proposed ([M6](../spec/changes/add-four-wheel-api/proposal.md)) but not implemented, and the layered application is not started. Spec-driven product work starts after M1 as described in the root README; the API proposal can start now, while M3-M5 hardware evidence will constrain its final requirements and implementation.
@@ -17,7 +19,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 
 1. **S1 spike** (done 2026-10-06, laptop only) — yes, with conditions. nano-ros's XRCE backend cross-compiles for the S3, links next to Rovi's stack, and interoperates with ROS 2 Jazzy via the micro-ROS agent. Rovi would own the S3 port (13 platform symbols; blocking UDP must be bridged to embassy-net). Footprint and on-board behaviour are untested; M8 decides nano-ros vs the direct XRCE client. See [S1 findings](research/s1-micro-ros-nano-ros-spike.md).
    * **S2 spike** (done 2026-10-06, laptop only): native Rust/embassy [zenoh-nostd](https://github.com/eclipse-zenoh/zenoh-nostd) + `rmw_zenoh`. ROS 2 ↔ car data works in both directions over UDP, and a real session links into M3 at +101 KiB flash. The car is invisible to the ROS graph until liveliness tokens are added. The project is early-stage. It is the preferred path for M8's `ros` feature. See [S2 findings](research/s2-zenoh-nostd-spike.md).
-2. **M8** (design approved 2026-10-06; not implemented) — setpoint protocol with a single owner and optional ROS 2. See [`experiments/rovi-m8-setpoint-ros/`](../experiments/rovi-m8-setpoint-ros/), [ADR-0004](adr/0004-single-owner-latest-setpoint.md), [ADR-0005](adr/0005-zenoh-nostd-ros-backend.md) and [ADR-0006](adr/0006-twiststamped-cdr-setpoint.md). Summary:
+2. **M8** (implemented and verified on the laptop 2026-10-11; merged; bench acceptance pending) — setpoint protocol with a single owner and optional ROS 2. See [`experiments/rovi-m8-setpoint-ros/`](../experiments/rovi-m8-setpoint-ros/), [ADR-0004](adr/0004-single-owner-latest-setpoint.md), [ADR-0005](adr/0005-zenoh-nostd-ros-backend.md) and [ADR-0006](adr/0006-twiststamped-cdr-setpoint.md). Summary:
    * Setpoints are `TwistStamped`, CDR-encoded on BLE, UDP and ROS, with `mecanum_drive_controller`-compatible kinematics.
    * The latest setpoint wins; there is no queue. Each valid setpoint renews the lease.
    * The first controller to claim the car (BLE connect, UDP hello, or first ROS setpoint) owns it, and the other radio shuts down until release.
@@ -50,10 +52,10 @@ Living list. Close an item when it is decided, move hard-to-reverse outcomes int
 | Q9 | iPhone client | M8 is accepted with laptop clients (BLE via bleak, a Python UDP client, ROS 2). Open: when and how to build the iPhone app. Decide after M8 bench results for Q18/Q19 | you, after M8 |
 | Q11 | Open-loop vs closed-loop wheel control; ros2_control wheel-velocity mode | Depends on whether encoders exist. M6's normalised wheel command fits both (O3) | M5 |
 | Q13 | Runtime vs compile-time configuration | Compile-time `ros` feature for M8 (agreed); runtime config later | after M8 |
-| Q16 | zenoh-nostd patches | A pinned fork with optional `defmt`, `embassy-sync` 0.8 and a liveliness API (decided, ADR-0005). The fork at `tptodorov/zenoh-nostd@rovi/liveliness-token` carries liveliness tokens, a liveliness subscriber, sample attachments and the zid accessor. The optional-`defmt` and `embassy-sync` 0.8 patches are in too. Per-priority/reliability sequence numbers are in too. Open: whether upstream accepts the patches | M8 |
+| Q16 | zenoh-nostd patches | Rovi pins the fork by commit ([ADR-0010](adr/0010-zenoh-nostd-fork-pin.md)); seven draft PRs to upstream (#28 to #34) are separate and do not block it. A pinned fork with optional `defmt`, `embassy-sync` 0.8 and a liveliness API (decided, ADR-0005). The fork at `tptodorov/zenoh-nostd@rovi/liveliness-token` carries liveliness tokens, a liveliness subscriber, sample attachments and the zid accessor. The optional-`defmt` and `embassy-sync` 0.8 patches are in too. Per-priority/reliability sequence numbers are in too. Open: whether upstream accepts the patches | M8 |
 | Q17 | Clock sync for setpoint stamps | Without sync, staleness is judged by receive time and sequence. With sync, stamp-age checks could match `reference_timeout` | M8 bench, later |
 | Q18 | BLE ATT MTU | CDR setpoints need MTU ≥ 75. Verify the negotiated value on iPhone and BlueZ with trouble-host; fall back to a compact 16-byte setpoint if it's unreliable | M8 bench |
-| Q19 | BLE streaming rate | Check that iOS gives a connection interval suitable for 20 Hz setpoints | M8 bench, iPhone |
+| Q19 | BLE streaming rate | Check that iOS gives a connection interval suitable for 20 Hz setpoints. ROS round-trip latency is tracked in [#16](https://github.com/tptodorov/rovi/issues/16) | M8 bench, iPhone |
 
 ## Deferred decisions (non-goals for now)
 
