@@ -12,6 +12,14 @@ use crate::udp::{self, Header, Kind};
 pub const CAPABILITIES_LEN: usize = 27;
 /// Bytes of the `STATUS` payload: state, stop reason, last error.
 pub const STATUS_LEN: usize = 3;
+/// Largest echo payload (UDP `ECHO`, BLE Echo characteristic).
+pub const ECHO_MAX: usize = 32;
+
+/// The latency echo: the payload to send back unchanged, or `None` if it is too long. Stateless:
+/// any peer may echo, owner or not, and it never touches the arbiter or the lease.
+pub fn echo(data: &[u8]) -> Option<&[u8]> {
+    (data.len() <= ECHO_MAX).then_some(data)
+}
 
 /// A reply to send back to the datagram's sender (`len` 0 means none) and the effects for the
 /// shell to act on.
@@ -80,6 +88,10 @@ impl Device {
             .unwrap_or(0)
         };
         match h.kind {
+            Kind::Echo => Reply {
+                len: echo(payload).map_or(0, |p| udp::write(out, h, p).unwrap_or(0)),
+                ..Reply::default()
+            },
             Kind::Hello => match self.arbiter.claim(now, who) {
                 Ok(effects) => {
                     let caps = self.capabilities();
@@ -499,6 +511,62 @@ mod tests {
         assert_eq!(fx.stop, Some(StopReason::OwnerLost));
         let (r, _) = send(&mut d, 6, B, Kind::Hello, 0, 1, &[]);
         assert_eq!(r.unwrap().0.session, s + 1);
+    }
+
+    #[test]
+    fn echo_answers_any_peer_with_the_same_bytes() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        let (r, fx) = send(
+            &mut d,
+            5,
+            B,
+            Kind::Echo,
+            77,
+            42,
+            b"0123456789abcdef0123456789abcdef",
+        );
+        let (h, p) = r.unwrap();
+        assert_eq!(
+            (h.kind, h.session, h.seq),
+            (Kind::Echo, 77, 42),
+            "header echoed as sent"
+        );
+        assert_eq!(&p[..32], b"0123456789abcdef0123456789abcdef");
+        assert_eq!(fx, Effects::default());
+        let (r, _) = send(&mut d, 5, A, Kind::Echo, s, 3, &[]);
+        assert_eq!(
+            r.unwrap().0.kind,
+            Kind::Echo,
+            "empty payload, from the owner"
+        );
+    }
+
+    #[test]
+    fn echo_never_claims_nor_renews_the_lease() {
+        let mut d = dev();
+        send(&mut d, 0, A, Kind::Echo, 0, 1, b"t");
+        assert_eq!(d.arbiter().state(), State::Open, "echo is not a claim");
+        armed(&mut d);
+        for t in (100..1_000).step_by(100) {
+            send(&mut d, t, A, Kind::Echo, 0, t as u32, b"t");
+            send(&mut d, t, B, Kind::Echo, 0, t as u32, b"t");
+        }
+        assert_eq!(d.arbiter().state(), State::Armed);
+        assert_eq!(
+            d.tick(1_000).stop,
+            Some(StopReason::LeaseExpired),
+            "lease not renewed"
+        );
+    }
+
+    #[test]
+    fn oversize_echo_is_dropped() {
+        let mut d = dev();
+        let (r, fx) = send(&mut d, 0, B, Kind::Echo, 0, 1, &[7; ECHO_MAX + 1]);
+        assert!(r.is_none() && fx == Effects::default());
+        assert_eq!(echo(&[7; ECHO_MAX + 1]), None, "BLE uses the same rule");
+        assert_eq!(echo(&[7; ECHO_MAX]), Some(&[7u8; ECHO_MAX][..]));
     }
 
     /// Registers a fake publisher `id` of node `nid` and returns its attachment for `seq`.

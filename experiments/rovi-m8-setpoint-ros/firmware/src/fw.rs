@@ -19,7 +19,7 @@ use esp_hal_smartled::{buffer_size, color_order, RmtSmartLeds};
 use esp_println::println;
 use esp_radio::wifi::{self, ap::AccessPointConfig, AuthenticationMethodConfig, WifiController};
 use rovi_m8_setpoint_ros::arbiter::{Config, Effects, Error, Source, State};
-use rovi_m8_setpoint_ros::device::Device;
+use rovi_m8_setpoint_ros::device::{self, Device};
 use rovi_m8_setpoint_ros::events::{self, Event, Fault};
 use rovi_m8_setpoint_ros::kinematics::Geometry;
 use smart_leds::{SmartLedsWrite, RGB8};
@@ -61,6 +61,9 @@ struct RoviService {
     /// State, stop reason, last error.
     #[characteristic(uuid = "d47a0014-45b2-4d19-8db0-6bd87e9c0001", read, notify, value = [0; 3])]
     status: [u8; 3],
+    /// Latency echo: up to 32 bytes written come back unchanged as a notification.
+    #[characteristic(uuid = "d47a0015-45b2-4d19-8db0-6bd87e9c0001", write_without_response, notify, value = [0; 32])]
+    echo: [u8; 32],
 }
 
 async fn until(mut cond: impl FnMut() -> bool) {
@@ -307,6 +310,22 @@ async fn main(_spawner: Spawner) -> ! {
                             log(fx);
                             if let Ok(reply) = w.accept() {
                                 reply.send().await;
+                            }
+                        } else if handle == server.rovi.echo.handle {
+                            let mut data = [0u8; device::ECHO_MAX];
+                            let n = w.with_data(|off, b| {
+                                if off == 0 && device::echo(b).is_some() {
+                                    data[..b.len()].copy_from_slice(b);
+                                    b.len()
+                                } else {
+                                    0
+                                }
+                            });
+                            if let Ok(reply) = w.accept() {
+                                reply.send().await;
+                            }
+                            if n > 0 {
+                                let _ = server.rovi.echo.notify_raw(&conn, &data[..n], false).await;
                             }
                         } else if handle == server.rovi.control.handle {
                             let cmd =
