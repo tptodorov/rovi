@@ -279,7 +279,9 @@ async fn main(_spawner: Spawner) -> ! {
             });
             let caps = dev.borrow().capabilities();
             let _ = conn.set(&server.rovi.capabilities, &caps);
-            let mut last_status = [255u8; 3];
+            // Status is readable right after connecting, not only after the first notify tick.
+            let mut last_status = dev.borrow().ble_status();
+            let _ = conn.set(&server.rovi.status, &last_status);
             loop {
                 match select3(
                     conn.next(),
@@ -335,7 +337,7 @@ async fn main(_spawner: Spawner) -> ! {
                         break;
                     }
                     Either3::Third(()) => {
-                        let status = dev.borrow().status(None);
+                        let status = dev.borrow().ble_status();
                         if status != last_status {
                             last_status = status;
                             let _ = server.rovi.status.notify(&conn, &status, true).await;
