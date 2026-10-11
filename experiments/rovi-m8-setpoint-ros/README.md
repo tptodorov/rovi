@@ -246,7 +246,7 @@ The sim car (`sim/simcar/`) runs the same device core on a laptop UDP socket. `s
 ROVI_TARGET=192.168.4.1:7777 python3 sim/udp_scenarios.py   # the same suite against a running car (the board)
 ```
 
-`sim/latency.py` measures the round trip over the echo: N timestamped probes at a fixed rate (default 200 at 20 Hz), then sent, received, loss, median, p95 and max RTT. The echo is not logged (per-message logging costs, [LOGGING.md](../../docs/LOGGING.md#cost)):
+`sim/latency.py` measures the round trip over the echo. Over UDP it works while another client owns the car. **Over BLE it works only while the car is free:** connecting is the claim, so the BLE run owns the car until it disconnects. ROS has no echo yet; ROS latency is tracked in [#16](https://github.com/tptodorov/rovi/issues/16). The client sends N timestamped probes at a fixed rate (default 200 at 20 Hz) and prints sent, received, loss, median, p95 and max RTT. The echo is not logged (per-message logging costs, [LOGGING.md](../../docs/LOGGING.md#cost)):
 
 ```sh
 python3 sim/latency.py                                     # a fresh sim car

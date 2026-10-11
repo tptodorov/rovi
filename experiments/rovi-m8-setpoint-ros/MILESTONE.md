@@ -64,11 +64,11 @@ Bench results (date, commit, board, clients, settings, logs, pass/fail) are adde
 
 #### Laptop: latency echo, 2026-10-11 — pass (UDP on the sim only)
 
-* **Core:** UDP `ECHO` (kind 9) and the BLE Echo characteristic (`…0015`) send back up to 32 bytes unchanged. One rule in the core (`device::echo`), used by both. Host tests: a non-owner's echo works, the arbiter state and lease are untouched (the lease still expires), and oversize payloads are dropped. 72 host tests pass.
+* **Core:** UDP `ECHO` (kind 9) and the BLE Echo characteristic (`…0015`) send back up to 32 bytes unchanged. One rule in the core (`device::echo`), used by both. Host tests: a non-owner's echo works, the arbiter state and lease are untouched (the lease still expires), and oversize payloads are dropped. 79 host tests pass (re-run after the reclaim-window change, where reclaim starts when the lease lapses).
 * **Sim car:** a UDP scenario checks echo while open (not a claim), a non-owner's 32-byte echo while another client is armed, the oversize drop, and 20 probes through `sim/latency.py`. 8 scenarios pass.
 * **Client:** `sim/latency.py` against the sim car over loopback, 100 probes at 50 Hz: count 100, loss 0 %, median 0.28 ms, p95 0.39 ms, max 0.49 ms. This only checks the tool; the bench numbers for acceptance come from the board.
-* **S3 firmware:** builds and passes clippy with and without `ros`. Text 652,985 B (+2.1 KB), 815,801 B with `ros`. Not flashed.
-* **Not yet:** the BLE variant has not been run (no board), and no UDP, BLE or ROS latency on hardware. ROS latency needs a separate echo (for example a ROS topic round trip) and is not covered.
+* **S3 firmware:** builds and passes clippy with and without `ros`. Text 653,465 B, 816,989 B with `ros` (the echo adds about 2.1 KB). Not flashed.
+* **Not yet:** the BLE variant has not been run (no board), and no UDP, BLE or ROS latency on hardware. ROS latency needs a separate echo and is tracked in [#16](https://github.com/tptodorov/rovi/issues/16). BLE echo runs only while the car is free (connecting claims it); accepted.
 
 #### Laptop: ROS graph visibility (test-plan step 1), 2026-10-07 — pass
 
