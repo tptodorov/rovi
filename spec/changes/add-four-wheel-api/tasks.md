@@ -5,7 +5,7 @@ Laptop tasks are development evidence only ([ADR-0002](../../../docs/adr/0002-si
 ## 1. Before implementation (laptop)
 
 - [ ] 1.1 Review and accept this proposal.
-- [ ] 1.2 Decide whether ROS 2 controllers get the capabilities (M8 has none on ROS).
+- [x] 1.2 Decide whether ROS 2 controllers get the capabilities: yes, on a latched `/rovi/capabilities` topic (proposed).
 - [ ] 1.3 Create the Cargo workspace (PLAN defers it until now) and move M8's host-tested core into a product crate, keeping its tests green.
 
 ## 2. Motor control (laptop, test-first)
@@ -17,6 +17,8 @@ Laptop tasks are development evidence only ([ADR-0002](../../../docs/adr/0002-si
 ## 3. Car control API conformance (laptop)
 
 - [ ] 3.1 Map each `car-control-api` scenario to a host test or a sim car scenario (`sim/udp_scenarios.py`, `sim/ros-scenarios.sh`); add the missing ones.
+- [ ] 3.2 Publish `/rovi/capabilities` and settle O9: test a late `ros2 topic echo` against Jazzy on the sim car; fall back to periodic republish if transient local does not work.
+- [ ] 3.3 Add the stop reason and the last command error to `/rovi/status` (M8 sends only state and session).
 
 ## 4. Settle OPEN requirements (bench)
 

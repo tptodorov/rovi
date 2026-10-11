@@ -79,7 +79,7 @@ If the owner sends no valid setpoint within the claim window, ownership SHALL be
 
 ### Requirement: Explicit arming
 
-A new owner SHALL start disarmed. Only the owner's explicit arm command SHALL arm the car, and only while the lease is valid. While disarmed, setpoints SHALL renew the lease and every wheel command SHALL be zero.
+A new owner SHALL start disarmed. Only the owner's explicit arm command SHALL arm the car, and only while the lease is valid. After a stop or an out-of-limits setpoint, arm SHALL also need a valid setpoint sent after that safety stop. While disarmed, setpoints SHALL renew the lease and every wheel command SHALL be zero.
 
 #### Scenario: Setpoints alone do not move the car
 
@@ -99,6 +99,13 @@ A new owner SHALL start disarmed. Only the owner's explicit arm command SHALL ar
 - **WHEN** it sends arm, then a non-zero setpoint
 - **THEN** the car is armed and the wheel commands follow the setpoint
 
+#### Scenario: Arm after a stop needs a new setpoint
+
+- **GIVEN** the owner sent stop while its lease was valid
+- **WHEN** it sends arm before any new setpoint
+- **THEN** arm is refused with not-ready and the car stays in safety stop
+- **AND** after one valid setpoint, the next arm succeeds
+
 ### Requirement: Lease and watchdog timeout
 
 Only the owner's valid setpoints SHALL renew the lease. When the lease expires, the car SHALL raise a watchdog timeout and a safety stop within the lease length plus 50 ms (M8's acceptance bound), checked by the control tick independently of incoming traffic.
@@ -112,7 +119,7 @@ Only the owner's valid setpoints SHALL renew the lease. When the lease expires, 
 
 ### Requirement: Safety stop
 
-The car SHALL enter a latched safety stop on the owner's stop command, lease expiry, owner loss, or an out-of-limits setpoint. A safety stop SHALL set every wheel command to zero, put every driver in standby and disarm the car. The owner SHALL be kept after every safety stop except owner loss. The latch SHALL clear only when the owner arms again or ownership is released.
+The car SHALL enter a latched safety stop on the owner's stop command, lease expiry, owner loss, or an out-of-limits setpoint. A safety stop SHALL set every wheel command to zero, put every driver in standby and disarm the car. The owner SHALL be kept after every safety stop except owner loss, as the reclaim window requirement states. The latch SHALL clear only when the owner arms again or ownership is released.
 
 #### Scenario: Stop keeps the owner
 
@@ -136,7 +143,26 @@ The car SHALL enter a latched safety stop on the owner's stop command, lease exp
 
 ### Requirement: Reclaim window
 
-After a safety stop that keeps the owner, the owner SHALL be able to resume within the reclaim window by sending a valid setpoint and then arming, without a new claim. When the window ends, ownership SHALL be released.
+After a stop or an out-of-limits setpoint, the owner SHALL be kept for as long as its valid setpoints keep the lease valid. The reclaim window SHALL start when the lease lapses: at once on a lease expiry, or when the owner goes quiet after a stop or an out-of-limits setpoint. Within the reclaim window, the owner SHALL be able to resume by sending a valid setpoint and then arming, without a new claim. When the window ends, ownership SHALL be released.
+
+#### Scenario: Streaming owner is kept after a stop
+
+- **GIVEN** the owner sent stop
+- **WHEN** it keeps streaming valid setpoints for longer than the reclaim window
+- **THEN** it is still the owner and the car stays in safety stop
+
+#### Scenario: Quiet owner after a stop is released
+
+- **GIVEN** the owner sent stop
+- **WHEN** it sends no setpoint after that
+- **THEN** the reclaim window starts when its lease lapses
+- **AND** ownership is released when the window ends, and every radio reopens
+
+#### Scenario: Out-of-limits keeps a streaming owner
+
+- **GIVEN** an out-of-limits setpoint raised a safety stop
+- **WHEN** the owner keeps streaming valid setpoints and then sends arm
+- **THEN** the car is armed in the same session
 
 #### Scenario: Resume within the window
 
@@ -163,7 +189,7 @@ After power-up or reset, the car SHALL be open, with no owner, disarmed, every w
 
 ### Requirement: Capabilities
 
-The car SHALL give its capabilities to the owner on claim, over BLE (Capabilities characteristic) and UDP (`HELLO_ACK`): protocol version, `wheels_radius`, `sum_of_robot_center_projection_on_X_Y_axis`, maximum `linear.x`, `linear.y` and `angular.z`, lease length, claim window and reclaim window. Each value SHALL be the one the car enforces, so a controller needs no hardcoded limits.
+The car SHALL give its capabilities on every source: protocol version, `wheels_radius`, `sum_of_robot_center_projection_on_X_Y_axis`, maximum `linear.x`, `linear.y` and `angular.z`, lease length, claim window and reclaim window. BLE (Capabilities characteristic) and UDP (`HELLO_ACK`) give them to the owner on claim; ROS 2 gives them before the claim, as below. Each value SHALL be the one the car enforces, so a controller needs no hardcoded limits.
 
 #### Scenario: Limits match enforcement
 
@@ -172,12 +198,73 @@ The car SHALL give its capabilities to the owner on claim, over BLE (Capabilitie
 - **THEN** the setpoint is applied
 - **AND** a setpoint above it raises a safety stop
 
+#### Scenario: Same capabilities on every source
+
+- **GIVEN** the same car
+- **WHEN** a BLE, a UDP and a ROS 2 controller each read the capabilities
+- **THEN** every value is identical
+
+### Requirement: ROS 2 capabilities topic (proposed)
+
+A ROS 2 controller claims with its first setpoint, so ROS 2 SHALL give the capabilities without a claim. **Proposed mechanism**, to confirm in implementation: the car SHALL publish its capabilities on `/rovi/capabilities` as `std_msgs/String` of space-separated `key=value` pairs. The topic SHALL be latched: reliable, transient local, depth 1, so a node that subscribes late still gets the last sample. **OPEN (O9, M6 implementation):** whether zenoh-nostd can serve it as latched.
+
+#### Scenario: Late subscriber gets the capabilities
+
+- **GIVEN** the car is open and connected to the ROS 2 router
+- **WHEN** a node starts and subscribes to `/rovi/capabilities`
+- **THEN** it receives the capabilities without sending anything to the car
+
+#### Scenario: One pair per field
+
+- **GIVEN** a node has received `/rovi/capabilities`
+- **WHEN** it splits the string on spaces and `=`
+- **THEN** it gets one value for each capabilities field, keyed by the field name above (for example `wheels_radius`)
+
+#### Scenario: Reading the capabilities is not a claim
+
+- **GIVEN** the car is open
+- **WHEN** a ROS 2 node reads `/rovi/capabilities`
+- **THEN** the car stays open and every radio stays up
+
+### Requirement: ROS 2 capabilities republish fallback (proposed)
+
+If O9 shows that zenoh-nostd cannot serve transient-local late joiners, the car SHALL instead republish `/rovi/capabilities` periodically and on every claim and release. **OPEN (O9):** the period.
+
+#### Scenario: Late subscriber gets the capabilities without latching
+
+- **GIVEN** the car uses the republish fallback
+- **WHEN** a node subscribes to `/rovi/capabilities` while the car is open
+- **THEN** it receives the capabilities within one republish period
+
 ### Requirement: Status
 
-The car SHALL report its status to the owner on every source: state (open, claimed, armed or safety stop), the stop reason (stop, lease-expired, owner-lost or out-of-limits) and the last command error (busy, not-owner, not-ready or invalid). Every status read or notification SHALL report the state at that moment.
+The car SHALL report its status to the owner on every source (BLE Status characteristic, UDP `STATUS`, ROS 2 `/rovi/status`): state (open, claimed, armed or safety stop), the stop reason (stop, lease-expired, owner-lost or out-of-limits) and the last command error (busy, not-owner, not-ready or invalid). Status SHALL be readable at once after a claim. Every status read or notification SHALL report the state at that moment.
 
 #### Scenario: Status follows a stop
 
 - **GIVEN** the car is armed and the owner reads status
 - **WHEN** the lease expires
 - **THEN** the next status reports safety stop with reason lease-expired
+
+#### Scenario: Readable right after the claim
+
+- **GIVEN** a BLE controller has just connected
+- **WHEN** it reads Status before any other write
+- **THEN** the status reports claimed with no error
+
+### Requirement: Last command error
+
+On every source, a refused device command from the owner (not-ready, invalid) SHALL show as the last command error until the owner's next device command succeeds. Setpoints SHALL NOT clear it. Commands from controllers that are not the owner SHALL NOT change the owner's status.
+
+#### Scenario: Refused arm shows on every source
+
+- **GIVEN** a new owner on BLE, UDP or ROS 2 that has sent no setpoint
+- **WHEN** it sends arm
+- **THEN** the status reports the last command error not-ready
+- **AND** a later setpoint does not clear it, and a successful arm does
+
+#### Scenario: Non-owner commands do not change the owner's status
+
+- **GIVEN** an owner whose status reports no error
+- **WHEN** another controller sends arm
+- **THEN** the owner's status still reports no error
