@@ -1,0 +1,5 @@
+# Host builds and tests use the default target. Build the firmware with:
+#   cargo build --release --bin rovi-m8-setpoint-ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+[target.xtensa-esp32s3-none-elf]
+runner = "espflash flash --monitor"
+rustflags = ["-C", "link-arg=-nostartfiles", "-C", "link-arg=-Tlinkall.x"]
