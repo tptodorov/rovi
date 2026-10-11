@@ -154,6 +154,7 @@ A milestone's checklist. An item is ticked only after it has been observed on re
 | **GATT** | BLE's attribute protocol layer: services and characteristics a client reads and writes. |
 | **ATT** | BLE attribute protocol; its error codes (e.g. `0x13` Value Not Allowed) reject writes. |
 | **UUID** | 128-bit identifier of a BLE service or characteristic. |
+| **RTT** | Round-trip time: a message out to the car and its echo back (`sim/latency.py`). |
 | **Connection interval** | How often a BLE central and peripheral exchange packets. |
 | **LE Secure Connections** | BLE pairing mode with ECDH key exchange. |
 | **MITM** | Man-in-the-middle attack. |

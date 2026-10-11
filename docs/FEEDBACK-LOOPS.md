@@ -8,12 +8,12 @@ Impact is the judgment of how many real bugs or open decisions a loop catches (Q
 
 | Rank | Channel | How it works | Impact | Ease | Needs | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | **One scenario suite for sim and board** (`sim/udp_scenarios.py`) | Seven `unittest` scenarios talk UDP over real sockets. By default each test starts a fresh `simcar` with short lease/claim/reclaim windows. With `ROVI_TARGET=host:port` they use a running car instead: wait until it is free, send `BYE` afterwards, take the windows from `ROVI_*_MS`. Each scenario also asserts events in the car's log (rank 2) | High | Easy | Laptop | **DONE.** Sim and running-car modes verified; board untested |
+| 1 | **One scenario suite for sim and board** (`sim/udp_scenarios.py`) | Eight `unittest` scenarios talk UDP over real sockets. By default each test starts a fresh `simcar` with short lease/claim/reclaim windows. With `ROVI_TARGET=host:port` they use a running car instead: wait until it is free, send `BYE` afterwards, take the windows from `ROVI_*_MS`. Each scenario also asserts events in the car's log (rank 2) | High | Easy | Laptop | **DONE.** Sim and running-car modes verified; board untested |
 | 2 | **`ev=` event lines from the firmware and sim car, plus `sim/carlog.py`** (logfmt, not JSONL: one shared formatter, no serializer on the S3) | `src/events.rs` defines the events (see [LOGGING.md](LOGGING.md)); the sim car prints them, and the firmware queues them in a ring that one paced task formats and writes. `carlog.parse()` reads a sim stdout or a serial capture and ignores other lines and cut-off ones. Scenarios poll it for up to 1 s (`saw()`); `python3 sim/carlog.py FILE` checks that claim and release alternate per boot, that every event is in the catalog, and that there is no panic, fault or dropped event | High | Easy-medium | Laptop | **DONE.** Firmware builds and passes clippy; its serial output is not yet seen on a board |
 | 3 | **Bench script** (`sim/bench.sh`) | Makes `bench/<name>/`, runs the scenarios into `scenarios.txt`, keeps the car log as `car.log` (sim: written by the sim car; board: copied from `ROVI_CARLOG`), runs the `carlog.py` check into `carlog.txt`, and exits non-zero if either fails. `BENCH_CAM=<s>` records camera frames alongside (rank 4) | High | Medium | Board | **DONE for the sim.** The board run is the same script with `ROVI_TARGET`; flashing and joining the AP stay manual |
 | 4 | **Laptop camera frames** (`scripts/cam.sh`) | `ffmpeg` copies the camera's 1280x720 30 fps MJPEG frames, without re-encoding, into `frames/<epoch µs>.jpg` (the name is the wall-clock capture time), then tiles 12 evenly spaced frames into `sheet.jpg` for a quick look | Medium-high | Easy | Laptop camera | **DONE.** Frame rate and naming verified; the car is not in view yet |
 | 5 | **Native USB port** (USB-Serial-JTAG) for logs and button-free reset | `esp-println` `auto` switches to the native port once it sees USB traffic (SOF), otherwise it uses UART0; `espflash` resets and enters download mode over it | Medium | Easy | Board, cable | **BLOCKED** on the bench. Confirm which connector it is (`303a:1001`) |
-| 6 | **Round-trip latency echo** over BLE and UDP (Q18, Q19, ADR-0008) | Planned: the firmware echoes a client timestamp and the client times the round trip | Medium-high | Easy-medium | Board | Not started |
+| 6 | **Round-trip latency echo** over BLE and UDP (Q18, Q19, ADR-0008) (`sim/latency.py`) | The car sends back any payload of up to 32 bytes unchanged: UDP `ECHO` frame, BLE Echo characteristic (write without response, notify). The echo is stateless: any peer may use it and it never touches the owner or lease. It is not logged. **BLE echo works only while the car is free:** connecting over BLE is a claim, so a BLE run owns the car for its duration and cannot run during another client's session. ROS has no echo; its latency is tracked in [#16](https://github.com/tptodorov/rovi/issues/16). The client sends N probes (probe number, send time in ns) at a fixed rate and prints `sent count loss_pct median_ms p95_ms max_ms`. `sim/bench.sh` writes it to `latency.txt` | Medium-high | Easy-medium | Board | **DONE for UDP on the sim** (200 probes at 20 Hz: median about 0.3 ms over loopback). The BLE variant, ROS ([#16](https://github.com/tptodorov/rovi/issues/16)) and every board number are untested |
 | 7 | **Current and voltage logging** (INA226 on the rail, or a USB meter with serial output) | Planned: log rail current and voltage next to the `ev=` lines | High | Medium | About €5-15 | Buy before M4 |
 | 8 | **Logic analyzer with `sigrok-cli`** (PWM, STBY, stop-to-brake latency) | Planned: probe the TB6612 inputs and decode captures on the laptop | High | Medium | About €10-20 | Buy before M4 |
 | 9 | **Commanded-motion plot** (`sim/plot_car.py`) | Takes the last boot in a car log, reads the `ev=state` events, holds each wheel command until the next event, and integrates the mecanum forward kinematics (wheel order FL, FR, RR, RL) into a pose. The PNG shows wheel commands over time and the path. It is commanded motion, not measured motion | Low-medium | Easy | Laptop | **DONE.** Checked against a forward, rotate, strafe drive (1.5 rad/s for 1 s gave 87 degrees) |
@@ -29,7 +29,8 @@ Run from `experiments/rovi-m8-setpoint-ros/` inside the repo's nix shell (`diren
 
 ```sh
 task m8:test                                  # core tests + car-log parser tests
-task m8:bench                                 # sim: scenarios + log check -> bench/sim-<time>/
+task m8:bench                                 # sim: scenarios + latency + log check -> bench/sim-<time>/
+python3 sim/latency.py                        # UDP RTT against a fresh sim car (ROVI_TARGET=host:port for a running car)
 python3 sim/plot_car.py bench/sim-<time>/car.log plot.png
 
 # camera, 5 s, frames named <epoch µs>.jpg + sheet.jpg
@@ -41,6 +42,7 @@ Board run (expected flow once the bench is back; **not yet tried**): flash the f
 
 ```sh
 ROVI_TARGET=192.168.4.1:7777 ROVI_CARLOG=<serial capture> BENCH_NAME=board-<date> sim/bench.sh
+python3 sim/latency.py --ble <address>        # BLE RTT (needs bleak); connecting claims the car, so run it while the car is free
 ```
 
 The scenario windows default to `Config::DEFAULT` for a board (`ROVI_LEASE_MS`, `ROVI_CLAIM_MS`, `ROVI_RECLAIM_MS` override them). Wi-Fi packet loss can fail a scenario that passes on the sim; read the car log before assuming a firmware bug.
