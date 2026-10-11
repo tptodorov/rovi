@@ -22,6 +22,8 @@ def ble_setpoint(seq, vx=0.0, vy=0.0, wz=0.0):
 
 
 class Status(NamedTuple):
+    """The car's state, the reason of the last safety stop, and the last control error. Over BLE the
+    error is that of the last refused Control write (NotReady, Invalid) until one succeeds."""
     state: str
     reason: str | None
     error: str | None

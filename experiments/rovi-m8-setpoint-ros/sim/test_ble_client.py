@@ -21,8 +21,10 @@ class Services:
 
 class FakePeer:
     """The surface of bleak's BleakClient that the client uses, acting like the M8 firmware's GATT
-    service: Control is a write with response, rejected (as an ATT error) when ARM comes without a
-    setpoint in the last lease; Status changes are notified."""
+    service. Status is set at connect. Control is a write with response, rejected (as an ATT error)
+    when ARM comes without a setpoint in the last lease or since a STOP, or for an unknown command;
+    the refusal shows in the Status error byte (NotReady, Invalid) until a control write succeeds.
+    Status changes are notified."""
 
     lease = 1.0
 
@@ -34,7 +36,8 @@ class FakePeer:
         if echo:
             chars.append(Char(ble_client.ECHO, ["write", "notify"]))
         self.services = Services(chars)
-        self.writes, self.notify, self.state, self.last_setpoint = [], {}, [0, 0, 0], None
+        self.writes, self.reads, self.notify, self.state, self.last_setpoint = [], [], {}, [0, 0, 0], None
+        self.fresh_needed = False
 
     async def connect(self):
         self.is_connected, self.state = True, [1, 0, 0]  # connecting is the claim
@@ -43,6 +46,7 @@ class FakePeer:
         self.is_connected, self.state = False, [0, 0, 0]
 
     async def read_gatt_char(self, uuid):
+        self.reads.append(uuid)
         return bytearray({ble_client.CAPABILITIES: CAPS, ble_client.STATUS: bytes(self.state)}[uuid])
 
     async def start_notify(self, uuid, cb):
@@ -54,15 +58,17 @@ class FakePeer:
     async def write_gatt_char(self, uuid, data, response=False):
         self.writes.append((uuid, bytes(data), response, time.monotonic()))
         if uuid == ble_client.SETPOINT:
-            self.last_setpoint = time.monotonic()
+            self.last_setpoint, self.fresh_needed = time.monotonic(), False
         elif uuid == ble_client.CONTROL:
             assert response, "Control is a write with response"
-            fresh = self.last_setpoint and time.monotonic() - self.last_setpoint < self.lease
+            fresh = self.last_setpoint and time.monotonic() - self.last_setpoint < self.lease and not self.fresh_needed
             if data == b"\x01" and fresh:
                 self.set([2, 0, 0])
             elif data == b"\x02":
                 self.set([3, 1, 0])
+                self.fresh_needed = True
             else:
+                self.set(self.state[:2] + [3 if data == b"\x01" else 4])  # NotReady, Invalid
                 raise ble_client.BleakError("ATT error 0x13 (Value Not Allowed)")
 
     def set(self, state):
@@ -89,6 +95,42 @@ class Client(unittest.TestCase):
         self.assertEqual(car.statuses, [wire.Status("Claimed", None, None)], "status is read once on open")
         self.assertIn(ble_client.STATUS, peer.notify)
         self.assertFalse(car.has_echo)
+
+    def test_status_is_read_first_and_is_right_without_a_notification(self):
+        peer = FakePeer()
+        peer.start_notify = lambda uuid, cb: asyncio.sleep(0)  # the board sends no notification yet
+        car = self.open(peer)
+        self.assertEqual(peer.reads[0], ble_client.STATUS, "Status is read right after connecting")
+        self.assertEqual(car.statuses[0], wire.Status("Claimed", None, None))
+
+    def test_refused_controls_show_in_the_error_byte_until_a_control_write_succeeds(self):
+        peer = FakePeer()
+
+        async def go():
+            car = await ble_client.Car(peer).open()
+            self.assertFalse(await car.arm())
+            self.assertEqual(await car.status(), ("Claimed", None, "NotReady"))
+            self.assertFalse(await car.control(9))
+            self.assertEqual(await car.status(), ("Claimed", None, "Invalid"))
+            await car.send(0.1)
+            self.assertEqual((await car.status()).error, "Invalid", "a setpoint does not clear it")
+            self.assertTrue(await car.arm())
+            return await car.status()
+        self.assertEqual(run(go()), ("Armed", None, None))
+
+    def test_arm_after_stop_needs_a_setpoint_sent_after_it(self):
+        peer = FakePeer()
+
+        async def go():
+            car = await ble_client.Car(peer).open()
+            await car.send(0.1)
+            self.assertTrue(await car.arm())
+            self.assertTrue(await car.stop())
+            self.assertFalse(await car.arm(), "the lease is still valid, but no setpoint since the stop")
+            self.assertEqual(await car.status(), ("Stopped", "Stop", "NotReady"))
+            await car.send(0.1)
+            self.assertTrue(await car.arm())
+        run(go())
 
     def test_warns_when_mtu_cannot_carry_a_setpoint(self):
         with self.assertLogs("rovi.ble", "WARNING") as logs:
@@ -188,17 +230,25 @@ class TimedPeer(FakePeer):
     async def write_gatt_char(self, uuid, data, response=False):
         self.active = True
         await super().write_gatt_char(uuid, data, response)
+        if uuid == ble_client.CONTROL and data == b"\x01":
+            self.reclaim_from = None  # arming again ends the reclaim window
 
     async def tick(self):
+        """The release rules: the claim window, lease expiry, and the reclaim window, which starts
+        when the lease lapses (at once on expiry; after a STOP only once the owner goes quiet)."""
+        self.reclaim_from = None
         while self.is_connected:
             await asyncio.sleep(0.01)
             now, (state, reason, _) = time.monotonic(), self.state
+            lapsed = self.last_setpoint is None or now - self.last_setpoint > self.lease
             if state == 1 and not self.active and now - self.claimed_at > self.claim:
                 await self.disconnect()
-            elif state == 2 and now - self.last_setpoint > self.lease:
+            elif state == 2 and lapsed:
                 self.set([3, 2, 0])
-                self.stopped_at = now
-            elif state == 3 and reason == 2 and now - self.stopped_at > self.reclaim:
+                self.reclaim_from = now
+            elif state == 3 and self.reclaim_from is None and lapsed:
+                self.reclaim_from = now
+            elif state == 3 and self.reclaim_from and now - self.reclaim_from > self.reclaim:
                 await self.disconnect()
 
 
@@ -228,7 +278,7 @@ class Scenarios(unittest.TestCase):
         finally:
             ble_client.connect, ble_client.find, ble_scenarios.ADAPTER2, ble_scenarios.CARLOG = saved
         self.assertEqual((r.failures, r.errors, r.skipped), ([], [], []))
-        self.assertGreaterEqual(r.testsRun, 6)
+        self.assertGreaterEqual(r.testsRun, 10)
 
     def test_skip_with_a_clear_message_without_a_board(self):
         env = {k: v for k, v in os.environ.items() if k != "ROVI_BLE_ADDR"}

@@ -56,13 +56,13 @@ class Car:
     async def open(self):
         if not self.peer.is_connected:
             await self.peer.connect()
+        self.statuses.append(await self.status())  # the board sets Status at connect
         self.mtu = await self._mtu()
         if self.mtu < MIN_MTU:
             log.warning("ATT MTU %d < %d: the 72-byte setpoint does not fit (PLAN Q18)", self.mtu, MIN_MTU)
         self.capabilities = wire.Capabilities.decode(await self.peer.read_gatt_char(CAPABILITIES))
         self.has_echo = self.peer.services.get_characteristic(ECHO) is not None
         await self.peer.start_notify(STATUS, self._on_status)
-        self.statuses.append(await self.status())
         return self
 
     async def _mtu(self):
@@ -157,7 +157,8 @@ async def main(args):
         if args.cmd == "drive":
             await car.send(args.vx, args.vy, args.wz)
             if not await car.arm():
-                print("arm refused")
+                refused = await car.wait_status(lambda s: s.error, 0.3)  # notified within 100 ms
+                print(f"arm refused: {refused or car.statuses[-1]}")
                 return 1
             n = await car.stream(args.vx, args.vy, args.wz, args.seconds)
             await car.stop()
