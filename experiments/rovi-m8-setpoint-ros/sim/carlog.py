@@ -3,7 +3,7 @@
 
     python3 sim/carlog.py car.log    # prints a summary, exits 1 if the log is inconsistent
 """
-import collections, re, sys
+import collections, re, sys, time
 
 # Keep in sync with src/events.rs (test_carlog.py checks it).
 CATALOG = {"boot", "claimed", "released", "stop", "state", "ble", "wifi", "ros", "error", "dropped"}
@@ -39,6 +39,21 @@ def read(path, offset=0):
 
 def events(path, offset=0):
     return [e for e in map(parse, read(path, offset).splitlines()) if e]
+
+
+def ev(name, **kv):
+    """Predicate for an event with this name and these fields."""
+    return lambda e: e.get("ev") == name and all(e.get(k) == v for k, v in kv.items())
+
+
+def wait(path, offset, pred, timeout=1.0):
+    """(found, events seen): polls the log after offset until an event matches pred or timeout passes."""
+    end = time.time() + timeout
+    while True:
+        seen = events(path, offset)
+        if any(map(pred, seen)) or time.time() > end:
+            return any(map(pred, seen)), seen
+        time.sleep(0.05)
 
 
 def segments(text):
