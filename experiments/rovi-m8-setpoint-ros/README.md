@@ -120,8 +120,8 @@ The BLE connection is the session, and connecting is the claim. The service has 
 | --- | --- | --- |
 | Setpoint | write without response | `seq u32` + CDR `TwistStamped` (72 B; needs ATT MTU ≥ 75, Q18) |
 | Control | write with response | ARM / STOP |
-| Capabilities | read | as in `HELLO_ACK` |
-| Status | notify | owner, armed, lease state, last seq, stop reason |
+| Capabilities | read | as in `HELLO_ACK` (27 B) |
+| Status | read + notify | state, stop reason, last error (3 B, `src/device.rs`) |
 
 ### ROS 2 (feature `ros`)
 
@@ -242,6 +242,12 @@ The sim car (`sim/simcar/`) runs the same device core on a laptop UDP socket. `s
 ```sh
 (cd sim/simcar && cargo build) && python3 sim/udp_scenarios.py
 ROVI_TARGET=192.168.4.1:7777 python3 sim/udp_scenarios.py   # the same suite against a running car (the board)
+```
+
+BLE has no sim car. `sim/ble_client.py` (bleak, in the repo nix shell) is the bench BLE client, and `sim/ble_scenarios.py` mirrors the UDP scenarios against a board (`ROVI_BLE_ADDR=<addr>`; skipped without it). Laptop evidence only: their unit tests run the client, the payloads (`sim/wire.py`, shared with the UDP scenarios and checked against the Rust golden vectors and status codes) and the scenario code against an in-memory fake GATT peer. The real BLE run is untried.
+
+```sh
+ROVI_BLE_ADDR=<addr> ROVI_CARLOG=<serial capture> python3 sim/ble_scenarios.py
 ```
 
 The firmware and the sim car log one `ev=<name> key=value ... at_ms=<n>` line per event (`src/events.rs`, standard in [`docs/LOGGING.md`](../../docs/LOGGING.md)). `sim/carlog.py` parses and checks them, `sim/bench.sh` runs scenarios plus the log check into `bench/<name>/`, and `sim/plot_car.py` plots the commanded wheels and path. See [`docs/FEEDBACK-LOOPS.md`](../../docs/FEEDBACK-LOOPS.md).

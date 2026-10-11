@@ -14,7 +14,7 @@ tasks:
       - cargo run --release
 
   m8:test:
-    desc: "M8: core unit tests and the car-log parser tests"
+    desc: "M8: core unit tests and the Python sim tests (car log, wire payloads, BLE client)"
     dir: experiments/rovi-m8-setpoint-ros
     cmds:
       - cargo test --lib
