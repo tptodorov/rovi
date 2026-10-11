@@ -16,7 +16,7 @@ One topic, one home. Read the relevant file below rather than expecting the answ
 ## Project structure
 
 * [`experiments/`](experiments/) — exploratory ESP32-S3/Rust hardware bring-up, one milestone per independent Cargo package.
-* `spec/` — not created yet; will hold OpenSpec change proposals once product development starts on the low-level API.
+* [`spec/`](spec/) — OpenSpec change proposals for product work (`spec/changes/{change-id}/`); first: [M6 four-wheel API](spec/changes/add-four-wheel-api/proposal.md).
 * [`docs/`](docs/) — `VISION.md`, `PLAN.md`, `adr/` (decision records), `reference/` (hardware component docs).
 
 ## Agent skills
