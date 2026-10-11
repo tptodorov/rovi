@@ -20,6 +20,14 @@ tasks:
       - cargo test --lib
       - python3 -m unittest discover -s sim -p 'test_*.py'
 
+  m4:test:
+    desc: "M4: core host tests, m4ctl tests, schematic netlist check (no board)"
+    dir: experiments/rovi-m4-four-motor-safety
+    cmds:
+      - cargo test --lib
+      - python3 -m unittest discover -s tools -p 'test_*.py'
+      - python3 tools/gen_wiring.py --check
+
   scripts:test:
     desc: "Marker tracking and camera calibration tests on synthetic frames (no camera, no car)"
     cmds:

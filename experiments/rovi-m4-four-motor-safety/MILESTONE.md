@@ -2,7 +2,7 @@
 
 ## M4: four-motor power and safety qualification
 
-**Status:** proposed — preliminary motor observation recorded; full M4 setup not yet implemented or qualified
+**Status:** prepared 2026-10-11 — wiring, parts list, test plan and firmware draft ready; **nothing run on hardware**. Preliminary motor observation recorded; the setup is not built or qualified
 **Setup count:** one, integrated four-motor chassis bench setup
 
 ### Goal
@@ -16,6 +16,15 @@ Establish safe electrical limits for the received motors, TB6612FNG boards, batt
 * Logic-rail sag, brownout, and recovery.
 * Motor switching noise and current-return paths affecting the ESP32 or control links.
 * GPIO boot/reset state and all-driver standby fail-safe.
+
+### Prepared (2026-10-11, laptop only)
+
+* [WIRING.md](WIRING.md) and [wiring.kicad_sch](wiring.kicad_sch): pin map on M1's pins plus free header pins, power path with fuse, kill switch and INA226, logic-analyzer probe list. Fail-safe options A-F; **recommended: a 74HC123 dead-man** that keeps both drivers' `STBY` low unless the firmware asks for enable *and* the control tick keeps toggling a heartbeat, plus pull-downs and the chip's RTC watchdog.
+* [BOM.md](BOM.md): kit parts and what to buy before M4.
+* [TESTPLAN.md](TESTPLAN.md): T0-T11, least to most dangerous, with stop criteria and evidence paths; maps O1, O4, O5, O7.
+* Firmware draft ([README](README.md#firmware)): host-tested core (28 tests) and an ESP32-S3 shell that cross-builds and passes clippy. Never flashed. All limits are placeholders.
+
+The test plan below is the milestone summary; [TESTPLAN.md](TESTPLAN.md) is the bench procedure.
 
 ### Test plan
 
