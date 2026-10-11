@@ -10,11 +10,11 @@
 """
 import os, socket, struct, subprocess, sys, tempfile, time, unittest, pathlib
 
-import carlog
+import carlog, latency
 from carlog import ev
 from wire import cdr
 
-HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY = 1, 2, 3, 4, 5, 6, 7, 8
+HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY, ECHO = 1, 2, 3, 4, 5, 6, 7, 8, 9
 TARGET = os.environ.get("ROVI_TARGET")
 HOST, PORT = (TARGET.rsplit(":", 1)[0], int(TARGET.rsplit(":", 1)[1])) if TARGET else ("127.0.0.1", 17777)
 # ms; the sim car gets short windows so the tests are quick
@@ -156,6 +156,20 @@ class Scenarios(unittest.TestCase):
         self.b.send(STOP)
         self.assertIsNone(self.b.recv())
         self.assertEqual(self.a.status(ARM), (2, 0, 0), "owner still armed")
+
+    def test_echo_from_any_peer_leaves_the_owner_alone(self):
+        self.b.send(ECHO, b"open", session=0, seq=9)
+        self.assertEqual(self.b.recv(), (ECHO, 0, b"open"), "echo while open")
+        self.assertEqual(self.a.hello()[0], ACK, "the echo was not a claim")
+        self.drive(self.a); self.assertEqual(self.a.status(ARM), (2, 0, 0))
+        probe = bytes(range(32))
+        self.b.send(ECHO, probe, session=0)
+        self.assertEqual(self.b.recv(), (ECHO, 0, probe), "non-owner echo, 32 bytes back unchanged")
+        self.b.send(ECHO, probe + b"!", session=0)
+        self.assertIsNone(self.b.recv(), "oversize echo dropped")
+        self.assertEqual(self.a.status(ARM), (2, 0, 0), "owner still armed")
+        rtts = latency.udp(HOST, PORT, n=20, hz=100, wait=0.3)
+        self.assertGreaterEqual(len(rtts), 18 if TARGET else 20)
 
     def test_setpoints_reach_the_wheels_with_mecanum_signs(self):
         self.a.hello(); self.drive(self.a); self.assertEqual(self.a.status(ARM), (2, 0, 0))

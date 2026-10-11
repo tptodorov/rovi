@@ -1,5 +1,6 @@
 //! UDP framing: `RoviHeader { magic "RV", version u8, kind u8, session u32, seq u32 }` plus an
 //! optional payload (M8 design).
+//! `ECHO` is answered with the same header and payload, from any peer (`device::echo`).
 
 pub const VERSION: u8 = 1;
 pub const HEADER_LEN: usize = 12;
@@ -16,6 +17,8 @@ pub enum Kind {
     Bye = 6,
     Status = 7,
     Busy = 8,
+    /// Round-trip probe: the payload comes back unchanged (`device::echo`).
+    Echo = 9,
 }
 
 impl Kind {
@@ -29,6 +32,7 @@ impl Kind {
             6 => Self::Bye,
             7 => Self::Status,
             8 => Self::Busy,
+            9 => Self::Echo,
             _ => return None,
         })
     }

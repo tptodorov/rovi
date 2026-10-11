@@ -12,6 +12,7 @@ pkgs.mkShell {
     (pkgs.python3.withPackages (p: [
       p.bleak
       p.matplotlib
+      p.opencv4
     ]))
     pkgs.rustup
     pkgs.v4l-utils

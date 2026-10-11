@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One bench run into bench/<name>/: the scenarios against the car, then a consistency check of the car's `ev=` log.
+# One bench run into bench/<name>/: the scenarios and the UDP latency echo against the car, then a consistency check of the car's `ev=` log.
 #   sim/bench.sh                                   sim car, UDP (build it first: cd sim/simcar && cargo build)
 #   ROVI_TARGET=192.168.4.1:7777 ROVI_CARLOG=<serial capture> sim/bench.sh
 #                                                  the board over UDP: flashed, laptop on its AP, serial logged to that file
@@ -16,6 +16,7 @@ dir=bench/$name; mkdir -p "$dir"
 status=0
 if [ -z "$kind" ] || [ -n "${ROVI_TARGET:-}" ]; then
   python3 sim/udp_scenarios.py 2>&1 | tee "$dir/scenarios.txt" || status=1
+  python3 sim/latency.py 2>&1 | tee "$dir/latency.txt" || status=1
 fi
 if [ -n "${ROVI_BLE_ADDR:-}" ]; then
   python3 -c 'import bleak' || { echo "bleak missing: run inside the repo nix shell" >&2; exit 1; }
