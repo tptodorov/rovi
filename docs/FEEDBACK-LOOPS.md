@@ -55,6 +55,8 @@ ROVI_TARGET=192.168.4.1:7777 ROVI_CARLOG=<serial capture> BENCH_NAME=board-<date
 python3 sim/latency.py --ble <address>        # BLE RTT (needs bleak); connecting claims the car, so run it while the car is free
 ```
 
+Step by step for bench day (preflight, each phase, what to look for, results template): [M8 bench runbook](../experiments/rovi-m8-setpoint-ros/BENCH.md).
+
 BLE leg (also **not yet tried**): find the car's address (`bluetoothctl scan on`, name "Rovi M8"), then add `ROVI_BLE_ADDR=<addr>` to the line above, or use it without `ROVI_TARGET` for BLE only. `python3 sim/ble_client.py info` shows MTU, capabilities and status; `drive --vx 0.2 --seconds 2` streams one drive. The second-central scenario stays skipped: it needs a second Bluetooth adapter (`ROVI_BLE_ADAPTER2`) and the bench has one. With one adapter, bleak reuses the open connection, so on the bench a second BLE claim is refused only in the host tests (`Busy`) and by the car not advertising while owned. Without bleak (outside the nix shell) the bench fails rather than skipping.
 
 The UDP scenario windows default to `Config::DEFAULT` for a board (`ROVI_LEASE_MS`, `ROVI_CLAIM_MS`, `ROVI_RECLAIM_MS` override them). Wi-Fi packet loss can fail a scenario that passes on the sim; read the car log before assuming a firmware bug.
