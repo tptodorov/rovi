@@ -36,7 +36,9 @@ Real hardware only; no motor hardware is connected for this milestone.
 - [x] The latest setpoint wins, and non-increasing sequences are never applied.
 - [x] Lease expiry raises a safety stop within lease + 50 ms. Claim and reclaim windows behave as specified. *(lease 995 to 1006 ms, reclaim 5002 to 5003 ms, claim 10007 ms)*
 - [x] For identical `TwistStamped` input, wheel commands match `mecanum_drive_controller`'s formulas.
-- [ ] `ros2 node list` and `topic info` show `/rovi`. Plain `ros2 topic pub` and stamped teleop drive it. *(`/rovi` and `topic info` observed on the board, and plain `ros2 topic pub` claims the car; it cannot arm it, since a second `ros2 topic pub` is another node, and `teleop_twist_keyboard` was not tried. The wording needs a decision.)*
+- [x] `ros2 node list` and `topic info` show `/rovi`, and plain `ros2 topic pub` claims the car. *(Board: phase 6 `q2.txt`.)*
+- [x] One ROS node can arm and drive the car (`/rovi/arm` and `/cmd_vel` from the same node). *(Board: the controller scenario, `ros_controller.py`. Plain CLI pub cannot do this by design: a second `ros2 topic pub` is another node, which the car ignores as a non-owner. Reworded from "plain pub and stamped teleop drive it", [#24](https://github.com/tptodorov/rovi/issues/24).)*
+- [ ] A stock stamped teleop (`teleop_twist_keyboard` with `stamped:=true`) drives the car. *(Untried; it publishes only `/cmd_vel`, so arming needs the single-node tool or a product teleop. Not an M8 gate.)*
 - [x] The BLE setpoint characteristic works at the negotiated MTU, streaming at 20 Hz.
 - [x] Latency for BLE, UDP and ROS (median, p95, max) and the flash/RAM footprint are recorded.
 
