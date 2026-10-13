@@ -44,6 +44,20 @@ Real hardware only; no motor hardware is connected for this milestone.
 
 Bench results (date, commit, board, clients, settings, logs, pass/fail) are added after bench testing. Laptop results are development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)).
 
+#### Board, 2026-10-13: boot and BLE (first runs on hardware)
+
+Setup: ESP32-S3 (rev v0.2, 16 MB, MAC `14:c1:9f:cd:71:78`) on the CH343 UART port, no motors or other wiring; laptop BlueZ central; non-ROS build (text 653,409 B at first, 672,448 B image after the fix). Evidence in `bench/board-2026-10-13-*`.
+
+* **Boot** (`board-…-boot`): `M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 …` then `ev=boot ver=0.1.0`; no panic, no `ev=error`; `sim/carlog.py` passes.
+* **BLE scenarios, first run** (`board-…-ble`): 8 pass, 1 skipped (second central: one adapter), **2 fail**, and both failures were firmware or log findings:
+  * **Status notifications were starved while streaming.** The 100 ms notify timer was recreated on every loop pass, so it never fired while the central wrote setpoints every 50 ms. `drive.txt` showed `Armed` was never notified. Fixed with a `Ticker` that keeps its schedule.
+  * **The car logged `mtu=23` at connect,** before the central's exchange. Added `ev=mtu id=N mtu=M` when the MTU changes (LOGGING.md catalog, `carlog.py`, tests updated). `mtu` in `ble link=up` stays as the value at connect.
+* **BLE scenarios after the fix** (`board-…-ble-fix`): **10 pass, 1 skipped, 0 fail**, car log clean (145 events in one boot).
+* **Q18 (ATT MTU), BlueZ half:** the client reads `mtu=247`; the HCI trace (`hci.btsnoop`, 12 connections) shows Client RX MTU 517 and Server RX MTU 247 on every connection. 247 is well above the 75 needed. The iPhone value is untested.
+* **Q19 (connection interval), BlueZ half:** requested 30 to 50 ms; all 12 connections ran at **45 ms**, latency 0, with no connection update. A 20 Hz stream (201 setpoints in 10 s, 441 in 22 s) produced no `LeaseExpired`. The iPhone value is untested.
+* **Q20 (AP off and on around BLE):** each BLE claim logged `ev=wifi ap=off` 15 to 17 ms later and `ap=on` 12 to 26 ms after the release, over 24 cycles with no `ev=error`. Observed from outside (`board-…-ap-switch/timeline-iw.txt`, flushed active scans of the SSID on channel 1): visible before, **absent in all 10 probes during the session**, visible again after. Still untried: a Wi-Fi client already associated when BLE claims (phase 5 with the laptop on the AP).
+* **Kinematics on the board:** `vx = 0.2 m/s` gave `wheels_pm=100,100,100,100`, as the host tests predict.
+
 #### Laptop: core and UDP scenarios, 2026-10-07 — pass
 
 * **Host tests:** 48 pass (`cargo test --lib`): CDR codec against real ROS bytes, kinematics against the `mecanum_drive_controller` formulas, the arbiter (ownership, lease, arm, claim and reclaim windows, limits), UDP framing and the device core, and the `rmw_zenoh` keys, liveliness tokens, entity gid and attachment against a live Jazzy graph (gid `1b8f09d3…` reproduced).
