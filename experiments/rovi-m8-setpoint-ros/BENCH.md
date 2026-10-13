@@ -370,7 +370,9 @@ Each acceptance box and what proves it:
 | Latest wins, non-increasing sequences never applied | phase 2 sequence check | — |
 | Lease expiry within lease + 50 ms; claim and reclaim windows | phase 7 `windows.txt`, phase 2/4 window scenarios | any lease row > 1040 ms |
 | Wheel commands match `mecanum_drive_controller` | phase 2/4 mecanum scenario plus the exact `wheels_pm` values in phase 2 | — |
-| `ros2 node list`/`topic info` show `/rovi`; plain `ros2 topic pub` and stamped teleop drive it | phase 6 `q2.txt`, ROS scenario | **stays open:** CLI pub claims but cannot arm, and the image has no `teleop_twist_keyboard` (see below) |
+| `ros2 node list`/`topic info` show `/rovi`; plain `ros2 topic pub` claims the car | phase 6 `q2.txt` | **passes** |
+| One ROS node arms and drives the car | ROS controller scenario | **passes** (plain CLI pub cannot arm: another node; reworded, #24) |
+| Stock stamped teleop drives it | none | **open, not a gate:** image has no `teleop_twist_keyboard`, and it cannot arm |
 | BLE setpoint works at the negotiated MTU at 20 Hz | phase 4 `info.txt`, trace, `drive.txt` | MTU < 75 (Q18 fallback: compact 16-byte setpoint) |
 | Latency for BLE, UDP and ROS, and the footprint, recorded | phases 1, 3, 4 | **stays open:** ROS has no echo yet ([#16](https://github.com/tptodorov/rovi/issues/16)) |
 
