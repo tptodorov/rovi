@@ -1,0 +1,1 @@
+30 min soak on the ROS build with router keepalives, 200 ms UDP echo probe: no unreachable period (0 transitions after link up); ROS link stayed up (no ev=ros link=down). Not reproduced.
