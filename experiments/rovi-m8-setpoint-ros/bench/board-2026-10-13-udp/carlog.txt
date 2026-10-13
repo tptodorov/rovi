@@ -1,0 +1,1 @@
+79 events in 1 boot(s): {'boot': 1, 'claimed': 19, 'released': 19, 'state': 33, 'stop': 7}
