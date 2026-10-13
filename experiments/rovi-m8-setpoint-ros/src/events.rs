@@ -12,6 +12,8 @@ pub enum Link {
     Up,
     Down,
     Retry,
+    /// A sample came from a publisher no token announced, so the tokens were asked for again.
+    Refresh,
 }
 
 /// Faults: events that should never happen on a healthy run (`ev=error`, flagged by `sim/carlog.py`).
@@ -126,6 +128,7 @@ impl fmt::Display for Record {
                     Link::Up => "up",
                     Link::Down => "down",
                     Link::Retry => "retry",
+                    Link::Refresh => "refresh",
                 }
             )?,
             Event::Fault(Fault::WifiAp) => f.write_str("ev=error src=wifi_ap")?,
@@ -229,6 +232,7 @@ mod tests {
             ),
             (Event::Wifi { ap_on: false }, "ev=wifi ap=off at_ms=42"),
             (Event::Ros(Link::Retry), "ev=ros link=retry at_ms=42"),
+            (Event::Ros(Link::Refresh), "ev=ros link=refresh at_ms=42"),
             (Event::Fault(Fault::WifiAp), "ev=error src=wifi_ap at_ms=42"),
             (Event::Dropped(3), "ev=dropped n=3 at_ms=42"),
         ];

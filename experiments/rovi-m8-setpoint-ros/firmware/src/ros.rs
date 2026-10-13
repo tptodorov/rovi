@@ -4,7 +4,7 @@
 extern crate alloc;
 
 use super::{log, logger::emit, now};
-use core::cell::RefCell;
+use core::cell::{Cell, RefCell};
 use embassy_futures::select::{select, select5, Either, Either5};
 use embassy_net::Stack;
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
@@ -188,10 +188,9 @@ async fn declare_and_serve(
         .finish()
         .await?;
     // Learn which ROS node each publisher gid belongs to from the graph's liveliness tokens.
+    let lv_ke = zenoh::keyexpr::new(leak(alloc::format!("@ros2_lv/{DOMAIN}/*/*/*/MP/**")))?;
     let lv_sub = session
-        .declare_liveliness_subscriber(zenoh::keyexpr::new(leak(alloc::format!(
-            "@ros2_lv/{DOMAIN}/*/*/*/MP/**"
-        )))?)
+        .declare_liveliness_subscriber(lv_ke)
         .channel(tokens.dyn_sender(), tokens.dyn_receiver())
         .finish()
         .await?;
@@ -211,6 +210,7 @@ async fn declare_and_serve(
     println!("ros node /{} up, zid {}, router {}", NODE, zid, ROUTER);
     emit(Event::Ros(RosLink::Up));
 
+    let last_refresh = Cell::new(None::<u64>);
     let echo_loop = async {
         // Latency probe: any ROS node may use it, no claim; the payload comes back unchanged.
         let mut seq = 0i64;
@@ -232,6 +232,14 @@ async fn declare_and_serve(
             session.run(),
             async {
                 while let Some(s) = cmd_sub.recv().await {
+                    maybe_refresh(
+                        session,
+                        lv_ke,
+                        dev,
+                        s.attachment().unwrap_or(&[]),
+                        &last_refresh,
+                    )
+                    .await;
                     let fx = dev.borrow_mut().on_ros_cmd_vel(
                         now(),
                         s.attachment().unwrap_or(&[]),
@@ -242,6 +250,14 @@ async fn declare_and_serve(
             },
             async {
                 while let Some(s) = arm_sub.recv().await {
+                    maybe_refresh(
+                        session,
+                        lv_ke,
+                        dev,
+                        s.attachment().unwrap_or(&[]),
+                        &last_refresh,
+                    )
+                    .await;
                     let fx = dev.borrow_mut().on_ros_arm(
                         now(),
                         s.attachment().unwrap_or(&[]),
@@ -282,4 +298,24 @@ async fn declare_and_serve(
         return Err(e.into());
     }
     Ok(())
+}
+
+/// A sample from a publisher no token announced means a token was lost (UDP does not resend):
+/// ask the router for the current tokens again, at most every 2 s.
+async fn maybe_refresh(
+    session: &Session<'static, RosConfig>,
+    lv_ke: &zenoh::keyexpr,
+    dev: &RefCell<Device>,
+    attachment: &[u8],
+    last: &Cell<Option<u64>>,
+) {
+    let at = now();
+    if dev.borrow().ros_publisher_known(attachment) != Some(false)
+        || last.get().is_some_and(|t| at < t + 2000)
+    {
+        return;
+    }
+    last.set(Some(at));
+    emit(Event::Ros(RosLink::Refresh));
+    let _ = session.liveliness_refresh(lv_ke).await;
 }
