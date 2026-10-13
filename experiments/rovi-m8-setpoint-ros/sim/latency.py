@@ -7,15 +7,18 @@ probes at a fixed rate and prints sent, received count, loss, and median, p95 an
     python3 sim/latency.py --ble <address>                        # BLE, needs `bleak`; connecting claims the car
 
 The echo is stateless and open to any UDP peer, so the UDP run works while another client owns the car.
-Over BLE the connection is the session, so the BLE run only connects while the car is free, and owns it meanwhile.
+Over BLE the connection is the session, so the BLE run only connects while the car is free, and owns it meanwhile. It also streams zero setpoints at the probe rate: echoes are not activity, and the car drops an owner that sends no setpoint within the claim window.
 """
 import argparse, asyncio, math, os, pathlib, select, socket, statistics, struct, subprocess, sys, time
+
+import wire
 
 ECHO = 9
 ECHO_MAX = 32  # device::ECHO_MAX
 MAGIC = b"RL"
 PROBE = struct.Struct("<2sIQ")  # magic, probe number, client send time in ns
 ECHO_UUID = "d47a0015-45b2-4d19-8db0-6bd87e9c0001"
+SETPOINT_UUID = "d47a0011-45b2-4d19-8db0-6bd87e9c0001"
 BIN = pathlib.Path(__file__).resolve().parent / "simcar/target/debug/simcar"
 SIM_PORT = 17778
 
@@ -87,15 +90,23 @@ def udp(host, port, n=200, hz=20.0, wait=1.0):
 async def ble(address, n=200, hz=20.0, wait=1.0):
     """The same over the BLE Echo characteristic (write without response, notify)."""
     try:
-        from bleak import BleakClient
+        from bleak import BleakClient, BleakScanner
     except ImportError:
         sys.exit("BLE needs bleak: pip install bleak")
     c = Collector()
-    async with BleakClient(address) as cl:
+    # Connecting is the claim, and the car releases an owner that sends no setpoint within the claim
+    # window (10 s), then drops the link. Echo writes do not count as activity, so stream zero
+    # setpoints alongside the probes, as a real controller would. Without that the first 10 s work
+    # and every later write fails with "Service Discovery has not been performed yet" (seen on the board).
+    device = await BleakScanner.find_device_by_address(address, timeout=15)
+    if device is None:
+        sys.exit(f"BLE device {address} not seen: is the car advertising (Open, LED off)?")
+    async with BleakClient(device) as cl:
         await cl.start_notify(ECHO_UUID, lambda _, d: c.got(bytes(d)))
         t0 = time.perf_counter()
         for i in range(n):
             await asyncio.sleep(max(0.0, t0 + i / hz - time.perf_counter()))
+            await cl.write_gatt_char(SETPOINT_UUID, wire.ble_setpoint(i + 1), response=False)
             await cl.write_gatt_char(ECHO_UUID, probe(i, time.perf_counter_ns()), response=False)
         await asyncio.sleep(wait)
     return c.ms()

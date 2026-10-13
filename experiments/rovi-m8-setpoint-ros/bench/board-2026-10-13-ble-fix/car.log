@@ -201,3 +201,32 @@ ev=released at_ms=336199
 ev=ble link=down id=1 at_ms=336199
 ev=wifi ap=on at_ms=336211
 ev=state state=Open wheels_pm=0,0,0,0 at_ms=336212
+ev=claimed source=Ble at_ms=374210
+ev=ble link=up id=1 mtu=23 at_ms=374210
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=374214
+ev=wifi ap=off at_ms=374221
+ev=mtu id=1 mtu=247 at_ms=374410
+ev=released at_ms=384218
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=384218
+ev=ble link=down id=1 at_ms=384234
+ev=wifi ap=on at_ms=384247
+ev=claimed source=Ble at_ms=406093
+ev=ble link=up id=2 mtu=23 at_ms=406093
+ev=wifi ap=off at_ms=406099
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=406103
+ev=mtu id=2 mtu=247 at_ms=406293
+ev=released at_ms=416096
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=416096
+ev=wifi ap=on at_ms=416107
+ev=ble link=down id=2 at_ms=416114
+ev=claimed source=Ble at_ms=452436
+ev=ble link=up id=1 mtu=23 at_ms=452436
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=452438
+ev=wifi ap=off at_ms=452455
+ev=mtu id=1 mtu=247 at_ms=452637
+ev=stop reason=LeaseExpired at_ms=484846
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=484846
+ev=released at_ms=487175
+ev=ble link=down id=1 at_ms=487175
+ev=wifi ap=on at_ms=487189
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=487190
