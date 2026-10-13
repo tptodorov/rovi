@@ -205,6 +205,14 @@ impl Device {
         self.graph.on_token(key, alive);
     }
 
+    /// Is the publisher in this sample attachment one the car has seen announced? `None` for an
+    /// attachment that does not parse. An unknown publisher usually means a liveliness token was
+    /// lost (UDP does not resend), so the adapter asks the router for the tokens again.
+    pub fn ros_publisher_known(&self, attachment: &[u8]) -> Option<bool> {
+        let att = Attachment::decode(attachment)?;
+        Some(self.graph.node_of(&att.gid).is_some())
+    }
+
     fn ros_claimant(&self, att: &Attachment) -> Option<Claimant> {
         let id = self.graph.node_of(&att.gid)?;
         Some(Claimant {
@@ -853,5 +861,39 @@ mod tests {
         d.on_ble_connect(0, 1).unwrap();
         assert_eq!(d.on_ble_control(1, 2, 1), Err(Error::NotOwner));
         assert_eq!(d.ble_status(), [1, 0, 0]);
+    }
+
+    #[test]
+    fn an_unknown_publisher_is_told_apart_from_a_malformed_attachment() {
+        let mut d = dev();
+        let known = publisher(&mut d, 1, 1, 1);
+        let unknown = Attachment {
+            seq: 1,
+            timestamp: 0,
+            gid: [9; 16],
+        }
+        .encode();
+        assert_eq!(d.ros_publisher_known(&known), Some(true));
+        assert_eq!(
+            d.ros_publisher_known(&unknown),
+            Some(false),
+            "its token has not been seen"
+        );
+        assert_eq!(
+            d.ros_publisher_known(&[1, 2, 3]),
+            None,
+            "not an attachment at all"
+        );
+        // Once its token arrives (a refresh answered), it is known.
+        let key = "@ros2_lv/0/9ad20db4c929c8189ca587de2f90c2e2/3/3/MP/%/%/n3/%t3/std_msgs::msg::dds_::Bool_/RIHS01_x/::,10:,:,:,,";
+        let late = Attachment {
+            seq: 2,
+            timestamp: 0,
+            gid: crate::rmw::gid(key),
+        }
+        .encode();
+        assert_eq!(d.ros_publisher_known(&late), Some(false));
+        d.on_ros_liveliness(key, true);
+        assert_eq!(d.ros_publisher_known(&late), Some(true));
     }
 }

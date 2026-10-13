@@ -142,6 +142,7 @@ The car is a zenoh-nostd client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (default 
   * Payload: CDR.
   * Attachment: 33 bytes (`seq` i64, timestamp i64, LEB128 `16`, 16-byte gid).
 * **Type hashes:** copied from a ROS 2 Jazzy install and checked against a live router.
+* **Lost tokens:** tokens are ordinary declarations, and over UDP a lost one is never resent. When a `/cmd_vel` or `/rovi/arm` sample comes from a publisher no token announced, the car asks the router for the current tokens again (`Session::liveliness_refresh` in the fork, at most every 2 s, logged as `ev=ros link=refresh`). `sim/ros-refresh.sh` drops the sim car's first token events and checks that the car never claims without the refresh and recovers with it.
 * **Ownership:** the owner is the ROS *node* of the publisher. Samples carry only a publisher gid, which is a hash of the publisher's liveliness key, and `/cmd_vel` and `/rovi/arm` are separate publishers with different gids. So the car subscribes to the graph's liveliness tokens, maps each publisher gid to its node (`zid/nid`), and ignores samples from other nodes and from publishers it has not seen announced.
 * **Graph visibility:** the node `/rovi` and its topics are announced with `rmw_zenoh` liveliness tokens. This is M8's first risk item (Q2).
 

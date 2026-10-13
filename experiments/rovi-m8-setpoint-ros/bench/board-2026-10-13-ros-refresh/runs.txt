@@ -1,0 +1,6 @@
+ 6.9 state=stopped session=1
+run 1: claimed=1 refreshes=1
+ 6.6 state=stopped session=2
+run 2: claimed=1 refreshes=1
+ 6.3 state=stopped session=3
+run 3: claimed=1 refreshes=1

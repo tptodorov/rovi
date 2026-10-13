@@ -31,7 +31,7 @@ ev=stop reason=LeaseExpired at_ms=7210
 | `ble` | `link` = `up`, `down`; `id`; `mtu` (up only) | BLE connected or disconnected |
 | `mtu` | `id`; `mtu` | The central's ATT MTU exchange completed (once per connection). The `mtu` in `ble link=up` is the value at connect, before the exchange (23 by default) |
 | `wifi` | `ap` = `on`, `off` | The Wi-Fi AP was switched |
-| `ros` | `link` = `up`, `down`, `retry` | The zenoh session changed |
+| `ros` | `link` = `up`, `down`, `retry`, `refresh` | The zenoh session changed |
 | `error` | `src` | A fault. `sim/carlog.py` flags it. |
 | `dropped` | `n` | `n` events were lost because the ring was full. Flagged too. |
 

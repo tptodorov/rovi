@@ -7,6 +7,7 @@ use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
 use rovi_m8_setpoint_ros::events::{Event, Link};
 use rovi_m8_setpoint_ros::rmw::{self, Attachment, Endpoint as Kind, Topic};
 use static_cell::StaticCell;
+use std::cell::Cell;
 use std::time::Instant;
 use zenoh_nostd::session::*;
 use zenoh_std::StdLinkManager as LinkManager;
@@ -213,10 +214,9 @@ async fn serve(
         .finish()
         .await?;
     // Learn which ROS node each publisher gid belongs to from the graph's liveliness tokens.
+    let lv_ke = zenoh::keyexpr::new(leak(format!("@ros2_lv/{DOMAIN}/*/*/*/MP/**")))?;
     let lv_sub = session
-        .declare_liveliness_subscriber(zenoh::keyexpr::new(leak(format!(
-            "@ros2_lv/{DOMAIN}/*/*/*/MP/**"
-        )))?)
+        .declare_liveliness_subscriber(lv_ke)
         .channel(lv_chan.dyn_sender(), lv_chan.dyn_receiver())
         .finish()
         .await?;
@@ -237,6 +237,13 @@ async fn serve(
     log(Event::Ros(Link::Up), t0);
 
     let (d1, d2, d3, d4) = (dev.clone(), dev.clone(), dev.clone(), dev.clone());
+    let last_refresh = Cell::new(None::<u64>);
+    // Test hook: drop token events for the first N seconds after the link comes up, as lost UDP
+    // datagrams would, to check that the car asks for the tokens again.
+    let ignore_tokens_until = std::env::var("ROVI_SIM_IGNORE_TOKENS_S")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .map(|n| ms(t0) + n * 1000);
     let echo_loop = async {
         // Latency probe: any ROS node may use it, no claim; the payload comes back unchanged.
         let mut seq = 0i64;
@@ -258,6 +265,15 @@ async fn serve(
             session.run(),
             async {
                 while let Some(s) = cmd_sub.recv().await {
+                    maybe_refresh(
+                        session,
+                        lv_ke,
+                        &d1,
+                        s.attachment().unwrap_or(&[]),
+                        t0,
+                        &last_refresh,
+                    )
+                    .await;
                     let fx = d1.lock().unwrap().on_ros_cmd_vel(
                         ms(t0),
                         s.attachment().unwrap_or(&[]),
@@ -268,6 +284,15 @@ async fn serve(
             },
             async {
                 while let Some(s) = arm_sub.recv().await {
+                    maybe_refresh(
+                        session,
+                        lv_ke,
+                        &d2,
+                        s.attachment().unwrap_or(&[]),
+                        t0,
+                        &last_refresh,
+                    )
+                    .await;
                     let fx = d2.lock().unwrap().on_ros_arm(
                         ms(t0),
                         s.attachment().unwrap_or(&[]),
@@ -278,6 +303,9 @@ async fn serve(
             },
             async {
                 while let Some(s) = lv_sub.recv().await {
+                    if ignore_tokens_until.is_some_and(|t| ms(t0) < t) {
+                        continue;
+                    }
                     let alive = s.payload() == [1];
                     d4.lock()
                         .unwrap()
@@ -309,4 +337,26 @@ async fn serve(
         return Err(e.into());
     }
     Ok(())
+}
+
+/// A sample from a publisher no token announced means a token was lost (UDP does not resend):
+/// ask the router for the current tokens again, at most every 2 s.
+async fn maybe_refresh(
+    session: &Session<'static, RosConfig>,
+    lv_ke: &zenoh::keyexpr,
+    dev: &Shared,
+    attachment: &[u8],
+    t0: Instant,
+    last: &Cell<Option<u64>>,
+) {
+    let now = ms(t0);
+    if std::env::var_os("ROVI_SIM_NO_REFRESH").is_some() // test hook: the behaviour before this fix
+        || dev.lock().unwrap().ros_publisher_known(attachment) != Some(false)
+        || last.get().is_some_and(|t| now < t + 2000)
+    {
+        return;
+    }
+    last.set(Some(now));
+    log(Event::Ros(Link::Refresh), t0);
+    let _ = session.liveliness_refresh(lv_ke).await;
 }
