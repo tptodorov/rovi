@@ -1,0 +1,13 @@
+test_bye_reopens (__main__.Scenarios.test_bye_reopens) ... ok
+test_claim_busy_arm_stream_stop (__main__.Scenarios.test_claim_busy_arm_stream_stop) ... ok
+test_claim_window_expires_if_owner_stays_silent (__main__.Scenarios.test_claim_window_expires_if_owner_stays_silent) ... ok
+test_echo_from_any_peer_leaves_the_owner_alone (__main__.Scenarios.test_echo_from_any_peer_leaves_the_owner_alone) ... ok
+test_lease_expiry_then_reclaim_without_reconnect (__main__.Scenarios.test_lease_expiry_then_reclaim_without_reconnect) ... ok
+test_non_owner_input_is_ignored (__main__.Scenarios.test_non_owner_input_is_ignored) ... ok
+test_owner_released_after_reclaim_window_and_session_changes (__main__.Scenarios.test_owner_released_after_reclaim_window_and_session_changes) ... ok
+test_setpoints_reach_the_wheels_with_mecanum_signs (__main__.Scenarios.test_setpoints_reach_the_wheels_with_mecanum_signs) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 20.390s
+
+OK

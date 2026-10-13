@@ -31,10 +31,15 @@ pub enum Event {
         state: State,
         wheels_pm: [i16; 4],
     },
-    /// `mtu` is set when the link comes up.
+    /// `mtu` is set when the link comes up: the ATT MTU at connect, before any exchange.
     Ble {
         id: u16,
         mtu: Option<u16>,
+    },
+    /// The ATT MTU after the central's exchange, once per connection.
+    Mtu {
+        id: u16,
+        mtu: u16,
     },
     Wifi {
         ap_on: bool,
@@ -112,6 +117,7 @@ impl fmt::Display for Record {
             }
             Event::Ble { id, mtu: Some(m) } => write!(f, "ev=ble link=up id={id} mtu={m}")?,
             Event::Ble { id, mtu: None } => write!(f, "ev=ble link=down id={id}")?,
+            Event::Mtu { id, mtu } => write!(f, "ev=mtu id={id} mtu={mtu}")?,
             Event::Wifi { ap_on } => write!(f, "ev=wifi ap={}", if ap_on { "on" } else { "off" })?,
             Event::Ros(l) => write!(
                 f,
@@ -216,6 +222,10 @@ mod tests {
             (
                 Event::Ble { id: 1, mtu: None },
                 "ev=ble link=down id=1 at_ms=42",
+            ),
+            (
+                Event::Mtu { id: 1, mtu: 247 },
+                "ev=mtu id=1 mtu=247 at_ms=42",
             ),
             (Event::Wifi { ap_on: false }, "ev=wifi ap=off at_ms=42"),
             (Event::Ros(Link::Retry), "ev=ros link=retry at_ms=42"),

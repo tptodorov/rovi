@@ -12,7 +12,7 @@ use embassy_net::{
     Config as NetConfig, IpAddress, IpEndpoint, Ipv4Address, Ipv4Cidr, StackResources,
     StaticConfigV4,
 };
-use embassy_time::{Instant, Timer};
+use embassy_time::{Duration, Instant, Ticker, Timer};
 use esp_backtrace as _;
 use esp_hal::{clock::CpuClock, ram, rmt::Rmt, rng::Rng, time::Rate, timer::timg::TimerGroup};
 use esp_hal_smartled::{buffer_size, color_order, RmtSmartLeds};
@@ -285,11 +285,15 @@ async fn main(_spawner: Spawner) -> ! {
             // Status is readable right after connecting, not only after the first notify tick.
             let mut last_status = dev.borrow().ble_status();
             let _ = conn.set(&server.rovi.status, &last_status);
+            // One schedule for the whole connection: a timer recreated per loop pass would never
+            // fire while the central writes setpoints faster than every 100 ms.
+            let mut tick = Ticker::every(Duration::from_millis(100));
+            let mut mtu_seen = conn.raw().att_mtu();
             loop {
                 match select3(
                     conn.next(),
                     until(|| !dev.borrow().ble_owns(id)),
-                    Timer::after_millis(100),
+                    tick.next(),
                 )
                 .await
                 {
@@ -356,6 +360,12 @@ async fn main(_spawner: Spawner) -> ! {
                         break;
                     }
                     Either3::Third(()) => {
+                        // The central's MTU exchange changes it from the value at connect.
+                        let mtu = conn.raw().att_mtu();
+                        if mtu != mtu_seen {
+                            mtu_seen = mtu;
+                            logger::emit(Event::Mtu { id, mtu });
+                        }
                         let status = dev.borrow().ble_status();
                         if status != last_status {
                             last_status = status;

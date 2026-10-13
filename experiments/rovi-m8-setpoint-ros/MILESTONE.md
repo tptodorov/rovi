@@ -2,7 +2,7 @@
 
 ## M8: setpoint protocol, single owner, optional ROS 2
 
-**Status:** design approved 2026-10-06; implementation started 2026-10-07 (laptop only; first risk item cleared)
+**Status:** implemented; board-verified 2026-10-13 on the bare ESP32-S3, except ROS latency ([#16](https://github.com/tptodorov/rovi/issues/16)), stamped teleop, a second BLE central and the iPhone side of Q18/Q19. Acceptance boxes below are ticked only for what was observed on the board.
 **Setup count:** one, ESP32-S3 board only; motor hardware disconnected
 
 ### Goal
@@ -30,19 +30,61 @@ Prove that a laptop or phone over BLE or UDP, or a ROS 2 graph over zenoh, can e
 
 Real hardware only; no motor hardware is connected for this milestone.
 
-- [ ] A BLE, UDP or ROS claim makes that client the owner, and the other radio shuts down and reopens on release.
-- [ ] A second claimant is refused, and ROS input from a non-owner gid is ignored.
-- [ ] A new owner starts disarmed. Only ARM enables motion, and every safety stop disarms.
-- [ ] The latest setpoint wins, and non-increasing sequences are never applied.
-- [ ] Lease expiry raises a safety stop within lease + 50 ms. Claim and reclaim windows behave as specified.
-- [ ] For identical `TwistStamped` input, wheel commands match `mecanum_drive_controller`'s formulas.
-- [ ] `ros2 node list` and `topic info` show `/rovi`. Plain `ros2 topic pub` and stamped teleop drive it.
-- [ ] The BLE setpoint characteristic works at the negotiated MTU, streaming at 20 Hz.
-- [ ] Latency for BLE, UDP and ROS (median, p95, max) and the flash/RAM footprint are recorded.
+- [x] A BLE, UDP or ROS claim makes that client the owner, and the other radio shuts down and reopens on release. *(observed 2026-10-13: BLE claim switches the Wi-Fi AP off and back, a UDP claim stops BLE advertising and `BYE` restores it; a ROS claim stopping BLE was not observed separately)*
+- [x] A second claimant is refused, and ROS input from a non-owner gid is ignored. *(UDP `BUSY` and the ROS intruder node observed; a second BLE central needs a second adapter and is untried)*
+- [x] A new owner starts disarmed. Only ARM enables motion, and every safety stop disarms.
+- [x] The latest setpoint wins, and non-increasing sequences are never applied.
+- [x] Lease expiry raises a safety stop within lease + 50 ms. Claim and reclaim windows behave as specified. *(lease 995 to 1006 ms, reclaim 5002 to 5003 ms, claim 10007 ms)*
+- [x] For identical `TwistStamped` input, wheel commands match `mecanum_drive_controller`'s formulas.
+- [ ] `ros2 node list` and `topic info` show `/rovi`. Plain `ros2 topic pub` and stamped teleop drive it. *(`/rovi` and `topic info` observed on the board, and plain `ros2 topic pub` claims the car; it cannot arm it, since a second `ros2 topic pub` is another node, and `teleop_twist_keyboard` was not tried. The wording needs a decision.)*
+- [x] The BLE setpoint characteristic works at the negotiated MTU, streaming at 20 Hz.
+- [ ] Latency for BLE, UDP and ROS (median, p95, max) and the flash/RAM footprint are recorded. *(BLE, UDP and footprint recorded; ROS latency is [#16](https://github.com/tptodorov/rovi/issues/16))*
 
 ### Results
 
 Bench results (date, commit, board, clients, settings, logs, pass/fail) are added after bench testing. Laptop results are development evidence only ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)).
+
+#### Board, 2026-10-13: UDP, timing, ROS, Q20 (first runs on hardware)
+
+Setup: laptop Wi-Fi radio on the car AP (`192.168.4.2/24`, never a default route), internet over USB Ethernet. Evidence in `bench/board-2026-10-13-*`.
+
+* **UDP over Wi-Fi** (`board-…-udp`): **8 of 8 scenarios pass**; echo 200 of 200, median 3.0 ms, p95 6.3 ms, max 31 ms, on a **dedicated radio**, which M3 could not measure. The car log is clean.
+* **Timing on the car's clock** (`board-…-udp/windows.txt`, 10 probes): lease 995 to 1006 ms, reclaim window 5002 to 5003 ms, claim window 10007 ms.
+* **Sequence rule** (`board-…-q20/sequence.txt`): wheels 250‰, then 150‰; the older and the repeated sequence number were never applied.
+* **Q20 (AP off and on around BLE)**, 10 cycles (`board-…-q20`): every BLE session completed without a BLE error, so the switch does not drop the BLE link; the car logged 10 `ap=off` and 10 `ap=on`, no `ev=error`; the laptop rejoined the AP in 1 to 2 s each time (4 times 1 s, 6 times 2 s) and every UDP echo run was 20 of 20. A Wi-Fi client is dropped when BLE claims, and NetworkManager did not rejoin by itself within 25 s even with autoconnect on (`board-…-ap-client/`).
+* **BLE off while UDP owns, and back after `BYE`** (`board-…-q20/ble-off.txt`): pass.
+* **ROS on the board** (`board-…-ros`, build with `--features ros`): `/rovi` is in `ros2 node list`; `topic info -v /cmd_vel` shows one subscription from node `rovi`, hash `RIHS01_5f0fcd4f…`, BEST_EFFORT, depth 1; `/rovi/status` has one publisher; plain `ros2 topic pub` (no `-w 0`) claimed the car (`state=claimed session=1`, `ev=claimed source=Ros`). **Q2: yes.** The controller scenario (one node with `/cmd_vel` and `/rovi/arm`, plus an intruder node) passes: claimed, armed at `wheels_pm=500`, stopped on `Stop`, intruder ignored. **Router restarts: `/rovi` back after 3, 4 and 3 s.** The stale-session check (laptop off the AP for 5 s) was too short to break the session (back after 0 s), so it proves little.
+* **Footprint (final builds):** text 653,537 B, data 18,804 B, bss 519,560 B without ROS; text 818,849 B, data 19,040 B, bss 519,356 B with ROS.
+
+**Defects the board found** (each reproduced on the board, fixed, and re-run; the failing runs stay in `bench/` as evidence):
+
+| Run | Symptom | Cause | Fix |
+| --- | --- | --- | --- |
+| `board-…-ble` | Status never notified while streaming | The 100 ms notify timer was recreated on every loop pass and never fired under 20 Hz writes | A `Ticker` per connection |
+| `board-…-ble` | The car logged `mtu=23` | Logged at connect, before the central's exchange | `ev=mtu` after the exchange |
+| `latency.py --ble` | Link dropped after 10 s | Echo is not activity; the claim window released the owner | The tool streams zero setpoints too |
+| `board-…-ros-panic` | Stack overflow at boot (ROS build) | `EmbassyLinkManager` held 3072 `PacketMetadata` (about 120 KB), built by value on the stack | Separate `META` size (fork) |
+| `board-…-ros-firstfail` | The controller never claimed the car | The router's burst of token datagrams overflowed a one-datagram receive queue; UDP does not resend, so the publishers' tokens were lost | `RX` and `META` consts (fork); queue of 32 slots and 8192 bytes; the car subscribes to publisher tokens only |
+| `board-…-ros-before-close-fix` | `/rovi` never came back after a router restart | The restarted router answers every datagram with a 2-byte `Close`, which the receiver dropped | A `Close` from the peer ends the session (fork) |
+
+**Follow-up issues:** [#22](https://github.com/tptodorov/rovi/issues/22) (re-request liveliness for an unknown publisher), [#25](https://github.com/tptodorov/rovi/issues/25) (about 60 s to notice a vanished router), [#24](https://github.com/tptodorov/rovi/issues/24) (acceptance wording for plain `ros2 topic pub`), [#16](https://github.com/tptodorov/rovi/issues/16) (ROS latency).
+
+**Not observed yet:** a second BLE central (one adapter), stamped teleop, ROS round-trip latency (#16), the iPhone side of Q18 and Q19, Wi-Fi range, phone onboarding. **Unexplained ([#23](https://github.com/tptodorov/rovi/issues/23)):** twice, after about 10 minutes, the laptop's Wi-Fi link to the car silently stopped passing traffic while still showing "connected" (re-association fixed it, and the car's ROS session returned by itself).
+
+#### Board, 2026-10-13: boot and BLE (first runs on hardware)
+
+Setup: ESP32-S3 (rev v0.2, 16 MB, MAC `14:c1:9f:cd:71:78`) on the CH343 UART port, no motors or other wiring; laptop BlueZ central; non-ROS build (text 653,409 B at first, 672,448 B image after the fix). Evidence in `bench/board-2026-10-13-*`.
+
+* **Boot** (`board-…-boot`): `M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 …` then `ev=boot ver=0.1.0`; no panic, no `ev=error`; `sim/carlog.py` passes.
+* **BLE scenarios, first run** (`board-…-ble`): 8 pass, 1 skipped (second central: one adapter), **2 fail**, and both failures were firmware or log findings:
+  * **Status notifications were starved while streaming.** The 100 ms notify timer was recreated on every loop pass, so it never fired while the central wrote setpoints every 50 ms. `drive.txt` showed `Armed` was never notified. Fixed with a `Ticker` that keeps its schedule.
+  * **The car logged `mtu=23` at connect,** before the central's exchange. Added `ev=mtu id=N mtu=M` when the MTU changes (LOGGING.md catalog, `carlog.py`, tests updated). `mtu` in `ble link=up` stays as the value at connect.
+* **BLE scenarios after the fix** (`board-…-ble-fix`): **10 pass, 1 skipped, 0 fail**, car log clean (145 events in one boot).
+* **Q18 (ATT MTU), BlueZ half:** the client reads `mtu=247`; the HCI trace (`hci.btsnoop`, 12 connections) shows Client RX MTU 517 and Server RX MTU 247 on every connection. 247 is well above the 75 needed. The iPhone value is untested.
+* **Q19 (connection interval), BlueZ half:** requested 30 to 50 ms; all 12 connections ran at **45 ms**, latency 0, with no connection update. A 20 Hz stream (201 setpoints in 10 s, 441 in 22 s) produced no `LeaseExpired`. The iPhone value is untested.
+* **Q20 (AP off and on around BLE):** each BLE claim logged `ev=wifi ap=off` 15 to 17 ms later and `ap=on` 12 to 26 ms after the release, over 24 cycles with no `ev=error`. Observed from outside (`board-…-ap-switch/timeline-iw.txt`, flushed active scans of the SSID on channel 1): visible before, **absent in all 10 probes during the session**, visible again after. Still untried: a Wi-Fi client already associated when BLE claims (phase 5 with the laptop on the AP).
+* **BLE echo latency** (`board-…-ble-fix/latency-ble.txt`, 600 probes at 20 Hz with a zero-setpoint stream alongside): 600 of 600 returned, loss 0 %, median 70.5 ms, p95 94.3 ms, max 159.5 ms, at a 45 ms connection interval. The first attempt failed: echoes alone are not activity, the claim window (10 s) released the owner and the car dropped the link, so `sim/latency.py --ble` now streams zero setpoints too.
+* **Kinematics on the board:** `vx = 0.2 m/s` gave `wheels_pm=100,100,100,100`, as the host tests predict.
 
 #### Laptop: core and UDP scenarios, 2026-10-07 — pass
 

@@ -1,0 +1,123 @@
+[2026-10-13T10:07:31Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-13T10:07:31Z INFO ] Connecting...
+[2026-10-13T10:07:31Z INFO ] Using flash stub
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x14d0
+load:0x403c8700,len:0xdcc
+load:0x403cb700,len:0x2f54
+entry 0x403c8900
+I (29) boot: ESP-IDF v6.1-beta1-497-g14f663f003e 2nd stage bootloader
+I (30) boot: Multicore bootloader
+I (30) boot: chip revision: v0.2
+I (30) boot: efuse block revision: v1.4
+I (34) boot.esp32s3: Boot SPI Speed : 40MHz
+I (38) boot.esp32s3: SPI Mode       : DIO
+I (42) boot.esp32s3: SPI Flash Size : 16MB
+I (45) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (52) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (72) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (78) boot: End of partition table
+I (82) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=00100h (   256) map
+I (89) esp_image: segment 1: paddr=00010128 vaddr=3fc97960 size=00010h (    16) load
+I (97) esp_image: segment 2: paddr=00010140 vaddr=3c000140 size=1a2d4h (107220) map
+I (131) esp_image: segment 3: paddr=0002a41c vaddr=3fc97970 size=04a68h ( 19048) load
+I (136) esp_image: segment 4: paddr=0002ee8c vaddr=40378000 size=0118ch (  4492) load
+I (138) esp_image: segment 5: paddr=00030020 vaddr=42020020 size=9dac8h (645832) map
+I (305) esp_image: segment 6: paddr=000cdaf0 vaddr=4037918c size=0e7d0h ( 59344) load
+I (329) boot: Loaded app from partition at offset 0x10000
+I (329) boot: Disabling RNG early entropy source...
+E (330) boot: Image contains multiple DROM segments. Only the last one will be mapped.
+M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 WPA2 channel=1 lease_ms=1000
+ev=boot ver=0.1.0 at_ms=995
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=11000
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=23001
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=35002
+ros node /rovi up, zid d9fbf8f6c977df315ac8408f5125de0d, router udp/192.168.4.2:7448
+ev=ros link=up at_ms=37058
+ros session ended (Some(TransportClosed)), reconnecting
+ev=ros link=down at_ms=667100
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=679101
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=691102
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=703103
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=715104
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=727105
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=739106
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=751107
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=763108
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=775109
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=787110
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=799111
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=811113
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=823114
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=835115
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=847116
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=859117
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=871118
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=883119
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=895120
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=907121
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=919122
+�����Dle	�eK�+)e��Y
+b����ɸ� a�e�����30�ɲ*d�
+!&)���¢�3��b��+) �*d�
+!&)���¢������Dle	�eK�+)e��Y
+b����ɸ� a�Y�
+43124��+) �*d�
+!&)���¢������Dle	�eK�+)e��Y
+b����ɸ� a�e�
+5512"pV�	�Y�ɲ*d�
+!&)���¢������Dle	�eK�+)e��Y
+b����ɸ� a�e�
+67126��+) �*d�
+!&)���¢������Dle	�eK������Dle	�eK�+)e��Y
+b����ɸ� a�e�����30�ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=1027131
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=1039132
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=1051133
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=1063134
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=1075135
+ros: router udp/192.168.4.2:7448 not reachable, retrying
+ev=ros link=retry at_ms=1087136
+ros node /rovi up, zid d9fbf8f6c977df315ac8408f5125de0d, router udp/192.168.4.2:7448
+ev=ros link=up at_ms=1093164
+ev=claimed source=Ros at_ms=1178661
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=1178663
+ev=stop reason=LeaseExpired at_ms=1184911
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=1184911
+ev=released at_ms=1189912
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=1189912

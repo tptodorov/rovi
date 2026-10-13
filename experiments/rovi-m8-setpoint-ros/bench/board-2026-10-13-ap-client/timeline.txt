@@ -1,0 +1,7 @@
+   0.0s link up
+   3.1s command starts: env ROVI_BLE_ADDR=FE:E4:05:1A:9F:FF python3 sim/ble_client.p
+   4.4s link DOWN
+  18.6s command ended (exit 0)
+  38.7s still down 20s after the command: rejoining with nmcli
+  39.2s nmcli exit 0
+  39.2s link up again 0.5s after nmcli started

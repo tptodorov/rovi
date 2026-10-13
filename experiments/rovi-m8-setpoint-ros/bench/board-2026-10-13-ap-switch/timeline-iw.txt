@@ -1,0 +1,21 @@
+t_s probe (active scan, flushed cache, channel 1)
+1 before: VISIBLE 16:c1:9f:cd:71:78(on -41.00 dBm
+2 before: VISIBLE 16:c1:9f:cd:71:78(on -41.00 dBm
+3 before: VISIBLE 16:c1:9f:cd:71:78(on -41.00 dBm
+7 during: ABSENT
+8 during: ABSENT
+9 during: ABSENT
+10 during: ABSENT
+11 during: ABSENT
+12 during: ABSENT
+13 during: ABSENT
+14 during: ABSENT
+15 during: ABSENT
+17 during: ABSENT
+26 after: ABSENT
+27 after: ABSENT
+28 after: ABSENT
+29 after: ABSENT
+later: VISIBLE 16:c1:9f:cd:71:78(on -42.00 dBm
+later: VISIBLE 16:c1:9f:cd:71:78(on -42.00 dBm
+later: VISIBLE 16:c1:9f:cd:71:78(on -42.00 dBm

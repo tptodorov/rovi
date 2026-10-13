@@ -1,0 +1,22 @@
+boot 1 claim     10007 ms  claimed -> released, never armed
+boot 1 reclaim    5002 ms  LeaseExpired -> released
+boot 1 lease      1005 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5002 ms  LeaseExpired -> released
+boot 1 lease      1006 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5003 ms  LeaseExpired -> released
+boot 1 lease      1005 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5002 ms  LeaseExpired -> released
+boot 1 lease       995 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5003 ms  LeaseExpired -> released
+boot 1 lease       995 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5003 ms  LeaseExpired -> released
+boot 1 lease       995 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5003 ms  LeaseExpired -> released
+boot 1 lease      1006 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5002 ms  LeaseExpired -> released
+boot 1 lease      1005 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5002 ms  LeaseExpired -> released
+boot 1 lease       995 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5003 ms  LeaseExpired -> released
+boot 1 lease       996 ms  last setpoint -> LeaseExpired
+boot 1 reclaim    5002 ms  LeaseExpired -> released

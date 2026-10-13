@@ -1,0 +1,1 @@
+ble sent=600 count=600 loss_pct=0.0 median_ms=70.489 p95_ms=94.326 max_ms=159.506

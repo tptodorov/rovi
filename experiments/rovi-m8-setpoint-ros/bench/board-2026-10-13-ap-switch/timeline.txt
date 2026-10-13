@@ -1,0 +1,17 @@
+t_s visible
+5 before: Rovi M8:84
+12 before: Rovi M8:97
+19 before: Rovi M8:82
+28 during BLE: Rovi M8:82
+36 during BLE: Rovi M8:82
+44 during BLE: Rovi M8:82
+52 during BLE: Rovi M8:82
+60 during BLE: Rovi M8:82
+68 during BLE: Rovi M8:99
+76 during BLE: Rovi M8:79
+84 during BLE: Rovi M8:80
+92 during BLE: Rovi M8:80
+109 after: Rovi M8:97
+116 after: Rovi M8:99
+124 after: Rovi M8:99
+132 after: Rovi M8:80

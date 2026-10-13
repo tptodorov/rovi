@@ -1,0 +1,30 @@
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 1: rejoined in 1 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=2.921 p95_ms=8.231 max_ms=13.872
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 2: rejoined in 2 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=3.018 p95_ms=5.886 max_ms=7.204
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 3: rejoined in 2 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=3.337 p95_ms=11.259 max_ms=12.996
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 4: rejoined in 2 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=3.268 p95_ms=7.787 max_ms=7.942
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 5: rejoined in 2 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=3.315 p95_ms=6.950 max_ms=7.249
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 6: rejoined in 2 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=2.711 p95_ms=6.391 max_ms=7.132
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 7: rejoined in 2 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=3.036 p95_ms=7.197 max_ms=12.400
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 8: rejoined in 1 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=3.083 p95_ms=4.495 max_ms=7.036
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 9: rejoined in 1 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=3.094 p95_ms=6.178 max_ms=7.256
+sent 101 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, erro
+cycle 10: rejoined in 1 s
+udp sent=20 count=20 loss_pct=0.0 median_ms=3.102 p95_ms=9.957 max_ms=11.932

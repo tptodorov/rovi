@@ -98,7 +98,7 @@ class Scenarios(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await car.arm())
         await self.status(car, lambda s: s == ("Armed", None, None))
         await self.saw(ev("claimed", source="Ble"))
-        await self.saw(lambda e: e.get("ev") == "ble" and e.get("link") == "up" and e.get("mtu", 0) >= ble_client.MIN_MTU)
+        await self.saw(lambda e: e.get("ev") == "mtu" and e.get("mtu", 0) >= ble_client.MIN_MTU)
         await self.saw(ev("wifi", ap="off"))
         await self.saw(ev("state", state="Armed"))
         await self.saw(ev("stop", reason="Stop"))

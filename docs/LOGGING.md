@@ -29,6 +29,7 @@ ev=stop reason=LeaseExpired at_ms=7210
 | `stop` | `reason` = `Stop`, `LeaseExpired`, `OwnerLost`, `OutOfLimits` | A safety stop |
 | `state` | `state` = `Open`, `Claimed`, `Armed`, `Stopped`; `reason` (Stopped only); `wheels_pm` = FL,FR,RR,RL | The state or a wheel command changed |
 | `ble` | `link` = `up`, `down`; `id`; `mtu` (up only) | BLE connected or disconnected |
+| `mtu` | `id`; `mtu` | The central's ATT MTU exchange completed (once per connection). The `mtu` in `ble link=up` is the value at connect, before the exchange (23 by default) |
 | `wifi` | `ap` = `on`, `off` | The Wi-Fi AP was switched |
 | `ros` | `link` = `up`, `down`, `retry` | The zenoh session changed |
 | `error` | `src` | A fault. `sim/carlog.py` flags it. |
