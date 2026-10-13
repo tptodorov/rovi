@@ -25,7 +25,11 @@ const ROUTER: &str = match option_env!("ROVI_ZENOH_ROUTER") {
     None => "udp/192.168.4.2:7448",
 };
 
-type Link = EmbassyLinkManager<'static, 512, 3>;
+/// UDP link buffers. A router answers the liveliness interest with a burst of datagrams, and UDP
+/// does not resend what a full receive queue drops: 8 slots and 512 bytes (the defaults) lost the
+/// controller's publisher tokens on the board, so the car never learned its node. 32 slots and
+/// 8192 bytes held a three-node graph; SOCKS 2 covers a reconnect while the old link is dropped.
+type Link = EmbassyLinkManager<'static, 512, 2, 32, 8192>;
 
 struct RosConfig {
     transports: TransportLinkManager<Link>,
@@ -168,7 +172,7 @@ async fn declare_and_serve(
     // Learn which ROS node each publisher gid belongs to from the graph's liveliness tokens.
     let lv_sub = session
         .declare_liveliness_subscriber(zenoh::keyexpr::new(leak(alloc::format!(
-            "@ros2_lv/{DOMAIN}/**"
+            "@ros2_lv/{DOMAIN}/*/*/*/MP/**"
         )))?)
         .channel(tokens.dyn_sender(), tokens.dyn_receiver())
         .finish()

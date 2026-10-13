@@ -1,0 +1,5 @@
+ev=claimed source=Ros at_ms=24344
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=24347
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=25861
+ev=stop reason=Stop at_ms=29360
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=29361

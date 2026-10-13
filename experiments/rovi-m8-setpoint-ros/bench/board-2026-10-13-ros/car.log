@@ -1,6 +1,6 @@
-[2026-10-13T10:03:02Z INFO ] Serial port: '/dev/ttyACM0'
-[2026-10-13T10:03:02Z INFO ] Connecting...
-[2026-10-13T10:03:03Z INFO ] Using flash stub
+[2026-10-13T10:59:18Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-13T10:59:18Z INFO ] Connecting...
+[2026-10-13T10:59:18Z INFO ] Using flash stub
 ESP-ROM:esp32s3-20210327
 Build:Mar 27 2021
 rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
@@ -27,53 +27,43 @@ I (78) boot: End of partition table
 I (82) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=00100h (   256) map
 I (89) esp_image: segment 1: paddr=00010128 vaddr=3fc97960 size=00010h (    16) load
 I (97) esp_image: segment 2: paddr=00010140 vaddr=3c000140 size=1a294h (107156) map
-I (131) esp_image: segment 3: paddr=0002a3dc vaddr=3fc97970 size=04a68h ( 19048) load
-I (136) esp_image: segment 4: paddr=0002ee4c vaddr=40378000 size=011cch (  4556) load
-I (138) esp_image: segment 5: paddr=00030020 vaddr=42020020 size=9da04h (645636) map
-I (304) esp_image: segment 6: paddr=000cda2c vaddr=403791cc size=0e790h ( 59280) load
-I (329) boot: Loaded app from partition at offset 0x10000
-I (329) boot: Disabling RNG early entropy source...
+I (131) esp_image: segment 3: paddr=0002a3dc vaddr=3fc97970 size=04a50h ( 19024) load
+I (136) esp_image: segment 4: paddr=0002ee34 vaddr=40378000 size=011e4h (  4580) load
+I (138) esp_image: segment 5: paddr=00030020 vaddr=42020020 size=9e1b4h (647604) map
+I (305) esp_image: segment 6: paddr=000ce1dc vaddr=403791e4 size=0e778h ( 59256) load
+I (330) boot: Loaded app from partition at offset 0x10000
+I (330) boot: Disabling RNG early entropy source...
 E (330) boot: Image contains multiple DROM segments. Only the last one will be mapped.
 M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 WPA2 channel=1 lease_ms=1000
-[31m
-
-====================== PANIC ======================
-panicked at /home/todor/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-rtos-0.4.0/src/task/mod.rs:567:9:
-Stack overflow detected in 0x3fc99ab0. Stack pointer: 3fcbeef0, Task stack range: 3fcc12e8 ..= 3fcdb700
-[38;5;11m0x3fc99ab0 - esp_rtos::scheduler::SCHEDULER
-    at ??:??
-[39m[0m
-
-Backtrace:
-
-0x42071241
-[38;5;11mcore::panicking::panic_fmt
-    at ??:??
-[39m0x4207c0f0
-[38;5;11m<esp_rtos::task::Task>::ensure_no_stack_overflow
-    at ??:??
-[39m0x4037a528
-[38;5;11mesp_rtos::task::arch_specific::trigger_task_switch
-    at ??:??
-[39m0x4037a46d
-[38;5;11mSoftware0
-    at ??:??
-[39m0x40378fa3
-[38;5;11m__level_1_interrupt
-    at ??:??
-[39m0x40378a0e
-0x4004001e
-[38;5;11mTRC_AMPDU_PER_DOWN_THRESHOLD
-    at ??:??
-[39m0x420a2267
-[38;5;11m<smoltcp::iface::interface::Interface>::poll::<embassy_net::driver_util::DriverAdapter<esp_radio::wifi::Interface>>
-    at ??:??
-[39m0x4209d9c0
-[38;5;11m<embassy_executor::raw::TaskStorage<rovi_m8_firmware::fw::__main::____embassy_main_task::____embassy_main_task_inner_function::{closure#0}>>::poll
-    at ??:??
-[39m0x4209fde7
-[38;5;11m<esp_rtos::embassy::Executor>::run_inner::<rovi_m8_firmware::fw::__main::__xtensa_lx_rt_main::{closure#0}, <esp_rtos::embassy::Executor>::run::NoHooks>
-    at ??:??
-[39m
-
-
+ev=boot ver=0.1.0 at_ms=997
+ros node /rovi up, zid 6f8606deb568d70a319f923888d1c481, router udp/192.168.4.2:7448
+ev=ros link=up at_ms=4037
+ros session ended (Some(TransportClosed)), reconnecting
+ev=ros link=down at_ms=5043
+ros node /rovi up, zid 6f8606deb568d70a319f923888d1c481, router udp/192.168.4.2:7448
+ev=ros link=up at_ms=7070
+ev=claimed source=Ros at_ms=9507
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=9514
+ev=stop reason=LeaseExpired at_ms=15757
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=15757
+ev=released at_ms=20761
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=20761
+ev=claimed source=Ros at_ms=23108
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=23109
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=24650
+ev=stop reason=Stop at_ms=28144
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=28147
+ros session ended (Some(TransportClosed)), reconnecting
+ev=ros link=down at_ms=33098
+ev=released at_ms=34606
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=34606
+ros node /rovi up, zid 6f8606deb568d70a319f923888d1c481, router udp/192.168.4.2:7448
+ev=ros link=up at_ms=35124
+ros session ended (Some(TransportClosed)), reconnecting
+ev=ros link=down at_ms=37131
+ros node /rovi up, zid 6f8606deb568d70a319f923888d1c481, router udp/192.168.4.2:7448
+ev=ros link=up at_ms=39157
+ros session ended (Some(TransportClosed)), reconnecting
+ev=ros link=down at_ms=40164
+ros node /rovi up, zid 6f8606deb568d70a319f923888d1c481, router udp/192.168.4.2:7448
+ev=ros link=up at_ms=42191

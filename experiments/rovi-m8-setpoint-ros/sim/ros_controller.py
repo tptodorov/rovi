@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Runs inside the ROS 2 container: one controller node with two publishers (/cmd_vel and
 /rovi/arm) plus an intruder node, against the sim car. Prints the car's /rovi/status over time."""
+import os
 import time
 import rclpy
 from geometry_msgs.msg import TwistStamped
@@ -34,7 +35,7 @@ def send_arm(pub, v):
 
 
 t0 = time.time()
-time.sleep(2)  # let the car learn the graph from liveliness tokens
+time.sleep(float(os.environ.get("ROVI_GRAPH_WAIT_S", "2")))  # let the car learn the graph from liveliness tokens
 t0 = time.time()
 armed_sent = stopped_sent = intruder_sent = False
 while (t := time.time() - t0) < 7:

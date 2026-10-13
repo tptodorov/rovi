@@ -1,5 +1,7 @@
 # Rovi M3: direct Wi-Fi and shared command ingress
 
+> **Superseded by M8 (2026-10-13).** M8's UDP protocol passed on the board, so M3's TCP protocol v1, the shared queue and `client.py` are retired. This package stays as the record of M3's results.
+
 **Status: hardware-validated 2026-10-04, except range/distance runs and visual LED checks;
 5 of 6 acceptance items met.** Board-only ESP32-S3 firmware,
 independent of M1/M2. No motor GPIO, driver, motor supply, or motor is used.

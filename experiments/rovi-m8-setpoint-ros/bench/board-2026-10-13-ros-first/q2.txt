@@ -1,0 +1,31 @@
+# ros2 node list
+/rovi
+# topic info -v /cmd_vel
+Type: geometry_msgs/msg/TwistStamped
+
+Publisher count: 0
+
+Subscription count: 1
+
+Node name: rovi
+Node namespace: /
+Topic type: geometry_msgs/msg/TwistStamped
+Topic type hash: RIHS01_5f0fcd4f81d5d06ad9b4c4c63e3ea51b82d6ae4d0558f1d475229b1121db6f64
+Endpoint type: SUBSCRIPTION
+GID: 47.5d.ab.f9.f0.c4.28.99.6d.58.b3.c2.85.41.b7.85
+QoS profile:
+  Reliability: BEST_EFFORT
+  History (Depth): KEEP_LAST (1)
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+# topic info /rovi/status
+Type: std_msgs/msg/String
+Publisher count: 1
+Subscription count: 0
+# plain ros2 topic pub (no -w 0), then one status
+data: state=claimed session=1
+---

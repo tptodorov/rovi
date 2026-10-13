@@ -6,6 +6,22 @@ Step by step for the day the board is back. Each phase says what to run, what a 
 
 Run everything from `experiments/rovi-m8-setpoint-ros/`. Motor hardware stays disconnected.
 
+## What the first board run (2026-10-13) changed
+
+Read this first; the phases above were written before the board was available.
+
+* **Internet during the Wi-Fi phases.** The laptop has one Wi-Fi radio, which joins the car AP, so everything else needs a wired link. A USB Ethernet adapter on the home router worked (`enp0s20f0u3u3`, default route via the router). With both on `192.168.1.x` the router can send return traffic to the wrong adapter until Wi-Fi leaves that subnet; that is expected and clears when the radio joins the AP.
+* **BLE phase needs `nix-shell`** (`bleak` is only there). `sudo` is passwordless here, so `btmon` and `iw` work. `iw` is not installed: `nix shell nixpkgs#iw`. Probe the AP with a flushed active scan, not `nmcli device wifi list` (that is a cache and kept showing the SSID):
+  `sudo iw dev wlp1s0f0 scan flush freq 2412 ssid "Rovi M8"`.
+* **`ping` here has no `-D`, and `bc` is missing.** `sim/ap_probe.py` probes the Wi-Fi link with UDP echoes while a command runs (phase 5).
+* **`ev=ble link=up mtu=23` is the value at connect.** The negotiated MTU is the separate `ev=mtu id=N mtu=M` (about 200 ms later), and `sim/ble_scenarios.py` checks that.
+* **BLE latency (`sim/latency.py --ble`) streams zero setpoints** alongside the echoes. Echo is not activity: without setpoints the 10 s claim window releases the owner and the car drops the link.
+* **ROS needs a bigger UDP queue and the publisher-only interest.** The firmware uses a 32-slot, 8192-byte receive queue and subscribes to `@ros2_lv/<domain>/*/*/*/MP/**`; with the defaults the car lost the controller's publisher tokens.
+* **Router restart: `/rovi` is back in 3 to 4 s** (after the fork's `Close` fix). Use a window of about 200 s, not 60 s, in case something regresses; the car needs about 60 s to notice a router that is simply gone.
+* **The stale-session step is weak.** Dropping the laptop off the AP for 5 s stays inside the lease, so the session survives (back after 0 s). Use `sim/ros-stale-session.sh` on the sim for the real case, or drop the link for longer than the lease (about 60 s).
+* **Sizes in the runbook are stale:** final text 653,537 B (no ROS) and 818,849 B (ROS).
+* **Cleanup after a bench run:** `docker rm -f rovi-router`, `sudo nixos-firewall-tool reset`, `nmcli connection up <home profile>`, and stop `espflash monitor`. Keep `connection.autoconnect no` on the `rovi-m8` profile.
+
 ## 0. Preflight (laptop, online)
 
 Do this while the laptop still has internet: during the bench its only Wi-Fi radio is on the car AP.

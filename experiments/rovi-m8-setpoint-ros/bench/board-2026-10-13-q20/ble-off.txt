@@ -1,0 +1,2 @@
+BLE while UDP owns: not advertising: pass
+BLE after BYE: advertising (FE:E4:05:1A:9F:FF): pass

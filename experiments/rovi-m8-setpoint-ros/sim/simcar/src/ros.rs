@@ -196,7 +196,9 @@ async fn serve(
         .await?;
     // Learn which ROS node each publisher gid belongs to from the graph's liveliness tokens.
     let lv_sub = session
-        .declare_liveliness_subscriber(zenoh::keyexpr::new(leak(format!("@ros2_lv/{DOMAIN}/**")))?)
+        .declare_liveliness_subscriber(zenoh::keyexpr::new(leak(format!(
+            "@ros2_lv/{DOMAIN}/*/*/*/MP/**"
+        )))?)
         .channel(lv_chan.dyn_sender(), lv_chan.dyn_receiver())
         .finish()
         .await?;
