@@ -17,6 +17,7 @@ Read this first; the phases above were written before the board was available.
 * **`ev=ble link=up mtu=23` is the value at connect.** The negotiated MTU is the separate `ev=mtu id=N mtu=M` (about 200 ms later), and `sim/ble_scenarios.py` checks that.
 * **BLE latency (`sim/latency.py --ble`) streams zero setpoints** alongside the echoes. Echo is not activity: without setpoints the 10 s claim window releases the owner and the car drops the link.
 * **ROS needs a bigger UDP queue and the publisher-only interest.** The firmware uses a 32-slot, 8192-byte receive queue and subscribes to `@ros2_lv/<domain>/*/*/*/MP/**`; with the defaults the car lost the controller's publisher tokens.
+* **A frozen or vanished router is noticed after the router's lease, not the car's.** The car's read timeout is the lease the router advertises: `rmw_zenohd` defaults to `lease: 60000`, so the car noticed after 56.6 s and reconnected 121 s after the router resumed. With `lease: 10000`, `keep_alive: 4` it noticed after 9.6 s and was back 14.1 s after the router resumed (10 s connect timeout plus a 2 s pause). The bench `router()` uses the short lease. Evidence: `bench/board-2026-10-13-router-gone/` ([#25](https://github.com/tptodorov/rovi/issues/25)).
 * **Router restart: `/rovi` is back in 3 to 4 s** (after the fork's `Close` fix). Use a window of about 200 s, not 60 s, in case something regresses; the car needs about 60 s to notice a router that is simply gone.
 * **The stale-session step is weak.** Dropping the laptop off the AP for 5 s stays inside the lease, so the session survives (back after 0 s). Use `sim/ros-stale-session.sh` on the sim for the real case, or drop the link for longer than the lease (about 60 s).
 * **Sizes in the runbook are stale:** final text 653,537 B (no ROS) and 818,849 B (ROS).
@@ -61,11 +62,12 @@ export ELF_ROS=firmware/target/ros/xtensa-esp32s3-none-elf/release/rovi-m8-firmw
 cap() {  # cap <name> [elf]: reset the board and capture its serial log into bench/<name>/car.log (Ctrl-C ends)
   mkdir -p "bench/$1" && espflash monitor --port "$PORT" --non-interactive --elf "${2:-$ELF}" | tee "bench/$1/car.log"
 }
-router() {  # rmw_zenohd with an extra UDP listener on 7448, the controller script mounted
+router() {  # rmw_zenohd with an extra UDP listener on 7448 and a 10 s lease (the default 60 s is how long the car waits to notice a dead router), the controller script mounted
   docker rm -f rovi-router >/dev/null 2>&1 || true
   docker run -d --rm --name rovi-router --net host -v "$PWD/sim/ros_controller.py:/ros_controller.py:ro" -v "$PWD/sim/ros_latency.py:/ros_latency.py:ro" rovi-ros-sim bash -c '
     source /opt/ros/jazzy/setup.bash
-    sed "s#\"tcp/\\[::\\]:7447\"#\"tcp/[::]:7447\", \"udp/0.0.0.0:7448\"#" \
+    sed -e "s#\"tcp/\\[::\\]:7447\"#\"tcp/[::]:7447\", \"udp/0.0.0.0:7448\"#" \
+        -e "s#lease: 60000#lease: 10000#" -e "s#keep_alive: 2,#keep_alive: 4,#" \
       /opt/ros/jazzy/share/rmw_zenoh_cpp/config/DEFAULT_RMW_ZENOH_ROUTER_CONFIG.json5 > /tmp/router.json5
     ZENOH_ROUTER_CONFIG_URI=/tmp/router.json5 ros2 run rmw_zenoh_cpp rmw_zenohd'
 }
