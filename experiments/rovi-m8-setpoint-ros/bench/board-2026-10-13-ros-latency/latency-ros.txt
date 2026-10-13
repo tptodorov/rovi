@@ -1,0 +1,2 @@
+ros sent=600 count=600 loss_pct=0.0 median_ms=7.969 p95_ms=11.726 max_ms=47.041
+ros sent=600 count=600 loss_pct=0.0 median_ms=7.665 p95_ms=11.475 max_ms=23.826

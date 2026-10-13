@@ -134,6 +134,8 @@ The car is a zenoh-nostd client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (default 
 | `/cmd_vel` (configurable) | `geometry_msgs/TwistStamped` | subscribe, best-effort, depth 1 |
 | `/rovi/arm` | `std_msgs/Bool` | subscribe; `true` arms, `false` stops and disarms |
 | `/rovi/status` | `std_msgs/String` | publish |
+| `/rovi/echo` | `std_msgs/Int64` | subscribe, best-effort, depth 1: latency probe, any node, no claim |
+| `/rovi/echo_reply` | `std_msgs/Int64` | publish, best-effort, depth 1: the probe's bytes, unchanged |
 
 * **Wire contract** ([S2](../../docs/research/s2-zenoh-nostd-spike.md)):
   * Key expression: `<domain>/<topic>/<type>/<RIHS01 hash>`.

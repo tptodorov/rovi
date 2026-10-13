@@ -2,7 +2,7 @@
 
 ## M8: setpoint protocol, single owner, optional ROS 2
 
-**Status:** implemented; board-verified 2026-10-13 on the bare ESP32-S3, except ROS latency ([#16](https://github.com/tptodorov/rovi/issues/16)), stamped teleop, a second BLE central and the iPhone side of Q18/Q19. Acceptance boxes below are ticked only for what was observed on the board.
+**Status:** implemented; board-verified 2026-10-13 on the bare ESP32-S3, except stamped teleop, a second BLE central and the iPhone side of Q18/Q19. Acceptance boxes below are ticked only for what was observed on the board.
 **Setup count:** one, ESP32-S3 board only; motor hardware disconnected
 
 ### Goal
@@ -38,7 +38,7 @@ Real hardware only; no motor hardware is connected for this milestone.
 - [x] For identical `TwistStamped` input, wheel commands match `mecanum_drive_controller`'s formulas.
 - [ ] `ros2 node list` and `topic info` show `/rovi`. Plain `ros2 topic pub` and stamped teleop drive it. *(`/rovi` and `topic info` observed on the board, and plain `ros2 topic pub` claims the car; it cannot arm it, since a second `ros2 topic pub` is another node, and `teleop_twist_keyboard` was not tried. The wording needs a decision.)*
 - [x] The BLE setpoint characteristic works at the negotiated MTU, streaming at 20 Hz.
-- [ ] Latency for BLE, UDP and ROS (median, p95, max) and the flash/RAM footprint are recorded. *(BLE, UDP and footprint recorded; ROS latency is [#16](https://github.com/tptodorov/rovi/issues/16))*
+- [x] Latency for BLE, UDP and ROS (median, p95, max) and the flash/RAM footprint are recorded.
 
 ### Results
 
@@ -54,6 +54,7 @@ Setup: laptop Wi-Fi radio on the car AP (`192.168.4.2/24`, never a default route
 * **Q20 (AP off and on around BLE)**, 10 cycles (`board-…-q20`): every BLE session completed without a BLE error, so the switch does not drop the BLE link; the car logged 10 `ap=off` and 10 `ap=on`, no `ev=error`; the laptop rejoined the AP in 1 to 2 s each time (4 times 1 s, 6 times 2 s) and every UDP echo run was 20 of 20. A Wi-Fi client is dropped when BLE claims, and NetworkManager did not rejoin by itself within 25 s even with autoconnect on (`board-…-ap-client/`).
 * **BLE off while UDP owns, and back after `BYE`** (`board-…-q20/ble-off.txt`): pass.
 * **ROS on the board** (`board-…-ros`, build with `--features ros`): `/rovi` is in `ros2 node list`; `topic info -v /cmd_vel` shows one subscription from node `rovi`, hash `RIHS01_5f0fcd4f…`, BEST_EFFORT, depth 1; `/rovi/status` has one publisher; plain `ros2 topic pub` (no `-w 0`) claimed the car (`state=claimed session=1`, `ev=claimed source=Ros`). **Q2: yes.** The controller scenario (one node with `/cmd_vel` and `/rovi/arm`, plus an intruder node) passes: claimed, armed at `wheels_pm=500`, stopped on `Stop`, intruder ignored. **Router restarts: `/rovi` back after 3, 4 and 3 s.** The stale-session check (laptop off the AP for 5 s) was too short to break the session (back after 0 s), so it proves little.
+* **ROS round trip** (`board-…-ros-latency/latency-ros.txt`, `/rovi/echo` to `/rovi/echo_reply`, 600 probes at 20 Hz, two runs, laptop on the car AP): 600 of 600 both times, loss 0 %, median 7.97 and 7.67 ms, p95 11.73 and 11.48 ms, max 47.0 and 23.8 ms. The echo claimed the car zero times. The path is rclpy, rmw_zenoh, the router, one Wi-Fi hop each way and the car; the sim over loopback measures 1.4 ms for the tool and the router alone. Closes [#16](https://github.com/tptodorov/rovi/issues/16).
 * **Footprint (final builds):** text 653,537 B, data 18,804 B, bss 519,560 B without ROS; text 818,849 B, data 19,040 B, bss 519,356 B with ROS.
 
 **Defects the board found** (each reproduced on the board, fixed, and re-run; the failing runs stay in `bench/` as evidence):
@@ -67,9 +68,9 @@ Setup: laptop Wi-Fi radio on the car AP (`192.168.4.2/24`, never a default route
 | `board-…-ros-firstfail` | The controller never claimed the car | The router's burst of token datagrams overflowed a one-datagram receive queue; UDP does not resend, so the publishers' tokens were lost | `RX` and `META` consts (fork); queue of 32 slots and 8192 bytes; the car subscribes to publisher tokens only |
 | `board-…-ros-before-close-fix` | `/rovi` never came back after a router restart | The restarted router answers every datagram with a 2-byte `Close`, which the receiver dropped | A `Close` from the peer ends the session (fork) |
 
-**Follow-up issues:** [#22](https://github.com/tptodorov/rovi/issues/22) (re-request liveliness for an unknown publisher), [#25](https://github.com/tptodorov/rovi/issues/25) (about 60 s to notice a vanished router), [#24](https://github.com/tptodorov/rovi/issues/24) (acceptance wording for plain `ros2 topic pub`), [#16](https://github.com/tptodorov/rovi/issues/16) (ROS latency).
+**Follow-up issues:** [#22](https://github.com/tptodorov/rovi/issues/22) (re-request liveliness for an unknown publisher), [#25](https://github.com/tptodorov/rovi/issues/25) (about 60 s to notice a vanished router), [#24](https://github.com/tptodorov/rovi/issues/24) (acceptance wording for plain `ros2 topic pub`).
 
-**Not observed yet:** a second BLE central (one adapter), stamped teleop, ROS round-trip latency (#16), the iPhone side of Q18 and Q19, Wi-Fi range, phone onboarding. **Unexplained ([#23](https://github.com/tptodorov/rovi/issues/23)):** twice, after about 10 minutes, the laptop's Wi-Fi link to the car silently stopped passing traffic while still showing "connected" (re-association fixed it, and the car's ROS session returned by itself).
+**Not observed yet:** a second BLE central (one adapter), stamped teleop, the iPhone side of Q18 and Q19, Wi-Fi range, phone onboarding. **Unexplained ([#23](https://github.com/tptodorov/rovi/issues/23)):** twice, after about 10 minutes, the laptop's Wi-Fi link to the car silently stopped passing traffic while still showing "connected" (re-association fixed it, and the car's ROS session returned by itself).
 
 #### Board, 2026-10-13: boot and BLE (first runs on hardware)
 
