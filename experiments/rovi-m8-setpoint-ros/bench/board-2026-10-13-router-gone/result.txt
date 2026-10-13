@@ -1,0 +1,3 @@
+router lease 10000 ms: noticed after 9.6 s; back 14.1 s after the router resumed
+router lease 60000 ms: noticed after 56.6 s; back 121.3 s after the router resumed
+router lease 60000 ms: noticed after 56.6 s; back 121.3 s after the router resumed

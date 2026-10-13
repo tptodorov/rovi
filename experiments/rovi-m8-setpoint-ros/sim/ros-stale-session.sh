@@ -8,7 +8,8 @@ docker rm -f rovi-router >/dev/null 2>&1 || true
 # The default router listens on TCP only; add a UDP listener.
 docker run -d --rm --name rovi-router --net host rovi-ros-sim bash -c '
   source /opt/ros/jazzy/setup.bash
-  sed "s#\"tcp/\\[::\\]:7447\"#\"tcp/[::]:7447\", \"udp/0.0.0.0:7448\"#" \
+  sed -e "s#\"tcp/\\[::\\]:7447\"#\"tcp/[::]:7447\", \"udp/0.0.0.0:7448\"#" \
+      -e "s#lease: 60000#lease: 10000#" -e "s#keep_alive: 2,#keep_alive: 4,#" \
     /opt/ros/jazzy/share/rmw_zenoh_cpp/config/DEFAULT_RMW_ZENOH_ROUTER_CONFIG.json5 > /tmp/router.json5
   ZENOH_ROUTER_CONFIG_URI=/tmp/router.json5 ros2 run rmw_zenoh_cpp rmw_zenohd' >/dev/null
 trap 'kill $car 2>/dev/null || true; docker rm -f rovi-router >/dev/null 2>&1 || true' EXIT
