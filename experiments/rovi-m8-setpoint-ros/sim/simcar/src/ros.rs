@@ -2,7 +2,7 @@
 //! device. Subscribes `/cmd_vel` (TwistStamped) and `/rovi/arm` (Bool), publishes `/rovi/status`.
 
 use crate::{log, log_effects, ms, Shared};
-use embassy_futures::select::{select5, Either5};
+use embassy_futures::select::{select, select5, Either, Either5};
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
 use rovi_m8_setpoint_ros::events::{Event, Link};
 use rovi_m8_setpoint_ros::rmw::{self, Attachment, Endpoint as Kind, Topic};
@@ -60,10 +60,12 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
     static CMD: StaticCell<Chan> = StaticCell::new();
     static ARM: StaticCell<Chan> = StaticCell::new();
     static TOKENS: StaticCell<TokenChan> = StaticCell::new();
+    static ECHO: StaticCell<Chan> = StaticCell::new();
     static CONFIG: StaticCell<RosConfig> = StaticCell::new();
     let cmd: &'static Chan = CMD.init(Channel::new());
     let arm: &'static Chan = ARM.init(Channel::new());
     let lv_chan: &'static TokenChan = TOKENS.init(Channel::new());
+    let echo: &'static Chan = ECHO.init(Channel::new());
     let router =
         leak(std::env::var("ROVI_ZENOH_ROUTER").unwrap_or_else(|_| "tcp/127.0.0.1:7447".into()));
     let config: &'static RosConfig = CONFIG.init(RosConfig {
@@ -102,6 +104,7 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
             cmd,
             arm,
             lv_chan,
+            echo,
         );
         // Test hook: abandon a healthy session after N seconds, as a silent link loss would
         // (over UDP the router keeps the old session until its lease runs out).
@@ -129,6 +132,7 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
         while cmd.try_receive().is_ok() {}
         while arm.try_receive().is_ok() {}
         while lv_chan.try_receive().is_ok() {}
+        while echo.try_receive().is_ok() {}
         embassy_time::Timer::after_secs(2).await;
     }
 }
@@ -143,6 +147,7 @@ async fn serve(
     cmd: &'static Chan,
     arm: &'static Chan,
     lv_chan: &'static TokenChan,
+    echo: &'static Chan,
 ) -> zenoh::ZResult<()> {
     let cmd_vel = Topic {
         name: "cmd_vel",
@@ -153,6 +158,16 @@ async fn serve(
         name: "rovi/arm",
         ty: rmw::BOOL.0,
         hash: rmw::BOOL.1,
+    };
+    let echo_t = Topic {
+        name: "rovi/echo",
+        ty: rmw::INT64.0,
+        hash: rmw::INT64.1,
+    };
+    let echo_reply_t = Topic {
+        name: "rovi/echo_reply",
+        ty: rmw::INT64.0,
+        hash: rmw::INT64.1,
     };
     let status_t = Topic {
         name: "rovi/status",
@@ -169,6 +184,8 @@ async fn serve(
         (1, Kind::Subscription, &cmd_vel, rmw::QOS_BEST_EFFORT_1),
         (2, Kind::Subscription, &arm_t, rmw::QOS_BEST_EFFORT_5),
         (3, Kind::Publisher, &status_t, rmw::QOS_DEFAULT_10),
+        (4, Kind::Subscription, &echo_t, rmw::QOS_BEST_EFFORT_1),
+        (5, Kind::Publisher, &echo_reply_t, rmw::QOS_BEST_EFFORT_1),
     ]
     .map(|(id, kind, topic, qos)| {
         rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
@@ -182,6 +199,7 @@ async fn serve(
         );
     }
     let status_gid = rmw::gid(tokens[2].as_str());
+    let echo_gid = rmw::gid(tokens[4].as_str());
 
     let key = |t: &Topic| leak(rmw::topic_key(DOMAIN, t).unwrap().as_str().into());
     let cmd_sub = session
@@ -202,6 +220,15 @@ async fn serve(
         .channel(lv_chan.dyn_sender(), lv_chan.dyn_receiver())
         .finish()
         .await?;
+    let echo_sub = session
+        .declare_subscriber(zenoh::keyexpr::new(key(&echo_t))?)
+        .channel(echo.dyn_sender(), echo.dyn_receiver())
+        .finish()
+        .await?;
+    let echo_pub = session
+        .declare_publisher(zenoh::keyexpr::new(key(&echo_reply_t))?)
+        .finish()
+        .await?;
     let status_pub = session
         .declare_publisher(zenoh::keyexpr::new(key(&status_t))?)
         .finish()
@@ -210,56 +237,75 @@ async fn serve(
     log(Event::Ros(Link::Up), t0);
 
     let (d1, d2, d3, d4) = (dev.clone(), dev.clone(), dev.clone(), dev.clone());
-    let ended = select5(
-        session.run(),
-        async {
-            while let Some(s) = cmd_sub.recv().await {
-                let fx = d1.lock().unwrap().on_ros_cmd_vel(
-                    ms(t0),
-                    s.attachment().unwrap_or(&[]),
-                    s.payload(),
-                );
-                log_effects(fx, t0);
-            }
-        },
-        async {
-            while let Some(s) = arm_sub.recv().await {
-                let fx = d2.lock().unwrap().on_ros_arm(
-                    ms(t0),
-                    s.attachment().unwrap_or(&[]),
-                    s.payload(),
-                );
-                log_effects(fx, t0);
-            }
-        },
-        async {
-            while let Some(s) = lv_sub.recv().await {
-                let alive = s.payload() == [1];
-                d4.lock()
-                    .unwrap()
-                    .on_ros_liveliness(s.keyexpr().as_str(), alive);
-            }
-        },
-        async {
-            let mut seq = 0i64;
-            loop {
-                let mut buf = [0u8; 80];
-                let n = d3.lock().unwrap().status_cdr(&mut buf);
+    let echo_loop = async {
+        // Latency probe: any ROS node may use it, no claim; the payload comes back unchanged.
+        let mut seq = 0i64;
+        while let Some(s) = echo_sub.recv().await {
+            if let Some(bytes) = rovi_m8_setpoint_ros::device::echo(s.payload()) {
                 seq += 1;
                 let att = Attachment {
                     seq,
                     timestamp: 0,
-                    gid: status_gid,
+                    gid: echo_gid,
                 }
                 .encode();
-                let _ = status_pub.put(&buf[..n]).attachment(&att).finish().await;
-                embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
+                let _ = echo_pub.put(bytes).attachment(&att).finish().await;
             }
-        },
+        }
+    };
+    let ended = select(
+        select5(
+            session.run(),
+            async {
+                while let Some(s) = cmd_sub.recv().await {
+                    let fx = d1.lock().unwrap().on_ros_cmd_vel(
+                        ms(t0),
+                        s.attachment().unwrap_or(&[]),
+                        s.payload(),
+                    );
+                    log_effects(fx, t0);
+                }
+            },
+            async {
+                while let Some(s) = arm_sub.recv().await {
+                    let fx = d2.lock().unwrap().on_ros_arm(
+                        ms(t0),
+                        s.attachment().unwrap_or(&[]),
+                        s.payload(),
+                    );
+                    log_effects(fx, t0);
+                }
+            },
+            async {
+                while let Some(s) = lv_sub.recv().await {
+                    let alive = s.payload() == [1];
+                    d4.lock()
+                        .unwrap()
+                        .on_ros_liveliness(s.keyexpr().as_str(), alive);
+                }
+            },
+            async {
+                let mut seq = 0i64;
+                loop {
+                    let mut buf = [0u8; 80];
+                    let n = d3.lock().unwrap().status_cdr(&mut buf);
+                    seq += 1;
+                    let att = Attachment {
+                        seq,
+                        timestamp: 0,
+                        gid: status_gid,
+                    }
+                    .encode();
+                    let _ = status_pub.put(&buf[..n]).attachment(&att).finish().await;
+                    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
+                }
+            },
+        ),
+        echo_loop,
     )
     .await;
     // Only the session loop ends on its own; say why it did.
-    if let Either5::First(Err(e)) = ended {
+    if let Either::First(Either5::First(Err(e))) = ended {
         return Err(e.into());
     }
     Ok(())

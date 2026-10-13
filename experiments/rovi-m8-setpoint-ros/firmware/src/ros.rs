@@ -5,7 +5,7 @@ extern crate alloc;
 
 use super::{log, logger::emit, now};
 use core::cell::RefCell;
-use embassy_futures::select::{select5, Either5};
+use embassy_futures::select::{select, select5, Either, Either5};
 use embassy_net::Stack;
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
 use embassy_time::Timer;
@@ -66,15 +66,17 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
     static CMD: StaticCell<Chan> = StaticCell::new();
     static ARM: StaticCell<Chan> = StaticCell::new();
     static TOKENS: StaticCell<TokenChan> = StaticCell::new();
+    static ECHO: StaticCell<Chan> = StaticCell::new();
 
     let config: &'static RosConfig = CONFIG.init(RosConfig {
         transports: TransportLinkManager::from(Link::new(stack)),
     });
     let zid = alloc::format!("{:?}", config.transports().zid());
-    let (cmd, arm, tokens) = (
+    let (cmd, arm, tokens, echo) = (
         CMD.init(Channel::new()),
         ARM.init(Channel::new()),
         TOKENS.init(Channel::new()),
+        ECHO.init(Channel::new()),
     );
 
     // One session per connection. Each gets heap storage that is reclaimed once it has ended
@@ -99,7 +101,8 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
         let session: *mut Session<'static, RosConfig> =
             alloc::boxed::Box::into_raw(alloc::boxed::Box::new(Session::new(link)));
         // SAFETY: the session lives until it is reclaimed below.
-        let result = declare_and_serve(dev, unsafe { &*session }, &zid, cmd, arm, tokens).await;
+        let result =
+            declare_and_serve(dev, unsafe { &*session }, &zid, cmd, arm, tokens, echo).await;
         println!("ros session ended ({:?}), reconnecting", result.err());
         emit(Event::Ros(RosLink::Down));
         // SAFETY: `declare_and_serve` returned, so every borrow of the session (tokens,
@@ -111,6 +114,7 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
         while cmd.try_receive().is_ok() {}
         while arm.try_receive().is_ok() {}
         while tokens.try_receive().is_ok() {}
+        while echo.try_receive().is_ok() {}
         Timer::after_secs(2).await;
     }
 }
@@ -122,6 +126,7 @@ async fn declare_and_serve(
     cmd: &'static Chan,
     arm: &'static Chan,
     tokens: &'static TokenChan,
+    echo: &'static Chan,
 ) -> zenoh::ZResult<()> {
     let cmd_vel = Topic {
         name: "cmd_vel",
@@ -132,6 +137,16 @@ async fn declare_and_serve(
         name: "rovi/arm",
         ty: rmw::BOOL.0,
         hash: rmw::BOOL.1,
+    };
+    let echo_t = Topic {
+        name: "rovi/echo",
+        ty: rmw::INT64.0,
+        hash: rmw::INT64.1,
+    };
+    let echo_reply_t = Topic {
+        name: "rovi/echo_reply",
+        ty: rmw::INT64.0,
+        hash: rmw::INT64.1,
     };
     let status_t = Topic {
         name: "rovi/status",
@@ -147,6 +162,8 @@ async fn declare_and_serve(
         (1, Kind::Subscription, &cmd_vel, rmw::QOS_BEST_EFFORT_1),
         (2, Kind::Subscription, &arm_t, rmw::QOS_BEST_EFFORT_5),
         (3, Kind::Publisher, &status_t, rmw::QOS_DEFAULT_10),
+        (4, Kind::Subscription, &echo_t, rmw::QOS_BEST_EFFORT_1),
+        (5, Kind::Publisher, &echo_reply_t, rmw::QOS_BEST_EFFORT_1),
     ]
     .map(|(id, kind, topic, qos)| {
         rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
@@ -157,6 +174,7 @@ async fn declare_and_serve(
             .await?;
     }
     let status_gid = rmw::gid(eps[2].as_str());
+    let echo_gid = rmw::gid(eps[4].as_str());
 
     let key = |t: &Topic| leak(rmw::topic_key(DOMAIN, t).unwrap().as_str().into());
     let cmd_sub = session
@@ -177,6 +195,15 @@ async fn declare_and_serve(
         .channel(tokens.dyn_sender(), tokens.dyn_receiver())
         .finish()
         .await?;
+    let echo_sub = session
+        .declare_subscriber(zenoh::keyexpr::new(key(&echo_t))?)
+        .channel(echo.dyn_sender(), echo.dyn_receiver())
+        .finish()
+        .await?;
+    let echo_pub = session
+        .declare_publisher(zenoh::keyexpr::new(key(&echo_reply_t))?)
+        .finish()
+        .await?;
     let status_pub = session
         .declare_publisher(zenoh::keyexpr::new(key(&status_t))?)
         .finish()
@@ -184,53 +211,74 @@ async fn declare_and_serve(
     println!("ros node /{} up, zid {}, router {}", NODE, zid, ROUTER);
     emit(Event::Ros(RosLink::Up));
 
-    let ended = select5(
-        session.run(),
-        async {
-            while let Some(s) = cmd_sub.recv().await {
-                let fx = dev.borrow_mut().on_ros_cmd_vel(
-                    now(),
-                    s.attachment().unwrap_or(&[]),
-                    s.payload(),
-                );
-                log(fx);
-            }
-        },
-        async {
-            while let Some(s) = arm_sub.recv().await {
-                let fx =
-                    dev.borrow_mut()
-                        .on_ros_arm(now(), s.attachment().unwrap_or(&[]), s.payload());
-                log(fx);
-            }
-        },
-        async {
-            while let Some(s) = lv_sub.recv().await {
-                let alive = s.payload() == [1];
-                dev.borrow_mut()
-                    .on_ros_liveliness(s.keyexpr().as_str(), alive);
-            }
-        },
-        async {
-            let mut seq = 0i64;
-            loop {
-                let mut buf = [0u8; 80];
-                let n = dev.borrow().status_cdr(&mut buf);
+    let echo_loop = async {
+        // Latency probe: any ROS node may use it, no claim; the payload comes back unchanged.
+        let mut seq = 0i64;
+        while let Some(s) = echo_sub.recv().await {
+            if let Some(bytes) = rovi_m8_setpoint_ros::device::echo(s.payload()) {
                 seq += 1;
                 let att = Attachment {
                     seq,
                     timestamp: 0,
-                    gid: status_gid,
+                    gid: echo_gid,
                 }
                 .encode();
-                let _ = status_pub.put(&buf[..n]).attachment(&att).finish().await;
-                Timer::after_secs(1).await;
+                let _ = echo_pub.put(bytes).attachment(&att).finish().await;
             }
-        },
+        }
+    };
+    let ended = select(
+        select5(
+            session.run(),
+            async {
+                while let Some(s) = cmd_sub.recv().await {
+                    let fx = dev.borrow_mut().on_ros_cmd_vel(
+                        now(),
+                        s.attachment().unwrap_or(&[]),
+                        s.payload(),
+                    );
+                    log(fx);
+                }
+            },
+            async {
+                while let Some(s) = arm_sub.recv().await {
+                    let fx = dev.borrow_mut().on_ros_arm(
+                        now(),
+                        s.attachment().unwrap_or(&[]),
+                        s.payload(),
+                    );
+                    log(fx);
+                }
+            },
+            async {
+                while let Some(s) = lv_sub.recv().await {
+                    let alive = s.payload() == [1];
+                    dev.borrow_mut()
+                        .on_ros_liveliness(s.keyexpr().as_str(), alive);
+                }
+            },
+            async {
+                let mut seq = 0i64;
+                loop {
+                    let mut buf = [0u8; 80];
+                    let n = dev.borrow().status_cdr(&mut buf);
+                    seq += 1;
+                    let att = Attachment {
+                        seq,
+                        timestamp: 0,
+                        gid: status_gid,
+                    }
+                    .encode();
+                    let _ = status_pub.put(&buf[..n]).attachment(&att).finish().await;
+                    Timer::after_secs(1).await;
+                }
+            },
+        ),
+        echo_loop,
     )
     .await;
     // Only the session loop ends on its own; say why it did.
-    if let Either5::First(Err(e)) = ended {
+    if let Either::First(Either5::First(Err(e))) = ended {
         return Err(e.into());
     }
     Ok(())

@@ -59,6 +59,10 @@ pub const BOOL: (&str, &str) = (
     "std_msgs::msg::dds_::Bool_",
     "RIHS01_feb91e995ff9ebd09c0cb3d2aed18b11077585839fb5db80193b62d74528f6c9",
 );
+pub const INT64: (&str, &str) = (
+    "std_msgs::msg::dds_::Int64_",
+    "RIHS01_8cd1048c2f186b6bd9a92472dc1ce51723c0833a221e2b7aecfff111774f4b49",
+);
 pub const STRING: (&str, &str) = (
     "std_msgs::msg::dds_::String_",
     "RIHS01_df668c740482bbd48fb39d76a70dfd4bd59db1288021743503259e948f6b1a18",
@@ -270,5 +274,49 @@ mod tests {
         let mut bad = b;
         bad[16] = 15;
         assert_eq!(Attachment::decode(&bad), None);
+    }
+
+    #[test]
+    fn echo_topics_match_ros() {
+        // Captured from a Jazzy graph: `ros2 topic echo /rovi/echo std_msgs/msg/Int64` and a publisher of
+        // `/rovi/echo_reply`, both best effort with depth 1.
+        let echo = Topic {
+            name: "rovi/echo",
+            ty: INT64.0,
+            hash: INT64.1,
+        };
+        let reply = Topic {
+            name: "rovi/echo_reply",
+            ty: INT64.0,
+            hash: INT64.1,
+        };
+        assert_eq!(
+            topic_key(0, &echo).unwrap().as_str(),
+            "0/rovi/echo/std_msgs::msg::dds_::Int64_/RIHS01_8cd1048c2f186b6bd9a92472dc1ce51723c0833a221e2b7aecfff111774f4b49"
+        );
+        let sub = endpoint_token(
+            0,
+            ZID,
+            4,
+            Endpoint::Subscription,
+            "rovi",
+            &echo,
+            QOS_BEST_EFFORT_1,
+        )
+        .unwrap();
+        assert!(sub.as_str().ends_with("/MS/%/%/rovi/%rovi%echo/std_msgs::msg::dds_::Int64_/RIHS01_8cd1048c2f186b6bd9a92472dc1ce51723c0833a221e2b7aecfff111774f4b49/2::,1:,:,:,,"));
+        let publ = endpoint_token(
+            0,
+            ZID,
+            5,
+            Endpoint::Publisher,
+            "rovi",
+            &reply,
+            QOS_BEST_EFFORT_1,
+        )
+        .unwrap();
+        assert!(publ
+            .as_str()
+            .contains("/MP/%/%/rovi/%rovi%echo_reply/std_msgs::msg::dds_::Int64_/"));
     }
 }

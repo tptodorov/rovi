@@ -63,7 +63,7 @@ cap() {  # cap <name> [elf]: reset the board and capture its serial log into ben
 }
 router() {  # rmw_zenohd with an extra UDP listener on 7448, the controller script mounted
   docker rm -f rovi-router >/dev/null 2>&1 || true
-  docker run -d --rm --name rovi-router --net host -v "$PWD/sim/ros_controller.py:/ros_controller.py:ro" rovi-ros-sim bash -c '
+  docker run -d --rm --name rovi-router --net host -v "$PWD/sim/ros_controller.py:/ros_controller.py:ro" -v "$PWD/sim/ros_latency.py:/ros_latency.py:ro" rovi-ros-sim bash -c '
     source /opt/ros/jazzy/setup.bash
     sed "s#\"tcp/\\[::\\]:7447\"#\"tcp/[::]:7447\", \"udp/0.0.0.0:7448\"#" \
       /opt/ros/jazzy/share/rmw_zenoh_cpp/config/DEFAULT_RMW_ZENOH_ROUTER_CONFIG.json5 > /tmp/router.json5
@@ -249,6 +249,14 @@ for p in 'ev=claimed source=Ros' 'state=Armed wheels_pm=500,500,500,500' 'ev=sto
 rg -q 'wheels_pm=-' bench/board-$D-ros/ros-run.log && echo "FAIL: intruder drove" || echo "ok: intruder ignored"
 rg -q 'state=armed' bench/board-$D-ros/ros-status.txt && rg -q 'state=stopped' bench/board-$D-ros/ros-status.txt && echo "ok: status"
 ```
+
+**ROS round-trip latency** (any node, no claim; 600 probes at 20 Hz is 30 s). The echo must not claim the car:
+
+```sh
+ros 'ROVI_N=600 python3 /ros_latency.py' | tee -a bench/board-$D-ros/latency-ros.txt
+```
+
+First board result: 1200 of 1200 returned, median 7.7 to 8.0 ms, p95 about 11.5 ms, max 23.8 to 47.0 ms.
 
 **Reconnect** (router restart, three times):
 
