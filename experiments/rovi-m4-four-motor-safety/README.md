@@ -6,7 +6,7 @@ M4 drives the car's motors from the M8 firmware for the first time, wheels off t
 
 | File | What |
 | --- | --- |
-| [WIRING.md](WIRING.md) | Step 1 (one driver, one motor, M1's wiring) and step 2 (four motors) |
+| [WIRING.md](WIRING.md) | Four motors and two drivers, starting from M1's wiring |
 | [TESTPLAN.md](TESTPLAN.md) | Bench steps S1-S5, safety rules, evidence |
 
 ## Firmware
@@ -15,7 +15,7 @@ There is no M4 firmware of its own. The M8 firmware ([`../rovi-m8-setpoint-ros/`
 
 * `motor::output` (host-tested core, `src/motor.rs`) turns the device state and the four wheel commands into `STBY` and each channel's `IN1`/`IN2`/duty. `STBY` is high only while armed with finite commands; a zero command coasts.
 * Duty cap `max_duty_pm` 800 for a wheel command of 1.0: with the placeholder geometry, `vx` 1.0 m/s is 40 % duty, the top of M1's ramp. Raise it only after S5 and step 2.
-* `CHANNELS` maps channels to wheels (step 1: driver 1 channel A = front-left).
+* `CHANNELS` maps the four bridges to wheels: driver 1 A/B = front-left/rear-left, driver 2 A/B = front-right/rear-right ([WIRING](WIRING.md)); inversion per motor is set after step 2's first test.
 * The control tick feeds the RTC watchdog (1 s, resets the chip); `ev=boot` logs the reset cause (`reset=SysRtcWdt`, `SysBrownOut`, …).
 
 The motor is driven by any M8 client: `sim/ble_client.py drive` (BLE), the UDP client, or `ros2 topic pub /cmd_vel` (ROS build).

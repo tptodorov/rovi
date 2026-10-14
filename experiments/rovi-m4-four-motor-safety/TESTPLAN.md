@@ -72,9 +72,15 @@ With the motor turning (`--vx 1.0`):
 
 **Pass:** warm at most; nothing too hot to hold a finger on.
 
-## Step 2: four motors (after rewiring)
+## Step 2: four motors (after rewiring per WIRING.md)
 
-S2 for each wheel (mapping and inversion), then all four together at increasing speed: no unplanned `ev=boot` (no brownout), the power bank does not cut out, the combined current on a USB meter if you have one. Then S3 with all four turning, and S5.
+The firmware already drives all four bridges. Each test is announced and started on your "go".
+
+1. **Which way each wheel turns:** `drive --vx 0.5 --seconds 3` (all four should turn forward). Note each wheel that turns backwards; set `invert: true` for it in `CHANNELS`, reflash, repeat until all four turn forward.
+2. **Mecanum pattern:** `--vy 0.5` (strafe left: FL and RR backwards, FR and RL forward) and `--wz 1.0` (turn left: left wheels backwards, right forward). Confirms the mapping.
+3. **All four together, increasing:** `--vx 0.25`, `0.5`, `1.0`, then `--vx 1.0` followed at once by `--vx -1.0` (reversal). Pass: no unplanned `ev=boot` (no brownout reset), the power bank keeps supplying.
+4. **Stops with four turning:** STOP, lease expiry, RST, ESP32 unplugged, as S3.
+5. **Thermal:** 5 min at `--vx 1.0`; drivers and motors at most warm.
 
 ## Evidence
 

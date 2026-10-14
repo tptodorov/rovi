@@ -1,5 +1,5 @@
 //! Board-only firmware shell: the car AP, the UDP adapter, the 10 ms control tick, the motor
-//! outputs (M1's wiring, one TB6612FNG channel so far) and the RGB LED indicator, all driving the
+//! outputs (two TB6612FNG drivers, four channels) and the RGB LED indicator, all driving the
 //! host-tested `Device` core.
 
 use core::cell::RefCell;
@@ -17,7 +17,7 @@ use embassy_time::{Duration, Instant, Ticker, Timer};
 use esp_backtrace as _;
 use esp_hal::{
     clock::CpuClock,
-    gpio::{Level, Output, OutputConfig},
+    gpio::{AnyPin, Level, Output, OutputConfig},
     mcpwm::{operator::PwmPinConfig, timer::PwmWorkingMode, McPwm, PeripheralClockConfig},
     ram,
     rmt::Rmt,
@@ -97,11 +97,27 @@ const GEOMETRY: Geometry = Geometry {
 /// Duty for a wheel command of 1.0, until M4 measures the limits. With the placeholder geometry
 /// `vx` 1.0 m/s is a wheel command of 0.5, so 40 % duty: the top of M1's bench-proven ramp.
 const MOTOR: motor::Config = motor::Config { max_duty_pm: 800 };
-/// Driver 1 channel A (M1's wiring) drives the front-left wheel until all four are wired.
-const CHANNELS: [Channel; 1] = [Channel {
-    wheel: 0,
-    invert: false,
-}];
+/// Bridge order: driver 1 A, driver 1 B, driver 2 A, driver 2 B (M4 WIRING). Driver 1 takes the
+/// left wheels, driver 2 the right. Inversion is a placeholder until M4 step 2 records which
+/// motors turn backwards.
+const CHANNELS: [Channel; 4] = [
+    Channel {
+        wheel: 0, // FL
+        invert: false,
+    },
+    Channel {
+        wheel: 3, // RL
+        invert: false,
+    },
+    Channel {
+        wheel: 1, // FR
+        invert: false,
+    },
+    Channel {
+        wheel: 2, // RR
+        invert: false,
+    },
+];
 /// MCPWM period in counts, so the compare value is the duty in permille (20 kHz, as M1).
 const PWM_PERIOD: u16 = 999;
 /// The RTC watchdog resets the chip if the control tick stops feeding it (ADR-0014).
@@ -186,17 +202,35 @@ fn color(state: State, wheels: [f32; 4]) -> RGB8 {
 async fn main(_spawner: Spawner) -> ! {
     let p = esp_hal::init(esp_hal::Config::default().with_cpu_clock(CpuClock::max()));
     // Motors first: STBY low before anything else runs (the TB6612's pull-down holds it low until
-    // here). Pins as M1: STBY GPIO4, AIN1 GPIO5, AIN2 GPIO6, PWMA GPIO7.
+    // here). Pins as M4 WIRING: one STBY (GPIO4) for both drivers; per bridge IN1, IN2, PWM.
     let mut stby = Output::new(p.GPIO4, Level::Low, OutputConfig::default());
-    let mut a_in1 = Output::new(p.GPIO5, Level::Low, OutputConfig::default());
-    let mut a_in2 = Output::new(p.GPIO6, Level::Low, OutputConfig::default());
+    let low = |pin: AnyPin<'static>| Output::new(pin, Level::Low, OutputConfig::default());
+    let mut dirs = [
+        (low(p.GPIO5.into()), low(p.GPIO6.into())), // driver 1 A: AIN1, AIN2
+        (low(p.GPIO16.into()), low(p.GPIO17.into())), // driver 1 B: BIN1, BIN2
+        (low(p.GPIO9.into()), low(p.GPIO10.into())), // driver 2 A: AIN1, AIN2
+        (low(p.GPIO12.into()), low(p.GPIO13.into())), // driver 2 B: BIN1, BIN2
+    ];
     let pwm_clock = PeripheralClockConfig::with_frequency(Rate::from_mhz(40)).unwrap();
     let mut mcpwm = McPwm::new(p.MCPWM0, pwm_clock);
     mcpwm.operator0.set_timer(&mcpwm.timer0);
-    let mut a_pwm = mcpwm
-        .operator0
-        .with_pin_a(p.GPIO7, PwmPinConfig::UP_ACTIVE_HIGH);
-    a_pwm.set_timestamp(0);
+    mcpwm.operator1.set_timer(&mcpwm.timer0);
+    let (mut pwm_1a, mut pwm_1b) = mcpwm.operator0.with_pins(
+        p.GPIO7,
+        PwmPinConfig::UP_ACTIVE_HIGH,
+        p.GPIO15,
+        PwmPinConfig::UP_ACTIVE_HIGH,
+    );
+    let (mut pwm_2a, mut pwm_2b) = mcpwm.operator1.with_pins(
+        p.GPIO8,
+        PwmPinConfig::UP_ACTIVE_HIGH,
+        p.GPIO11,
+        PwmPinConfig::UP_ACTIVE_HIGH,
+    );
+    pwm_1a.set_timestamp(0);
+    pwm_1b.set_timestamp(0);
+    pwm_2a.set_timestamp(0);
+    pwm_2b.set_timestamp(0);
     mcpwm.timer0.start(
         pwm_clock
             .timer_clock_with_frequency(PWM_PERIOD, PwmWorkingMode::Increase, Rate::from_khz(20))
@@ -467,10 +501,15 @@ async fn main(_spawner: Spawner) -> ! {
             if !out.standby_high {
                 stby.set_low();
             }
-            let a = out.bridges[0];
-            a_pwm.set_timestamp(a.duty_pm);
-            a_in1.set_level(Level::from(a.in1));
-            a_in2.set_level(Level::from(a.in2));
+            let b = out.bridges;
+            pwm_1a.set_timestamp(b[0].duty_pm);
+            pwm_1b.set_timestamp(b[1].duty_pm);
+            pwm_2a.set_timestamp(b[2].duty_pm);
+            pwm_2b.set_timestamp(b[3].duty_pm);
+            for ((in1, in2), bridge) in dirs.iter_mut().zip(b) {
+                in1.set_level(Level::from(bridge.in1));
+                in2.set_level(Level::from(bridge.in2));
+            }
             if out.standby_high {
                 stby.set_high();
             }
