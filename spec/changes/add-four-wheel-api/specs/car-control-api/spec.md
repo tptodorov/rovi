@@ -79,11 +79,11 @@ If the owner sends no valid setpoint within the claim window, ownership SHALL be
 
 ### Requirement: Explicit arming
 
-A new owner SHALL start disarmed. Only the owner's explicit arm command SHALL arm the car, and only while the lease is valid. After a stop or an out-of-limits setpoint, arm SHALL also need a valid setpoint sent after that safety stop. While disarmed, setpoints SHALL renew the lease and every wheel command SHALL be zero.
+A new owner SHALL start disarmed. Over BLE and UDP, only the owner's explicit arm command SHALL arm the car, and only while the lease is valid. Over ROS 2, a valid setpoint from the owner SHALL arm the car when it is claimed or stopped by a lease expiry ([ADR-0011](../../../../docs/adr/0011-ros-auto-arm.md)). After a stop or an out-of-limits setpoint, on every source, only the owner's explicit arm SHALL arm the car, and it SHALL also need a valid setpoint sent after that safety stop. While disarmed, setpoints SHALL renew the lease and every wheel command SHALL be zero.
 
 #### Scenario: Setpoints alone do not move the car
 
-- **GIVEN** a new owner that has not armed
+- **GIVEN** a new BLE or UDP owner that has not armed
 - **WHEN** it streams non-zero setpoints
 - **THEN** every wheel command is zero
 
@@ -92,6 +92,19 @@ A new owner SHALL start disarmed. Only the owner's explicit arm command SHALL ar
 - **GIVEN** a new owner that has sent no setpoint
 - **WHEN** it sends arm
 - **THEN** arm is refused with not-ready and the car stays disarmed
+
+#### Scenario: A ROS 2 stream arms the car
+
+- **GIVEN** the car is open
+- **WHEN** a ROS 2 node streams non-zero setpoints on `/cmd_vel` and nothing on `/rovi/arm`
+- **THEN** the first setpoint claims and arms the car and the wheel commands follow it
+- **AND** after a lease expiry, the resumed stream arms the car again
+
+#### Scenario: A ROS 2 stop stays latched while streaming
+
+- **GIVEN** a ROS 2 owner that is streaming and armed
+- **WHEN** it publishes `/rovi/arm` false and keeps streaming
+- **THEN** the car stops and every wheel command stays zero until the owner publishes `/rovi/arm` true
 
 #### Scenario: Arm then drive
 
@@ -264,9 +277,9 @@ The car SHALL publish `/rovi/status` as `std_msgs/String` of space-separated `ke
 
 #### Scenario: Refused arm on ROS 2
 
-- **GIVEN** a new ROS 2 owner that has sent no setpoint
-- **WHEN** it publishes arm
-- **THEN** the next `/rovi/status` has `state=claimed` and `error=not-ready`
+- **GIVEN** a ROS 2 owner stopped by its own STOP
+- **WHEN** it publishes arm before any new setpoint
+- **THEN** the next `/rovi/status` has `state=stopped` and `error=not-ready`
 
 #### Scenario: Status on a change
 

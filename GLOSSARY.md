@@ -61,7 +61,7 @@ A controller's request to become the owner: connecting over BLE, a UDP hello, or
 The period after a claim in which the new owner must send its first setpoint or arm. If it doesn't, ownership is released.
 
 **Armed**:
-The state in which the owner's setpoints move the device. A new owner starts disarmed, and every safety stop disarms. Only the owner's explicit arm command arms the device.
+The state in which the owner's setpoints move the device. A new owner starts disarmed, and every safety stop disarms. Over BLE and UDP only the owner's explicit arm command arms the device. Over ROS 2 the owner's setpoint arms it after a claim or a lease expiry; a STOP or out-of-limits stop needs the owner's explicit arm ([ADR-0011](docs/adr/0011-ros-auto-arm.md)).
 _Avoid_: Enabled, active
 
 **Reclaim window**:
