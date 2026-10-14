@@ -127,7 +127,7 @@ The BLE connection is the session, and connecting is the claim. The service has 
 
 ### ROS 2 (feature `ros`)
 
-The car is a zenoh-nostd client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (default `udp/192.168.4.2:7448`). It reconnects with backoff.
+The car is a zenoh-nostd client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (default `tcp/192.168.4.2:7447`, [ADR-0012](../../docs/adr/0012-ros-router-over-tcp.md)). It reconnects with backoff.
 
 | Topic | Type | Direction |
 | --- | --- | --- |
@@ -151,7 +151,7 @@ sequenceDiagram
     participant T as ROS teleop (host)
     participant R as rmw_zenohd (host, on car AP)
     participant C as Car (zenoh-nostd)
-    C->>R: connect udp/192.168.4.2:7448
+    C->>R: connect tcp/192.168.4.2:7447
     C->>R: liveliness tokens (node /rovi, sub /cmd_vel, sub /rovi/arm, pub /rovi/status)
     T->>R: TwistStamped on /cmd_vel (attachment gid, seq)
     R->>C: sample
@@ -286,4 +286,4 @@ BLE service `d47a0010-45b2-4d19-8db0-6bd87e9c0001`: Setpoint (`…0011`, write w
 
 ### ROS 2 on the board
 
-With `--features ros` the car is a zenoh client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (build-time, default `udp/192.168.4.2:7448`): a laptop that joined the car AP with the static address `192.168.4.2`. The default `rmw_zenohd` listens on TCP only, so add a UDP listener to the router config, for example `listen/endpoints: ["tcp/[::]:7447", "udp/0.0.0.0:7448"]` in `DEFAULT_RMW_ZENOH_ROUTER_CONFIG.json5`. The adapter retries until the router is up and rejoins whenever the session ends (router restart, link loss, lease expiry), after a 2 s pause. The log says why it ended. If the router still holds the old session when the car returns (the zenoh id is fixed per boot), the connect fails until that session's lease runs out, and the adapter keeps retrying; `sim/ros-stale-session.sh` checks this over UDP. Each connection gets its own heap-allocated session that is freed when it ends. `sim/ros-reconnect.sh` checks three router restarts in a row against the sim car.
+With `--features ros` the car is a zenoh client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (build-time, default `tcp/192.168.4.2:7447`): a laptop that joined the car AP with the static address `192.168.4.2`, running a stock `rmw_zenohd`. A `udp/...` endpoint also works but needs a UDP listener in the router config (`listen/endpoints: ["tcp/[::]:7447", "udp/0.0.0.0:7448"]`), and a stalled router can stop accepting UDP peers for good ([ADR-0012](../../docs/adr/0012-ros-router-over-tcp.md), `sim/ros-router-gone.sh 60000 udp`). Set `lease: 10000` in the router config to notice a dead router in 10 s instead of 60 s. The adapter retries until the router is up and rejoins whenever the session ends (router restart, link loss, lease expiry), after a 2 s pause. The log says why it ended. If the router still holds the old session when the car returns (the zenoh id is fixed per boot), the connect fails until that session's lease runs out, and the adapter keeps retrying; `sim/ros-stale-session.sh` checks this over UDP. Each connection gets its own heap-allocated session that is freed when it ends. `sim/ros-reconnect.sh` checks three router restarts in a row against the sim car.

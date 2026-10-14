@@ -17,7 +17,7 @@ Read this first; the phases above were written before the board was available.
 * **`ev=ble link=up mtu=23` is the value at connect.** The negotiated MTU is the separate `ev=mtu id=N mtu=M` (about 200 ms later), and `sim/ble_scenarios.py` checks that.
 * **BLE latency (`sim/latency.py --ble`) streams zero setpoints** alongside the echoes. Echo is not activity: without setpoints the 10 s claim window releases the owner and the car drops the link.
 * **ROS needs a bigger UDP queue and the publisher-only interest.** The firmware uses a 32-slot, 8192-byte receive queue and subscribes to `@ros2_lv/<domain>/*/*/*/MP/**`; with the defaults the car lost the controller's publisher tokens.
-* **A frozen or vanished router is noticed after the router's lease, not the car's.** The car's read timeout is the lease the router advertises: `rmw_zenohd` defaults to `lease: 60000`, so the car noticed after 56.6 s and reconnected 121 s after the router resumed. With `lease: 10000`, `keep_alive: 4` it noticed after 9.6 s and was back 14.1 s after the router resumed (10 s connect timeout plus a 2 s pause). The bench `router()` uses the short lease. Evidence: `bench/board-2026-10-13-router-gone/` ([#25](https://github.com/tptodorov/rovi/issues/25)).
+* **A frozen or vanished router is noticed after the router's lease, not the car's** (`rmw_zenohd` default 60 s; the bench `router()` sets 10 s). **Over UDP the car may never rejoin** after a long freeze, because the router's UDP listener stops accepting every peer ([zenoh#2849](https://github.com/eclipse-zenoh/zenoh/issues/2849); the 2026-10-13 "back 121 s" was the script's timeout). Over TCP, the default since ADR-0012, it is back 2.0 s after the router resumes. Evidence: `bench/board-2026-10-13-router-gone/`, `bench/board-2026-10-14-ros-tcp/`.
 * **Wi-Fi stall ([#23](https://github.com/tptodorov/rovi/issues/23)) did not reproduce.** A 30 min soak with ROS keepalives and a 200 ms UDP probe saw no outage (`bench/board-2026-10-13-wifi-soak/`). The two earlier stalls stay unexplained; if one recurs, capture the car log, `iw dev wlp1s0f0 link` and the wpa_supplicant log at that moment.
 * **Router restart: `/rovi` is back in 3 to 4 s** (after the fork's `Close` fix). Use a window of about 200 s, not 60 s, in case something regresses; the car needs about 60 s to notice a router that is simply gone.
 * **The stale-session step is weak.** Dropping the laptop off the AP for 5 s stays inside the lease, so the session survives (back after 0 s). Use `sim/ros-stale-session.sh` on the sim for the real case, or drop the link for longer than the lease (about 60 s).
@@ -49,7 +49,7 @@ task m8:test                                               # host tests still gr
   ```
 
   `nmcli --wait 15 connection up rovi-m8` joins (it replaces the home network on `wlp1s0f0`: the **dedicated** radio). The **shared** setup (M3's confound) is in phase 3.
-* **Firewall (ROS only).** The car connects *to* the laptop's router on UDP 7448, and the NixOS firewall on `blade` is active, so open it for the session: `sudo nixos-firewall-tool open udp 7448` (undo: `sudo nixos-firewall-tool reset`). The sim rehearsals ran over loopback and never hit this.
+* **Firewall (ROS only).** The car connects *to* the laptop's router on TCP 7447 (UDP 7448 for a `udp/...` build), and the NixOS firewall on `blade` is active, so open it for the session: `sudo nixos-firewall-tool open tcp 7447` (undo: `sudo nixos-firewall-tool reset`). The sim rehearsals ran over loopback and never hit this.
 * **Serial port.** Use the **CH343 UART** connector (USB `1a86:*`, M2/M3 used it as `/dev/ttyACM0`), and only that cable: once the native USB port (`303a:1001`) sees traffic, `esp-println` moves the log there and the CH343 goes silent. `ls -l /dev/serial/by-id/` shows which is which; your user needs `dialout` (it has it on `blade`).
 * **Bluetooth.** `bluetoothctl show | rg Powered` is `yes`. One adapter (`hci0`), so the second-central BLE scenario stays skipped.
 
@@ -63,7 +63,7 @@ export ELF_ROS=firmware/target/ros/xtensa-esp32s3-none-elf/release/rovi-m8-firmw
 cap() {  # cap <name> [elf]: reset the board and capture its serial log into bench/<name>/car.log (Ctrl-C ends)
   mkdir -p "bench/$1" && espflash monitor --port "$PORT" --non-interactive --elf "${2:-$ELF}" | tee "bench/$1/car.log"
 }
-router() {  # rmw_zenohd with an extra UDP listener on 7448 and a 10 s lease (the default 60 s is how long the car waits to notice a dead router), the controller script mounted
+router() {  # rmw_zenohd with a 10 s lease (the default 60 s is how long the car waits to notice a dead router) and a UDP listener on 7448 for udp builds, the controller script mounted
   docker rm -f rovi-router >/dev/null 2>&1 || true
   docker run -d --rm --name rovi-router --net host -v "$PWD/sim/ros_controller.py:/ros_controller.py:ro" -v "$PWD/sim/ros_latency.py:/ros_latency.py:ro" rovi-ros-sim bash -c '
     source /opt/ros/jazzy/setup.bash
@@ -96,7 +96,7 @@ Look for, in `bench/board-$D-boot/car.log`:
 
 * `M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 WPA2 channel=1 lease_ms=1000`, then `ev=boot ver=0.1.0 at_ms=<n>`.
 * No `panicked`, no `ev=error`, no `ev=dropped`; the LED is off (Open). `python3 sim/carlog.py bench/board-$D-boot/car.log` exits 0.
-* With `$ELF_ROS` and no router yet: `ros: router udp/192.168.4.2:7448 not reachable, retrying` and `ev=ros link=retry`, repeating.
+* With `$ELF_ROS` and no router yet: `ros: router tcp/192.168.4.2:7447 not reachable, retrying` and `ev=ros link=retry`, repeating.
 * The AP: `nmcli -f SSID,CHAN device wifi list --rescan yes | rg 'Rovi M8'` shows channel 1.
 
 If espflash cannot connect: hold BOOT, tap RST, release BOOT, retry. Copy `/tmp/m8-size.txt` (text/data/bss) into the results; the latest laptop numbers are text 653,493 B without `ros` and 816,841 B with.
@@ -231,7 +231,7 @@ Flash `$ELF_ROS`, open the firewall (phase 0), check `ss -tlnp | rg ':7447'` sho
 
 ```sh
 nmcli --wait 15 connection up rovi-m8
-router; sleep 3; ss -ulnp | rg 7448                     # the UDP listener is up
+router; sleep 3; ss -tlnp | rg 7447                     # the router listens
 # within a few s the car log shows "ros node /rovi up, zid ..." and ev=ros link=up
 ros ros2 node list | tee bench/board-$D-ros/q2.txt                       # /rovi
 ros ros2 topic info -v /cmd_vel | tee -a bench/board-$D-ros/q2.txt       # one subscription, node rovi, BEST_EFFORT, depth 1
@@ -382,7 +382,7 @@ Tick only what was seen on the board in this run. Untried even after a clean run
 ## Troubleshooting
 
 * **Port 7447 or 7448 already taken.** Another `rovi-router` (the sim scripts in any worktree use the same container name) or a host `rmw_zenohd`: `docker ps`, `ss -tlnup | rg ':744[78]'`, then `docker rm -f rovi-router`. Don't run the sim ROS scripts during the bench.
-* **The car never joins the router.** Car log repeats `router udp/192.168.4.2:7448 not reachable`: check the firewall (phase 0), the laptop address (`ip -4 addr show wlp1s0f0`), the UDP listener (`ss -ulnp | rg 7448`) and that the laptop is on the AP at all.
+* **The car never joins the router.** Car log repeats `router tcp/192.168.4.2:7447 not reachable`: check the firewall (phase 0), the laptop address (`ip -4 addr show wlp1s0f0`), the listener (`ss -tlnp | rg 7447`) and that the laptop is on the AP at all.
 * **bleak finds nothing.** The car advertises only while free: not while UDP or ROS owns it, and not during a claim or reclaim window (wait up to 16 s, stop other clients). Check `bluetoothctl show` (powered) and that a BLE client is not still connected. After one "car not found", the remaining BLE scenarios fail at once.
 * **ATT MTU readout.** `ble_client.py` uses bleak's private `_backend._acquire_mtu` (BlueZ) and falls back to the write size + 3; a bleak upgrade can break it. The btmon trace is the authority.
 * **Car logs `mtu=23` but the client reports ≥ 75.** The firmware logs `ev=ble link=up` right at accept, likely before the client's MTU exchange; the BLE claim scenario's log check then fails. Not a Q18 failure: confirm with the trace and open an issue.
