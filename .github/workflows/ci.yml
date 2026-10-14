@@ -84,6 +84,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: esp-rs/xtensa-toolchain@v1.7.0
+        env:
+          # espup queries the GitHub API; anonymous calls hit the rate limit (403).
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           buildtargets: esp32s3
           version: 1.97.0.0
