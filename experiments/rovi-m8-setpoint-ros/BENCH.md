@@ -239,7 +239,7 @@ ros ros2 topic info /rovi/status | tee -a bench/board-$D-ros/q2.txt      # Publi
 ros 'timeout 6 ros2 topic pub -r 20 /cmd_vel geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.2}}}" >/dev/null & sleep 2; timeout 3 ros2 topic echo /rovi/status --once; wait' | tee -a bench/board-$D-ros/q2.txt
 ```
 
-Q2 passes when `/rovi` is listed, `topic info` matches, and plain `ros2 topic pub` (no `-w 0`) claims the car: `ev=claimed source=Ros` and status `state=claimed`. Plain CLI cannot arm it: a second `ros2 topic pub /rovi/arm` is another node, which the car ignores by design (seen on the sim car).
+Q2 passes when `/rovi` is listed, `topic info` matches, and plain `ros2 topic pub` (no `-w 0`) claims the car: `ev=claimed source=Ros`. Since ADR-0011 the same stream also arms and drives it (status `state=armed`, non-zero `wheels_pm`).
 
 The ROS scenario (one node with `/cmd_vel` and `/rovi/arm`, plus an intruder node), once the car log shows `ev=released` (lease plus reclaim window, about 6 s after the pub ends):
 
@@ -372,8 +372,8 @@ Each acceptance box and what proves it:
 | Lease expiry within lease + 50 ms; claim and reclaim windows | phase 7 `windows.txt`, phase 2/4 window scenarios | any lease row > 1040 ms |
 | Wheel commands match `mecanum_drive_controller` | phase 2/4 mecanum scenario plus the exact `wheels_pm` values in phase 2 | — |
 | `ros2 node list`/`topic info` show `/rovi`; plain `ros2 topic pub` claims the car | phase 6 `q2.txt` | **passes** |
-| One ROS node arms and drives the car | ROS controller scenario | **passes** (plain CLI pub cannot arm: another node; reworded, #24) |
-| Stock stamped teleop drives it | none | **open, not a gate:** image has no `teleop_twist_keyboard`, and it cannot arm |
+| One ROS node arms and drives the car; a STOP stays latched while it streams | ROS controller scenario | **passes** (2026-10-14) |
+| A stock tool publishing only `/cmd_vel` drives it | `ros2 topic pub -r 20 /cmd_vel` | **passes** (2026-10-14, ADR-0011) |
 | BLE setpoint works at the negotiated MTU at 20 Hz | phase 4 `info.txt`, trace, `drive.txt` | MTU < 75 (Q18 fallback: compact 16-byte setpoint) |
 | Latency for BLE, UDP and ROS, and the footprint, recorded | phases 1, 3, 4 | **stays open:** ROS has no echo yet ([#16](https://github.com/tptodorov/rovi/issues/16)) |
 

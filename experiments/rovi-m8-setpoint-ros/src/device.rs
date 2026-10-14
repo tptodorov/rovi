@@ -1,7 +1,9 @@
 //! The device core: the arbiter plus kinematics, driven by UDP datagrams. The BLE and ROS
 //! adapters will feed the same arbiter. Time is passed in; the firmware shell owns the sockets.
 
-use crate::arbiter::{Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason};
+use crate::arbiter::{
+    Applied, Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason,
+};
 use crate::graph::Graph;
 use crate::kinematics::{self, Geometry};
 use crate::rmw::Attachment;
@@ -223,6 +225,9 @@ impl Device {
 
     /// A sample on the `cmd_vel` topic. The first valid one from a free device claims it, and the
     /// owner is the ROS node of the publisher gid in the attachment. Input from other nodes is ignored.
+    /// ROS arms on its own (ADR-0011): a setpoint arms a claimed car, and a stream resuming after
+    /// a lease expiry arms it again, so stock tools that publish only `cmd_vel` can drive. A STOP
+    /// or an out-of-limits setpoint stays latched while the owner streams, until `rovi/arm` true.
     pub fn on_ros_cmd_vel(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
         let (Some(att), Ok(sp)) = (Attachment::decode(attachment), Setpoint::decode(payload))
         else {
@@ -234,8 +239,15 @@ impl Device {
         let Ok(mut fx) = self.arbiter.claim(now, who) else {
             return Effects::default();
         };
-        if let Ok((_, e)) = self.arbiter.setpoint(now, who, att.seq as u32, sp) {
+        if let Ok((applied, e)) = self.arbiter.setpoint(now, who, att.seq as u32, sp) {
             fx.stop = e.stop;
+            let auto_arm = matches!(
+                self.arbiter.state(),
+                State::Claimed | State::Stopped(StopReason::LeaseExpired)
+            );
+            if applied == Applied::Applied && e.stop.is_none() && auto_arm {
+                let _ = self.arbiter.arm(now, who);
+            }
         }
         fx
     }
@@ -613,18 +625,72 @@ mod tests {
         [0, 1, 0, 0, v as u8]
     }
 
+    /// Attachment of publisher `cmd` with sequence `seq` (the same gid, a later sample).
+    fn at(cmd: &[u8; 33], seq: i64) -> [u8; 33] {
+        let mut a = *cmd;
+        a[..8].copy_from_slice(&seq.to_le_bytes());
+        a
+    }
+
     #[test]
-    fn first_ros_setpoint_claims_then_arm_from_another_publisher_of_the_node_drives() {
+    fn first_ros_setpoint_claims_and_arms() {
         let mut d = dev();
-        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        let cmd = publisher(&mut d, 1, 1, 1);
         let fx = d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
         assert_eq!(fx.claimed, Some(Source::Ros));
-        assert_eq!(d.wheels(0), [0.0; 4], "claimed but not armed");
-        d.on_ros_arm(5, &arm, &bool_cdr(true));
-        assert_eq!(d.wheels(5), [0.5; 4]);
-        let fx = d.on_ros_arm(6, &arm, &bool_cdr(false));
+        assert_eq!(d.arbiter().state(), State::Armed, "ROS arms on its own");
+        assert_eq!(d.wheels(0), [0.5; 4]);
+    }
+
+    #[test]
+    fn ros_stream_resuming_after_a_lease_expiry_arms_again() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        assert_eq!(d.tick(1_000).stop, Some(StopReason::LeaseExpired));
+        assert_eq!(d.wheels(1_000), [0.0; 4]);
+        d.on_ros_cmd_vel(1_500, &at(&cmd, 2), &cdr(1.0));
+        assert_eq!(d.arbiter().state(), State::Armed);
+        assert_eq!(d.wheels(1_500), [0.5; 4]);
+    }
+
+    #[test]
+    fn ros_stop_latches_while_the_owner_streams_until_it_arms() {
+        let mut d = dev();
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        let fx = d.on_ros_arm(5, &arm, &bool_cdr(false));
         assert_eq!(fx.stop, Some(StopReason::Stop));
-        assert_eq!(d.wheels(6), [0.0; 4]);
+        d.on_ros_cmd_vel(10, &at(&cmd, 2), &cdr(1.0));
+        assert_eq!(d.wheels(10), [0.0; 4], "a stop is not undone by the stream");
+        d.on_ros_arm(15, &at(&arm, 2), &bool_cdr(true));
+        assert_eq!(d.wheels(15), [0.5; 4], "an explicit arm resumes");
+    }
+
+    #[test]
+    fn ros_out_of_limits_latches_while_the_owner_streams() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        assert_eq!(
+            d.on_ros_cmd_vel(10, &at(&cmd, 2), &cdr(9.0)).stop,
+            Some(StopReason::OutOfLimits)
+        );
+        d.on_ros_cmd_vel(20, &at(&cmd, 3), &cdr(1.0));
+        assert_eq!(d.wheels(20), [0.0; 4]);
+    }
+
+    #[test]
+    fn ros_owner_that_goes_quiet_after_a_stop_is_released_and_a_new_stream_arms() {
+        let mut d = dev();
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        d.on_ros_arm(5, &arm, &bool_cdr(false));
+        d.tick(1_000); // lease lapses: the reclaim window starts
+        assert!(d.tick(6_000).released);
+        let fx = d.on_ros_cmd_vel(6_100, &at(&cmd, 2), &cdr(1.0));
+        assert_eq!(fx.claimed, Some(Source::Ros));
+        assert_eq!(d.wheels(6_100), [0.5; 4]);
     }
 
     #[test]
@@ -656,7 +722,7 @@ mod tests {
         assert_eq!(d.arbiter().state(), State::Open);
         let cmd = publisher(&mut d, 1, 1, 1);
         d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
-        assert_eq!(d.arbiter().state(), State::Claimed);
+        assert_eq!(d.arbiter().state(), State::Armed);
     }
 
     #[test]
@@ -684,7 +750,7 @@ mod tests {
         assert_eq!(d.arbiter().state(), State::Open, "nothing claimed");
         d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
         assert_eq!(d.on_ros_arm(1, &arm, &[0, 1, 0]), Effects::default());
-        assert_eq!(d.arbiter().state(), State::Claimed);
+        assert_eq!(d.arbiter().state(), State::Armed, "a short arm sample does not stop");
     }
 
     #[test]

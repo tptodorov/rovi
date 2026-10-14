@@ -132,7 +132,7 @@ The car is a zenoh-nostd client of `rmw_zenohd` at `ROVI_ZENOH_ROUTER` (default 
 | Topic | Type | Direction |
 | --- | --- | --- |
 | `/cmd_vel` (configurable) | `geometry_msgs/TwistStamped` | subscribe, best-effort, depth 1 |
-| `/rovi/arm` | `std_msgs/Bool` | subscribe; `true` arms, `false` stops and disarms |
+| `/rovi/arm` | `std_msgs/Bool` | subscribe; `false` stops and disarms, `true` re-arms after a stop. Not needed to start: the stream arms ([ADR-0011](../../docs/adr/0011-ros-auto-arm.md)) |
 | `/rovi/status` | `std_msgs/String` | publish |
 | `/rovi/echo` | `std_msgs/Int64` | subscribe, best-effort, depth 1: latency probe, any node, no claim |
 | `/rovi/echo_reply` | `std_msgs/Int64` | publish, best-effort, depth 1: the probe's bytes, unchanged |
@@ -155,9 +155,7 @@ sequenceDiagram
     C->>R: liveliness tokens (node /rovi, sub /cmd_vel, sub /rovi/arm, pub /rovi/status)
     T->>R: TwistStamped on /cmd_vel (attachment gid, seq)
     R->>C: sample
-    Note over C: first valid sample is the claim (owner = gid), BLE off, disarmed
-    T->>R: /rovi/arm true
-    R->>C: armed
+    Note over C: first valid sample claims (owner = node) and arms, BLE off
     loop 20 Hz
         T->>R: TwistStamped
         R->>C: latest wins, renews the lease
@@ -168,7 +166,7 @@ sequenceDiagram
 ## Ownership, arming and safety
 
 * **Claim.** On a BLE connect, UDP `HELLO` or first valid ROS setpoint, the controller becomes the owner and the other radio shuts down. Other claimants get `BUSY` (UDP) or are ignored (ROS).
-* **Arming.** A new owner starts disarmed. Setpoints renew the lease but only move the device after an explicit ARM. Every safety stop disarms.
+* **Arming.** A new owner starts disarmed. Over BLE and UDP, setpoints renew the lease but only move the device after an explicit ARM. Over ROS 2 a setpoint arms a claimed car, and a stream that resumes after a lease expiry arms it again, so stock tools that publish only `/cmd_vel` can drive ([ADR-0011](../../docs/adr/0011-ros-auto-arm.md)). Every safety stop disarms, and after a STOP or an out-of-limits setpoint every source needs an explicit ARM.
 * **Lease.** Only the owner's valid setpoints renew the lease. Default 1 s.
 * **Claim window.** The owner must send its first setpoint or ARM within 10 s of the claim. This covers slow BLE service discovery.
 * **Safety stop.** Triggered by STOP, lease expiry, owner loss or an out-of-limits setpoint. Wheels go to zero, drivers go to standby, and the device disarms. The control tick checks for it every 10 ms, independently of incoming traffic.
