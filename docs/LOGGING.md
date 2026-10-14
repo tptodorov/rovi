@@ -23,7 +23,7 @@ ev=stop reason=LeaseExpired at_ms=7210
 
 | `ev` | Fields | Emitted when |
 | --- | --- | --- |
-| `boot` | `ver` | Once at startup. Starts a new log segment. |
+| `boot` | `ver`, `reset` (board only: the chip's reset cause, e.g. `ChipPowerOn`, `SysRtcWdt`, `SysBrownOut`) | Once at startup. Starts a new log segment. |
 | `claimed` | `source` = `Ble`, `Udp`, `Ros` | A controller took ownership |
 | `released` | - | Ownership was released |
 | `stop` | `reason` = `Stop`, `LeaseExpired`, `OwnerLost`, `OutOfLimits` | A safety stop |

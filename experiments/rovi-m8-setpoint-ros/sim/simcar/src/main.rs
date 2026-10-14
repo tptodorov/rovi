@@ -104,7 +104,7 @@ fn main() -> std::io::Result<()> {
     };
     let dev: Shared = Arc::new(Mutex::new(Device::new(cfg, geometry)));
     let t0 = Instant::now();
-    log(Event::Boot, t0);
+    log(Event::Boot { reset: None }, t0);
 
     let (d, u) = (dev.clone(), dev.clone());
     std::thread::spawn(move || control_loop(d, t0));

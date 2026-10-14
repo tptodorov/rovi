@@ -8,7 +8,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 * Hardware: the parts package arrived on 2026-09-26 ([README](../README.md#hardware)). The ESP32-S3 bench is available, without motor wiring.
 * Product software: the low-level four-wheel API is proposed ([M6](../spec/changes/add-four-wheel-api/proposal.md)), not accepted or implemented; the layered application is not started. Motor limits, speeds and fail-safe timing wait for M4/M5.
 * CI runs the host tests, the sim scenarios and the firmware builds on every PR (`.github/workflows/ci.yml`). Board and ROS-router checks stay manual.
-* Preliminary current observation: one motor drew 120 mA from a 5 V power bank labeled 6500 mAh. Conditions are incomplete; see the [M4 results](../experiments/rovi-m4-four-motor-safety/MILESTONE.md#results) and [mecanum reference](reference/mecanum-car/README.md#preliminary-measurement). It does not yet establish operating limits or runtime.
+* Motor current: 150 mA per motor running (2026-10-14), about 0.6 A for four; start and stall currents are not measured ([M4 results](../experiments/rovi-m4-four-motor-safety/MILESTONE.md#results)).
 
 ## Roadmap
 
@@ -31,7 +31,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 ### Hardware (resume when the bench setup is available)
 
 * **M8 and M3 remainder** (deferred, see M8 above). Then M4 ([`experiments/rovi-m4-four-motor-safety/`](../experiments/rovi-m4-four-motor-safety/)), the first step that needs wiring.
-* **M4** (proposed) — qualify four-motor electrical limits, power integrity, and standby fail-safe in one integrated bench setup. Highest physical risk; gates all motion. See [`experiments/rovi-m4-four-motor-safety/`](../experiments/rovi-m4-four-motor-safety/).
+* **M4** (step 1 ready, 2026-10-14) — four motors on the M8 firmware, wheels off the ground, minimal wiring (M1's pins, the power bank) and a software fail-safe ([ADR-0014](adr/0014-m4-minimal-wiring-software-fail-safe.md)). Step 1 is one driver and one motor; step 2 adds the other three. Running current is 150 mA per motor. Gates all motion. See [`experiments/rovi-m4-four-motor-safety/`](../experiments/rovi-m4-four-motor-safety/).
 * **M5** (proposed) — characterize mecanum wheel mapping, open-loop behavior, and available feedback (encoders decide open- vs closed-loop) using the M4 setup. See [`experiments/rovi-m5-mecanum-motion/`](../experiments/rovi-m5-mecanum-motion/).
 
 ### Done

@@ -24,7 +24,10 @@ pub enum Fault {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Event {
-    Boot,
+    /// `reset`: the chip's reset cause (the firmware's `SocResetReason` name); none on the sim.
+    Boot {
+        reset: Option<&'static str>,
+    },
     Claimed(Source),
     Released,
     Stop(StopReason),
@@ -97,7 +100,12 @@ fn reason(r: StopReason) -> &'static str {
 impl fmt::Display for Record {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.ev {
-            Event::Boot => write!(f, "ev=boot ver={}", env!("CARGO_PKG_VERSION"))?,
+            Event::Boot { reset } => {
+                write!(f, "ev=boot ver={}", env!("CARGO_PKG_VERSION"))?;
+                if let Some(r) = reset {
+                    write!(f, " reset={r}")?;
+                }
+            }
             Event::Claimed(s) => write!(f, "ev=claimed source={}", source(s))?,
             Event::Released => f.write_str("ev=released")?,
             Event::Stop(r) => write!(f, "ev=stop reason={}", reason(r))?,
@@ -197,7 +205,13 @@ mod tests {
             wheels_pm: w,
         };
         let cases = [
-            (Event::Boot, "ev=boot ver=0.1.0 at_ms=42"),
+            (Event::Boot { reset: None }, "ev=boot ver=0.1.0 at_ms=42"),
+            (
+                Event::Boot {
+                    reset: Some("SysRtcWdt"),
+                },
+                "ev=boot ver=0.1.0 reset=SysRtcWdt at_ms=42",
+            ),
             (
                 Event::Claimed(Source::Udp),
                 "ev=claimed source=Udp at_ms=42",

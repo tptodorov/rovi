@@ -20,13 +20,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
             experiments/rovi-m8-setpoint-ros
             experiments/rovi-m8-setpoint-ros/sim/simcar
-            experiments/rovi-m4-four-motor-safety
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -34,13 +33,11 @@ jobs:
       - name: M8 core
         working-directory: experiments/rovi-m8-setpoint-ros
         run: |
+          cargo fmt --check
+          (cd firmware && RUSTUP_TOOLCHAIN=stable cargo fmt --check)  # the directory pins the esp toolchain
+          (cd sim/simcar && cargo fmt --check)
           cargo test --locked --lib
           cargo clippy --locked --lib --tests -- -D warnings
-      - name: M4 core
-        working-directory: experiments/rovi-m4-four-motor-safety
-        run: |
-          cargo test --locked
-          cargo clippy --locked --all-targets -- -D warnings
       - name: M8 sim car (with and without ROS)
         working-directory: experiments/rovi-m8-setpoint-ros/sim/simcar
         run: |
@@ -54,7 +51,6 @@ jobs:
           MPLBACKEND: Agg
         run: |
           (cd experiments/rovi-m8-setpoint-ros/sim && python3 -m unittest test_wire test_carlog test_latency test_plot_car test_compare_track test_ble_client)
-          (cd experiments/rovi-m4-four-motor-safety/tools && python3 -m unittest test_m4ctl)
           (cd experiments/rovi-m3-wifi-queue && python3 -m unittest test_client)
 
   ros-sim:
@@ -94,7 +90,6 @@ jobs:
         with:
           workspaces: |
             experiments/rovi-m8-setpoint-ros/firmware
-            experiments/rovi-m4-four-motor-safety/firmware
       - name: M8 firmware
         working-directory: experiments/rovi-m8-setpoint-ros/firmware
         run: |
@@ -107,8 +102,3 @@ jobs:
         run: |
           cargo clippy --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
           cargo build --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
-      - name: M4 firmware
-        working-directory: experiments/rovi-m4-four-motor-safety/firmware
-        run: |
-          cargo clippy --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
-          cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc

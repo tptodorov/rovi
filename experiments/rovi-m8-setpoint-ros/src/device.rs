@@ -750,7 +750,11 @@ mod tests {
         assert_eq!(d.arbiter().state(), State::Open, "nothing claimed");
         d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
         assert_eq!(d.on_ros_arm(1, &arm, &[0, 1, 0]), Effects::default());
-        assert_eq!(d.arbiter().state(), State::Armed, "a short arm sample does not stop");
+        assert_eq!(
+            d.arbiter().state(),
+            State::Armed,
+            "a short arm sample does not stop"
+        );
     }
 
     #[test]
