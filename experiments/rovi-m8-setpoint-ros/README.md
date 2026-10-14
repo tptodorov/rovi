@@ -267,7 +267,7 @@ This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-nev
 
 ## Firmware (ESP32-S3, board-only)
 
-`firmware/` is the firmware shell around the host-tested `Device` core: the car AP (WPA2, `192.168.4.1`), the UDP adapter on port 7777, the BLE GATT adapter, the 10 ms control tick, the motor outputs and the RGB LED indicator. The control tick writes `motor::output` to the pins (M1's wiring: `STBY` GPIO4, `AIN1` GPIO5, `AIN2` GPIO6, `PWMA` GPIO7 on MCPWM0 at 20 kHz; one channel so far, see [M4](../rovi-m4-four-motor-safety/WIRING.md)) and feeds the RTC watchdog (1 s). The ROS adapter is an optional `ros` feature (`cargo build --release --features ros ...`).
+`firmware/` is the firmware shell around the host-tested `Device` core: the car AP (WPA2, `192.168.4.1`), the UDP adapter on port 7777, the BLE GATT adapter, the 10 ms control tick, the motor outputs and the RGB LED indicator. The control tick writes `motor::output` to the pins (two TB6612FNG drivers, four channels, one ribbon cable per driver: driver 1 on GPIO4-7 and 15-17, driver 2 on GPIO1, 2 and 38-42, MCPWM0 at 20 kHz; see [M4 WIRING](../rovi-m4-four-motor-safety/WIRING.md)) and feeds the RTC watchdog (1 s). The ROS adapter is an optional `ros` feature (`cargo build --release --features ros ...`).
 
 ```sh
 source ~/export-esp.sh

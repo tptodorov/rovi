@@ -24,7 +24,7 @@ espflash monitor --port $PORT --non-interactive --elf $ELF | tee $B/car.log   # 
 
 `espflash monitor` resets the board, so the log starts at `ev=boot … reset=…`. Every BLE command below runs in the repo nix shell (`nix-shell` at the repo root) from `experiments/rovi-m8-setpoint-ros`.
 
-## Step 1: one driver, one motor
+## Step 1: one driver, one motor (done 2026-10-14, on M1's pins; the firmware now uses the ribbon pin map)
 
 ### S1: no motor power
 

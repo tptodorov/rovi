@@ -202,29 +202,31 @@ fn color(state: State, wheels: [f32; 4]) -> RGB8 {
 async fn main(_spawner: Spawner) -> ! {
     let p = esp_hal::init(esp_hal::Config::default().with_cpu_clock(CpuClock::max()));
     // Motors first: STBY low before anything else runs (the TB6612's pull-down holds it low until
-    // here). Pins as M4 WIRING: one STBY (GPIO4) for both drivers; per bridge IN1, IN2, PWM.
-    let mut stby = Output::new(p.GPIO4, Level::Low, OutputConfig::default());
+    // here). Pins as M4 WIRING: each driver's 7 control pins are 7 consecutive header pins, so one
+    // ribbon cable per driver (driver 1: left header GPIO4-7, 15-17; driver 2: right header GPIO1, 2,
+    // 42-38). Each driver has its own STBY; both switch together.
     let low = |pin: AnyPin<'static>| Output::new(pin, Level::Low, OutputConfig::default());
+    let mut stby = [low(p.GPIO7.into()), low(p.GPIO41.into())]; // driver 1, driver 2
     let mut dirs = [
-        (low(p.GPIO5.into()), low(p.GPIO6.into())), // driver 1 A: AIN1, AIN2
-        (low(p.GPIO16.into()), low(p.GPIO17.into())), // driver 1 B: BIN1, BIN2
-        (low(p.GPIO9.into()), low(p.GPIO10.into())), // driver 2 A: AIN1, AIN2
-        (low(p.GPIO12.into()), low(p.GPIO13.into())), // driver 2 B: BIN1, BIN2
+        (low(p.GPIO6.into()), low(p.GPIO5.into())), // driver 1 A: AIN1, AIN2
+        (low(p.GPIO15.into()), low(p.GPIO16.into())), // driver 1 B: BIN1, BIN2
+        (low(p.GPIO42.into()), low(p.GPIO2.into())), // driver 2 A: AIN1, AIN2
+        (low(p.GPIO40.into()), low(p.GPIO39.into())), // driver 2 B: BIN1, BIN2
     ];
     let pwm_clock = PeripheralClockConfig::with_frequency(Rate::from_mhz(40)).unwrap();
     let mut mcpwm = McPwm::new(p.MCPWM0, pwm_clock);
     mcpwm.operator0.set_timer(&mcpwm.timer0);
     mcpwm.operator1.set_timer(&mcpwm.timer0);
     let (mut pwm_1a, mut pwm_1b) = mcpwm.operator0.with_pins(
-        p.GPIO7,
+        p.GPIO4,
         PwmPinConfig::UP_ACTIVE_HIGH,
-        p.GPIO15,
+        p.GPIO17,
         PwmPinConfig::UP_ACTIVE_HIGH,
     );
     let (mut pwm_2a, mut pwm_2b) = mcpwm.operator1.with_pins(
-        p.GPIO8,
+        p.GPIO1,
         PwmPinConfig::UP_ACTIVE_HIGH,
-        p.GPIO11,
+        p.GPIO38,
         PwmPinConfig::UP_ACTIVE_HIGH,
     );
     pwm_1a.set_timestamp(0);
@@ -499,7 +501,7 @@ async fn main(_spawner: Spawner) -> ! {
             // rises after them.
             let out = motor::output(&MOTOR, &CHANNELS, state, wheels);
             if !out.standby_high {
-                stby.set_low();
+                stby.iter_mut().for_each(|p| p.set_low());
             }
             let b = out.bridges;
             pwm_1a.set_timestamp(b[0].duty_pm);
@@ -511,7 +513,7 @@ async fn main(_spawner: Spawner) -> ! {
                 in2.set_level(Level::from(bridge.in2));
             }
             if out.standby_high {
-                stby.set_high();
+                stby.iter_mut().for_each(|p| p.set_high());
             }
             rtc.rwdt.feed();
             if (state, wheels) != last {

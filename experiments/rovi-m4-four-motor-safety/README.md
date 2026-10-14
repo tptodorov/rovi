@@ -2,11 +2,11 @@
 
 **Status: step 1 ready for the bench (2026-10-14), nothing run on hardware.**
 
-M4 drives the car's motors from the M8 firmware for the first time, wheels off the ground, with the minimal wiring of [ADR-0014](../../docs/adr/0014-m4-minimal-wiring-software-fail-safe.md): the ESP32-S3, TB6612FNG drivers, the motors and the 5 V power bank, on M1's proven pins. Goal, acceptance and results: [MILESTONE.md](MILESTONE.md).
+M4 drives the car's motors from the M8 firmware for the first time, wheels off the ground, with the minimal wiring of [ADR-0014](../../docs/adr/0014-m4-minimal-wiring-software-fail-safe.md): the ESP32-S3, TB6612FNG drivers, the motors and the 5 V power bank. Step 1 used M1's wiring; step 2 uses one 7-wire ribbon cable per driver ([WIRING](WIRING.md)). Goal, acceptance and results: [MILESTONE.md](MILESTONE.md).
 
 | File | What |
 | --- | --- |
-| [WIRING.md](WIRING.md) | Four motors and two drivers, starting from M1's wiring |
+| [WIRING.md](WIRING.md), [wiring.kicad_sch](wiring.kicad_sch) | Four motors and two drivers; one 7-wire ribbon cable per driver |
 | [TESTPLAN.md](TESTPLAN.md) | Bench steps S1-S5, safety rules, evidence |
 
 ## Firmware
