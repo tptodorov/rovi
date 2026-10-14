@@ -1,0 +1,92 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  host:
+    name: host tests (cores, sim car, Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            experiments/rovi-m8-setpoint-ros
+            experiments/rovi-m8-setpoint-ros/sim/simcar
+            experiments/rovi-m4-four-motor-safety
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install bleak matplotlib numpy
+      - name: M8 core
+        working-directory: experiments/rovi-m8-setpoint-ros
+        run: |
+          cargo test --locked --lib
+          cargo clippy --locked --lib --tests -- -D warnings
+      - name: M4 core
+        working-directory: experiments/rovi-m4-four-motor-safety
+        run: |
+          cargo test --locked
+          cargo clippy --locked --all-targets -- -D warnings
+      - name: M8 sim car (with and without ROS)
+        working-directory: experiments/rovi-m8-setpoint-ros/sim/simcar
+        run: |
+          cargo build --locked --features ros
+          cargo build --locked
+      - name: M8 UDP scenarios against the sim car
+        working-directory: experiments/rovi-m8-setpoint-ros
+        run: python3 sim/udp_scenarios.py
+      - name: Python unit tests
+        env:
+          MPLBACKEND: Agg
+        run: |
+          (cd experiments/rovi-m8-setpoint-ros/sim && python3 -m unittest test_wire test_carlog test_latency test_plot_car test_compare_track test_ble_client)
+          (cd experiments/rovi-m4-four-motor-safety/tools && python3 -m unittest test_m4ctl)
+          (cd experiments/rovi-m3-wifi-queue && python3 -m unittest test_client)
+
+  firmware:
+    name: firmware (ESP32-S3)
+    runs-on: ubuntu-latest
+    env:
+      ROVI_WIFI_PASSWORD: ci-not-a-real-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: esp-rs/xtensa-toolchain@v1.7.0
+        with:
+          buildtargets: esp32s3
+          version: 1.97.0.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            experiments/rovi-m8-setpoint-ros/firmware
+            experiments/rovi-m4-four-motor-safety/firmware
+      - name: M8 firmware
+        working-directory: experiments/rovi-m8-setpoint-ros/firmware
+        run: |
+          cargo clippy --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
+          cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+      - name: M8 firmware with ROS
+        working-directory: experiments/rovi-m8-setpoint-ros/firmware
+        env:
+          CARGO_TARGET_DIR: target/ros
+        run: |
+          cargo clippy --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
+          cargo build --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+      - name: M4 firmware
+        working-directory: experiments/rovi-m4-four-motor-safety/firmware
+        run: |
+          cargo clippy --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
+          cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
