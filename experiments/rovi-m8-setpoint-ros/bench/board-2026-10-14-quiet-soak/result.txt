@@ -1,0 +1,1 @@
+60 min quiet soak (2026-10-14 12:23-13:24), ROS build over UDP, router keepalives only, one 3-ping probe a minute, laptop power save off: 60/60 probes answered, one ROS session for the whole run (no ev=ros link=down), laptop wpa_supplicant/NetworkManager log shows only the initial connect. The #23 stall did not recur under idle conditions.

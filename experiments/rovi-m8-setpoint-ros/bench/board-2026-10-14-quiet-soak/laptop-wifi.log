@@ -1,0 +1,6 @@
+Oct 14 12:24:13 blade wpa_supplicant[1644]: wlp1s0f0: SME: Trying to authenticate with 16:c1:9f:cd:71:78 (SSID='Rovi M8' freq=2412 MHz)
+Oct 14 12:24:13 blade wpa_supplicant[1644]: wlp1s0f0: Trying to associate with 16:c1:9f:cd:71:78 (SSID='Rovi M8' freq=2412 MHz)
+Oct 14 12:24:13 blade wpa_supplicant[1644]: wlp1s0f0: Associated with 16:c1:9f:cd:71:78
+Oct 14 12:24:13 blade wpa_supplicant[1644]: wlp1s0f0: CTRL-EVENT-SUBNET-STATUS-UPDATE status=0
+Oct 14 12:24:13 blade wpa_supplicant[1644]: wlp1s0f0: WPA: Key negotiation completed with 16:c1:9f:cd:71:78 [PTK=CCMP GTK=CCMP]
+Oct 14 12:24:13 blade wpa_supplicant[1644]: wlp1s0f0: CTRL-EVENT-CONNECTED - Connection to 16:c1:9f:cd:71:78 completed [id=0 id_str=]

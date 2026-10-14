@@ -57,6 +57,25 @@ jobs:
           (cd experiments/rovi-m4-four-motor-safety/tools && python3 -m unittest test_m4ctl)
           (cd experiments/rovi-m3-wifi-queue && python3 -m unittest test_client)
 
+  ros-sim:
+    name: ROS 2 scenarios (sim car, rmw_zenohd in docker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: experiments/rovi-m8-setpoint-ros/sim/simcar
+      - name: Sim car with ROS
+        working-directory: experiments/rovi-m8-setpoint-ros/sim/simcar
+        run: cargo build --locked --features ros
+      - name: ROS scenarios (stock pub drives, controller, intruder, latched stop, round trip)
+        working-directory: experiments/rovi-m8-setpoint-ros
+        run: sim/ros-scenarios.sh
+      - name: Router frozen and resumed (TCP rejoins)
+        working-directory: experiments/rovi-m8-setpoint-ros
+        run: sim/ros-router-gone.sh 10000 tcp
+
   firmware:
     name: firmware (ESP32-S3)
     runs-on: ubuntu-latest
