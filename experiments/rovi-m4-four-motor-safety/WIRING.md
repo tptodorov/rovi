@@ -16,17 +16,19 @@ Each driver's control header (right header R1-R7: `PWMA, AIN2, AIN1, STBY, BIN1,
 | 6 | L9 | 16 | R6 `BIN2` |
 | 7 | L10 | 17 | R7 `PWMB` |
 
-## Ribbon 2: ESP32 right header → driver 2 (right wheels)
+## Ribbon 2: ESP32 left header L14-L20 → driver 2 (right wheels)
 
 | Wire | ESP32 header | GPIO | Driver 2 pin |
 | --- | --- | --- | --- |
-| 1 | R4 | 1 | R1 `PWMA` |
-| 2 | R5 | 2 | R2 `AIN2` |
-| 3 | R6 | 42 | R3 `AIN1` |
-| 4 | R7 | 41 | R4 `STBY` |
-| 5 | R8 | 40 | R5 `BIN1` |
-| 6 | R9 | 39 | R6 `BIN2` |
-| 7 | R10 | 38 | R7 `PWMB` |
+| 1 | L14 | 46 | R1 `PWMA` |
+| 2 | L15 | 9 | R2 `AIN2` |
+| 3 | L16 | 10 | R3 `AIN1` |
+| 4 | L17 | 11 | R4 `STBY` |
+| 5 | L18 | 12 | R5 `BIN1` |
+| 6 | L19 | 13 | R6 `BIN2` |
+| 7 | L20 | 14 | R7 `PWMB` |
+
+L11 (GPIO18), L12 (GPIO8) and L13 (GPIO3) stay free between the two ribbons.
 
 ## Power, ground and motors (single wires)
 
@@ -34,8 +36,8 @@ Each driver's control header (right header R1-R7: `PWMA, AIN2, AIN1, STBY, BIN1,
 | --- | --- |
 | ESP32 `3V3` (L1) | Driver 1 `VCC` (L2) |
 | ESP32 `3V3` (L2) | Driver 2 `VCC` (L2) |
-| ESP32 `GND` (L22) | Driver 1 `GND` (L3) |
-| ESP32 `GND` (R1) | Driver 2 `GND` (L3) |
+| ESP32 `GND` (R1, right header) | Driver 1 `GND` (L3) |
+| ESP32 `GND` (L22) | Driver 2 `GND` (L3) |
 | Power bank + (5 V) | Driver 1 `VM` (L1) and driver 2 `VM` (L1) |
 | Power bank − | Driver 1 `GND` and driver 2 `GND` (the same ground as the ESP32) |
 | Driver 1 `AO1`/`AO2` (L4/L5) | front-left motor |
@@ -47,9 +49,8 @@ The drivers' other `GND` pins (L8, R8) are tied to L3 on the board and stay free
 
 ## Notes
 
-* **Why these pins:** the only two runs of 7 consecutive usable pins. Left L4-L10 (GPIO4-7, 15-17) and right R4-R10 (GPIO1, 2, 42-38) avoid the strapping pins (0, 3, 45, 46), the octal-PSRAM pins (35-37), USB (19, 20), UART0 (43, 44), the RGB LED (48) and GPIO18 (high glitch at power-up). At reset these pins are floating or show only a 60 µs low glitch, except GPIO39 (`MTCK`), which has a weak pull-up with default eFuses; it is driver 2's `BIN2`, harmless while that driver's `STBY` is low ([SoC datasheet](../../docs/reference/esp32-s3-n16r8/soc-datasheet.md) pin table and Table 2-2).
-* **STBY:** one per driver (GPIO7, GPIO41), both switched together: low from boot and unless armed. In reset or with the ESP32 unpowered, the TB6612's internal pull-down holds it low. The 1 s RTC watchdog resets the chip if the control tick stops.
-* **PWM:** MCPWM0 at 20 kHz: operator 0 drives driver 1 `PWMA`/`PWMB` (GPIO4/17), operator 1 drives driver 2 `PWMA`/`PWMB` (GPIO1/38).
+* **Why these pins:** the two runs of 7 consecutive usable pins on the left header. L4-L10 (GPIO4-7, 15-17) and L14-L20 (GPIO46, 9-14) only show a 60 µs low glitch at power-up, which cannot enable a driver. L11 (GPIO18, high glitch) and L13 (GPIO3, strapping) are skipped. GPIO46 is a strapping pin too, but its reset state is an internal pull-down, which is also the boot default, and the TB6612 input's own pull-down agrees; after boot it is driver 2's `PWMA`, inert while `STBY` is low ([SoC datasheet](../../docs/reference/esp32-s3-n16r8/soc-datasheet.md) pin table and Table 2-2).
+* **STBY:** one per driver (GPIO7, GPIO11), both switched together: low from boot and unless armed. In reset or with the ESP32 unpowered, the TB6612's internal pull-down holds it low. The 1 s RTC watchdog resets the chip if the control tick stops.
+* **PWM:** MCPWM0 at 20 kHz: operator 0 drives driver 1 `PWMA`/`PWMB` (GPIO4/17), operator 1 drives driver 2 `PWMA`/`PWMB` (GPIO46/14).
 * **Firmware mapping** (`CHANNELS` in `../rovi-m8-setpoint-ros/firmware/src/fw.rs`): driver 1 A = front-left, 1 B = rear-left, 2 A = front-right, 2 B = rear-right; no motor inverted yet. The right motors face the other way, so they will likely turn backwards at first; step 2's first test records that, and the fix is one `invert: true` per motor. Motor wire polarity doesn't matter for safety.
 * **Kill switch:** unplugging the power bank stops every motor. Four motors draw about 0.6 A running.
-* **Schematic:** driver 2 and the right motors are drawn mirrored (control header facing the ESP32, as on the bench); pin numbers are the boards' own.

@@ -57,55 +57,51 @@ BANK_RIGHT = [("1", "+5V"), ("2", "-")]
 LIBS = {
     "ESP32S3_CORE": (30.48, ESP_LEFT, ESP_RIGHT),
     "TB6612FNG_BOARD": (25.4, TB_LEFT, TB_RIGHT),
-    # Driver 2 and the right motors are drawn mirrored (control header facing the ESP32), as on the
-    # bench; pin numbers stay the board's own.
-    "TB6612FNG_BOARD_MIRRORED": (25.4, TB_RIGHT, TB_LEFT),
     "MOTOR": (10.16, [], MOTOR_PINS),
-    "MOTOR_MIRRORED": (10.16, MOTOR_PINS, []),
     "POWER_BANK": (15.24, [], BANK_RIGHT),
 }
 
 # --- Parts: reference, lib, value, (x, y), {pin number: net}. Unlisted pins get a no-connect. -----
-# Columns: left motors | driver 1 | ESP32 | driver 2 | right motors. Drivers' rows sit on the 2.54
-# grid; every other part's rows are offset by 1.27, so rows never coincide across a channel.
-# Each driver's control header R1-R7 takes 7 consecutive ESP32 header pins: one ribbon cable each.
+# Columns: motors and power bank | drivers | ESP32. Drivers' rows sit on the 2.54 grid; every other
+# part's rows are offset by 1.27, so rows never coincide across a channel. Each driver's control
+# header R1-R7 takes 7 consecutive ESP32 left-header pins: one ribbon cable each, drawn nearly
+# straight (driver 1 R1 sits beside ESP32 L4, driver 2 R1 beside L14).
 
 GND = "GND"
 PARTS = [
     ("U1", "ESP32S3_CORE", "ESP32-S3-N16R8 CORE board (USB-C from the laptop)", (243.84, 39.37), {
         "L1": "3V3", "L2": "3V3", "L4": "D1_PWMA", "L5": "D1_AIN2", "L6": "D1_AIN1", "L7": "D1_STBY",
-        "L8": "D1_BIN1", "L9": "D1_BIN2", "L10": "D1_PWMB", "L22": GND,
-        "R1": GND, "R4": "D2_PWMA", "R5": "D2_AIN2", "R6": "D2_AIN1", "R7": "D2_STBY",
-        "R8": "D2_BIN1", "R9": "D2_BIN2", "R10": "D2_PWMB"}),
+        "L8": "D1_BIN1", "L9": "D1_BIN2", "L10": "D1_PWMB", "L14": "D2_PWMA", "L15": "D2_AIN2",
+        "L16": "D2_AIN1", "L17": "D2_STBY", "L18": "D2_BIN1", "L19": "D2_BIN2", "L20": "D2_PWMB",
+        "L22": GND, "R1": GND}),
     ("U2", "TB6612FNG_BOARD", "D1: TB6612FNG, left wheels", (127.0, 45.72), {
         "L1": "VM", "L2": "3V3", "L3": GND, "L4": "D1_AO1", "L5": "D1_AO2", "L6": "D1_BO2",
         "L7": "D1_BO1", "R1": "D1_PWMA", "R2": "D1_AIN2", "R3": "D1_AIN1", "R4": "D1_STBY",
         "R5": "D1_BIN1", "R6": "D1_BIN2", "R7": "D1_PWMB"}),
-    ("U3", "TB6612FNG_BOARD_MIRRORED", "D2: TB6612FNG, right wheels (drawn mirrored)", (360.68, 45.72), {
+    ("U3", "TB6612FNG_BOARD", "D2: TB6612FNG, right wheels", (127.0, 73.66), {
         "L1": "VM", "L2": "3V3", "L3": GND, "L4": "D2_AO1", "L5": "D2_AO2", "L6": "D2_BO2",
         "L7": "D2_BO1", "R1": "D2_PWMA", "R2": "D2_AIN2", "R3": "D2_AIN1", "R4": "D2_STBY",
         "R5": "D2_BIN1", "R6": "D2_BIN2", "R7": "D2_PWMB"}),
-    ("M1", "MOTOR", "Motor front-left (D1 A)", (25.4, 49.53), {"1": "D1_AO1", "2": "D1_AO2"}),
-    ("M2", "MOTOR", "Motor rear-left (D1 B)", (25.4, 64.77), {"1": "D1_BO1", "2": "D1_BO2"}),
-    ("M3", "MOTOR_MIRRORED", "Motor front-right (D2 A)", (472.44, 49.53), {"1": "D2_AO1", "2": "D2_AO2"}),
-    ("M4", "MOTOR_MIRRORED", "Motor rear-right (D2 B)", (472.44, 64.77), {"1": "D2_BO1", "2": "D2_BO2"}),
-    ("BT1", "POWER_BANK", "5 V power bank (unplug = kill switch)", (25.4, 95.25), {"1": "VM", "2": GND}),
+    ("M1", "MOTOR", "Motor front-left (D1 A)", (25.4, 46.99), {"1": "D1_AO1", "2": "D1_AO2"}),
+    ("M2", "MOTOR", "Motor rear-left (D1 B)", (25.4, 59.69), {"1": "D1_BO1", "2": "D1_BO2"}),
+    ("M3", "MOTOR", "Motor front-right (D2 A)", (25.4, 77.47), {"1": "D2_AO1", "2": "D2_AO2"}),
+    ("M4", "MOTOR", "Motor rear-right (D2 B)", (25.4, 90.17), {"1": "D2_BO1", "2": "D2_BO2"}),
+    ("BT1", "POWER_BANK", "5 V power bank (unplug = kill switch)", (25.4, 105.41), {"1": "VM", "2": GND}),
 ]
 
 # Channels by x: where a pin tip lies decides which channel its wire runs in.
-CHANNELS = {"A": (40, 122), "B": (155, 239), "C": (279, 356), "D": (391, 468)}
+CHANNELS = {"A": (40, 122), "B": (157, 239), "C": (279, 320)}
 # Lanes: x of each net's vertical in each channel; nets in more than one channel join on a rail.
 LANES = {
-    "A": {"D1_AO1": 55.88, "D1_AO2": 60.96, "D1_BO2": 66.04, "D1_BO1": 71.12, "VM": 81.28,
-          "3V3": 88.9, GND: 96.52},
-    "B": {"D1_PWMA": 170.18, "D1_AIN2": 175.26, "D1_AIN1": 180.34, "D1_STBY": 185.42,
-          "D1_BIN1": 190.5, "D1_BIN2": 195.58, "D1_PWMB": 200.66, "3V3": 213.36, GND: 220.98},
-    "C": {"D2_PWMA": 330.2, "D2_AIN2": 325.12, "D2_AIN1": 320.04, "D2_STBY": 314.96,
-          "D2_BIN1": 309.88, "D2_BIN2": 304.8, "D2_PWMB": 299.72, GND: 289.56},
-    "D": {"D2_AO1": 441.96, "D2_AO2": 436.88, "D2_BO2": 431.8, "D2_BO1": 426.72, "VM": 416.56,
-          "3V3": 408.94, GND: 401.32},
+    "A": {"D1_AO1": 55.88, "D1_AO2": 60.96, "D1_BO2": 66.04, "D1_BO1": 71.12, "D2_AO1": 76.2,
+          "D2_AO2": 81.28, "D2_BO2": 86.36, "D2_BO1": 91.44, "VM": 101.6, "3V3": 106.68, GND: 111.76},
+    "B": {"D1_PWMA": 167.64, "D1_AIN2": 171.45, "D1_AIN1": 175.26, "D1_STBY": 179.07,
+          "D1_BIN1": 182.88, "D1_BIN2": 186.69, "D1_PWMB": 190.5, "D2_PWMA": 196.85,
+          "D2_AIN2": 200.66, "D2_AIN1": 204.47, "D2_STBY": 208.28, "D2_BIN1": 212.09,
+          "D2_BIN2": 215.9, "D2_PWMB": 219.71, "3V3": 226.06, GND: 231.14},
+    "C": {GND: 289.56},
 }
-RAILS = {"VM": 116.84, "3V3": 124.46, GND: 132.08}
+RAILS = {"3V3": 115.57, GND: 121.92}
 
 
 def lib_symbol(name):
@@ -216,10 +212,10 @@ def place(ref, lib, value, at, nets, body):
 
 
 NOTES = """Rovi M4 wiring: four TT motors, two TB6612FNG drivers, ESP32-S3, 5 V power bank. Same pins as WIRING.md.
-Ribbon cables: ESP32 left header L4-L10 (GPIO 4,5,6,7,15,16,17) -> D1 R1-R7; right header R4-R10 (GPIO 1,2,42,41,40,39,38) -> D2 R1-R7.
-Each driver has its own STBY (GPIO7, GPIO41), low from boot and unless armed; the TB6612 pull-down holds it low in reset.
-Firmware CHANNELS: D1 A=FL, D1 B=RL, D2 A=FR, D2 B=RR. D2 and the right motors are drawn mirrored; pin numbers are the boards' own.
-VM, 3V3 and GND run along the three rails at the bottom. No current monitor, dead-man or bench supply (ADR-0014)."""
+Ribbon cables: ESP32 left header L4-L10 (GPIO 4,5,6,7,15,16,17) -> D1 R1-R7; L14-L20 (GPIO 46,9,10,11,12,13,14) -> D2 R1-R7.
+Each driver has its own STBY (GPIO7, GPIO11), low from boot and unless armed; the TB6612 pull-down holds it low in reset.
+Firmware CHANNELS: D1 A=FL, D1 B=RL, D2 A=FR, D2 B=RR. Skipped: L11 GPIO18 (high glitch at power-up), L13 GPIO3 (strapping).
+3V3 and GND join along the two rails at the bottom. No current monitor, dead-man or bench supply (ADR-0014)."""
 
 
 def main():
@@ -248,14 +244,14 @@ def main():
         body.append(f'\t(label "{net}" (at {f(lx)} {f(ay)} 0)'
                     f' (effects (font (size 1.0 1.0)) (justify {just} bottom)) (uuid "{uid("l", net)}"))')
     lines = ["(kicad_sch", "\t(version 20231120)", '\t(generator "rovi-gen-wiring")', '\t(generator_version "9.0")',
-             f'\t(uuid "{uid("sheet")}")', '\t(paper "A2")', "\t(lib_symbols"]
+             f'\t(uuid "{uid("sheet")}")', '\t(paper "A3")', "\t(lib_symbols"]
     for name in LIBS:
         lines += lib_symbol(name)
     lines.append("\t)")
     lines.append('\t(text "Rovi M4 wiring -- ESP32-S3 + 2x TB6612FNG + 4 motors + power bank"'
                  f' (at 25.4 22.86 0) (effects (font (size 2.5 2.5)) (justify left)) (uuid "{uid("title")}"))')
     note = NOTES.replace('"', "'").replace("\n", "\\n")
-    lines.append(f'\t(text "{note}" (at 25.4 147.32 0) (effects (font (size 1.4 1.4)) (justify left top))'
+    lines.append(f'\t(text "{note}" (at 25.4 132.08 0) (effects (font (size 1.4 1.4)) (justify left top))'
                  f' (uuid "{uid("notes")}"))')
     lines += body
     lines += ['\t(sheet_instances (path "/" (page "1")))', ")"]

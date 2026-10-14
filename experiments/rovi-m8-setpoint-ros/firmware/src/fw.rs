@@ -203,15 +203,15 @@ async fn main(_spawner: Spawner) -> ! {
     let p = esp_hal::init(esp_hal::Config::default().with_cpu_clock(CpuClock::max()));
     // Motors first: STBY low before anything else runs (the TB6612's pull-down holds it low until
     // here). Pins as M4 WIRING: each driver's 7 control pins are 7 consecutive header pins, so one
-    // ribbon cable per driver (driver 1: left header GPIO4-7, 15-17; driver 2: right header GPIO1, 2,
-    // 42-38). Each driver has its own STBY; both switch together.
+    // ribbon cable per driver (driver 1: left header L4-L10, GPIO4-7 and 15-17; driver 2: left header
+    // L14-L20, GPIO46 and 9-14). Each driver has its own STBY; both switch together.
     let low = |pin: AnyPin<'static>| Output::new(pin, Level::Low, OutputConfig::default());
-    let mut stby = [low(p.GPIO7.into()), low(p.GPIO41.into())]; // driver 1, driver 2
+    let mut stby = [low(p.GPIO7.into()), low(p.GPIO11.into())]; // driver 1, driver 2
     let mut dirs = [
         (low(p.GPIO6.into()), low(p.GPIO5.into())), // driver 1 A: AIN1, AIN2
         (low(p.GPIO15.into()), low(p.GPIO16.into())), // driver 1 B: BIN1, BIN2
-        (low(p.GPIO42.into()), low(p.GPIO2.into())), // driver 2 A: AIN1, AIN2
-        (low(p.GPIO40.into()), low(p.GPIO39.into())), // driver 2 B: BIN1, BIN2
+        (low(p.GPIO10.into()), low(p.GPIO9.into())), // driver 2 A: AIN1, AIN2
+        (low(p.GPIO12.into()), low(p.GPIO13.into())), // driver 2 B: BIN1, BIN2
     ];
     let pwm_clock = PeripheralClockConfig::with_frequency(Rate::from_mhz(40)).unwrap();
     let mut mcpwm = McPwm::new(p.MCPWM0, pwm_clock);
@@ -224,9 +224,9 @@ async fn main(_spawner: Spawner) -> ! {
         PwmPinConfig::UP_ACTIVE_HIGH,
     );
     let (mut pwm_2a, mut pwm_2b) = mcpwm.operator1.with_pins(
-        p.GPIO1,
+        p.GPIO46,
         PwmPinConfig::UP_ACTIVE_HIGH,
-        p.GPIO38,
+        p.GPIO14,
         PwmPinConfig::UP_ACTIVE_HIGH,
     );
     pwm_1a.set_timestamp(0);
