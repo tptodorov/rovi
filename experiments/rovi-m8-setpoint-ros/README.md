@@ -1,6 +1,6 @@
 # Rovi M8: setpoint protocol, single owner, optional ROS 2
 
-**Status: implemented and verified on the laptop (2026-10-11); board acceptance pending.** Nothing here has run on a board yet ([ADR-0002](../../docs/adr/0002-simulation-never-proves-hardware.md)). Board-only ESP32-S3 firmware (no motors). It supersedes M3's TCP+FIFO design ([ADR-0004](../../docs/adr/0004-single-owner-latest-setpoint.md)). The setpoint format is set by [ADR-0006](../../docs/adr/0006-twiststamped-cdr-setpoint.md), and the ROS 2 backend by [ADR-0005](../../docs/adr/0005-zenoh-nostd-ros-backend.md). Terms are as defined in [`GLOSSARY.md`](../../GLOSSARY.md). Open items are in [PLAN](../../docs/PLAN.md#open-questions-and-decisions).
+**Status: board-verified (2026-10-13/14), gating acceptance passed ([MILESTONE](MILESTONE.md#results)).** Since 2026-10-14 the firmware also drives TB6612FNG motor outputs for M4 ([ADR-0014](../../docs/adr/0014-m4-minimal-wiring-software-fail-safe.md)); M8's own runs had no motors connected. It supersedes M3's TCP+FIFO design ([ADR-0004](../../docs/adr/0004-single-owner-latest-setpoint.md)). The setpoint format is set by [ADR-0006](../../docs/adr/0006-twiststamped-cdr-setpoint.md), and the ROS 2 backend by [ADR-0005](../../docs/adr/0005-zenoh-nostd-ros-backend.md). Terms are as defined in [`GLOSSARY.md`](../../GLOSSARY.md). Open items are in [PLAN](../../docs/PLAN.md#open-questions-and-decisions).
 
 ## Architecture
 
@@ -267,7 +267,7 @@ This is development evidence only ([ADR-0002](../../docs/adr/0002-simulation-nev
 
 ## Firmware (ESP32-S3, board-only)
 
-`firmware/` is the firmware shell around the host-tested `Device` core: the car AP (WPA2, `192.168.4.1`), the UDP adapter on port 7777, the BLE GATT adapter, the 10 ms control tick and the RGB LED indicator. No motor GPIO is configured. The ROS adapter is an optional `ros` feature (`cargo build --release --features ros ...`).
+`firmware/` is the firmware shell around the host-tested `Device` core: the car AP (WPA2, `192.168.4.1`), the UDP adapter on port 7777, the BLE GATT adapter, the 10 ms control tick, the motor outputs and the RGB LED indicator. The control tick writes `motor::output` to the pins (M1's wiring: `STBY` GPIO4, `AIN1` GPIO5, `AIN2` GPIO6, `PWMA` GPIO7 on MCPWM0 at 20 kHz; one channel so far, see [M4](../rovi-m4-four-motor-safety/WIRING.md)) and feeds the RTC watchdog (1 s). The ROS adapter is an optional `ros` feature (`cargo build --release --features ros ...`).
 
 ```sh
 source ~/export-esp.sh

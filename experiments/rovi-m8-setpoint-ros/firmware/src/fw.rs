@@ -1,5 +1,6 @@
-//! Board-only firmware shell: the car AP, the UDP adapter, the 10 ms control tick and the RGB LED
-//! indicator, all driving the host-tested `Device` core. No motor GPIO is configured.
+//! Board-only firmware shell: the car AP, the UDP adapter, the 10 ms control tick, the motor
+//! outputs (M1's wiring, one TB6612FNG channel so far) and the RGB LED indicator, all driving the
+//! host-tested `Device` core.
 
 use core::cell::RefCell;
 use embassy_executor::Spawner;
@@ -14,7 +15,18 @@ use embassy_net::{
 };
 use embassy_time::{Duration, Instant, Ticker, Timer};
 use esp_backtrace as _;
-use esp_hal::{clock::CpuClock, ram, rmt::Rmt, rng::Rng, time::Rate, timer::timg::TimerGroup};
+use esp_hal::{
+    clock::CpuClock,
+    gpio::{Level, Output, OutputConfig},
+    mcpwm::{operator::PwmPinConfig, timer::PwmWorkingMode, McPwm, PeripheralClockConfig},
+    ram,
+    rmt::Rmt,
+    rng::Rng,
+    rtc_cntl::{Rtc, RwdtStage, RwdtStageAction, SocResetReason},
+    system::reset_reason,
+    time::Rate,
+    timer::timg::TimerGroup,
+};
 use esp_hal_smartled::{buffer_size, color_order, RmtSmartLeds};
 use esp_println::println;
 use esp_radio::wifi::{self, ap::AccessPointConfig, AuthenticationMethodConfig, WifiController};
@@ -22,6 +34,7 @@ use rovi_m8_setpoint_ros::arbiter::{Config, Effects, Error, Source, State};
 use rovi_m8_setpoint_ros::device::{self, Device};
 use rovi_m8_setpoint_ros::events::{self, Event, Fault};
 use rovi_m8_setpoint_ros::kinematics::Geometry;
+use rovi_m8_setpoint_ros::motor::{self, Channel};
 use smart_leds::{SmartLedsWrite, RGB8};
 use trouble_host::prelude::*;
 
@@ -80,6 +93,37 @@ const GEOMETRY: Geometry = Geometry {
     offset_theta: 0.0,
     max_wheel_speed: 40.0,
 };
+
+/// Duty for a wheel command of 1.0, until M4 measures the limits. With the placeholder geometry
+/// `vx` 1.0 m/s is a wheel command of 0.5, so 40 % duty: the top of M1's bench-proven ramp.
+const MOTOR: motor::Config = motor::Config { max_duty_pm: 800 };
+/// Driver 1 channel A (M1's wiring) drives the front-left wheel until all four are wired.
+const CHANNELS: [Channel; 1] = [Channel {
+    wheel: 0,
+    invert: false,
+}];
+/// MCPWM period in counts, so the compare value is the duty in permille (20 kHz, as M1).
+const PWM_PERIOD: u16 = 999;
+/// The RTC watchdog resets the chip if the control tick stops feeding it (ADR-0014).
+const RWDT_MS: u64 = 1000;
+
+fn reset_name() -> &'static str {
+    use SocResetReason as R;
+    match reset_reason() {
+        Some(R::ChipPowerOn) => "ChipPowerOn",
+        Some(R::SysBrownOut) => "SysBrownOut",
+        Some(R::SysRtcWdt) => "SysRtcWdt",
+        Some(R::CoreRtcWdt) => "CoreRtcWdt",
+        Some(R::CpuRtcWdt) => "CpuRtcWdt",
+        Some(R::CoreMwdt0) | Some(R::CoreMwdt1) | Some(R::CpuMwdt0) | Some(R::CpuMwdt1) => "Mwdt",
+        Some(R::SysSuperWdt) => "SysSuperWdt",
+        Some(R::CoreSw) | Some(R::CpuSw) => "Sw",
+        Some(R::CoreUsbUart) | Some(R::CoreUsbJtag) => "Usb",
+        Some(R::SysClkGlitch) | Some(R::CorePwrGlitch) => "Glitch",
+        Some(_) => "Other",
+        None => "Unknown",
+    }
+}
 
 fn ap_config(password: &'static str) -> wifi::Config {
     wifi::Config::AccessPoint(
@@ -141,6 +185,23 @@ fn color(state: State, wheels: [f32; 4]) -> RGB8 {
 #[esp_rtos::main]
 async fn main(_spawner: Spawner) -> ! {
     let p = esp_hal::init(esp_hal::Config::default().with_cpu_clock(CpuClock::max()));
+    // Motors first: STBY low before anything else runs (the TB6612's pull-down holds it low until
+    // here). Pins as M1: STBY GPIO4, AIN1 GPIO5, AIN2 GPIO6, PWMA GPIO7.
+    let mut stby = Output::new(p.GPIO4, Level::Low, OutputConfig::default());
+    let mut a_in1 = Output::new(p.GPIO5, Level::Low, OutputConfig::default());
+    let mut a_in2 = Output::new(p.GPIO6, Level::Low, OutputConfig::default());
+    let pwm_clock = PeripheralClockConfig::with_frequency(Rate::from_mhz(40)).unwrap();
+    let mut mcpwm = McPwm::new(p.MCPWM0, pwm_clock);
+    mcpwm.operator0.set_timer(&mcpwm.timer0);
+    let mut a_pwm = mcpwm
+        .operator0
+        .with_pin_a(p.GPIO7, PwmPinConfig::UP_ACTIVE_HIGH);
+    a_pwm.set_timestamp(0);
+    mcpwm.timer0.start(
+        pwm_clock
+            .timer_clock_with_frequency(PWM_PERIOD, PwmWorkingMode::Increase, Rate::from_khz(20))
+            .unwrap(),
+    );
     esp_alloc::heap_allocator!(#[ram(reclaimed)] size: 64 * 1024);
     esp_alloc::heap_allocator!(size: 64 * 1024);
     let timers = TimerGroup::new(p.TIMG0);
@@ -204,7 +265,9 @@ async fn main(_spawner: Spawner) -> ! {
         UDP_PORT,
         Config::DEFAULT.lease_ms
     );
-    logger::emit(Event::Boot);
+    logger::emit(Event::Boot {
+        reset: Some(reset_name()),
+    });
 
     let udp = async {
         let (mut rx_meta, mut tx_meta) = ([PacketMetadata::EMPTY; 4], [PacketMetadata::EMPTY; 4]);
@@ -379,6 +442,14 @@ async fn main(_spawner: Spawner) -> ! {
             logger::emit(Event::Ble { id, mtu: None });
         }
     };
+    let mut rtc = Rtc::new(p.RTC_TIMER);
+    rtc.rwdt.set_timeout(
+        RwdtStage::Stage0,
+        esp_hal::time::Duration::from_millis(RWDT_MS),
+    );
+    rtc.rwdt
+        .set_stage_action(RwdtStage::Stage0, RwdtStageAction::ResetSystem);
+    rtc.rwdt.enable();
     let control = async {
         let mut last = (State::Open, [0.0f32; 4]);
         loop {
@@ -390,6 +461,20 @@ async fn main(_spawner: Spawner) -> ! {
                 (fx, d.arbiter().state(), d.wheels(at))
             };
             log(fx);
+            // Only this loop touches the motor pins: STBY drops before the bridges change and
+            // rises after them.
+            let out = motor::output(&MOTOR, &CHANNELS, state, wheels);
+            if !out.standby_high {
+                stby.set_low();
+            }
+            let a = out.bridges[0];
+            a_pwm.set_timestamp(a.duty_pm);
+            a_in1.set_level(Level::from(a.in1));
+            a_in2.set_level(Level::from(a.in2));
+            if out.standby_high {
+                stby.set_high();
+            }
+            rtc.rwdt.feed();
             if (state, wheels) != last {
                 logger::emit(Event::State {
                     state,

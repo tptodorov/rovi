@@ -4,6 +4,7 @@ connecting makes this laptop the owner.
 
     python3 sim/ble_client.py info                       # MTU, capabilities, status, then disconnect
     python3 sim/ble_client.py drive --vx 0.2 --seconds 2 # one setpoint, ARM, 20 Hz stream, STOP
+    python3 sim/ble_client.py drive --vx 1.0 --quiet 3   # ... then 3 s connected but silent (lease expiry) before STOP
     ROVI_BLE_ADDR=AA:BB:..    connect to this address instead of scanning for the name "Rovi M8"
 
 Untried on a board: only the fake-peer tests in test_ble_client.py have run it.
@@ -161,6 +162,9 @@ async def main(args):
                 print(f"arm refused: {refused or car.statuses[-1]}")
                 return 1
             n = await car.stream(args.vx, args.vy, args.wz, args.seconds)
+            if args.quiet > 0:
+                print(f"silent for {args.quiet} s: the lease expires and the car stops on its own")
+                await asyncio.sleep(args.quiet)
             await car.stop()
             await asyncio.sleep(0.3)  # the car notifies status every 100 ms at most
             print(f"sent {n} setpoints; statuses: {car.statuses}")
@@ -173,7 +177,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("cmd", choices=("info", "drive"))
     p.add_argument("--addr", default=os.environ.get("ROVI_BLE_ADDR"))
-    for k, d in (("--vx", 0.2), ("--vy", 0.0), ("--wz", 0.0), ("--seconds", 2.0)):
+    for k, d in (("--vx", 0.2), ("--vy", 0.0), ("--wz", 0.0), ("--seconds", 2.0), ("--quiet", 0.0)):
         p.add_argument(k, type=float, default=d)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     raise SystemExit(asyncio.run(main(p.parse_args())))
