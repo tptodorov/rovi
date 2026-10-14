@@ -1,0 +1,15 @@
+13:27:43 car joined the router: ros node /rovi up, zid 8e6bc85de2434914936672183035a393, router tcp/192.168.4.2:7447
+13:27:47 --- stock ros2 topic pub on /cmd_vel only (x 0.6)
+13:27:51 stock pub drove the car: ok
+13:27:59 released after the stream ended: ok
+13:27:59 --- controller scenario
+13:28:11 intruder ignored: ok
+13:28:11 stop latched while streaming, arm resumed: ok
+13:28:11 --- ROS round trip over TCP (200 probes)
+13:28:33 ros sent=200 count=200 loss_pct=0.0 median_ms=9.123 p95_ms=14.333 max_ms=36.938 
+13:28:33 --- router frozen, lease 10000
+13:28:48 tcp, router lease 10000 ms: noticed after 9.6 s; back 2.0 s after the router resumed
+13:28:48 --- router frozen, default lease 60000
+13:28:50 car rejoined the stock router
+13:29:53 tcp, router lease 60000 ms (stock): noticed after 57.1 s; back 2.0 s after the router resumed
+13:29:56 == done

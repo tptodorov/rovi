@@ -19,13 +19,14 @@ use zenoh_nostd::session::*;
 
 const DOMAIN: u32 = 0;
 const NODE: &str = "rovi";
-/// `rmw_zenohd` must listen on UDP (see the README).
+/// TCP, which a stock `rmw_zenohd` listens on. Over UDP the router's listener can stop accepting
+/// every peer after a stall (eclipse-zenoh/zenoh#2849), so the car could not rejoin (ADR-0012).
 const ROUTER: &str = match option_env!("ROVI_ZENOH_ROUTER") {
     Some(v) => v,
-    None => "udp/192.168.4.2:7448",
+    None => "tcp/192.168.4.2:7447",
 };
 
-/// UDP link buffers. A router answers the liveliness interest with a burst of datagrams, and UDP
+/// Link buffers (TCP uses the same 512-byte transmit and 8192-byte receive buffers). A router answers the liveliness interest with a burst of datagrams, and UDP
 /// does not resend what a full receive queue drops: 8 slots and 512 bytes (the defaults) lost the
 /// controller's publisher tokens on the board, so the car never learned its node. 32 slots and
 /// 8192 bytes held a three-node graph; SOCKS 2 covers a reconnect while the old link is dropped.
