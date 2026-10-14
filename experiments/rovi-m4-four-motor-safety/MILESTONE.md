@@ -31,7 +31,8 @@ Real hardware only.
 
 #### 2026-10-14 step 1: one driver, one motor — pass
 
-M8 firmware with motor outputs, M1's wiring, power bank on VM, BLE client ([notes and logs](bench/2026-10-14-step1/notes.md)). The motor followed speed (10, 20, 40 % duty) and direction. STOP, lease expiry (1.0 s after the last setpoint), a killed controller (stopped by the lease 1 s later), the RST button and unplugging the ESP32 each stopped it, and it stayed off until a client armed again. A 5 min run at 40 % had no reboot or BLE drop, and the driver stayed cold. Not observed: the smallest duty that turns the motor (M5, O6).
+M8 firmware with motor outputs, M1's wiring, power bank on VM, BLE client ([notes and logs](bench/2026-10-14-step1/notes.md)). The motor followed speed (10, 20, 40 % duty) and direction. STOP, lease expiry (1.0 s after the last setpoint), a killed controller (stopped by the lease 1 s later), the RST button and unplugging the ESP32 each stopped it, and it stayed off until a client armed again. A 5 min run at 40 % had no reboot or BLE drop, and the driver stayed cold. 
+**Start duty, no load** ([notes](bench/2026-10-14-start-duty/notes.md)): from standstill 8 % duty twitches and **9 % turns**; while running it keeps turning down to about 8 % and **stops at about 7 %**. Input to O6 (dead zone); under load on the floor (M5) both will be higher.
 
 #### Motor current (measured by Todor)
 
