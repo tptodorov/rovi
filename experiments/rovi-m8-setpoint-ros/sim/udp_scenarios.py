@@ -30,7 +30,7 @@ def signs(wheels):
 class Client:
     def __init__(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.s.settimeout(0.15)
+        self.s.bind(("", 0))
         self.session, self.seq = 0, 0
 
     def send(self, kind, payload=b"", session=None, seq=None):
@@ -40,10 +40,15 @@ class Client:
         self.s.sendto(b"RV\x01" + bytes([kind]) + struct.pack("<II", s, q) + payload, (HOST, PORT))
 
     def recv(self):
-        try:
-            d, _ = self.s.recvfrom(1500)
-        except socket.timeout:
-            return None
+        car, deadline = (socket.gethostbyname(HOST), PORT), time.monotonic() + 0.15
+        while True:  # only the car's replies count; a reused ephemeral port can catch strays (e.g. a late DNS reply)
+            self.s.settimeout(max(deadline - time.monotonic(), 1e-3))
+            try:
+                d, frm = self.s.recvfrom(1500)
+            except socket.timeout:
+                return None
+            if frm == car:
+                break
         assert d[:3] == b"RV\x01", d
         return d[3], struct.unpack("<II", d[4:12])[0], d[12:]
 
@@ -144,6 +149,13 @@ class Scenarios(unittest.TestCase):
         self.a.hello()
         time.sleep(CLAIM / 1000 + 0.2)
         self.assertEqual(self.b.hello()[0], ACK)
+
+    def test_stray_datagram_from_another_source_is_ignored(self):
+        # CI once handed a client's reused ephemeral port a late DNS reply; only the car's replies count
+        stray = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        stray.sendto(b'"\xc2\x81\x80 not a rovi frame', ("127.0.0.1", self.a.s.getsockname()[1]))
+        stray.close()
+        self.assertEqual(self.a.hello()[0], ACK)
 
     def test_bye_reopens(self):
         self.a.hello(); self.a.send(BYE); time.sleep(0.1)
