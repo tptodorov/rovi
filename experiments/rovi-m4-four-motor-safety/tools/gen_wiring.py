@@ -52,13 +52,21 @@ TB_LEFT = [("L1", "VM"), ("L2", "VCC"), ("L3", "GND"), ("L4", "AO1"), ("L5", "AO
 TB_RIGHT = [("R1", "PWMA"), ("R2", "AIN2"), ("R3", "AIN1"), ("R4", "STBY"), ("R5", "BIN1"),
             ("R6", "BIN2"), ("R7", "PWMB"), ("R8", "GND")]
 MOTOR_PINS = [("1", "1"), ("2", "2")]
-BANK_RIGHT = [("1", "+5V"), ("2", "-")]
+BANK_PINS = [("1", "+5V"), ("2", "-")]
+CAP_POL = [("1", "+"), ("2", "-")]
+CAP_PINS = [("1", "1"), ("2", "2")]
+USB_PINS = [("1", "VBUS"), ("2", "GND")]
 
 LIBS = {
     "ESP32S3_CORE": (30.48, ESP_LEFT, ESP_RIGHT),
     "TB6612FNG_BOARD": (25.4, TB_LEFT, TB_RIGHT),
     "MOTOR": (10.16, [], MOTOR_PINS),
-    "POWER_BANK": (15.24, [], BANK_RIGHT),
+    "POWER_BANK": (15.24, [], BANK_PINS),
+    "POWER_BANK_MIRRORED": (15.24, BANK_PINS, []),
+    "CAP_POLARIZED": (10.16, [], CAP_POL),
+    "CAP": (10.16, [], CAP_PINS),
+    # The ESP32 board's USB-C COM port; on the board it feeds 5Vin and GND (not drawn).
+    "USB_C_ON_BOARD": (30.48, [], USB_PINS),
 }
 
 # --- Parts: reference, lib, value, (x, y), {pin number: net}. Unlisted pins get a no-connect. -----
@@ -69,7 +77,7 @@ LIBS = {
 
 GND = "GND"
 PARTS = [
-    ("U1", "ESP32S3_CORE", "ESP32-S3-N16R8 CORE board (USB-C from the laptop)", (243.84, 39.37), {
+    ("U1", "ESP32S3_CORE", "ESP32-S3-N16R8 CORE board (powered by BT2 via USB-C)", (243.84, 39.37), {
         "L1": "3V3", "L2": "3V3", "L4": "D1_PWMA", "L5": "D1_AIN2", "L6": "D1_AIN1", "L7": "D1_STBY",
         "L8": "D1_BIN1", "L9": "D1_BIN2", "L10": "D1_PWMB", "L14": "D2_PWMA", "L15": "D2_AIN2",
         "L16": "D2_AIN1", "L17": "D2_STBY", "L18": "D2_BIN1", "L19": "D2_BIN2", "L20": "D2_PWMB",
@@ -82,15 +90,23 @@ PARTS = [
         "L1": "VM", "L2": "3V3", "L3": GND, "L4": "D2_AO1", "L5": "D2_AO2", "L6": "D2_BO2",
         "L7": "D2_BO1", "R1": "D2_PWMA", "R2": "D2_AIN2", "R3": "D2_AIN1", "R4": "D2_STBY",
         "R5": "D2_BIN1", "R6": "D2_BIN2", "R7": "D2_PWMB"}),
-    ("M1", "MOTOR", "Motor front-left (D1 A)", (25.4, 46.99), {"1": "D1_AO1", "2": "D1_AO2"}),
-    ("M2", "MOTOR", "Motor rear-left (D1 B)", (25.4, 59.69), {"1": "D1_BO1", "2": "D1_BO2"}),
-    ("M3", "MOTOR", "Motor front-right (D2 A)", (25.4, 77.47), {"1": "D2_AO1", "2": "D2_AO2"}),
-    ("M4", "MOTOR", "Motor rear-right (D2 B)", (25.4, 90.17), {"1": "D2_BO1", "2": "D2_BO2"}),
-    ("BT1", "POWER_BANK", "5 V power bank (unplug = kill switch)", (25.4, 105.41), {"1": "VM", "2": GND}),
+    ("M1", "MOTOR", "Motor front-left (D1 A)", (25.4, 39.37), {"1": "D1_AO1", "2": "D1_AO2"}),
+    ("C3", "CAP", "100 nF ceramic across M1", (25.4, 52.07), {"1": "D1_AO1", "2": "D1_AO2"}),
+    ("M2", "MOTOR", "Motor rear-left (D1 B)", (25.4, 64.77), {"1": "D1_BO1", "2": "D1_BO2"}),
+    ("C4", "CAP", "100 nF ceramic across M2", (25.4, 77.47), {"1": "D1_BO1", "2": "D1_BO2"}),
+    ("M3", "MOTOR", "Motor front-right (D2 A)", (25.4, 90.17), {"1": "D2_AO1", "2": "D2_AO2"}),
+    ("C5", "CAP", "100 nF ceramic across M3", (25.4, 102.87), {"1": "D2_AO1", "2": "D2_AO2"}),
+    ("M4", "MOTOR", "Motor rear-right (D2 B)", (25.4, 115.57), {"1": "D2_BO1", "2": "D2_BO2"}),
+    ("C6", "CAP", "100 nF ceramic across M4", (25.4, 128.27), {"1": "D2_BO1", "2": "D2_BO2"}),
+    ("C1", "CAP_POLARIZED", "220-470 uF >= 10 V at D1 VM", (25.4, 140.97), {"1": "VM", "2": GND}),
+    ("C2", "CAP_POLARIZED", "220-470 uF >= 10 V at D2 VM", (25.4, 153.67), {"1": "VM", "2": GND}),
+    ("BT1", "POWER_BANK", "Motor power bank, 5 V USB (unplug = kill switch)", (20.32, 166.37), {"1": "VM", "2": GND}),
+    ("J1", "USB_C_ON_BOARD", "ESP32 board USB-C (COM port)", (243.84, 107.95), {"1": "ESP_5V", "2": GND}),
+    ("BT2", "POWER_BANK_MIRRORED", "ESP32 power bank, 5 V USB", (330.2, 113.03), {"1": "ESP_5V", "2": GND}),
 ]
 
 # Channels by x: where a pin tip lies decides which channel its wire runs in.
-CHANNELS = {"A": (40, 122), "B": (157, 239), "C": (279, 320)}
+CHANNELS = {"A": (40, 122), "B": (157, 239), "C": (279, 326)}
 # Lanes: x of each net's vertical in each channel; nets in more than one channel join on a rail.
 LANES = {
     "A": {"D1_AO1": 55.88, "D1_AO2": 60.96, "D1_BO2": 66.04, "D1_BO1": 71.12, "D2_AO1": 76.2,
@@ -99,9 +115,9 @@ LANES = {
           "D1_BIN1": 182.88, "D1_BIN2": 186.69, "D1_PWMB": 190.5, "D2_PWMA": 196.85,
           "D2_AIN2": 200.66, "D2_AIN1": 204.47, "D2_STBY": 208.28, "D2_BIN1": 212.09,
           "D2_BIN2": 215.9, "D2_PWMB": 219.71, "3V3": 226.06, GND: 231.14},
-    "C": {GND: 289.56},
+    "C": {GND: 289.56, "ESP_5V": 297.18},
 }
-RAILS = {"3V3": 115.57, GND: 121.92}
+RAILS = {"3V3": 180.34, GND: 186.69}
 
 
 def lib_symbol(name):
@@ -211,11 +227,13 @@ def place(ref, lib, value, at, nets, body):
                 body.append(f'\t(no_connect (at {f(tip_x)} {f(y0 + i * PITCH)}) (uuid "{uid(ref, "nc", num)}"))')
 
 
-NOTES = """Rovi M4 wiring: four TT motors, two TB6612FNG drivers, ESP32-S3, 5 V power bank. Same pins as WIRING.md.
+NOTES = """Rovi M4 wiring: four TT motors, two TB6612FNG drivers, ESP32-S3, two 5 V power banks. Same pins as WIRING.md.
 Ribbon cables: ESP32 left header L4-L10 (GPIO 4,5,6,7,15,16,17) -> D1 R1-R7; L14-L20 (GPIO 46,9,10,11,12,13,14) -> D2 R1-R7.
 Each driver has its own STBY (GPIO7, GPIO11), low from boot and unless armed; the TB6612 pull-down holds it low in reset.
 Firmware CHANNELS: D1 A=FL, D1 B=RL, D2 A=FR, D2 B=RR. Skipped: L11 GPIO18 (high glitch at power-up), L13 GPIO3 (strapping).
-3V3 and GND join along the two rails at the bottom. No current monitor, dead-man or bench supply (ADR-0014)."""
+Power: two 5 V USB power banks. BT1 feeds both drivers' VM (motors); BT2 feeds the ESP32 through its USB-C port (J1).
+C1/C2 bulk electrolytics at each driver's VM (mind polarity), C3-C6 100 nF ceramics soldered across each motor.
+Grounds are common (ESP32 GND to both drivers' GND); 3V3 and GND join along the two rails at the bottom. No current monitor, dead-man or bench supply (ADR-0014)."""
 
 
 def main():
@@ -248,10 +266,10 @@ def main():
     for name in LIBS:
         lines += lib_symbol(name)
     lines.append("\t)")
-    lines.append('\t(text "Rovi M4 wiring -- ESP32-S3 + 2x TB6612FNG + 4 motors + power bank"'
+    lines.append('\t(text "Rovi M4 wiring -- ESP32-S3 + 2x TB6612FNG + 4 motors + 2 power banks"'
                  f' (at 25.4 22.86 0) (effects (font (size 2.5 2.5)) (justify left)) (uuid "{uid("title")}"))')
     note = NOTES.replace('"', "'").replace("\n", "\\n")
-    lines.append(f'\t(text "{note}" (at 25.4 132.08 0) (effects (font (size 1.4 1.4)) (justify left top))'
+    lines.append(f'\t(text "{note}" (at 25.4 198.12 0) (effects (font (size 1.4 1.4)) (justify left top))'
                  f' (uuid "{uid("notes")}"))')
     lines += body
     lines += ['\t(sheet_instances (path "/" (page "1")))', ")"]
