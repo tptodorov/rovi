@@ -189,9 +189,10 @@ def wire_path(a, b, mirror, bow):
     return f"M{x1:.1f},{y1:.1f} Q{cx:.1f},{cy:.1f} {x2:.1f},{y2:.1f}"
 
 
-def top_view():
+def top_view(name="carrier-top.svg", boxes=(), title=None):
+    """The component side. `boxes` are hole rectangles (c0, r0, c1, r1, label) to highlight."""
     out = board(False)
-    out.append(text(OX - 150, 30, "Carrier, TOP view (component side). Wires are on the other side: see the bottom view.", 15, weight="bold"))
+    out.append(text(OX - 150, 30, title or "Carrier, TOP view (component side). Wires are on the other side: see the bottom view.", 15, weight="bold"))
     # ESP32 board outline (57 x 28 mm, antenna overhanging the top edge, USB-C at the bottom)
     x0, x1 = hx(20) - 0.55 * S, hx(30) + 0.55 * S
     out.append(f'<rect x="{x0:.1f}" y="{hy(1) - 0.75 * S - 3 * S:.1f}" width="{x1 - x0:.1f}" height="{3 * S:.1f}" '
@@ -212,13 +213,13 @@ def top_view():
         out.append(text(hx(20) + 13, hy(k) + 4, f"L{k} {lab}", 10, fill="#ffef9e"))
     out.append(text(hx(30) - 13, hy(1) + 4, "R1 GND", 10, "end", fill="#ffef9e"))
     # Drivers
-    for ref, top, name in (("U2", 4, "DRIVER 1 (left wheels)"), ("U3", 14, "DRIVER 2 (right wheels)")):
+    for ref, top, dname in (("U2", 4, "DRIVER 1 (left wheels)"), ("U3", 14, "DRIVER 2 (right wheels)")):
         xa, xb = hx(10) - 0.9 * S, hx(16) + 0.9 * S
         out.append(f'<rect x="{xa:.1f}" y="{hy(top) - 0.8 * S:.1f}" width="{xb - xa:.1f}" height="{8.6 * S:.1f}" '
                    f'rx="4" fill="#d42a2a" opacity="0.75" stroke="#7a0000"/>')
         out.append(header_strip(10, top, 8, False))
         out.append(header_strip(16, top, 8, False))
-        out.append(text((xa + xb) / 2, hy(top) - 0.95 * S, name, 12, "middle", "bold"))
+        out.append(text((xa + xb) / 2, hy(top) - 0.95 * S, dname, 12, "middle", "bold"))
         for i in range(8):
             out.append(text(hx(10) + 13, hy(top + i) + 4, TB_LEFT[i], 10, fill="#fff"))
             out.append(text(hx(16) - 13, hy(top + i) + 4, TB_RIGHT[i], 10, "end", fill="#fff"))
@@ -245,12 +246,21 @@ def top_view():
     out.append(text(hx(3), OY + ROWS * S + 58, "power-in plug (3-pin): from the motor power bank", 12, "middle", "bold"))
     out.append(text(OX - 50, hy(3), "motor plugs (2-pin)", 12, "end", "bold"))
     out.append(text(OX + COLS * S, OY + ROWS * S + 25, "zip-tie the pigtails through free holes for strain relief", 11, "end", fill="#555"))
-    write("carrier-top.svg", svg(OX + COLS * S + 60, OY + ROWS * S + 80, "\n".join(out), "Carrier top view"))
+    for c0, r0, c1, r1, lab in boxes:
+        x, y = OX + (c0 - 1) * S - 4, OY + (r0 - 1) * S - 4
+        w, h = (c1 - c0 + 1) * S + 8, (r1 - r0 + 1) * S + 8
+        out.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" fill="#ffe000" fill-opacity="0.22" '
+                   f'stroke="#ff8c00" stroke-width="4" stroke-dasharray="10,5"/>')
+        if lab:
+            out.append(f'<rect x="{x}" y="{y - 24}" width="{len(lab) * 8 + 16}" height="22" rx="5" fill="#ff8c00"/>')
+            out.append(text(x + 8, y - 8, lab, 13, weight="bold", fill="#fff"))
+    write(name, svg(OX + COLS * S + 60, OY + ROWS * S + 80, "\n".join(out), "Carrier top view"))
 
 
-def bottom_view():
+def bottom_view(name="carrier-bottom.svg", only=None, title=None):
+    """The solder side. With `only` (wire numbers), the other wires are dimmed and unnumbered."""
     out = board(True)
-    out.append(text(OX - 150, 30, "Carrier, BOTTOM view (solder side, flipped left-right). Solder the wires in the numbered order.", 15, weight="bold"))
+    out.append(text(OX - 150, 30, title or "Carrier, BOTTOM view (solder side, flipped left-right). Solder the wires in the numbered order.", 15, weight="bold"))
     out.append(text(OX - 150, 52, "Flip the board over its long side: the ESP32 headers are now on the LEFT.", 13, fill="#555"))
     used = {}
     for (ref, pin), (c, r) in PINS.items():
@@ -269,9 +279,13 @@ def bottom_view():
         if label == "GND: C1- to C2-":
             bow = 1.2
         d = wire_path(a, b, True, bow)
-        out.append(f'<path d="{d}" stroke="#000" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.5"/>')
-        out.append(f'<path d="{d}" stroke="{colour}" stroke-width="4" fill="none" stroke-linecap="round"/>')
+        dim = only is not None and n not in only
+        op = ' opacity="0.18"' if dim else ""
+        out.append(f'<path d="{d}" stroke="#000" stroke-width="6" fill="none" stroke-linecap="round" opacity="{0.08 if dim else 0.5}"/>')
+        out.append(f'<path d="{d}" stroke="{colour}" stroke-width="{4 if dim else 5}" fill="none" stroke-linecap="round"{op}/>')
     for n, (a, b, colour, label) in enumerate(WIRES, 1):
+        if only is not None and n not in only:
+            continue
         (c1, r1), (c2, r2) = PINS[a], PINS[b]
         mx, my = (hx(c1, True) + hx(c2, True)) / 2, (hy(r1) + hy(r2)) / 2
         out.append(f'<circle cx="{mx:.1f}" cy="{my:.1f}" r="8" fill="#fff" stroke="#333"/>')
@@ -279,6 +293,8 @@ def bottom_view():
     wired = {w[0] for w in WIRES} | {w[1] for w in WIRES}
     for (c, r), (ref, pin) in used.items():
         if (ref, pin) not in wired:
+            continue
+        if only is not None and not any((ref, pin) in (WIRES[n - 1][0], WIRES[n - 1][1]) for n in only):
             continue
         if ref == "U1":
             if pin.startswith("R") or int(pin[1:]) in range(4, 11) or int(pin[1:]) in range(14, 21):
@@ -300,7 +316,7 @@ def bottom_view():
     for xcol, lab in ((20, "ESP32 left header"), (30, "ESP32 right header"), (16, "driver control"), (10, "driver power"),
                       (5.5, "caps + pigtails")):
         out.append(text(hx(xcol, True), OY - 24, lab, 11, "middle", "bold"))
-    write("carrier-bottom.svg", svg(OX + COLS * S + 60, OY + ROWS * S + 30, "\n".join(out), "Carrier bottom view"))
+    write(name, svg(OX + COLS * S + 60, OY + ROWS * S + 30, "\n".join(out), "Carrier bottom view"))
 
 
 # --- Parts dictionary ---------------------------------------------------------------------------
@@ -585,11 +601,295 @@ def wire_list():
         fh.write("\n".join(rows) + "\n")
 
 
+def power_cable():
+    out = [text(16, 36, "Motor power cable and the carrier's power-in pigtail", 20, weight="bold"),
+           f'<rect x="30" y="90" width="80" height="44" rx="4" fill="#bbb" stroke="#666"/>',
+           text(70, 117, "USB-A", 13, "middle", "bold"),
+           f'<path d="M110,112 L300,112" stroke="#222" stroke-width="10"/>',
+           text(205, 98, "~30 cm, outer jacket stripped 4 cm", 12, "middle"),
+           f'<path d="M300,112 L420,92" stroke="#D00000" stroke-width="5"/>',
+           f'<path d="M300,112 L420,132" stroke="#202020" stroke-width="5"/>',
+           f'<path d="M300,112 L350,150 M300,112 L345,160" stroke="#20A020" stroke-width="3"/>',
+           f'<path d="M345,160 L352,152" stroke="#20A020" stroke-width="3"/>',
+           f'<rect x="338" y="145" width="18" height="22" rx="3" fill="#222" opacity="0.6"/>',
+           text(360, 182, "data wires: cut short, heat-shrink each", 11, "middle"),
+           f'<rect x="420" y="76" width="64" height="74" rx="5" fill="#f2f2f2" stroke="#888"/>',
+           f'<rect x="420" y="84" width="14" height="14" fill="#555"/>', text(442, 96, "1", 12),
+           f'<rect x="420" y="106" width="14" height="14" fill="#ddd"/>', text(442, 118, "2 empty", 11),
+           f'<rect x="420" y="128" width="14" height="14" fill="#555"/>', text(442, 140, "3", 12),
+           f'<circle cx="478" cy="84" r="6" fill="#D00000"/>',
+           text(452, 172, "3-pin SOCKET side", 13, "middle", "bold"),
+           text(452, 188, "red = 1, black = 3", 12, "middle"),
+           f'<path d="M500,113 L540,113" stroke="#888" stroke-width="2" stroke-dasharray="4,3"/>', text(520, 104, "click", 10, "middle"),
+           f'<rect x="540" y="76" width="64" height="74" rx="5" fill="#f2f2f2" stroke="#888"/>',
+           f'<rect x="604" y="86" width="16" height="8" fill="#d4b04a"/>', f'<rect x="604" y="130" width="16" height="8" fill="#d4b04a"/>',
+           f'<circle cx="548" cy="84" r="6" fill="#D00000"/>',
+           text(572, 172, "3-pin PIN side", 13, "middle", "bold"), text(572, 188, "(carrier pigtail)", 12, "middle"),
+           f'<path d="M620,90 L760,90" stroke="#D00000" stroke-width="5"/>', f'<path d="M620,134 L760,134" stroke="#202020" stroke-width="5"/>',
+           f'<rect x="760" y="60" width="90" height="100" fill="#D9B77A"/>', text(805, 178, "carrier", 12, "middle"),
+           text(805, 105, "VM (4,25)", 11, "middle"), text(805, 125, "GND (2,25)", 11, "middle"),
+           text(16, 230, "1. Plug the USB-A end into the motor power bank and MEASURE which wire carries +5 V (usually red). Unplug.", 13),
+           text(16, 250, "2. Pin 1 = +5 V (red), pin 3 = GND (black), pin 2 empty, on both halves. Mark pin 1 with a red dot.", 13),
+           text(16, 270, "3. The 3-pin plug cannot mate with a 2-pin motor plug, and the keyed housing only fits one way round.", 13)]
+    write("power-cable.svg", svg(880, 290, "\n".join(out), "Motor power cable"))
+
+
+# Per-step views: (file, title, highlight boxes) and (file, title, wire numbers).
+TOP_STEPS = [
+    ("step-headers.svg", "Step: solder the female header sockets (boards plugged in while soldering)",
+     [(20, 1, 20, 22, "ESP32 left"), (30, 1, 30, 22, "ESP32 right"), (10, 4, 10, 11, "D1"), (16, 4, 16, 11, ""),
+      (10, 14, 10, 21, "D2"), (16, 14, 16, 21, "")]),
+    ("step-caps.svg", "Step: capacitors C1 and C2 (stripe = − to the GND hole)",
+     [(6, 4, 6, 6, "C1"), (6, 14, 6, 16, "C2")]),
+    ("step-pigtails.svg", "Step: motor pigtails and the power-in pigtail (zip-tie for strain relief)",
+     [(5, 7, 5, 10, "M1 + M2"), (5, 17, 5, 20, "M3 + M4"), (2, 25, 4, 25, "power in")]),
+]
+BOTTOM_STEPS = [
+    ("step-wires-ribbon.svg", "Wires 1-14: the two 'ribbons' (driver control pin → ESP32 pin, same row)", set(range(1, 15))),
+    ("step-wires-3v3.svg", "Wires 15-16: 3V3 from the ESP32 to each driver's VCC (white)", {15, 16}),
+    ("step-wires-power.svg", "Wires 17-26: VM (red) and GND (black)", set(range(17, 27))),
+    ("step-wires-motors.svg", "Wires 27-34: motor pigtails → driver outputs", set(range(27, 35))),
+]
+
+
+# --- HTML guide -------------------------------------------------------------------------------
+
+def esc(s):
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+VIDEOS = [
+    ("Crimping with an SN-28B ratchet crimper", "https://player.vimeo.com/video/449552756", "https://vimeo.com/449552756"),
+    ("Using perfboard (soldering basics)", "https://www.youtube-nocookie.com/embed/l9Kbr8cPqOE", "https://youtu.be/l9Kbr8cPqOE"),
+]
+LINKS = [
+    ("Core Electronics: How to make and crimp custom connectors (guide with video)", "https://core-electronics.com.au/guides/prototyping/how-to-crimp-custom-connectors/"),
+    ("IWISS SN-28B: product page with demo video", "https://iwiss.com/products/sn-28b-dupont-crimping-tool-for-3-96mm-2-54mm-2-5mm-pitch-dupont-jst-xh-vh-connectors-awg-18-to-28"),
+    ("Making a custom JST cable", "https://zbotic.in/how-to-make-custom-jst-cable-at-home-tools-and-steps/"),
+    ("Instructables: Using Perfboard", "https://instructables.com/Using-Perfboard"),
+    ("Adafruit Collin's Lab: Breadboards & Perfboards", "https://learn.adafruit.com/collins-lab-breadboards-and-perfboards"),
+    ("Pololu: Dealing with motor noise", "https://www.pololu.com/docs/0J15/9"),
+]
+
+# Steps: (id, title, image, [instructions], [(kind, text)] callouts). "!" marks a must-check item.
+STEPS = [
+    ("overview", "What you are building", "system.svg", [
+        "A perfboard <b>carrier</b> holds the ESP32 and both TB6612FNG drivers in plug-in sockets.",
+        "The four motors and the motor power bank connect with latching JST-SM plugs.",
+        "The ESP32 has its own power bank on its USB-C port; the grounds join on the carrier.",
+        "Every wire on the carrier is in the generated wire list, which is proven to match the KiCad schematic.",
+    ], [("tip", "Work top to bottom. Tick each box as you go; ticks are saved in this browser.")]),
+    ("parts", "1. Gather the parts", "parts.svg", [
+        "1 × ESP32-S3 CORE board, 2 × TB6612FNG modules, 4 × TT motors.",
+        "2 × 5 V USB power banks (motors, ESP32), 1 × USB-C cable, 1 × USB-A cable you can cut.",
+        "4 × JST-SM 2-pin pairs, 1 × JST-SM 3-pin pair, about 20 crimp terminals (pins and sockets).",
+        "2 × electrolytic 220-470 µF ≥ 10 V (C1, C2), 4 × ceramic 100 nF marked <code>104</code>.",
+        "Perfboard ≥ 35 × 27 holes (about 9 × 7 cm), female header strips: 2 × 22-pin, 4 × 8-pin.",
+        "Solid 22 AWG wire in several colours (about 2 m), stranded 22-24 AWG in two colours (about 2 m), heat-shrink, zip ties.",
+    ], [("note", "Tools: soldering iron, solder, SN-28B type crimper, wire stripper, flush cutters, multimeter, heat gun or lighter.")]),
+    ("harness", "2. Make the four motor harnesses", "harness.svg", [
+        "Cut two stranded wires per motor, 15-25 cm: yellow = lead 1, green = lead 2.",
+        "Solder one wire to each motor tab.",
+        "Solder a <b>100 nF ceramic across the two tabs</b>, legs short, close to the motor.",
+        "Heat-shrink the joints, then twist the two wires around each other.",
+        "Crimp <b>pin</b> terminals on the free ends (next step) into a 2-pin <b>pin-side</b> housing; lead 1 in the same position on all four.",
+        "Label each motor: FL, RL, FR, RR.",
+        "Make 4 carrier pigtails, about 8 cm: <b>socket</b> terminals in a 2-pin <b>socket-side</b> housing, other ends stripped and tinned.",
+    ], [("why", "The side that carries power gets the recessed sockets, so an unplugged live plug can't short. A reversed motor only spins backwards; the firmware inverts it.")]),
+    ("crimp", "3. Crimp each terminal", "crimp.svg", [
+        "Strip 2-2.5 mm: bare copper under the front (conductor) wings only.",
+        "Terminal in the smallest die slot that closes both wing pairs, wings up.",
+        "Insert the wire, squeeze until the ratchet releases.",
+        "!Check: wings rolled tight, no insulation under the conductor wings, a firm tug doesn't pull it out.",
+        "Push into the housing, barb toward the latch window, until it clicks. It must not pull back out.",
+    ], [("video", "0"), ("tip", "A bad crimp costs a terminal; a hidden bad crimp costs an evening. Redo any doubtful one.")]),
+    ("power", "4. Make the motor power cable", "power-cable.svg", [
+        "Cut the USB-A cable about 30 cm from the plug; strip the outer jacket 4 cm.",
+        "!Plug it into the motor power bank and <b>measure</b> which wire is +5 V (usually red). Unplug.",
+        "Cut the data wires short and heat-shrink each one separately.",
+        "Crimp <b>sockets</b> on red and black into a 3-pin <b>socket-side</b> housing: <b>red = 1, black = 3</b>, 2 empty. Red dot on pin 1.",
+        "Make the carrier's power-in pigtail the same way with <b>pins</b> in a 3-pin <b>pin-side</b> housing: red 1, black 3.",
+    ], [("why", "3 pins can't mate with a 2-pin motor plug, and the keyed housing only fits one way round.")]),
+    ("dryfit", "5. Dry-fit the carrier (no solder)", "carrier-top.svg", [
+        "Plug the female header strips onto the ESP32 and both drivers.",
+        "ESP32: left header in column 20, right header in column 30, rows 1-22, antenna end at row 1. <b>10 holes</b> between the headers.",
+        "Driver 1: power header (VM…GND) in column 10, control header (PWMA…GND) in column 16, rows 4-11. <b>6 holes</b> between the headers.",
+        "Driver 2: the same columns, rows 14-21.",
+        "Check the antenna sticks out past the top edge and both USB-C ports at the bottom end are reachable.",
+    ], [("warn", "If your boards' header spacing is not 10 and 6 holes, stop: the layout is regenerated from one table.")]),
+    ("headers", "6. Solder the header sockets", "step-headers.svg", [
+        "Solder each strip <b>with its board plugged in</b>, so the sockets stay aligned.",
+        "Tack one pin at each end, check the strip sits flat, then solder the rest.",
+        "Remove the boards again; they stay out until the first power-up.",
+    ], [("video", "1")]),
+    ("caps", "7. Fit C1 and C2", "step-caps.svg", [
+        "C1: + leg (long) in hole (6, 4), − leg (stripe) in (6, 6).",
+        "C2: + leg in (6, 14), − leg in (6, 16).",
+        "!The stripe faces the GND hole on both. Solder and trim the legs.",
+    ], [("warn", "A reversed electrolytic can burst. Check twice.")]),
+    ("pigtails", "8. Fit the pigtails", "step-pigtails.svg", [
+        "Motor pigtails, bare ends through from the top: M1 lead 1 → (5, 7), lead 2 → (5, 8); M2 lead 1 → (5, 10), lead 2 → (5, 9).",
+        "M3 lead 1 → (5, 17), lead 2 → (5, 18); M4 lead 1 → (5, 20), lead 2 → (5, 19).",
+        "Power-in pigtail: red (VM) → (4, 25), black (GND) → (2, 25).",
+        "Zip-tie each pigtail through two free holes, so a tug pulls the tie, not the joint.",
+    ], []),
+    ("ribbon", "9. Wires 1-14: the two ribbons", "step-wires-ribbon.svg", [
+        "Turn the board over. Each wire is a short hop along one row: driver control pin → ESP32 left-header pin.",
+        "Strip 3 mm, bend the end around the pin on the solder side, solder. Tick each wire in the list below.",
+    ], [("tip", "Solid insulated wire. Bare ends must not touch a neighbouring pad: check each row with the meter later.")]),
+    ("v3", "10. Wires 15-16: 3V3", "step-wires-3v3.svg", [
+        "White: ESP32 L1 → driver 1 VCC, ESP32 L2 → driver 2 VCC.",
+    ], []),
+    ("vm", "11. Wires 17-26: VM and GND", "step-wires-power.svg", [
+        "Red: C1+ → D1 VM, C2+ → D2 VM, C1+ → C2+, power-in VM → C2+.",
+        "Black: C1− → D1 GND, C2− → D2 GND, C1− → C2−, power-in GND → C2−, ESP32 R1 → D1 GND, ESP32 L22 → D2 GND.",
+    ], [("note", "A pin or lead can take more than one wire: wrap and solder each onto the same lead.")]),
+    ("motors", "12. Wires 27-34: motors", "step-wires-motors.svg", [
+        "Each motor pigtail pad → its driver output on the same row (AO1, AO2, BO2, BO1).",
+    ], []),
+    ("checks", "13. Checks before power", "carrier-bottom.svg", [
+        "Boards out, nothing plugged in. Meter in continuity (beep) mode.",
+        "!Every wire in the list beeps end to end.",
+        "!Each ESP32 socket in column 20 (rows 4-10, 14-20) does <b>not</b> beep to the socket above or below.",
+        "!VM (C1+) to GND (C1−): no beep (a short beep while the capacitors charge is fine).",
+        "!3V3 (20, 1) to GND (20, 22): no beep. VM to 3V3: no beep.",
+        "Plug the motor power bank in, boards still out: about 5 V on each driver's VM socket to GND, + on C1's + leg. Unplug.",
+    ], [("warn", "Find and fix any short now. Nothing of value is plugged in yet.")]),
+    ("powerup", "14. First power-up", "system.svg", [
+        "Plug the ESP32 and both drivers into their sockets (orientation as in the top view). Motors and motor bank unplugged.",
+        "Connect the ESP32 power bank (or the laptop for flashing) to the ESP32's COM USB-C port: the LED comes on.",
+        "Tell Claude: it flashes the four-motor firmware and checks the boot log.",
+        "Plug in the motors, wheels off the ground, motor power bank within reach: <b>unplugging it stops every motor</b>.",
+        "Step 2 of the test plan: each test is announced and starts on your \"go\".",
+    ], []),
+]
+
+
+def html():
+    swatch = {v: k for k, v in COLOUR_NAMES.items()}
+    nav = "".join(f'<a href="#{sid}">{esc(t)}</a>' for sid, t, *_ in STEPS) + '<a href="#wires">Wire list</a><a href="#refs">Videos and references</a>'
+    sections = []
+    for sid, title, img, items, notes in STEPS:
+        lis = []
+        for i, it in enumerate(items):
+            if sid == "overview":
+                lis.append(f'<li class="info">{it}</li>')
+                continue
+            must = it.startswith("!")
+            it = it[1:] if must else it
+            lis.append(f'<li class="{"must" if must else ""}"><label><input type="checkbox" data-k="{sid}-{i}"> <span>{it}</span></label></li>')
+        call = []
+        for kind, body in notes:
+            if kind == "video":
+                t, emb, url = VIDEOS[int(body)]
+                call.append(f'<div class="video"><iframe src="{emb}" title="{esc(t)}" loading="lazy" allowfullscreen></iframe>'
+                            f'<a href="{url}">{esc(t)}</a></div>')
+            else:
+                label = {"tip": "Tip", "warn": "Careful", "why": "Why", "note": "Note"}[kind]
+                call.append(f'<div class="call {kind}"><b>{label}:</b> {body}</div>')
+        sections.append(f'''<section id="{sid}" class="step">
+  <div class="text"><h2>{esc(title)}</h2><ol class="todo">{"".join(lis)}</ol>{"".join(call)}</div>
+  <figure><a href="img/{img}" target="_blank"><img src="img/{img}" alt="{esc(title)}"></a><figcaption>click to enlarge</figcaption></figure>
+</section>''')
+    rows = []
+    groups = {1: "Ribbon 1 (driver 1)", 8: "Ribbon 2 (driver 2)", 15: "3V3", 17: "VM and GND", 27: "Motors"}
+    for n, (a, b, colour, _) in enumerate(WIRES, 1):
+        if n in groups:
+            rows.append(f'<tr class="grp"><td colspan="5">{groups[n]}</td></tr>')
+        rows.append(f'<tr><td><input type="checkbox" data-k="w{n}"></td><td><b>{n}</b></td>'
+                    f'<td><span class="sw" style="background:{colour}"></span>{COLOUR_NAMES[colour]}</td>'
+                    f'<td>{esc(pin_name(*a))} <span class="hole">{PINS[a]}</span></td>'
+                    f'<td>{esc(pin_name(*b))} <span class="hole">{PINS[b]}</span></td></tr>')
+    refs = "".join(f'<li><a href="{u}">{esc(t)}</a></li>' for t, u in LINKS)
+    page = f'''<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rovi M4: build the four-motor carrier</title>
+<style>
+:root {{ --accent:#d4570f; --ink:#1f2328; --muted:#59636e; --line:#d8dee4; }}
+* {{ box-sizing:border-box; }}
+body {{ margin:0; font:16px/1.55 system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--ink); background:#f6f8fa; }}
+header {{ background:#1f2328; color:#fff; padding:18px 28px; }}
+header h1 {{ margin:0; font-size:24px; }} header p {{ margin:4px 0 0; color:#c9d1d9; }}
+.wrap {{ display:grid; grid-template-columns:240px 1fr; gap:24px; max-width:1500px; margin:0 auto; padding:20px; }}
+nav {{ position:sticky; top:12px; align-self:start; background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px; max-height:calc(100vh - 24px); overflow:auto; }}
+nav a {{ display:block; padding:5px 8px; color:var(--ink); text-decoration:none; border-radius:6px; font-size:14px; }}
+nav a:hover {{ background:#f0f3f6; }} nav a.done {{ color:#1a7f37; }} nav a.done::before {{ content:"✔ "; }}
+.progress {{ font-size:13px; color:var(--muted); padding:6px 8px 10px; border-bottom:1px solid var(--line); margin-bottom:6px; }}
+.bar {{ height:6px; background:#e6e9ec; border-radius:3px; margin-top:6px; }} .bar i {{ display:block; height:6px; background:#1a7f37; border-radius:3px; width:0; }}
+.step {{ display:grid; grid-template-columns:minmax(320px,1fr) minmax(360px,1.35fr); gap:24px; background:#fff; border:1px solid var(--line);
+        border-radius:12px; padding:20px 22px; margin-bottom:20px; scroll-margin-top:12px; }}
+.step h2 {{ margin:0 0 10px; font-size:21px; }}
+ol.todo {{ list-style:none; padding:0; margin:0 0 12px; }}
+ol.todo li {{ padding:6px 0; border-bottom:1px dashed #eceff2; }}
+ol.todo li.info {{ padding-left:22px; position:relative; }} ol.todo li.info::before {{ content:"•"; position:absolute; left:6px; color:var(--accent); }}
+ol.todo li.must span::before {{ content:"MUST CHECK  "; font-size:11px; font-weight:700; color:#fff; background:#cf222e; border-radius:4px; padding:1px 5px; margin-right:6px; }}
+label {{ display:flex; gap:10px; align-items:flex-start; cursor:pointer; }}
+input[type=checkbox] {{ width:18px; height:18px; margin-top:3px; accent-color:#1a7f37; flex:none; }}
+li:has(input:checked) span {{ color:#8c959f; text-decoration:line-through; }}
+figure {{ margin:0; }} figure img {{ width:100%; border:1px solid var(--line); border-radius:8px; background:#fff; }}
+figcaption {{ font-size:12px; color:var(--muted); text-align:right; }}
+.call {{ border-left:4px solid; border-radius:6px; padding:8px 12px; margin:8px 0; font-size:15px; }}
+.call.tip {{ border-color:#1f6feb; background:#ddf4ff; }} .call.warn {{ border-color:#cf222e; background:#ffebe9; }}
+.call.why {{ border-color:#8250df; background:#fbefff; }} .call.note {{ border-color:#9a6700; background:#fff8c5; }}
+.video iframe {{ width:100%; aspect-ratio:16/9; border:0; border-radius:8px; }} .video a {{ font-size:13px; }}
+table {{ width:100%; border-collapse:collapse; background:#fff; font-size:14px; }}
+th, td {{ border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }}
+tr.grp td {{ background:#f0f3f6; font-weight:700; }} tr:has(input:checked) td {{ color:#8c959f; }}
+.sw {{ display:inline-block; width:14px; height:14px; border:1px solid #888; border-radius:3px; margin-right:6px; vertical-align:-2px; }}
+.hole {{ color:var(--muted); font-family:ui-monospace,monospace; font-size:12px; }}
+.card {{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:20px; }}
+button {{ font:inherit; padding:6px 12px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer; }}
+@media (max-width:1000px) {{ .wrap {{ grid-template-columns:1fr; }} nav {{ position:static; }} .step {{ grid-template-columns:1fr; }} }}
+@media print {{ nav, header p, .video, button {{ display:none; }} .wrap {{ display:block; }} .step {{ break-inside:avoid; }} }}
+</style></head><body>
+<header><h1>Rovi M4: build the four-motor carrier</h1>
+<p>From loose parts to a soldered carrier with latching plugs. Generated by <code>gen_build_guide.py</code>; the board is checked against the KiCad schematic (25 nets, 34 wires, 0 problems).</p></header>
+<div class="wrap">
+<nav><div class="progress"><span id="pct">0 %</span> done<div class="bar"><i id="barfill"></i></div></div>{nav}
+<div style="padding:8px"><button onclick="if(confirm('Clear all ticks?')){{localStorage.removeItem(KEY);location.reload()}}">Reset ticks</button></div></nav>
+<main>
+{"".join(sections)}
+<section id="wires" class="card"><h2>Wire list (34 wires, solder side)</h2>
+<p>Holes are (column, row) in the top-view numbering. The numbers match the bottom-view drawings. Strip 3 mm, wrap the end around the pin or lead on the solder side, solder, then tick.</p>
+<table><thead><tr><th></th><th>#</th><th>Colour</th><th>From</th><th>To</th></tr></thead><tbody>{"".join(rows)}</tbody></table></section>
+<section id="refs" class="card"><h2>Videos and references</h2><ul>{refs}</ul>
+<p>Project files: <a href="../WIRING.md">wiring table</a>, <a href="../wiring.kicad_sch">KiCad schematic</a>, <a href="../TESTPLAN.md">test plan</a>, <a href="wire-list.md">wire list (Markdown)</a>.</p></section>
+</main></div>
+<script>
+const KEY = "rovi-m4-build";
+const state = JSON.parse(localStorage.getItem(KEY) || "{{}}");
+const boxes = [...document.querySelectorAll("input[data-k]")];
+function update() {{
+  const done = boxes.filter(b => b.checked).length;
+  const pct = Math.round(100 * done / boxes.length);
+  document.getElementById("pct").textContent = pct + " % (" + done + "/" + boxes.length + ")";
+  document.getElementById("barfill").style.width = pct + "%";
+  document.querySelectorAll("section[id]").forEach(s => {{
+    const bs = [...s.querySelectorAll("input[data-k]")];
+    const a = document.querySelector('nav a[href="#' + s.id + '"]');
+    if (a && bs.length) a.classList.toggle("done", bs.every(b => b.checked));
+  }});
+}}
+boxes.forEach(b => {{ b.checked = !!state[b.dataset.k];
+  b.addEventListener("change", () => {{ state[b.dataset.k] = b.checked; localStorage.setItem(KEY, JSON.stringify(state)); update(); }}); }});
+update();
+</script></body></html>
+'''
+    with open(os.path.join(HERE, "index.html"), "w") as fh:
+        fh.write(page)
+
+
 def main():
     os.makedirs(IMG, exist_ok=True)
     wire_list()
     top_view()
     bottom_view()
+    for name, title, boxes in TOP_STEPS:
+        top_view(name, boxes, title)
+    for name, title, only in BOTTOM_STEPS:
+        bottom_view(name, only, title)
+    power_cable()
+    html()
     parts()
     crimp()
     harness()
