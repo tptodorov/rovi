@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320" font-family="Helvetica, Arial, sans-serif">
+<title>Motor harness</title>
+<rect width="1000" height="320" fill="#ffffff"/>
+<text x="16.0" y="36.0" font-size="20" text-anchor="start" font-weight="bold" fill="#222" >Motor harness (×4) and carrier pigtail</text>
+<rect x="40" y="105" width="150" height="90" rx="10" fill="#f0d000"/>
+<text x="115.0" y="155.0" font-size="15" text-anchor="middle" font-weight="bold" fill="#222" >TT motor</text>
+<rect x="190" y="120" width="40" height="60" rx="6" fill="#b0b0b0"/>
+<rect x="230" y="128" width="14" height="10" fill="#c08040"/>
+<rect x="230" y="162" width="14" height="10" fill="#c08040"/>
+<ellipse cx="262" cy="150" rx="11" ry="9" fill="#e08a1a"/>
+<path d="M244,133 L258,142 M244,167 L258,158" stroke="#999" stroke-width="2"/>
+<text x="262.0" y="120.0" font-size="12" text-anchor="middle" font-weight="normal" fill="#222" >100 nF across the tabs</text>
+<path d="M244,133 C330,133 340,167 420,144 S520,162 600,143" stroke="#C8A000" stroke-width="5" fill="none"/>
+<path d="M244,167 C330,167 340,133 420,156 S520,138 600,157" stroke="#3A9A3A" stroke-width="5" fill="none"/>
+<text x="420.0" y="195.0" font-size="12" text-anchor="middle" font-weight="normal" fill="#222" >twist the pair, ~15-25 cm</text>
+<rect x="250" y="120" width="30" height="60" fill="#222" opacity="0.25"/>
+<text x="265.0" y="200.0" font-size="11" text-anchor="middle" font-weight="normal" fill="#222" >heat-shrink</text>
+<rect x="600" y="126" width="60" height="48" rx="5" fill="#f2f2f2" stroke="#888"/>
+<rect x="616" y="120" width="22" height="6" fill="#ddd" stroke="#888"/>
+<rect x="660" y="140" width="22" height="5" fill="#d4b04a"/>
+<rect x="660" y="155" width="22" height="5" fill="#d4b04a"/>
+<text x="630.0" y="200.0" font-size="13" text-anchor="middle" font-weight="bold" fill="#222" >PIN side</text>
+<text x="630.0" y="216.0" font-size="12" text-anchor="middle" font-weight="normal" fill="#222" >(on the motor)</text>
+<rect x="700" y="126" width="60" height="48" rx="5" fill="#f2f2f2" stroke="#888"/>
+<rect x="700" y="138" width="14" height="9" fill="#555"/>
+<rect x="700" y="153" width="14" height="9" fill="#555"/>
+<rect x="716" y="118" width="28" height="8" fill="#f2f2f2" stroke="#888"/>
+<text x="730.0" y="200.0" font-size="13" text-anchor="middle" font-weight="bold" fill="#222" >SOCKET side</text>
+<text x="730.0" y="216.0" font-size="12" text-anchor="middle" font-weight="normal" fill="#222" >(carrier pigtail)</text>
+<path d="M682,114 L700,114" stroke="#888" stroke-width="2"/>
+<text x="691.0" y="108.0" font-size="10" text-anchor="middle" font-weight="normal" fill="#222" >click</text>
+<path d="M760,144 L900,144" stroke="#C8A000" stroke-width="5"/>
+<path d="M760,156 L900,156" stroke="#3A9A3A" stroke-width="5"/>
+<rect x="900" y="110" width="70" height="80" fill="#D9B77A"/>
+<text x="935.0" y="210.0" font-size="12" text-anchor="middle" font-weight="normal" fill="#222" >carrier</text>
+<text x="16.0" y="260.0" font-size="13" text-anchor="start" font-weight="normal" fill="#222" >• Socket (recessed metal) on the side that carries power: carrier → motor, power bank → carrier.</text>
+<text x="16.0" y="280.0" font-size="13" text-anchor="start" font-weight="normal" fill="#222" >• Motor polarity does not matter for safety: a reversed motor just spins backwards; the firmware inverts it.</text>
+<text x="16.0" y="300.0" font-size="13" text-anchor="start" font-weight="normal" fill="#222" >• Pigtail on the carrier: ~8 cm, soldered into holes (col 5, see the carrier views), zip-tied for strain relief.</text>
+</svg>

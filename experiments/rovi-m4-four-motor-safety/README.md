@@ -7,6 +7,7 @@ M4 drives the car's motors from the M8 firmware for the first time, wheels off t
 | File | What |
 | --- | --- |
 | [WIRING.md](WIRING.md), [wiring.kicad_sch](wiring.kicad_sch) | Four motors and two drivers; one 7-wire ribbon cable per driver |
+| [build/](build/README.md) | Build guide: parts dictionary, crimping, motor harnesses, the perfboard carrier (top and bottom views, numbered wire list), checks, first power-up |
 | [TESTPLAN.md](TESTPLAN.md) | Bench steps S1-S5, safety rules, evidence |
 
 ## Firmware
