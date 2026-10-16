@@ -1,0 +1,229 @@
+[2026-10-16T13:26:29Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-16T13:26:29Z INFO ] Connecting...
+[2026-10-16T13:26:30Z INFO ] Using flash stub
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x14d0
+load:0x403c8700,len:0xdcc
+load:0x403cb700,len:0x2f54
+entry 0x403c8900
+I (29) boot: ESP-IDF v6.1-beta1-497-g14f663f003e 2nd stage bootloader
+I (30) boot: Multicore bootloader
+I (30) boot: chip revision: v0.2
+I (30) boot: efuse block revision: v1.4
+I (34) boot.esp32s3: Boot SPI Speed : 40MHz
+I (38) boot.esp32s3: SPI Mode       : DIO
+I (42) boot.esp32s3: SPI Flash Size : 16MB
+I (45) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (52) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (72) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (78) boot: End of partition table
+I (82) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=169dch ( 92636) map
+I (112) esp_image: segment 1: paddr=00026a04 vaddr=3fc97958 size=04ac8h ( 19144) load
+I (118) esp_image: segment 2: paddr=0002b4d4 vaddr=40378000 size=04b44h ( 19268) load
+I (124) esp_image: segment 3: paddr=00030020 vaddr=42020020 size=7b20ch (504332) map
+I (251) esp_image: segment 4: paddr=000ab234 vaddr=4037cb44 size=0ae14h ( 44564) load
+I (272) boot: Loaded app from partition at offset 0x10000
+I (272) boot: Disabling RNG early entropy source...
+M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 WPA2 channel=1 lease_ms=1000
+ev=boot ver=0.1.0 reset=ChipPowerOn at_ms=931
+ev=claimed source=Ble at_ms=10848
+ev=ble link=up id=1 mtu=23 at_ms=10848
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=10849
+ev=wifi ap=off at_ms=10871
+ev=mtu id=1 mtu=247 at_ms=11048
+ev=state state=Armed wheels_pm=250,250,250,250 at_ms=12458
+ev=stop reason=Stop at_ms=17583
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=17587
+ev=released at_ms=19968
+ev=ble link=down id=1 at_ms=19968
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=19974
+ev=wifi ap=on at_ms=19994
+ev=claimed source=Ble at_ms=23753
+ev=ble link=up id=1 mtu=23 at_ms=23753
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=23756
+ev=wifi ap=off at_ms=23765
+ev=mtu id=1 mtu=247 at_ms=23953
+ev=state state=Armed wheels_pm=375,375,375,375 at_ms=24519
+ev=stop reason=Stop at_ms=29643
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=29647
+ev=released at_ms=31983
+ev=ble link=down id=1 at_ms=31983
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=31985
+ev=wifi ap=on at_ms=32007
+ev=claimed source=Ble at_ms=36281
+ev=ble link=up id=1 mtu=23 at_ms=36281
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=36290
+ev=wifi ap=off at_ms=36298
+ev=mtu id=1 mtu=247 at_ms=36482
+ev=state state=Armed wheels_pm=-300,300,300,-300 at_ms=37025
+ev=stop reason=Stop at_ms=42153
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=42155
+ev=released at_ms=44988
+ev=ble link=down id=1 at_ms=44988
+ev=wifi ap=on at_ms=44999
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=45000
+ev=claimed source=Ble at_ms=117418
+ev=ble link=up id=1 mtu=23 at_ms=117418
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=117422
+ev=wifi ap=off at_ms=117435
+ev=mtu id=1 mtu=247 at_ms=117618
+ev=state state=Armed wheels_pm=375,375,375,375 at_ms=119023
+ev=stop reason=Stop at_ms=139129
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=139133
+ev=released at_ms=141964
+ev=ble link=down id=1 at_ms=141964
+ev=wifi ap=on at_ms=141976
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=141978
+ev=claimed source=Ble at_ms=212390
+ev=ble link=up id=1 mtu=23 at_ms=212390
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=212394
+ev=wifi ap=off at_ms=212407
+ev=mtu id=1 mtu=247 at_ms=212590
+ev=state state=Armed wheels_pm=375,375,375,375 at_ms=213974
+ev=stop reason=Stop at_ms=224089
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=224099
+ev=released at_ms=226969
+ev=ble link=down id=1 at_ms=226969
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=226976
+ev=wifi ap=on at_ms=226996
+ev=claimed source=Ble at_ms=271390
+ev=ble link=up id=1 mtu=23 at_ms=271390
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=271392
+ev=wifi ap=off at_ms=271412
+ev=mtu id=1 mtu=247 at_ms=271590
+ev=state state=Armed wheels_pm=375,375,375,375 at_ms=272969
+ev=stop reason=Stop at_ms=303065
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=303068
+ev=released at_ms=305990
+ev=ble link=down id=1 at_ms=305990
+ev=wifi ap=on at_ms=306006
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=306007
+ev=claimed source=Ble at_ms=360104
+ev=ble link=up id=1 mtu=23 at_ms=360104
+ev=wifi ap=off at_ms=360116
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=360117
+ev=mtu id=1 mtu=247 at_ms=360305
+ev=state state=Armed wheels_pm=375,375,375,375 at_ms=361663
+ev=stop reason=Stop at_ms=391760
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=391765
+ev=released at_ms=393966
+ev=ble link=down id=1 at_ms=393966
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=393972
+ev=wifi ap=on at_ms=393992
+ev=claimed source=Ble at_ms=509693
+ev=ble link=up id=1 mtu=23 at_ms=509693
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=509697
+ev=wifi ap=off at_ms=509714
+ev=mtu id=1 mtu=247 at_ms=509893
+ev=state state=Armed wheels_pm=250,250,250,250 at_ms=511244
+ev=stop reason=Stop at_ms=521361
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=521369
+ev=released at_ms=523971
+ev=ble link=down id=1 at_ms=523971
+ev=wifi ap=on at_ms=523982
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=523983
+ev=claimed source=Ble at_ms=528114
+ev=ble link=up id=1 mtu=23 at_ms=528114
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=528115
+ev=wifi ap=off at_ms=528133
+ev=mtu id=1 mtu=247 at_ms=528314
+ev=state state=Armed wheels_pm=375,375,375,375 at_ms=528880
+ev=stop reason=Stop at_ms=539001
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=539004
+ev=released at_ms=541972
+ev=ble link=down id=1 at_ms=541972
+ev=wifi ap=on at_ms=541982
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=541984
+ev=claimed source=Ble at_ms=546285
+ev=ble link=up id=1 mtu=23 at_ms=546285
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=546287
+ev=wifi ap=off at_ms=546294
+ev=mtu id=1 mtu=247 at_ms=546386
+ev=state state=Armed wheels_pm=-300,300,300,-300 at_ms=547060
+ev=stop reason=Stop at_ms=557181
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=557189
+ev=released at_ms=559972
+ev=ble link=down id=1 at_ms=559972
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=559978
+ev=wifi ap=on at_ms=560000
+ev=claimed source=Ble at_ms=645870
+ev=ble link=up id=1 mtu=23 at_ms=645870
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=645877
+ev=wifi ap=off at_ms=645886
+ev=mtu id=1 mtu=247 at_ms=645970
+ev=state state=Armed wheels_pm=188,188,188,188 at_ms=647456
+ev=stop reason=Stop at_ms=651592
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=651599
+ev=released at_ms=653977
+ev=ble link=down id=1 at_ms=653977
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=653986
+ev=wifi ap=on at_ms=654006
+ev=claimed source=Ble at_ms=659074
+ev=ble link=up id=1 mtu=23 at_ms=659075
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=659080
+ev=wifi ap=off at_ms=659098
+ev=mtu id=1 mtu=247 at_ms=659275
+ev=state state=Armed wheels_pm=250,250,250,250 at_ms=659834
+ev=stop reason=Stop at_ms=663967
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=663976
+ev=released at_ms=666983
+ev=ble link=down id=1 at_ms=666983
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=666985
+ev=wifi ap=on at_ms=666999
+ev=claimed source=Ble at_ms=672415
+ev=ble link=up id=1 mtu=23 at_ms=672415
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=672424
+ev=wifi ap=off at_ms=672442
+ev=mtu id=1 mtu=247 at_ms=672615
+ev=state state=Armed wheels_pm=313,313,313,313 at_ms=673197
+ev=stop reason=Stop at_ms=677332
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=677339
+ev=released at_ms=679988
+ev=ble link=down id=1 at_ms=679988
+ev=wifi ap=on at_ms=680002
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=680003
+ev=claimed source=Ble at_ms=685464
+ev=ble link=up id=1 mtu=23 at_ms=685464
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=685468
+ev=wifi ap=off at_ms=685475
+ev=mtu id=1 mtu=247 at_ms=685664
+ev=state state=Armed wheels_pm=375,375,375,375 at_ms=686202
+ev=stop reason=Stop at_ms=690337
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=690345
+ev=released at_ms=692993
+ev=ble link=down id=1 at_ms=692993
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=693001
+ev=wifi ap=on at_ms=693015
+ev=claimed source=Ble at_ms=697637
+ev=ble link=up id=1 mtu=23 at_ms=697637
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=697639
+ev=wifi ap=off at_ms=697646
+ev=mtu id=1 mtu=247 at_ms=697837
+ev=state state=Armed wheels_pm=438,438,438,438 at_ms=698442
+ev=stop reason=Stop at_ms=702577
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=702585
+ev=released at_ms=704963
+ev=ble link=down id=1 at_ms=704963
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=704970
+ev=wifi ap=on at_ms=704986
+ev=claimed source=Ble at_ms=710250
+ev=ble link=up id=1 mtu=23 at_ms=710251
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=710252
+ev=wifi ap=off at_ms=710259
+ev=mtu id=1 mtu=247 at_ms=710451
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=710996
+ev=stop reason=Stop at_ms=715132
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=715140
+ev=released at_ms=717968
+ev=ble link=down id=1 at_ms=717968
+ev=wifi ap=on at_ms=717979
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=717980
+Error:   × Broken pipe
+
