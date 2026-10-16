@@ -13,11 +13,12 @@ Setup: perfboard carrier per the build guide (C1/C2 fitted, motor capacitors C3-
 | Start duty, single motor (bank awake) | Starts at 30 % |
 | **Start duty, all four connected** | FL, RL, RR start at **35 %**; FR does not start by itself even at 40 % |
 | FR fault isolation (FR ↔ RR plugs swapped) | **The fault follows the FR motor** (motor, gearbox or its harness); the carrier and driver 2 are fine |
+| Retest, all four, from standstill at 40, 35, 30, 25, 20 % | **All four, FR included, start at 40 % and 35 %**; none start at 30 % or below |
 
 ## Findings
 
 1. **The motor power bank auto-sleeps.** It must be woken before a run, or replaced/kept awake (bank with an always-on mode, a dummy load, sharing the ESP32 bank, or a battery without auto-off for the car).
-2. **Mounted motors need about 35 % duty to start** with all four connected (a loose motor in step 1 started at 9 %). Input to O6: the firmware needs a start kick or a minimum duty before M5 floor driving.
-3. **FR motor fault:** next, spin it by hand (stiffness) and measure its resistance at the plug versus another motor (harness/crimp).
+2. **Mounted motors need about 35 % duty to start (consistent across all four)** with all four connected (a loose motor in step 1 started at 9 %). Input to O6: the firmware needs a start kick or a minimum duty before M5 floor driving.
+3. **FR motor:** first refused to start even at 40 %; on the retest it started at 35 % like the others. Watch it; if it sticks again, check its mounting screws, gearbox and harness.
 
 Still to do for step 2: FR fix, stops with four turning (S3), reversal without brownout, 5 min thermal run, motor capacitors.
