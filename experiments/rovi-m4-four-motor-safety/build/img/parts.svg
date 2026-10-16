@@ -1,0 +1,420 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1124" width="1280" height="1124" font-family="Helvetica, Arial, sans-serif">
+<title>Parts dictionary</title>
+<rect width="1280" height="1124" fill="#ffffff"/>
+<text x="16.0" y="38.0" font-size="20" text-anchor="start" font-weight="bold" fill="#222" >Parts dictionary: everything on the bench for M4 step 2</text>
+<rect x="16" y="60" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="28.0" y="84.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >ESP32-S3 CORE board ×1</text>
+<rect x="56" y="110" width="220" height="100" rx="6" fill="#1d1d1d"/>
+<rect x="36" y="130" width="24" height="60" fill="#333"/>
+<rect x="106" y="128" width="60" height="62" fill="#aaa"/>
+<rect x="241" y="130" width="30" height="22" rx="5" fill="#bbb"/>
+<rect x="241" y="168" width="30" height="22" rx="5" fill="#bbb"/>
+<circle cx="66.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="75.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="85.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="94.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="104.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="113.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="123.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="132.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="142.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="151.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="161.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="170.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="180.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="189.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="199.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="208.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="218.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="227.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="237.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="246.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="256.0" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="265.5" cy="116" r="2.5" fill="#d4b04a"/>
+<circle cx="66.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="75.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="85.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="94.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="104.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="113.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="123.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="132.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="142.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="151.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="161.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="170.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="180.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="189.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="199.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="208.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="218.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="227.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="237.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="246.5" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="256.0" cy="204" r="2.5" fill="#d4b04a"/>
+<circle cx="265.5" cy="204" r="2.5" fill="#d4b04a"/>
+<text x="28.0" y="282.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >The brain. Plugs into the carrier.</text>
+<text x="28.0" y="298.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Have it.</text>
+<rect x="332" y="60" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="344.0" y="84.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >TB6612FNG driver ×2</text>
+<rect x="427" y="105" width="110" height="110" rx="5" fill="#d42a2a"/>
+<rect x="462" y="140" width="40" height="40" fill="#222"/>
+<circle cx="440" cy="116" r="3" fill="#d4b04a"/>
+<circle cx="440" cy="129" r="3" fill="#d4b04a"/>
+<circle cx="440" cy="142" r="3" fill="#d4b04a"/>
+<circle cx="440" cy="155" r="3" fill="#d4b04a"/>
+<circle cx="440" cy="168" r="3" fill="#d4b04a"/>
+<circle cx="440" cy="181" r="3" fill="#d4b04a"/>
+<circle cx="440" cy="194" r="3" fill="#d4b04a"/>
+<circle cx="440" cy="207" r="3" fill="#d4b04a"/>
+<circle cx="524" cy="116" r="3" fill="#d4b04a"/>
+<circle cx="524" cy="129" r="3" fill="#d4b04a"/>
+<circle cx="524" cy="142" r="3" fill="#d4b04a"/>
+<circle cx="524" cy="155" r="3" fill="#d4b04a"/>
+<circle cx="524" cy="168" r="3" fill="#d4b04a"/>
+<circle cx="524" cy="181" r="3" fill="#d4b04a"/>
+<circle cx="524" cy="194" r="3" fill="#d4b04a"/>
+<circle cx="524" cy="207" r="3" fill="#d4b04a"/>
+<text x="344.0" y="282.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Drives two motors each.</text>
+<text x="344.0" y="298.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Have them (M1 used one).</text>
+<rect x="648" y="60" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="660.0" y="84.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >TT gear motor ×4</text>
+<rect x="708" y="130" width="120" height="60" rx="8" fill="#f0d000"/>
+<rect x="828" y="140" width="70" height="40" rx="18" fill="#b0b0b0"/>
+<rect x="898" y="148" width="10" height="8" fill="#c08040"/>
+<rect x="898" y="164" width="10" height="8" fill="#c08040"/>
+<rect x="668" y="155" width="40" height="10" fill="#fff" stroke="#999"/>
+<text x="660.0" y="282.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >2 wires, no encoder.</text>
+<text x="660.0" y="298.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >On the chassis.</text>
+<rect x="964" y="60" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="976.0" y="84.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >Power bank 5 V USB ×2</text>
+<rect x="1034" y="105" width="160" height="110" rx="16" fill="#f4f4f4" stroke="#999" stroke-width="2"/>
+<rect x="1186" y="145" width="16" height="30" fill="#666"/>
+<text x="1114.0" y="165.0" font-size="22" text-anchor="middle" font-weight="bold" fill="#888" >5 V</text>
+<text x="976.0" y="282.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >One for the motors (VM),</text>
+<text x="976.0" y="298.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >one for the ESP32 (USB-C).</text>
+<rect x="16" y="326" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="28.0" y="350.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >JST-SM 2-pin pair ×4</text>
+<rect x="46" y="386" width="62" height="40" rx="4" fill="#f2f2f2" stroke="#888"/>
+<rect x="54" y="396" width="18" height="20" fill="#ccc"/>
+<rect x="60" y="426" width="6" height="18" fill="#d4b04a"/>
+<rect x="80" y="396" width="18" height="20" fill="#ccc"/>
+<rect x="86" y="426" width="6" height="18" fill="#d4b04a"/>
+<rect x="69.0" y="378" width="16" height="8" fill="#ddd" stroke="#888"/>
+<text x="77.0" y="498.0" font-size="11" text-anchor="middle" font-weight="normal" fill="#222" >pin side</text>
+<rect x="148" y="386" width="62" height="40" rx="4" fill="#f2f2f2" stroke="#888"/>
+<rect x="156" y="396" width="18" height="20" fill="#555"/>
+<rect x="182" y="396" width="18" height="20" fill="#555"/>
+<rect x="169.0" y="376" width="20" height="10" fill="#f2f2f2" stroke="#888"/>
+<text x="179.0" y="498.0" font-size="11" text-anchor="middle" font-weight="normal" fill="#222" >socket side</text>
+<path d="M63,444 L63,484" stroke="#D00000" stroke-width="3"/>
+<path d="M165,426 L165,466" stroke="#D00000" stroke-width="3"/>
+<path d="M89,444 L89,484" stroke="#202020" stroke-width="3"/>
+<path d="M191,426 L191,466" stroke="#202020" stroke-width="3"/>
+<text x="28.0" y="548.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Motor plugs (your AliExpress set).</text>
+<text x="28.0" y="564.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Pin side on motor, socket side on carrier.</text>
+<rect x="332" y="326" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="344.0" y="350.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >JST-SM 3-pin pair ×1</text>
+<rect x="362" y="381" width="88" height="40" rx="4" fill="#f2f2f2" stroke="#888"/>
+<rect x="370" y="391" width="18" height="20" fill="#ccc"/>
+<rect x="376" y="421" width="6" height="18" fill="#d4b04a"/>
+<rect x="396" y="391" width="18" height="20" fill="#ccc"/>
+<rect x="402" y="421" width="6" height="18" fill="#d4b04a"/>
+<rect x="422" y="391" width="18" height="20" fill="#ccc"/>
+<rect x="428" y="421" width="6" height="18" fill="#d4b04a"/>
+<rect x="398.0" y="373" width="16" height="8" fill="#ddd" stroke="#888"/>
+<text x="406.0" y="493.0" font-size="11" text-anchor="middle" font-weight="normal" fill="#222" >pin side</text>
+<rect x="490" y="381" width="88" height="40" rx="4" fill="#f2f2f2" stroke="#888"/>
+<rect x="498" y="391" width="18" height="20" fill="#555"/>
+<rect x="524" y="391" width="18" height="20" fill="#555"/>
+<rect x="550" y="391" width="18" height="20" fill="#555"/>
+<rect x="524.0" y="371" width="20" height="10" fill="#f2f2f2" stroke="#888"/>
+<text x="534.0" y="493.0" font-size="11" text-anchor="middle" font-weight="normal" fill="#222" >socket side</text>
+<path d="M379,439 L379,479" stroke="#D00000" stroke-width="3"/>
+<path d="M507,421 L507,461" stroke="#D00000" stroke-width="3"/>
+<path d="M431,439 L431,479" stroke="#202020" stroke-width="3"/>
+<path d="M559,421 L559,461" stroke="#202020" stroke-width="3"/>
+<text x="344.0" y="548.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Power-in plug. 3-pin so it can't</text>
+<text x="344.0" y="564.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >mate with a motor plug. Middle empty.</text>
+<rect x="648" y="326" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="660.0" y="350.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >Crimp terminals</text>
+<rect x="688" y="410" width="40" height="12" rx="2" fill="#d4b04a" stroke="#9a7a20"/>
+<rect x="658" y="414" width="30" height="4" fill="#d4b04a"/>
+<path d="M743,408 l12,-8 M743,424 l12,8" stroke="#9a7a20" stroke-width="3"/>
+<path d="M768,406 l14,-10 M768,426 l14,10" stroke="#9a7a20" stroke-width="3"/>
+<rect x="738" y="412" width="50" height="8" fill="#d4b04a"/>
+<text x="746.0" y="394.0" font-size="9" text-anchor="end" font-weight="normal" fill="#222" >conductor</text>
+<text x="772.0" y="394.0" font-size="9" text-anchor="start" font-weight="normal" fill="#222" >insulation</text>
+<text x="888.0" y="420.0" font-size="11" text-anchor="end" font-weight="normal" fill="#222" >pin</text>
+<rect x="688" y="460" width="50" height="12" rx="2" fill="#d4b04a" stroke="#9a7a20"/>
+<path d="M743,458 l12,-8 M743,474 l12,8" stroke="#9a7a20" stroke-width="3"/>
+<path d="M768,456 l14,-10 M768,476 l14,10" stroke="#9a7a20" stroke-width="3"/>
+<rect x="738" y="462" width="50" height="8" fill="#d4b04a"/>
+<text x="746.0" y="444.0" font-size="9" text-anchor="end" font-weight="normal" fill="#222" >conductor</text>
+<text x="772.0" y="444.0" font-size="9" text-anchor="start" font-weight="normal" fill="#222" >insulation</text>
+<text x="888.0" y="470.0" font-size="11" text-anchor="end" font-weight="normal" fill="#222" >socket</text>
+<text x="660.0" y="548.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Come with the JST set: one per wire.</text>
+<text x="660.0" y="564.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Pins (male) and sockets (female).</text>
+<rect x="964" y="326" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="976.0" y="350.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >Electrolytic 220-470 µF ×2</text>
+<rect x="1084" y="371" width="60" height="90" rx="10" fill="#2b4fa8"/>
+<rect x="1129" y="371" width="15" height="90" fill="#e8e8e8"/>
+<text x="1136.0" y="421.0" font-size="18" text-anchor="middle" font-weight="bold" fill="#2b4fa8" >−</text>
+<line x1="1099" y1="461" x2="1099" y2="501" stroke="#999" stroke-width="3"/>
+<line x1="1129" y1="461" x2="1129" y2="491" stroke="#999" stroke-width="3"/>
+<text x="1092.0" y="514.0" font-size="11" text-anchor="end" font-weight="normal" fill="#222" >+ long</text>
+<text x="1136.0" y="504.0" font-size="11" text-anchor="start" font-weight="normal" fill="#222" >− short</text>
+<text x="976.0" y="548.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >C1, C2 at each driver's VM. ≥ 10 V.</text>
+<text x="976.0" y="564.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Stripe = − leg (shorter leg).</text>
+<rect x="16" y="592" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="28.0" y="616.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >Ceramic 100 nF ×4</text>
+<ellipse cx="166" cy="687" rx="26" ry="20" fill="#e08a1a"/>
+<text x="166.0" y="692.0" font-size="13" text-anchor="middle" font-weight="bold" fill="#222" >104</text>
+<line x1="156" y1="705" x2="151" y2="762" stroke="#999" stroke-width="3"/>
+<line x1="176" y1="705" x2="181" y2="762" stroke="#999" stroke-width="3"/>
+<text x="28.0" y="814.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Marked 104. Across each motor's tabs.</text>
+<text x="28.0" y="830.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >No polarity.</text>
+<rect x="332" y="592" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="344.0" y="616.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >Perfboard ≥ 9 × 7 cm ×1</text>
+<rect x="382" y="637" width="200" height="130" rx="6" fill="#D9B77A"/>
+<circle cx="392" cy="647" r="2" fill="#6b5330"/>
+<circle cx="392" cy="659" r="2" fill="#6b5330"/>
+<circle cx="392" cy="671" r="2" fill="#6b5330"/>
+<circle cx="392" cy="683" r="2" fill="#6b5330"/>
+<circle cx="392" cy="695" r="2" fill="#6b5330"/>
+<circle cx="392" cy="707" r="2" fill="#6b5330"/>
+<circle cx="392" cy="719" r="2" fill="#6b5330"/>
+<circle cx="392" cy="731" r="2" fill="#6b5330"/>
+<circle cx="392" cy="743" r="2" fill="#6b5330"/>
+<circle cx="392" cy="755" r="2" fill="#6b5330"/>
+<circle cx="404" cy="647" r="2" fill="#6b5330"/>
+<circle cx="404" cy="659" r="2" fill="#6b5330"/>
+<circle cx="404" cy="671" r="2" fill="#6b5330"/>
+<circle cx="404" cy="683" r="2" fill="#6b5330"/>
+<circle cx="404" cy="695" r="2" fill="#6b5330"/>
+<circle cx="404" cy="707" r="2" fill="#6b5330"/>
+<circle cx="404" cy="719" r="2" fill="#6b5330"/>
+<circle cx="404" cy="731" r="2" fill="#6b5330"/>
+<circle cx="404" cy="743" r="2" fill="#6b5330"/>
+<circle cx="404" cy="755" r="2" fill="#6b5330"/>
+<circle cx="416" cy="647" r="2" fill="#6b5330"/>
+<circle cx="416" cy="659" r="2" fill="#6b5330"/>
+<circle cx="416" cy="671" r="2" fill="#6b5330"/>
+<circle cx="416" cy="683" r="2" fill="#6b5330"/>
+<circle cx="416" cy="695" r="2" fill="#6b5330"/>
+<circle cx="416" cy="707" r="2" fill="#6b5330"/>
+<circle cx="416" cy="719" r="2" fill="#6b5330"/>
+<circle cx="416" cy="731" r="2" fill="#6b5330"/>
+<circle cx="416" cy="743" r="2" fill="#6b5330"/>
+<circle cx="416" cy="755" r="2" fill="#6b5330"/>
+<circle cx="428" cy="647" r="2" fill="#6b5330"/>
+<circle cx="428" cy="659" r="2" fill="#6b5330"/>
+<circle cx="428" cy="671" r="2" fill="#6b5330"/>
+<circle cx="428" cy="683" r="2" fill="#6b5330"/>
+<circle cx="428" cy="695" r="2" fill="#6b5330"/>
+<circle cx="428" cy="707" r="2" fill="#6b5330"/>
+<circle cx="428" cy="719" r="2" fill="#6b5330"/>
+<circle cx="428" cy="731" r="2" fill="#6b5330"/>
+<circle cx="428" cy="743" r="2" fill="#6b5330"/>
+<circle cx="428" cy="755" r="2" fill="#6b5330"/>
+<circle cx="440" cy="647" r="2" fill="#6b5330"/>
+<circle cx="440" cy="659" r="2" fill="#6b5330"/>
+<circle cx="440" cy="671" r="2" fill="#6b5330"/>
+<circle cx="440" cy="683" r="2" fill="#6b5330"/>
+<circle cx="440" cy="695" r="2" fill="#6b5330"/>
+<circle cx="440" cy="707" r="2" fill="#6b5330"/>
+<circle cx="440" cy="719" r="2" fill="#6b5330"/>
+<circle cx="440" cy="731" r="2" fill="#6b5330"/>
+<circle cx="440" cy="743" r="2" fill="#6b5330"/>
+<circle cx="440" cy="755" r="2" fill="#6b5330"/>
+<circle cx="452" cy="647" r="2" fill="#6b5330"/>
+<circle cx="452" cy="659" r="2" fill="#6b5330"/>
+<circle cx="452" cy="671" r="2" fill="#6b5330"/>
+<circle cx="452" cy="683" r="2" fill="#6b5330"/>
+<circle cx="452" cy="695" r="2" fill="#6b5330"/>
+<circle cx="452" cy="707" r="2" fill="#6b5330"/>
+<circle cx="452" cy="719" r="2" fill="#6b5330"/>
+<circle cx="452" cy="731" r="2" fill="#6b5330"/>
+<circle cx="452" cy="743" r="2" fill="#6b5330"/>
+<circle cx="452" cy="755" r="2" fill="#6b5330"/>
+<circle cx="464" cy="647" r="2" fill="#6b5330"/>
+<circle cx="464" cy="659" r="2" fill="#6b5330"/>
+<circle cx="464" cy="671" r="2" fill="#6b5330"/>
+<circle cx="464" cy="683" r="2" fill="#6b5330"/>
+<circle cx="464" cy="695" r="2" fill="#6b5330"/>
+<circle cx="464" cy="707" r="2" fill="#6b5330"/>
+<circle cx="464" cy="719" r="2" fill="#6b5330"/>
+<circle cx="464" cy="731" r="2" fill="#6b5330"/>
+<circle cx="464" cy="743" r="2" fill="#6b5330"/>
+<circle cx="464" cy="755" r="2" fill="#6b5330"/>
+<circle cx="476" cy="647" r="2" fill="#6b5330"/>
+<circle cx="476" cy="659" r="2" fill="#6b5330"/>
+<circle cx="476" cy="671" r="2" fill="#6b5330"/>
+<circle cx="476" cy="683" r="2" fill="#6b5330"/>
+<circle cx="476" cy="695" r="2" fill="#6b5330"/>
+<circle cx="476" cy="707" r="2" fill="#6b5330"/>
+<circle cx="476" cy="719" r="2" fill="#6b5330"/>
+<circle cx="476" cy="731" r="2" fill="#6b5330"/>
+<circle cx="476" cy="743" r="2" fill="#6b5330"/>
+<circle cx="476" cy="755" r="2" fill="#6b5330"/>
+<circle cx="488" cy="647" r="2" fill="#6b5330"/>
+<circle cx="488" cy="659" r="2" fill="#6b5330"/>
+<circle cx="488" cy="671" r="2" fill="#6b5330"/>
+<circle cx="488" cy="683" r="2" fill="#6b5330"/>
+<circle cx="488" cy="695" r="2" fill="#6b5330"/>
+<circle cx="488" cy="707" r="2" fill="#6b5330"/>
+<circle cx="488" cy="719" r="2" fill="#6b5330"/>
+<circle cx="488" cy="731" r="2" fill="#6b5330"/>
+<circle cx="488" cy="743" r="2" fill="#6b5330"/>
+<circle cx="488" cy="755" r="2" fill="#6b5330"/>
+<circle cx="500" cy="647" r="2" fill="#6b5330"/>
+<circle cx="500" cy="659" r="2" fill="#6b5330"/>
+<circle cx="500" cy="671" r="2" fill="#6b5330"/>
+<circle cx="500" cy="683" r="2" fill="#6b5330"/>
+<circle cx="500" cy="695" r="2" fill="#6b5330"/>
+<circle cx="500" cy="707" r="2" fill="#6b5330"/>
+<circle cx="500" cy="719" r="2" fill="#6b5330"/>
+<circle cx="500" cy="731" r="2" fill="#6b5330"/>
+<circle cx="500" cy="743" r="2" fill="#6b5330"/>
+<circle cx="500" cy="755" r="2" fill="#6b5330"/>
+<circle cx="512" cy="647" r="2" fill="#6b5330"/>
+<circle cx="512" cy="659" r="2" fill="#6b5330"/>
+<circle cx="512" cy="671" r="2" fill="#6b5330"/>
+<circle cx="512" cy="683" r="2" fill="#6b5330"/>
+<circle cx="512" cy="695" r="2" fill="#6b5330"/>
+<circle cx="512" cy="707" r="2" fill="#6b5330"/>
+<circle cx="512" cy="719" r="2" fill="#6b5330"/>
+<circle cx="512" cy="731" r="2" fill="#6b5330"/>
+<circle cx="512" cy="743" r="2" fill="#6b5330"/>
+<circle cx="512" cy="755" r="2" fill="#6b5330"/>
+<circle cx="524" cy="647" r="2" fill="#6b5330"/>
+<circle cx="524" cy="659" r="2" fill="#6b5330"/>
+<circle cx="524" cy="671" r="2" fill="#6b5330"/>
+<circle cx="524" cy="683" r="2" fill="#6b5330"/>
+<circle cx="524" cy="695" r="2" fill="#6b5330"/>
+<circle cx="524" cy="707" r="2" fill="#6b5330"/>
+<circle cx="524" cy="719" r="2" fill="#6b5330"/>
+<circle cx="524" cy="731" r="2" fill="#6b5330"/>
+<circle cx="524" cy="743" r="2" fill="#6b5330"/>
+<circle cx="524" cy="755" r="2" fill="#6b5330"/>
+<circle cx="536" cy="647" r="2" fill="#6b5330"/>
+<circle cx="536" cy="659" r="2" fill="#6b5330"/>
+<circle cx="536" cy="671" r="2" fill="#6b5330"/>
+<circle cx="536" cy="683" r="2" fill="#6b5330"/>
+<circle cx="536" cy="695" r="2" fill="#6b5330"/>
+<circle cx="536" cy="707" r="2" fill="#6b5330"/>
+<circle cx="536" cy="719" r="2" fill="#6b5330"/>
+<circle cx="536" cy="731" r="2" fill="#6b5330"/>
+<circle cx="536" cy="743" r="2" fill="#6b5330"/>
+<circle cx="536" cy="755" r="2" fill="#6b5330"/>
+<circle cx="548" cy="647" r="2" fill="#6b5330"/>
+<circle cx="548" cy="659" r="2" fill="#6b5330"/>
+<circle cx="548" cy="671" r="2" fill="#6b5330"/>
+<circle cx="548" cy="683" r="2" fill="#6b5330"/>
+<circle cx="548" cy="695" r="2" fill="#6b5330"/>
+<circle cx="548" cy="707" r="2" fill="#6b5330"/>
+<circle cx="548" cy="719" r="2" fill="#6b5330"/>
+<circle cx="548" cy="731" r="2" fill="#6b5330"/>
+<circle cx="548" cy="743" r="2" fill="#6b5330"/>
+<circle cx="548" cy="755" r="2" fill="#6b5330"/>
+<circle cx="560" cy="647" r="2" fill="#6b5330"/>
+<circle cx="560" cy="659" r="2" fill="#6b5330"/>
+<circle cx="560" cy="671" r="2" fill="#6b5330"/>
+<circle cx="560" cy="683" r="2" fill="#6b5330"/>
+<circle cx="560" cy="695" r="2" fill="#6b5330"/>
+<circle cx="560" cy="707" r="2" fill="#6b5330"/>
+<circle cx="560" cy="719" r="2" fill="#6b5330"/>
+<circle cx="560" cy="731" r="2" fill="#6b5330"/>
+<circle cx="560" cy="743" r="2" fill="#6b5330"/>
+<circle cx="560" cy="755" r="2" fill="#6b5330"/>
+<circle cx="572" cy="647" r="2" fill="#6b5330"/>
+<circle cx="572" cy="659" r="2" fill="#6b5330"/>
+<circle cx="572" cy="671" r="2" fill="#6b5330"/>
+<circle cx="572" cy="683" r="2" fill="#6b5330"/>
+<circle cx="572" cy="695" r="2" fill="#6b5330"/>
+<circle cx="572" cy="707" r="2" fill="#6b5330"/>
+<circle cx="572" cy="719" r="2" fill="#6b5330"/>
+<circle cx="572" cy="731" r="2" fill="#6b5330"/>
+<circle cx="572" cy="743" r="2" fill="#6b5330"/>
+<circle cx="572" cy="755" r="2" fill="#6b5330"/>
+<text x="344.0" y="814.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Plain holes, 2.54 mm pitch.</text>
+<text x="344.0" y="830.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >35 × 27 holes or more.</text>
+<rect x="648" y="592" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="660.0" y="616.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >Female header strips</text>
+<rect x="688" y="662" width="220" height="22" rx="3" fill="#1a1a1a"/>
+<rect x="688" y="712" width="90" height="22" rx="3" fill="#1a1a1a"/>
+<rect x="694" y="669" width="5" height="8" fill="#888"/>
+<rect x="704" y="669" width="5" height="8" fill="#888"/>
+<rect x="714" y="669" width="5" height="8" fill="#888"/>
+<rect x="724" y="669" width="5" height="8" fill="#888"/>
+<rect x="734" y="669" width="5" height="8" fill="#888"/>
+<rect x="744" y="669" width="5" height="8" fill="#888"/>
+<rect x="754" y="669" width="5" height="8" fill="#888"/>
+<rect x="764" y="669" width="5" height="8" fill="#888"/>
+<rect x="774" y="669" width="5" height="8" fill="#888"/>
+<rect x="784" y="669" width="5" height="8" fill="#888"/>
+<rect x="794" y="669" width="5" height="8" fill="#888"/>
+<rect x="804" y="669" width="5" height="8" fill="#888"/>
+<rect x="814" y="669" width="5" height="8" fill="#888"/>
+<rect x="824" y="669" width="5" height="8" fill="#888"/>
+<rect x="834" y="669" width="5" height="8" fill="#888"/>
+<rect x="844" y="669" width="5" height="8" fill="#888"/>
+<rect x="854" y="669" width="5" height="8" fill="#888"/>
+<rect x="864" y="669" width="5" height="8" fill="#888"/>
+<rect x="874" y="669" width="5" height="8" fill="#888"/>
+<rect x="884" y="669" width="5" height="8" fill="#888"/>
+<rect x="894" y="669" width="5" height="8" fill="#888"/>
+<rect x="694" y="719" width="5" height="8" fill="#888"/>
+<rect x="704" y="719" width="5" height="8" fill="#888"/>
+<rect x="714" y="719" width="5" height="8" fill="#888"/>
+<rect x="724" y="719" width="5" height="8" fill="#888"/>
+<rect x="734" y="719" width="5" height="8" fill="#888"/>
+<rect x="744" y="719" width="5" height="8" fill="#888"/>
+<rect x="754" y="719" width="5" height="8" fill="#888"/>
+<rect x="764" y="719" width="5" height="8" fill="#888"/>
+<text x="660.0" y="814.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >2 × 22-pin (ESP32), 4 × 8-pin (drivers).</text>
+<text x="660.0" y="830.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Cut longer strips to length.</text>
+<rect x="964" y="592" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="976.0" y="616.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >Wire</text>
+<path d="M994,662 C1084,632 1144,692 1234,662" stroke="#8B4513" stroke-width="5" fill="none"/>
+<path d="M994,680 C1084,650 1144,710 1234,680" stroke="#E02020" stroke-width="5" fill="none"/>
+<path d="M994,698 C1084,668 1144,728 1234,698" stroke="#FF8C00" stroke-width="5" fill="none"/>
+<path d="M994,716 C1084,686 1144,746 1234,716" stroke="#E6C800" stroke-width="5" fill="none"/>
+<path d="M994,734 C1084,704 1144,764 1234,734" stroke="#20A020" stroke-width="5" fill="none"/>
+<path d="M994,752 C1084,722 1144,782 1234,752" stroke="#2060E0" stroke-width="5" fill="none"/>
+<text x="976.0" y="814.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Solid 22 AWG for the carrier (several colours).</text>
+<text x="976.0" y="830.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Stranded 22-24 AWG red/black for leads.</text>
+<rect x="16" y="858" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="28.0" y="882.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >USB cable to cut ×1</text>
+<rect x="56" y="943" width="50" height="30" rx="3" fill="#bbb" stroke="#666"/>
+<path d="M106,958 L196,958" stroke="#222" stroke-width="9"/>
+<path d="M196,958 L266,938" stroke="#D00000" stroke-width="4"/>
+<path d="M196,958 L266,978" stroke="#202020" stroke-width="4"/>
+<path d="M196,958 L256,958" stroke="#20A020" stroke-width="3" opacity="0.5"/>
+<path d="M196,958 L251,968" stroke="#ffffff" stroke-width="3" opacity="0.5"/>
+<text x="268.0" y="962.0" font-size="10" text-anchor="start" font-weight="normal" fill="#222" >data: cut short</text>
+<text x="28.0" y="1080.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >USB-A plug end for the motor power bank.</text>
+<text x="28.0" y="1096.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Red = +5 V, black = GND (check!).</text>
+<rect x="332" y="858" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="344.0" y="882.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >Heat-shrink, zip ties</text>
+<rect x="392" y="928" width="150" height="14" rx="7" fill="#222"/>
+<rect x="392" y="958" width="110" height="10" rx="5" fill="#c00"/>
+<path d="M412,1008 L572,1008" stroke="#eee" stroke-width="8"/>
+<path d="M412,1008 L572,1008" stroke="#bbb" stroke-width="2" stroke-dasharray="3,3"/>
+<text x="344.0" y="1080.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Heat-shrink 2-3 mm over joints.</text>
+<text x="344.0" y="1096.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Zip ties for strain relief.</text>
+<rect x="648" y="858" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="660.0" y="882.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >USB-C cable ×1</text>
+<rect x="688" y="946" width="40" height="24" rx="3" fill="#bbb"/>
+<path d="M728,958 C798,898 818,1018 878,958" stroke="#222" stroke-width="8" fill="none"/>
+<rect x="878" y="950" width="34" height="16" rx="6" fill="#bbb"/>
+<text x="660.0" y="1080.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >ESP32 power bank to the ESP32's</text>
+<text x="660.0" y="1096.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >COM USB-C port.</text>
+<rect x="964" y="858" width="300" height="250" rx="10" fill="#fafafa" stroke="#bbb"/>
+<text x="976.0" y="882.0" font-size="15" text-anchor="start" font-weight="bold" fill="#222" >Tools</text>
+<path d="M1004,1008 L1114,918" stroke="#444" stroke-width="12" stroke-linecap="round"/>
+<path d="M1114,918 L1134,902" stroke="#bbb" stroke-width="4"/>
+<path d="M1144,1018 L1194,928 M1224,1018 L1194,928" stroke="#c00" stroke-width="10" stroke-linecap="round"/>
+<text x="976.0" y="1080.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >Soldering iron, solder, crimper (SN-28B type),</text>
+<text x="976.0" y="1096.0" font-size="12" text-anchor="start" font-weight="normal" fill="#333" >wire stripper, flush cutter, multimeter.</text>
+</svg>

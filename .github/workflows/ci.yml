@@ -52,6 +52,10 @@ jobs:
         run: |
           (cd experiments/rovi-m8-setpoint-ros/sim && python3 -m unittest test_wire test_carlog test_latency test_plot_car test_compare_track test_ble_client)
           (cd experiments/rovi-m3-wifi-queue && python3 -m unittest test_client)
+      - name: M4 carrier matches the schematic; build-guide images are up to date
+        run: |
+          python3 experiments/rovi-m4-four-motor-safety/build/gen_build_guide.py --check
+          git diff --exit-code experiments/rovi-m4-four-motor-safety/build
 
   ros-sim:
     name: ROS 2 scenarios (sim car, rmw_zenohd in docker)
