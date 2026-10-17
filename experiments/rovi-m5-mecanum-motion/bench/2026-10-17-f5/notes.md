@@ -17,4 +17,10 @@ Same command, each after a 5 s lead-in and a request to reset the heading at HOM
 | Second leftward pulse | [Output](rotate-left-05-repeat2-client.txt): 11 setpoints, Armed → Stopped (`Stop`), no reported error | No physical result supplied; Todor requested another run. |
 | Third leftward pulse | [Output](rotate-left-05-repeat3-client.txt): 11 setpoints, Armed → Stopped (`Stop`), no reported error | Todor reported **40° left**, with the **centre "ok"** (no noticeable centre shift, not quantitatively measured). |
 
-Two reported leftward angles are both approximately 40°. This is a limited repeatability observation at one command under the current conditions; angle precision and different battery/load conditions remain uncharacterized. Centre stability was confirmed only for the latest run. Clockwise rotation and quantified stopping remain untested.
+Two reported leftward angles are both approximately 40°. This is a limited repeatability observation at one command under the current conditions; angle precision and different battery/load conditions remain uncharacterized. Centre stability was confirmed only for the latest leftward run.
+
+## First rightward rotation
+
+Command: `drive --vx 0 --wz -0.5 --seconds 0.5`, after a 5 s lead-in and a request to reset at HOME. [Client output](rotate-right-05-client.txt): 11 setpoints, Claimed → Armed → Stopped (`Stop`), no reported error.
+
+Todor reported **"ok, 40-45deg"** in response to the angle and centre-position questions. Record approximately **40–45° right**, with no problem reported; centre displacement was not separately quantified. Angle divided by command duration is approximately 1.40–1.57 rad/s, including any unseparated acceleration/coast. This agrees roughly with the reported 40° leftward results, but does not establish calibrated turn rate or symmetry across conditions. Rightward repeatability and quantified stopping remain pending.
