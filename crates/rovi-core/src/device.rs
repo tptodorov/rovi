@@ -31,6 +31,19 @@ pub struct Reply {
     pub effects: Effects,
 }
 
+/// Why a device profile is refused. The device does not start, so nothing can claim it and the
+/// motors are never enabled.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ProfileError {
+    /// Radius, centre projection sum or maximum wheel speed is not a positive finite f32, or a
+    /// frame offset is not finite.
+    Geometry,
+    /// A speed limit is not a finite, nonnegative f32.
+    Limits,
+    /// A lease or window length is outside `1..=65535` ms (the capabilities carry u16).
+    Times,
+}
+
 pub struct Device {
     cfg: Config,
     geometry: Geometry,
@@ -39,17 +52,68 @@ pub struct Device {
     /// The last error a BLE control write got, shown in the Status last-error byte until the
     /// next control write that succeeds.
     ble_error: Option<Error>,
+    /// Deadline effects an input processed but could not return (a refused BLE write); the
+    /// next [`tick`](Self::tick) returns them.
+    pending: Effects,
+}
+
+/// The profile with its speed limits as the advertised f32 values, or why it is refused.
+fn validated(cfg: Config, g: &Geometry) -> Result<Config, ProfileError> {
+    // Advertised as f32, so a positive f64 must stay positive and finite as an f32.
+    let positive = |x: f64| x.is_finite() && (x as f32).is_finite() && x as f32 > 0.0;
+    let offsets = [g.offset_x, g.offset_y, g.offset_theta];
+    if !(positive(g.wheels_radius)
+        && positive(g.center_projection_sum)
+        && positive(g.max_wheel_speed)
+        && offsets.iter().all(|o| o.is_finite()))
+    {
+        return Err(ProfileError::Geometry);
+    }
+    let limit = |x: f64| {
+        let advertised = x as f32;
+        (x.is_finite() && x >= 0.0 && advertised.is_finite()).then_some(f64::from(advertised))
+    };
+    let (Some(max_vx), Some(max_vy), Some(max_wz)) =
+        (limit(cfg.max_vx), limit(cfg.max_vy), limit(cfg.max_wz))
+    else {
+        return Err(ProfileError::Limits);
+    };
+    let time = |ms: u64| (1..=u64::from(u16::MAX)).contains(&ms);
+    if !(time(cfg.lease_ms) && time(cfg.claim_window_ms) && time(cfg.reclaim_window_ms)) {
+        return Err(ProfileError::Times);
+    }
+    Ok(Config {
+        max_vx,
+        max_vy,
+        max_wz,
+        ..cfg
+    })
+}
+
+/// `a` then `b`, as one set of effects. `events::effects` logs a stop, then a release, then a
+/// claim, which is also the order they happen in when a deadline releases the car and the same
+/// input claims it again.
+fn merge(a: Effects, b: Effects) -> Effects {
+    Effects {
+        claimed: b.claimed.or(a.claimed),
+        released: a.released || b.released,
+        stop: a.stop.or(b.stop),
+    }
 }
 
 impl Device {
-    pub fn new(cfg: Config, geometry: Geometry) -> Self {
-        Self {
+    /// Starts the device with a validated profile. Speed limits are kept as the f32 values the
+    /// capabilities advertise, so a limit a controller reads is one it can send.
+    pub fn new(cfg: Config, geometry: Geometry) -> Result<Self, ProfileError> {
+        let cfg = validated(cfg, &geometry)?;
+        Ok(Self {
             cfg,
             geometry,
             arbiter: Arbiter::new(cfg),
             graph: Graph::new(),
             ble_error: None,
-        }
+            pending: Effects::default(),
+        })
     }
 
     /// May `source`'s radio be on? While one source owns the car, the others' radios are off.
@@ -73,6 +137,13 @@ impl Device {
 
     /// Handles one UDP datagram from `peer` (an id the shell keeps stable per remote address).
     pub fn on_udp(&mut self, now: u64, peer: u128, datagram: &[u8], out: &mut [u8]) -> Reply {
+        let due = self.arbiter.tick(now);
+        let mut r = self.udp_input(now, peer, datagram, out);
+        r.effects = merge(due, r.effects);
+        r
+    }
+
+    fn udp_input(&mut self, now: u64, peer: u128, datagram: &[u8], out: &mut [u8]) -> Reply {
         let Some((h, payload)) = udp::parse(datagram) else {
             return Reply::default();
         };
@@ -152,13 +223,32 @@ impl Device {
 
     /// A BLE central connected: that is the claim.
     pub fn on_ble_connect(&mut self, now: u64, conn: u16) -> Result<Effects, Error> {
-        let fx = self.arbiter.claim(now, ble(conn))?;
-        self.ble_error = None;
-        Ok(fx)
+        let due = self.arbiter.tick(now);
+        let result = self.arbiter.claim(now, ble(conn));
+        if result.is_ok() {
+            self.ble_error = None;
+        }
+        self.returned(due, result)
+    }
+
+    /// Returns `due` with an accepted input's effects, or keeps it for the next tick.
+    fn returned(&mut self, due: Effects, result: Result<Effects, Error>) -> Result<Effects, Error> {
+        match result {
+            Ok(fx) => Ok(merge(due, fx)),
+            Err(e) => {
+                self.pending = merge(self.pending, due);
+                Err(e)
+            }
+        }
     }
 
     /// A write to the Setpoint characteristic: `seq u32` (LE) then the CDR `TwistStamped`.
     pub fn on_ble_setpoint(&mut self, now: u64, conn: u16, data: &[u8]) -> Effects {
+        let due = self.arbiter.tick(now);
+        merge(due, self.ble_setpoint(now, conn, data))
+    }
+
+    fn ble_setpoint(&mut self, now: u64, conn: u16, data: &[u8]) -> Effects {
         let Some((seq, cdr)) = data.split_first_chunk::<4>() else {
             return Effects::default();
         };
@@ -176,6 +266,12 @@ impl Device {
 
     /// A write to the Control characteristic: 1 = ARM, 2 = STOP. An error rejects the write.
     pub fn on_ble_control(&mut self, now: u64, conn: u16, cmd: u8) -> Result<Effects, Error> {
+        let due = self.arbiter.tick(now);
+        let result = self.ble_control(now, conn, cmd);
+        self.returned(due, result)
+    }
+
+    fn ble_control(&mut self, now: u64, conn: u16, cmd: u8) -> Result<Effects, Error> {
         let who = ble(conn);
         let result = match cmd {
             1 => self.arbiter.arm(now, who).map(|()| Effects::default()),
@@ -198,7 +294,11 @@ impl Device {
 
     /// The central disconnected.
     pub fn on_ble_disconnect(&mut self, now: u64, conn: u16) -> Effects {
-        self.arbiter.release(now, ble(conn)).unwrap_or_default()
+        let due = self.arbiter.tick(now);
+        merge(
+            due,
+            self.arbiter.release(now, ble(conn)).unwrap_or_default(),
+        )
     }
 
     /// A liveliness token appeared (`alive`) or went away. Samples are attributed to a ROS node
@@ -229,6 +329,11 @@ impl Device {
     /// a lease expiry arms it again, so stock tools that publish only `cmd_vel` can drive. A STOP
     /// or an out-of-limits setpoint stays latched while the owner streams, until `rovi/arm` true.
     pub fn on_ros_cmd_vel(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
+        let due = self.arbiter.tick(now);
+        merge(due, self.ros_cmd_vel(now, attachment, payload))
+    }
+
+    fn ros_cmd_vel(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
         let (Some(att), Ok(sp)) = (Attachment::decode(attachment), Setpoint::decode(payload))
         else {
             return Effects::default();
@@ -236,6 +341,10 @@ impl Device {
         let Some(who) = self.ros_claimant(&att) else {
             return Effects::default();
         };
+        // An out-of-limits sample is a stop for an owner, but must not claim a free car.
+        if self.arbiter.owner().is_none() && !self.arbiter.within_limits(&sp) {
+            return Effects::default();
+        }
         let Ok(mut fx) = self.arbiter.claim(now, who) else {
             return Effects::default();
         };
@@ -254,6 +363,11 @@ impl Device {
 
     /// A sample on `rovi/arm` (`std_msgs/Bool`): true arms, false stops.
     pub fn on_ros_arm(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
+        let due = self.arbiter.tick(now);
+        merge(due, self.ros_arm(now, attachment, payload))
+    }
+
+    fn ros_arm(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
         let Some(att) = Attachment::decode(attachment) else {
             return Effects::default();
         };
@@ -294,9 +408,10 @@ impl Device {
         len
     }
 
-    /// Call every control tick (10 ms).
+    /// Call every control tick (10 ms). Also returns deadline effects a refused input kept.
     pub fn tick(&mut self, now: u64) -> Effects {
-        self.arbiter.tick(now)
+        let kept = core::mem::take(&mut self.pending);
+        merge(kept, self.arbiter.tick(now))
     }
 
     /// Motor control failed (the coordinator reports it): an out-of-limits stop.
@@ -387,7 +502,7 @@ mod tests {
     const B: u128 = 0xB;
 
     fn dev() -> Device {
-        Device::new(Config::DEFAULT, GEOMETRY)
+        Device::new(Config::DEFAULT, GEOMETRY).unwrap()
     }
 
     fn frame(kind: Kind, session: u32, seq: u32, payload: &[u8]) -> ([u8; 96], usize) {
@@ -1003,5 +1118,389 @@ mod tests {
         send(&mut d, 20, A, Kind::Setpoint, s, 4, &cdr(0.5));
         let (r, _) = send(&mut d, 20, A, Kind::Arm, s, 5, &[]);
         assert_eq!(r.unwrap().1[0], 2, "armed");
+    }
+
+    #[test]
+    fn an_unsupported_frame_neither_renews_the_lease_nor_uses_the_sequence() {
+        use crate::setpoint::tests::with_frame;
+        let mut d = dev();
+        let s = armed(&mut d); // setpoint seq 1 and ARM at t=0
+        send(
+            &mut d,
+            900,
+            A,
+            Kind::Setpoint,
+            s,
+            3,
+            &with_frame(b"map", 0, 0.5),
+        );
+        assert_eq!(
+            d.tick(1_000).stop,
+            Some(StopReason::LeaseExpired),
+            "map did not renew"
+        );
+
+        let mut d = dev();
+        let s = armed(&mut d);
+        send(
+            &mut d,
+            900,
+            A,
+            Kind::Setpoint,
+            s,
+            3,
+            &with_frame(b"map", 0, 0.5),
+        );
+        send(
+            &mut d,
+            950,
+            A,
+            Kind::Setpoint,
+            s,
+            3,
+            &with_frame(b"base_link", 0, 0.5),
+        );
+        assert_eq!(
+            d.tick(1_000).stop,
+            None,
+            "the same sequence in base_link is still accepted"
+        );
+    }
+
+    #[test]
+    fn an_old_stamp_is_accepted_and_the_lease_runs_from_receive_time() {
+        use crate::setpoint::tests::with_frame;
+        let mut d = dev();
+        let s = armed(&mut d);
+        send(
+            &mut d,
+            900,
+            A,
+            Kind::Setpoint,
+            s,
+            3,
+            &with_frame(b"", 0, 0.5),
+        );
+        assert_eq!(
+            d.tick(1_000).stop,
+            None,
+            "renewed at 900 despite a zero stamp"
+        );
+        assert_eq!(d.tick(1_900).stop, Some(StopReason::LeaseExpired));
+    }
+
+    #[test]
+    fn a_bad_first_ros_input_does_not_claim() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        let fx = d.on_ros_cmd_vel(0, &cmd, &cdr(9.0));
+        assert_eq!(fx, Effects::default(), "out of limits: no claim, no stop");
+        assert_eq!(d.arbiter().state(), State::Open);
+        let mut nan = cdr(0.5);
+        nan[20..28].copy_from_slice(&f64::NAN.to_le_bytes());
+        assert_eq!(d.on_ros_cmd_vel(10, &at(&cmd, 2), &nan), Effects::default());
+        assert_eq!(d.arbiter().state(), State::Open);
+        assert_eq!(
+            d.on_ros_cmd_vel(20, &at(&cmd, 3), &cdr(1.0)).claimed,
+            Some(Source::Ros)
+        );
+    }
+
+    // Deadline ordering: input at time t first processes every deadline at or before t, even when
+    // no control tick ran in between.
+
+    #[test]
+    fn a_setpoint_on_the_lease_deadline_cannot_renew_the_expired_lease() {
+        let mut d = dev();
+        let s = armed(&mut d); // lease until 1000
+        let (_, fx) = send(&mut d, 1_000, A, Kind::Setpoint, s, 3, &cdr(0.5));
+        assert_eq!(fx.stop, Some(StopReason::LeaseExpired));
+        assert_eq!(
+            d.arbiter().state(),
+            State::Stopped(StopReason::LeaseExpired)
+        );
+        assert_eq!(d.wheels(1_000), [0.0; 4]);
+    }
+
+    #[test]
+    fn a_setpoint_on_the_claim_deadline_cannot_revive_the_claim() {
+        let mut d = dev();
+        let (r, _) = send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
+        let s = r.unwrap().0.session;
+        let (_, fx) = send(&mut d, 10_000, A, Kind::Setpoint, s, 2, &cdr(0.5));
+        assert!(fx.released, "the claim window ended first");
+        assert_eq!(d.arbiter().state(), State::Open, "UDP needs a new claim");
+    }
+
+    #[test]
+    fn arm_and_setpoint_on_the_reclaim_deadline_cannot_drive_the_expired_session() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        assert_eq!(d.tick(1_000).stop, Some(StopReason::LeaseExpired)); // reclaim until 6000
+        let (_, fx) = send(&mut d, 6_000, A, Kind::Setpoint, s, 3, &cdr(0.5));
+        assert!(fx.released, "released first");
+        send(&mut d, 6_000, A, Kind::Arm, s, 4, &[]);
+        assert_eq!(d.arbiter().state(), State::Open);
+        assert_eq!(d.wheels(6_000), [0.0; 4]);
+    }
+
+    #[test]
+    fn a_ros_sample_on_the_reclaim_deadline_releases_then_claims_anew() {
+        let mut d = dev();
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        d.on_ros_arm(5, &arm, &bool_cdr(false)); // STOP latched
+        d.tick(1_000); // lease lapses: reclaim until 6000
+        let fx = d.on_ros_cmd_vel(6_000, &at(&cmd, 2), &cdr(1.0));
+        assert!(fx.released && fx.claimed == Some(Source::Ros), "{fx:?}");
+        let mut log = std::vec::Vec::new();
+        crate::events::effects(fx, |e| log.push(e));
+        assert_eq!(
+            log,
+            [
+                crate::events::Event::Released,
+                crate::events::Event::Claimed(Source::Ros)
+            ],
+            "release logged before the new claim"
+        );
+    }
+
+    #[test]
+    fn a_refused_ble_write_after_a_deadline_still_reports_the_release() {
+        let mut d = dev();
+        d.on_ble_connect(0, 7).unwrap();
+        let mut w = [0u8; 4 + 68];
+        w[4..].copy_from_slice(&cdr(0.5));
+        d.on_ble_setpoint(0, 7, &w);
+        d.on_ble_control(0, 7, 1).unwrap();
+        d.tick(1_000); // lease expiry, reclaim until 6000
+        assert_eq!(
+            d.on_ble_control(6_000, 7, 1),
+            Err(Error::NotOwner),
+            "the session is over"
+        );
+        assert!(
+            d.tick(6_005).released,
+            "the release reaches the log on the next tick"
+        );
+    }
+
+    // Valid operating profile.
+
+    #[test]
+    fn the_car_profile_is_valid() {
+        assert!(Device::new(Config::DEFAULT, Geometry::CAR).is_ok());
+    }
+
+    #[test]
+    fn an_invalid_geometry_fails_to_start() {
+        for g in [
+            Geometry {
+                max_wheel_speed: 0.0,
+                ..GEOMETRY
+            },
+            Geometry {
+                max_wheel_speed: f64::NAN,
+                ..GEOMETRY
+            },
+            Geometry {
+                max_wheel_speed: -40.0,
+                ..GEOMETRY
+            },
+            Geometry {
+                wheels_radius: 0.0,
+                ..GEOMETRY
+            },
+            Geometry {
+                wheels_radius: f64::INFINITY,
+                ..GEOMETRY
+            },
+            Geometry {
+                wheels_radius: 1e-300,
+                ..GEOMETRY
+            }, // advertised as f32 0.0
+            Geometry {
+                center_projection_sum: -0.2,
+                ..GEOMETRY
+            },
+            Geometry {
+                offset_x: f64::NAN,
+                ..GEOMETRY
+            },
+            Geometry {
+                offset_theta: f64::INFINITY,
+                ..GEOMETRY
+            },
+        ] {
+            assert_eq!(
+                Device::new(Config::DEFAULT, g).err(),
+                Some(ProfileError::Geometry),
+                "{g:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_speed_limits_fail_to_start() {
+        for cfg in [
+            Config {
+                max_vx: f64::NAN,
+                ..Config::DEFAULT
+            },
+            Config {
+                max_vy: -0.1,
+                ..Config::DEFAULT
+            },
+            Config {
+                max_wz: 1e39,
+                ..Config::DEFAULT
+            }, // not an f32
+            Config {
+                max_wz: f64::INFINITY,
+                ..Config::DEFAULT
+            },
+        ] {
+            assert_eq!(
+                Device::new(cfg, GEOMETRY).err(),
+                Some(ProfileError::Limits),
+                "{cfg:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn times_outside_one_to_65535_ms_fail_to_start() {
+        for cfg in [
+            Config {
+                lease_ms: 0,
+                ..Config::DEFAULT
+            },
+            Config {
+                lease_ms: 65_536,
+                ..Config::DEFAULT
+            },
+            Config {
+                claim_window_ms: 70_000,
+                ..Config::DEFAULT
+            },
+            Config {
+                reclaim_window_ms: 0,
+                ..Config::DEFAULT
+            },
+        ] {
+            assert_eq!(
+                Device::new(cfg, GEOMETRY).err(),
+                Some(ProfileError::Times),
+                "{cfg:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn boundary_profiles_start() {
+        let cfg = Config {
+            lease_ms: 1,
+            claim_window_ms: 65_535,
+            reclaim_window_ms: 65_535,
+            max_vx: 0.0,
+            ..Config::DEFAULT
+        };
+        assert!(Device::new(cfg, GEOMETRY).is_ok());
+    }
+
+    #[test]
+    fn a_limit_read_from_the_capabilities_is_accepted() {
+        // 0.3 is not an f32: the car advertises 0.30000001192..., and a controller that sends
+        // exactly that must not be stopped for exceeding 0.3.
+        let cfg = Config {
+            max_vx: 0.3,
+            ..Config::DEFAULT
+        };
+        let mut d = Device::new(cfg, GEOMETRY).unwrap();
+        let caps = d.capabilities();
+        let max_vx = f64::from(f32::from_le_bytes(caps[9..13].try_into().unwrap()));
+        let (r, _) = send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
+        let s = r.unwrap().0.session;
+        send(&mut d, 0, A, Kind::Setpoint, s, 1, &cdr(0.1));
+        send(&mut d, 0, A, Kind::Arm, s, 2, &[]);
+        let (_, fx) = send(&mut d, 10, A, Kind::Setpoint, s, 3, &cdr(max_vx));
+        assert_eq!(fx.stop, None, "{max_vx} is the advertised limit");
+        assert_eq!(d.arbiter().state(), State::Armed);
+    }
+
+    // Input validation before state changes.
+
+    /// Setpoint payloads that must not renew a lease or use a sequence.
+    fn malformed() -> std::vec::Vec<std::vec::Vec<u8>> {
+        let mut nan = cdr(0.5);
+        nan[20..28].copy_from_slice(&f64::NAN.to_le_bytes());
+        let mut out_of_plane = cdr(0.5);
+        out_of_plane[36..44].copy_from_slice(&0.1f64.to_le_bytes()); // linear.z
+        std::vec![
+            nan.to_vec(),
+            cdr(0.5)[..40].to_vec(),
+            std::vec::Vec::new(),
+            out_of_plane.to_vec(),
+            crate::setpoint::tests::with_frame(b"map", 0, 0.5),
+        ]
+    }
+
+    #[test]
+    fn malformed_setpoints_neither_renew_the_lease_nor_use_the_sequence() {
+        let mut d = dev();
+        let s = armed(&mut d); // seq 1 at t=0: lease until 1000
+        for p in malformed() {
+            let (_, fx) = send(&mut d, 500, A, Kind::Setpoint, s, 3, &p);
+            assert_eq!(fx, Effects::default());
+        }
+        assert_eq!(
+            d.wheels(500),
+            [0.25; 4],
+            "the previous output (0.5 m/s) stays"
+        );
+        assert_eq!(
+            d.tick(1_000).stop,
+            Some(StopReason::LeaseExpired),
+            "not renewed"
+        );
+
+        let mut d = dev();
+        let s = armed(&mut d);
+        for p in malformed() {
+            send(&mut d, 500, A, Kind::Setpoint, s, 3, &p);
+        }
+        send(&mut d, 600, A, Kind::Setpoint, s, 3, &cdr(0.25));
+        assert_eq!(
+            d.wheels(600),
+            [0.125; 4],
+            "sequence 3 (0.25 m/s) was still free"
+        );
+    }
+
+    #[test]
+    fn stale_or_non_owner_oversized_input_cannot_stop_the_owner() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        send(&mut d, 10, A, Kind::Setpoint, s, 10, &cdr(0.5));
+        let (_, fx) = send(&mut d, 20, A, Kind::Setpoint, s, 9, &cdr(9.0));
+        assert_eq!(fx.stop, None, "stale: sequence 9 after 10");
+        let (_, fx) = send(&mut d, 30, B, Kind::Setpoint, s, 11, &cdr(9.0));
+        assert_eq!(fx.stop, None, "not the owner");
+        assert_eq!(d.arbiter().state(), State::Armed);
+        assert_eq!(
+            d.tick(1_010).stop,
+            Some(StopReason::LeaseExpired),
+            "neither renewed it"
+        );
+    }
+
+    #[test]
+    fn another_ros_nodes_oversized_sample_cannot_stop_the_owner() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        let other = publisher(&mut d, 2, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        assert_eq!(d.on_ros_cmd_vel(10, &other, &cdr(9.0)).stop, None);
+        assert_eq!(d.arbiter().state(), State::Armed);
     }
 }

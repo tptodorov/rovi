@@ -53,8 +53,19 @@ impl<D: Driver> Drive<D> {
     /// One control tick (every 10 ms): the device's timers first, so a lease expiry reaches the
     /// pins in the same tick, then the motors.
     pub fn tick(&mut self, dev: &mut Device, now: u64) -> Tick {
+        self.tick_with(dev, now, Device::wheels)
+    }
+
+    /// [`tick`](Self::tick) with the wheel demands from `wheels`: the tests inject faults the
+    /// device's validated profile cannot produce.
+    fn tick_with(
+        &mut self,
+        dev: &mut Device,
+        now: u64,
+        wheels: fn(&Device, u64) -> [f32; 4],
+    ) -> Tick {
         let mut effects = dev.tick(now);
-        let fault = self.apply(dev, now);
+        let fault = self.apply(dev, now, wheels);
         if fault.is_some() {
             // Best effort: the drivers may already be in standby, and the fault is reported anyway.
             let _ = self.motor.standby();
@@ -65,7 +76,12 @@ impl<D: Driver> Drive<D> {
         Tick { effects, fault }
     }
 
-    fn apply(&mut self, dev: &Device, now: u64) -> Option<Fault> {
+    fn apply(
+        &mut self,
+        dev: &Device,
+        now: u64,
+        wheels: fn(&Device, u64) -> [f32; 4],
+    ) -> Option<Fault> {
         let arbiter = dev.arbiter();
         let result = if arbiter.state() != State::Armed {
             if !self.motor.is_enabled() {
@@ -75,9 +91,9 @@ impl<D: Driver> Drive<D> {
         } else if self.armed_for != Some(arbiter.arm_count()) {
             // Recorded before enabling: a failed enable is not retried on the next tick.
             self.armed_for = Some(arbiter.arm_count());
-            self.motor.enable(dev.wheels(now))
+            self.motor.enable(wheels(dev, now))
         } else if self.motor.is_enabled() {
-            self.motor.update(dev.wheels(now))
+            self.motor.update(wheels(dev, now))
         } else {
             // Armed, but a fault holds the motors off until the next arming.
             return None;
@@ -139,14 +155,7 @@ mod tests {
 
     const STANDBY: [Op; 2] = [Op::Stby(0, false), Op::Stby(1, false)];
     const ENABLE: [Op; 2] = [Op::Stby(0, true), Op::Stby(1, true)];
-    const CAR: Geometry = Geometry {
-        wheels_radius: 0.030,
-        center_projection_sum: 0.1275,
-        offset_x: 0.0,
-        offset_y: 0.0,
-        offset_theta: 0.0,
-        max_wheel_speed: 40.0,
-    };
+    const CAR: Geometry = Geometry::CAR;
     const PEER: u128 = 0xA;
 
     struct Car {
@@ -162,7 +171,7 @@ mod tests {
             let log = Recording::default();
             let mc = MotorControl::new(log.clone(), motor, CAR_CHANNELS).unwrap();
             let mut car = Car {
-                dev: Device::new(Config::DEFAULT, geometry),
+                dev: Device::new(Config::DEFAULT, geometry).unwrap(),
                 drive: Drive::new(mc),
                 log,
                 session: 0,
@@ -333,14 +342,10 @@ mod tests {
 
     #[test]
     fn a_non_finite_wheel_demand_stops_the_device_and_no_tick_recovers_it() {
-        // A NaN normalisation makes every wheel demand NaN: the motor layer refuses it.
-        let bad = Geometry {
-            max_wheel_speed: f64::NAN,
-            ..CAR
-        };
-        let mut car = Car::new(bad, MotorConfig::PRODUCT);
+        // Injected: a validated device profile cannot produce a NaN demand.
+        let mut car = Car::new(CAR, MotorConfig::PRODUCT);
         car.arm_udp(0);
-        let t = car.tick(10);
+        let t = car.drive.tick_with(&mut car.dev, 10, |_, _| [f32::NAN; 4]);
         assert_eq!(t.fault, Some(Fault::MotorNonFinite));
         assert_eq!(t.effects.stop, Some(StopReason::OutOfLimits));
         assert_eq!(

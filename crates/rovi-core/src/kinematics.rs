@@ -15,6 +15,19 @@ pub struct Geometry {
     pub max_wheel_speed: f64,
 }
 
+impl Geometry {
+    /// The car (M5, 2026-10-17): 60 mm wheels, wheelbase 0.115 m and track 0.140 m, so a centre
+    /// projection sum of 0.1275 m. `max_wheel_speed` is the experimental placeholder (M6 O2).
+    pub const CAR: Geometry = Geometry {
+        wheels_radius: 0.030,
+        center_projection_sum: 0.1275,
+        offset_x: 0.0,
+        offset_y: 0.0,
+        offset_theta: 0.0,
+        max_wheel_speed: 40.0,
+    };
+}
+
 /// Wheel speeds in rad/s: FL, FR, RR, RL.
 pub fn inverse(g: &Geometry, vx: f64, vy: f64, wz: f64) -> [f64; 4] {
     let (s, c) = (libm::sin(g.offset_theta), libm::cos(g.offset_theta));
@@ -31,9 +44,17 @@ pub fn inverse(g: &Geometry, vx: f64, vy: f64, wz: f64) -> [f64; 4] {
     ]
 }
 
-/// Normalises wheel speeds to wheel commands in -1.0..=1.0, saturating.
+/// Normalises wheel speeds to wheel commands in -1.0..=1.0, saturating. A non-finite speed (an
+/// overflow) stays NaN instead of saturating, so motor control refuses it as a fault.
 pub fn normalise(g: &Geometry, wheels: [f64; 4]) -> [f32; 4] {
-    wheels.map(|w| (w / g.max_wheel_speed).clamp(-1.0, 1.0) as f32)
+    wheels.map(|w| {
+        let n = w / g.max_wheel_speed;
+        if n.is_finite() {
+            n.clamp(-1.0, 1.0) as f32
+        } else {
+            f32::NAN
+        }
+    })
 }
 
 #[cfg(test)]
@@ -101,5 +122,20 @@ mod tests {
             normalise(&G, [80.0, -80.0, 0.0, 0.0]),
             [1.0, -1.0, 0.0, 0.0]
         );
+    }
+
+    #[test]
+    fn a_non_finite_wheel_speed_stays_non_finite_for_motor_fault_handling() {
+        let w = normalise(&G, [f64::INFINITY, f64::NEG_INFINITY, f64::NAN, 1.0]);
+        assert!(w[0].is_nan() && w[1].is_nan() && w[2].is_nan(), "{w:?}");
+        assert_eq!(w[3], (1.0 / G.max_wheel_speed) as f32);
+    }
+
+    #[test]
+    fn combined_inputs_saturate_each_wheel_independently() {
+        // vx 1.5 and vy 1.0: FR and RL would be 1.25, FL and RR 0.25. Each is clamped on its
+        // own; the four are not rescaled to keep their ratio.
+        let w = normalise(&G, inverse(&G, 1.5, 1.0, 0.0));
+        assert_eq!(w, [0.25, 1.0, 0.25, 1.0]);
     }
 }

@@ -69,15 +69,17 @@ pub struct Record {
 }
 
 /// Calls `emit` once per event in `fx`.
+/// Order: stop, release, claim. One call never claims and stops; when a passed deadline
+/// releases the car and the same input claims it again, the release happens first.
 pub fn effects(fx: Effects, mut emit: impl FnMut(Event)) {
-    if let Some(s) = fx.claimed {
-        emit(Event::Claimed(s));
-    }
     if let Some(r) = fx.stop {
         emit(Event::Stop(r));
     }
     if fx.released {
         emit(Event::Released);
+    }
+    if let Some(s) = fx.claimed {
+        emit(Event::Claimed(s));
     }
 }
 
@@ -307,12 +309,13 @@ mod tests {
         };
         let mut evs = Vec::new();
         effects(fx, |e| evs.push(e));
+        // The old session's stop and release come before the new claim (deadline ordering).
         assert_eq!(
             evs,
             [
-                Event::Claimed(Source::Ble),
                 Event::Stop(StopReason::OwnerLost),
-                Event::Released
+                Event::Released,
+                Event::Claimed(Source::Ble)
             ]
         );
     }

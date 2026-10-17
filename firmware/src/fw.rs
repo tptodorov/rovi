@@ -85,15 +85,6 @@ async fn until(mut cond: impl FnMut() -> bool) {
         Timer::after_millis(20).await;
     }
 }
-/// M5 dimensions measured 2026-10-17; speed normalization still awaits calibration.
-const GEOMETRY: Geometry = Geometry {
-    wheels_radius: 0.030,
-    center_projection_sum: 0.1275, // (0.115 m wheelbase + 0.140 m track) / 2
-    offset_x: 0.0,
-    offset_y: 0.0,
-    offset_theta: 0.0,
-    max_wheel_speed: 40.0, // Placeholder, not the unloaded speed measured at 70% duty.
-};
 
 /// MCPWM period in counts, so the compare value is the duty in permille (20 kHz, as M1).
 const PWM_PERIOD: u16 = 999;
@@ -315,7 +306,12 @@ async fn main(_spawner: Spawner) -> ! {
     }))
     .unwrap();
 
-    let dev = RefCell::new(Device::new(Config::DEFAULT, GEOMETRY));
+    // The profile is checked on the host (`Geometry::CAR` with `Config::DEFAULT`); an invalid one
+    // halts here with both drivers still in standby, before anything can claim the car.
+    let Ok(device) = Device::new(Config::DEFAULT, Geometry::CAR) else {
+        panic!("invalid device profile");
+    };
+    let dev = RefCell::new(device);
     println!(
         "M8 board-only AP=Rovi M8 udp=192.168.4.1:{} WPA2 channel=1 lease_ms={}",
         UDP_PORT,
