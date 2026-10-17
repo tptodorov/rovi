@@ -1,3 +1,7 @@
+## Purpose
+
+Defines how controllers request car motion, acquire ownership, arm, stop and inspect capabilities and status consistently across the supported transports.
+
 ## ADDED Requirements
 
 ### Requirement: Setpoint
