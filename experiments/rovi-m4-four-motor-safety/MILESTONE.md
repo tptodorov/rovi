@@ -2,7 +2,7 @@
 
 ## M4: four motors on the M8 firmware
 
-**Status:** step 1 passed (2026-10-14); step 2 in progress: wiring, mapping and direction done, start duty 35 %; stops, reversal and thermal to do.
+**Status:** **complete (2026-10-17).** Step 1 (one motor) passed 2026-10-14; step 2 (four motors on the soldered carrier) passed 2026-10-17. Open, not gating: motor capacitors C3-C6, the motor power bank's auto-sleep.
 **Setup:** M1's wiring plus motors and the 5 V power bank ([WIRING.md](WIRING.md)); wheels off the ground.
 
 ### Goal
@@ -22,12 +22,24 @@ Real hardware only.
 
 - [x] `STBY` is low through boot, reset and while disarmed; high only while armed. *(Step 1: shown by S3 on one motor; S1's meter check skipped.)*
 - [x] Each motor follows speed and direction; mapping and inversion recorded for all four wheels. *(Step 2, 2026-10-17: every channel drives its intended wheel, all forward; directions set at the connectors, no firmware inversion. [notes](bench/2026-10-17-step2/notes.md))*
-- [ ] STOP, lease expiry, controller disconnect, reset and ESP32 power loss each stop every wheel, and nothing restarts until a client arms again. *(S3, step 2)*
+- [x] STOP, lease expiry, controller disconnect, reset and ESP32 power loss each stop every wheel, and nothing restarts until a client arms again. *(Step 1 with one motor; step 2, 2026-10-17, with all four turning at 70 %.)*
 - [x] Four motors starting and reversing together do not reset the ESP32 or cut out the power bank. *(Step 2, 2026-10-17: 10 reversals at ±70 %, no reset, bank stayed on; the bank must be woken before a session.)*
 - [x] The radio keeps working while the motors run. *(Step 1: 5 min at 40 %; step 2: 5 min at 70 % with four motors; no reboot, no BLE drop.)*
 - [x] Driver and motor stay at most warm in a 5 min run; duty cap and current recorded for M5. *(Step 2: 5 min at 70 %, at most warm. Duty range 40-100 %, start threshold 35 %, 150 mA per motor running.)*
 
 ### Results
+
+#### 2026-10-16/17 step 2: four motors on the carrier — pass
+
+Notes and logs: [2026-10-16](bench/2026-10-16-step2/notes.md), [2026-10-17](bench/2026-10-17-step2/notes.md), [setup photo](bench/2026-10-17-step2/setup.jpg).
+
+* **Mapping and direction:** every channel drives its intended wheel, all forward (directions set at the connectors, no firmware inversion); strafe and rotate patterns as expected.
+* **Start duty:** the mounted motors need about **35 %** with all four connected (a loose motor started at 9 %). The motor layer now maps any command outside a 2 % deadband to **40-100 %** duty (PR #42); the gentlest command starts every motor (O6, M4 part).
+* **Power:** the motor power bank **auto-sleeps at 2.7 V** (below the TB6612's 4.5 V VM minimum) until its button is pressed; awake, VM is 4.7 V under load. Running current about 150 mA per motor.
+* **Reversal:** 10 changes at ±70 %, no ESP32 reset, bank stayed on (O7: no slew limit needed at these duties).
+* **Stops with four turning:** STOP, lease expiry (1 s after the last setpoint), controller loss, RST and ESP32 power loss each stopped all four; nothing restarted until a client armed again (O4).
+* **Thermal:** 5 min at 70 %, drivers and motors at most warm; radio fine throughout.
+* **Fault found and fixed:** the FR motor would not start on its own; a plug swap showed it followed the motor, and Todor's rework fixed it.
 
 #### 2026-10-14 step 1: one driver, one motor — pass
 

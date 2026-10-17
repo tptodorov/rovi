@@ -35,3 +35,9 @@ The dead zone (O6) is handled in the motor layer: the gentlest command starts ev
 | Thermal: 5 min at 70 % | 300 s, 6000 setpoints, clean STOP, no reset | Drivers and motors at most warm ✔ |
 
 STOP with four turning is shown by every run above (each ends with a client STOP, all wheels stop). Left for step 2: RST button and ESP32 power loss with four turning.
+
+## Stops with four turning: RST and ESP32 power loss
+
+Two 30 s runs at 70 %. Run 1: Todor pressed RST while all four turned; the BLE link dropped, the board rebooted, and run 2 then connected to the fresh boot (`Armed` at 14.4 s after the reset). Run 2: Todor unplugged the ESP32's USB while all four turned (motor bank on); the serial log ends with "Broken pipe".
+
+Observed (Todor): **all four stopped at once on RST and on ESP32 power loss, and nothing restarted until a client armed again** ✔. With STOP, lease expiry and controller loss above, every stop trigger is shown with four motors.

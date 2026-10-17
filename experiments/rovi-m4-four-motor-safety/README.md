@@ -1,6 +1,6 @@
 # Rovi M4: four motors on the M8 firmware
 
-**Status: step 1 passed (2026-10-14); step 2 in progress (mapping and direction confirmed 2026-10-17).**
+**Status: complete (2026-10-17).** Four motors on the soldered carrier pass every acceptance item ([MILESTONE](MILESTONE.md#results)).
 
 M4 drives the car's motors from the M8 firmware for the first time, wheels off the ground, with the minimal wiring of [ADR-0014](../../docs/adr/0014-m4-minimal-wiring-software-fail-safe.md): the ESP32-S3, TB6612FNG drivers, the motors and the 5 V power bank. Step 1 used M1's wiring; step 2 uses one 7-wire ribbon cable per driver ([WIRING](WIRING.md)). Goal, acceptance and results: [MILESTONE.md](MILESTONE.md).
 
