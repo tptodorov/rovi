@@ -4,6 +4,12 @@ Rovi follows **OpenSpec's `spec-driven` workflow** for product development, star
 
 Experiments retain their [milestone process](../experiments/README.md). Bench results inform product requirements; they do not automatically accept a new product implementation.
 
+## Reading in a browser
+
+Open [`openspec/index.html`](../openspec/index.html) locally in a browser (`xdg-open openspec/index.html`). It provides proposal summaries, requirement search, expandable scenarios, an M6 state-flow reading aid, read-only task checklists and verification links. It works offline; GitHub's file view shows the HTML source, so use your local checkout. Print / PDF expands scenarios and includes all requirements, even after filtering.
+
+Markdown remains authoritative. The page is generated, not an independently maintained specification; its recorded status and checked tasks are not proof of product or hardware acceptance. Edit the Markdown, then run `rtk npm run spec:build` and commit the regenerated page. CI runs `rtk npm run spec:reader:check` to check coverage, links and freshness. Reader code and the explicitly authored M6 state-flow summary live in `scripts/spec-reader/`; keep that summary aligned when transition requirements change.
+
 ## One home for each kind of information
 
 | Location | Meaning |
