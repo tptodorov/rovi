@@ -34,7 +34,7 @@ Measure whether the received chassis and motor setup can provide useful open-loo
 Real hardware only; reuse the verified M4 setup and stay within its recorded electrical limits.
 
 - [x] Motor, driver, wheel, and direction mapping is documented. *(M4 step 2; roller orientation checked in F1.)*
-- [ ] Four basic mecanum movement combinations and stop are demonstrated at safe speed.
+- [x] Four basic mecanum movement combinations and stop are demonstrated at safe speed. *(2026-10-17: forward/reverse, lateral, rotation and diagonal on the floor; clean physical stop explicitly confirmed in reverse. See results below.)*
 - [ ] Repeatability and calibration variation are recorded across battery/load conditions.
 - [ ] Encoder availability is confirmed; the open-loop versus closed-loop API decision has evidence and limitations. *(No encoders: confirmed in M4. The open-loop evidence comes from F3-F8.)*
 - [ ] The API/spec can state units, bounds, stop behavior, update timing, and calibration needs without hidden assumptions.
@@ -115,3 +115,7 @@ At `wz -0.5` for 0.5 s, Todor reported **"ok, 40-45deg"**: approximately **40–
 #### Reverse floor motion, 2026-10-17
 
 Three pulses at `vx -0.05` for 0.5 s were sent; the first two were repeated without reported measurements. On the third, Todor confirmed **10 cm backward, straight, clean stop**. Reverse motion and a clean physical stop are demonstrated at this command; stopping distance and reverse repeatability are not quantified. The distance is close to the forward baseline (10, 11, 10 cm). See [F3 notes and output](bench/2026-10-17-f3/notes.md).
+
+#### First floor diagonal, 2026-10-17
+
+At `vx 0.05`, `vy 0.05` for 0.5 s, Todor measured **4.5 cm forward and 4.5 cm left**: approximately **45° left of forward**, total displacement **6.4 cm**. Heading change and physical stopping were not separately reported; diagonal direction does not prove unchanged heading. See [F6 notes and output](bench/2026-10-17-f6/notes.md). Forward-right motion and diagonal repeatability remain pending.
