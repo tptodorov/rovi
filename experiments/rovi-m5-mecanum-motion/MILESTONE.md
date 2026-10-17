@@ -55,6 +55,17 @@ Reported by Todor before the floor tests:
 
 Derived geometry: `wheels_radius = 0.030 m`; `center_projection_sum = (0.115 + 0.140) / 2 = 0.1275 m`.
 
-These values are recorded here; firmware geometry has not yet been updated. Wheel speed, floor speed, drift and stopping distance remain unmeasured. The roller photo mentioned in chat was not available in the handoff, so the roller orientation is not yet verified. No M5 motor runs have been performed.
+These values are recorded here; firmware geometry has not yet been updated. Wheel speed, floor speed, drift and stopping distance remain unmeasured. No M5 motor runs have been performed.
+
+#### Top-view inspection, 2026-10-17
+
+![Assembled car, viewed from above](bench/2026-10-17-setup/top.jpg)
+
+Source: Todor's `IMG_0521.HEIC`, supplied from `experiments/rovi-m4-four-motor-safety/`; the JPEG is resized and stripped of metadata.
+
+* All four mecanum wheels and both power banks are visible.
+* The visible roller axes appear to form the expected X pattern ([WPILib reference](https://docs.wpilib.org/en/stable/docs/software/hardware-apis/motors/wpi-drive-classes.html)). This is photo evidence only; the F1 motion check remains pending.
+* No front marker is visible, so front/rear labels have not been inferred from this photo.
+* Wiring continuity, wheel clearance through a full turn and secure mounting cannot be established from this view.
 
 Record firmware revision, floor surface, battery state, observations and evidence for each subsequent run.
