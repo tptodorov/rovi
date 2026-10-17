@@ -22,8 +22,9 @@ def ble_setpoint(seq, vx=0.0, vy=0.0, wz=0.0):
 
 
 class Status(NamedTuple):
-    """The car's state, the reason of the last safety stop, and the last control error. Over BLE the
-    error is that of the last refused Control write (NotReady, Invalid) until one succeeds."""
+    """Shared state, stop reason and last refused owner ARM/STOP (NotReady, Invalid).
+    Only successful owner control or release clears the error; setpoints and echo do not.
+    Numeric codes remain version 1; Busy is a claimant reply, not a stored owner error."""
     state: str
     reason: str | None
     error: str | None

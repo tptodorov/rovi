@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>13 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>14 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
 <strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
@@ -1340,7 +1340,7 @@ BLE disconnect and UDP BYE release their owning session. A detected ROS router d
 <h3 id="openspec--changes--add-four-wheel-api--design--ros-capabilities-and-status">ROS capabilities and status</h3><p>
 Use shared typed capabilities/status snapshots; adapters serialize the same values. Preserve existing BLE/UDP frame layouts and numeric status codes. Implement persistent last-control-error state for every transport, not only BLE. BLE refreshes its readable value synchronously with changes; UDP sends its existing STATUS frame on owner control replies and stop transitions. Release leaves the externally readable state open; owner-lost is also recorded as a stop event, not a persistent stopped state with no owner.</p>
 <p>
-ROS uses bounded CDR strings and the exact key/units contract in the spec. Publish status on snapshot changes and once per second; <code>session=0</code> denotes no owner. No measured velocity field is added.</p>
+ROS uses bounded CDR strings and the exact key/units contract in the spec. Both ROS adapters compare the shared <code>Status</code> snapshot every 10 ms and publish observed changes plus a 900 ms heartbeat; reconnect resets the publication schedule. <code>session=0</code> denotes no owner. BLE refreshes the GATT value before reads and after control/setpoint writes, then notifies changes. UDP adapters poll for pending owner stop notifications even without incoming datagrams; unsolicited STATUS uses sequence 0, direct replies echo the request sequence. No measured velocity field is added.</p>
 <p>
 O9 closed on 2026-10-17: the pinned ordinary publisher did not serve retained history to a late Jazzy transient-local subscriber; the same subscriber received its later live sample (<a href="../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md">evidence</a>). Use the approved reliable/volatile/depth-1 fallback. <code>capabilities::Publication</code> publishes every 900 ms (headroom under one second) and on observed session/owner changes; each new router connection starts a fresh schedule. Both adapters poll it every 10 ms and serialize <code>Device::capabilities_snapshot()</code> through the same bounded CDR encoder. Controllers subscribe with volatile durability. Transport disconnection can delay delivery; publication schedules are not guarantees during packet loss or an unavailable router.</p>
 <h3 id="openspec--changes--add-four-wheel-api--design--compatibility-changes-to-verify">Compatibility changes to verify</h3><p>
@@ -1432,7 +1432,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.4 Implement canonical capabilities and ROS publication. Verify field/units/round-trip golden tests and a late Jazzy subscriber. Close O9 with evidence of working transient-local history or the specified one-second volatile fallback; document chosen QoS and reconnect behavior. <strong>Done 2026-10-17:</strong> shared typed <code>Capabilities</code> preserves the 27-byte BLE/UDP layout and emits the nine ROS keys with exact canonical values. Four encoder and three publication-schedule tests failed against stubs first; 191 workspace tests pass. O9 selected reliable/volatile/depth-1 (900 ms plus claim/release/reconnect), with <a href="../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md">Jazzy evidence</a>, a CI scenario and subscriber instructions in the README. All six product ROS scripts, UDP/Python checks and both firmware builds pass; no flash or board run.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.5 Implement shared owner-error persistence and status delivery for BLE/UDP/ROS. Test immediate BLE reads, UDP transition/reply frames, ROS change/periodic publication, none values, release and non-owner isolation; update client/runbook documentation without changing numeric wire codes.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.5 Implement shared owner-error persistence and status delivery for BLE/UDP/ROS. Test immediate BLE reads, UDP transition/reply frames, ROS change/periodic publication, none values, release and non-owner isolation; update client/runbook documentation without changing numeric wire codes. <strong>Done 2026-10-17:</strong> canonical <code>Status</code> snapshot and persistent owner control error shared by all sources; malformed UDP controls/ROS Bool report invalid without acting or consuming the ROS sequence. Six regression tests failed on old behavior and four delivery tests failed against stubs first. BLE refreshes before reads/after writes; UDP adapters send owner stop notifications while idle; ROS publishes four keys on observed changes plus a 900 ms heartbeat. Queued notifications exposed three UDP client failures, now fixed by sequence matching. 203 workspace tests, 14 UDP scenarios, 23 Python tests, all six ROS scripts and both firmware builds/clippy pass. <a href="../apps/simcar/scenarios/evidence/2026-10-17-status/README.md">Jazzy evidence</a>; actual ESP32 GATT/radio delivery remains 5.2.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 3.6 Add product CI alongside experiment checks. Verify format, clippy, core/motor tests, socket/ROS scenarios, and ESP32 builds with/without ROS; complete the verification map with test names and clearly label remaining physical checks. <em>CI part added early (2026-10-17, before section 3): product crates, sim car with/without ROS, UDP and ROS scenarios, both firmware builds. The verification-map completion remains.</em></li>
 </ul>
@@ -1491,7 +1491,7 @@ Host golden kinematics and combined-input saturation tests; transport parity (3.
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-open-loop-motion-references">Open-loop motion references</a></td>
 <td>
-Review product docs/status fields against M5 evidence; no command-derived measurement claims (3.5, 5.3).</td>
+Review: the shared status codec emits only state/reason/error/session; README labels M5 observations approximate, with no command-derived velocity measurement. Host: <code>status_codes_and_ros_fields_cover_all_reasons_and_errors</code>. Physical product acceptance remains 5.3.</td>
 </tr>
 <tr>
 <td>
@@ -1563,25 +1563,25 @@ Real Jazzy volatile subscriber timing plus claim/release/reconnect; record selec
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-status">Status</a></td>
 <td>
-Host snapshots and fake-BLE immediate read; validate actual BLE notification on board (3.5, 5.2).</td>
+Host: <code>ble_reads_follow_claim_control_deadline_and_release_immediately</code>, <code>status_codes_and_ros_fields_cover_all_reasons_and_errors</code>. BLE adapter refreshes before ATT reads and after writes; actual GATT read/notification delivery remains a board check (5.2).</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-ros-2-status-topic">ROS 2 status topic</a></td>
 <td>
-Jazzy subscriber observes changes and heartbeat, reason/error/session fields (3.5).</td>
+Host: <code>status_publication_tracks_each_field_and_heartbeat</code>, <code>status_is_a_cdr_string</code>. Jazzy: <code>ros-scenarios.sh</code> checks owner NotReady persistence, stop reasons and release; <code>ros_status.py</code> (via <code>ros-capabilities.sh</code>) checks four keys, change delivery, heartbeat and reconnect. Evidence: <a href="../apps/simcar/scenarios/evidence/2026-10-17-status/README.md">status run</a>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-last-command-error">Last command error</a></td>
 <td>
-Cross-transport test sequence STOP, refused ARM, setpoint, successful ARM, non-owner input (3.5).</td>
+Host: <code>udp_owner_error_persists_through_setpoints_echo_and_intruders</code>, <code>ros_owner_error_persists_until_a_successful_fresh_control</code>, <code>ble_status_carries_the_last_control_error_until_a_control_write_succeeds</code>, <code>malformed_ros_bool_reports_invalid_without_consuming_the_arm_sequence</code>, <code>udp_control_payloads_must_be_empty_and_report_invalid_without_acting</code>. Jazzy: <code>ros_controller.py</code> owner/intruder timeline and <code>ros_status.py</code> cross-source snapshots.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-input-validation-before-state-changes">Input validation before state changes</a></td>
 <td>
-Malformed corpus and non-owner/stale oversized samples; assert state, sequence and lease snapshots (3.1). Host: <code>malformed_setpoints_neither_renew_the_lease_nor_use_the_sequence</code>, <code>stale_or_non_owner_oversized_input_cannot_stop_the_owner</code>, <code>another_ros_nodes_oversized_sample_cannot_stop_the_owner</code>, <code>a_bad_first_ros_input_does_not_claim</code>.</td>
+Malformed corpus and non-owner/stale oversized samples; assert state, sequence and lease snapshots (3.1). Host: <code>malformed_setpoints_neither_renew_the_lease_nor_use_the_sequence</code>, <code>stale_or_non_owner_oversized_input_cannot_stop_the_owner</code>, <code>another_ros_nodes_oversized_sample_cannot_stop_the_owner</code>, <code>a_bad_first_ros_input_does_not_claim</code>, <code>malformed_ros_bool_reports_invalid_without_consuming_the_arm_sequence</code>, <code>udp_control_payloads_must_be_empty_and_report_invalid_without_acting</code> (control persistence: 3.5).</td>
 </tr>
 <tr>
 <td>
@@ -1617,7 +1617,7 @@ Exact key/unit golden tests and f32 round-trip values across three encodings (3.
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-status-delivery-and-empty-values">Status delivery and empty values</a></td>
 <td>
-BLE readable/notify tests, UDP reply and stop-frame capture, ROS release snapshot (3.5).</td>
+Host: <code>ble_reads_follow_claim_control_deadline_and_release_immediately</code>, <code>release_and_new_transport_claim_cannot_retain_a_previous_owners_error</code>, <code>udp_lease_stop_notifies_the_owner_once_in_the_current_session</code>, <code>direct_udp_control_replies_do_not_duplicate_stop_notifications</code>, <code>udp_notifications_never_leak_a_released_owners_session</code>. Sockets: <code>test_lease_stop_is_pushed_to_the_owner_without_a_request</code>, <code>test_control_reply_is_correlated_after_a_queued_stop_notification</code>; Jazzy <code>ros_status.py</code> release/none values. Actual BLE notifications remain physical (5.2).</td>
 </tr>
 <tr>
 <td>
@@ -1635,7 +1635,7 @@ Injected-time tests at deadline-1, deadline and deadline+1 for each window (3.1)
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-echo-is-observational">Echo is observational</a></td>
 <td>
-Existing UDP/fake-BLE echo patterns with state/lease/error snapshots and oversized payloads (3.3). Host: <code>echo_answers_any_peer_with_the_same_bytes</code>, <code>echo_never_claims_nor_renews_the_lease</code>, <code>oversize_echo_is_dropped</code>, <code>ble_echo_preserves_state_error_and_setpoint_sequence</code> (device policy, including empty payload; does not exercise ESP32 GATT notifications). Integration: <code>udp_scenarios.py::test_echo_from_any_peer_leaves_the_owner_alone</code>. Actual BLE notification delivery remains a board check (5.2); the firmware currently suppresses empty notifications, with correction tracked in 5.2. Shared UDP/ROS owner-error persistence is task 3.5.</td>
+Existing UDP/fake-BLE echo patterns with state/lease/error snapshots and oversized payloads (3.3). Host: <code>echo_answers_any_peer_with_the_same_bytes</code>, <code>echo_never_claims_nor_renews_the_lease</code>, <code>oversize_echo_is_dropped</code>, <code>ble_echo_preserves_state_error_and_setpoint_sequence</code> (device policy, including empty payload; does not exercise ESP32 GATT notifications). Integration: <code>udp_scenarios.py::test_echo_from_any_peer_leaves_the_owner_alone</code>. Actual BLE notification delivery remains a board check (5.2); the firmware currently suppresses empty notifications, with correction tracked in 5.2. Shared persistence is covered by <code>udp_owner_error_persists_through_setpoints_echo_and_intruders</code> and <code>ros_owner_error_persists_until_a_successful_fresh_control</code> (3.5).</td>
 </tr>
 <tr>
 <td>

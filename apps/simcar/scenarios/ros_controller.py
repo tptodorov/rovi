@@ -4,7 +4,9 @@
 
 Timeline: the stream claims and arms the car on its own (ADR-0011); at 2 s an intruder node tries
 to drive and stop; at 3 s the controller stops, and the stop stays latched while it keeps
-streaming; at 4.5 s it arms again; at 5.5 s the stream ends and the lease expires.
+streaming. An ARM before fresh input at 3.1 s reports NotReady; resumed streaming and an
+intruder STOP preserve that error. At 4.5 s the owner arms again; at 5.5 s the stream ends
+and the lease expires. After the final stream ends at 10 s, the car releases by 16 s.
 At 7 s an out-of-limits sample latches the stop; valid streaming resumes at 7.25 s,
 but only the explicit arm at 9 s may restart the car."""
 import os
@@ -43,14 +45,18 @@ def send_arm(pub, v):
 t0 = time.time()
 time.sleep(float(os.environ.get("ROVI_GRAPH_WAIT_S", "2")))  # let the car learn the graph from liveliness tokens
 t0 = time.time()
-armed_sent = stopped_sent = intruder_sent = oversized_sent = rearmed_sent = False
-while (t := time.time() - t0) < 11.5:
-    if t < 5.5 or 7.25 < t < 10:
+armed_sent = stopped_sent = premature_arm_sent = error_intruder_sent = intruder_sent = oversized_sent = rearmed_sent = False
+while (t := time.time() - t0) < 17:
+    if t < 3 or 3.25 < t < 5.5 or 7.25 < t < 10:
         cmd.publish(twist(1.0))  # 20 Hz
     if t > 2 and not intruder_sent:  # another node tries to drive and to stop
         bad_cmd.publish(twist(-1.0)); send_arm(bad_arm, False); intruder_sent = True
     if t > 3 and not stopped_sent:
         send_arm(arm, False); stopped_sent = True
+    if t > 3.1 and not premature_arm_sent:
+        send_arm(arm, True); premature_arm_sent = True
+    if t > 3.5 and not error_intruder_sent:
+        send_arm(bad_arm, False); error_intruder_sent = True
     if t > 4.5 and not armed_sent:
         send_arm(arm, True); armed_sent = True
     if t > 7 and not oversized_sent:

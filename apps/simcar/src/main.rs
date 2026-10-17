@@ -46,18 +46,41 @@ fn peer_id(a: SocketAddr) -> u128 {
 
 fn udp_loop(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
     let sock = UdpSocket::bind(("0.0.0.0", port))?;
+    sock.set_read_timeout(Some(Duration::from_millis(10)))?;
     println!("simcar listening on udp/{port}");
     let (mut buf, mut out) = ([0u8; 1500], [0u8; 128]);
+    let mut owner_addr = None;
     loop {
-        let (n, from) = sock.recv_from(&mut buf)?;
-        let r = dev
-            .lock()
-            .unwrap()
-            .on_udp(ms(t0), peer_id(from), &buf[..n], &mut out);
-        if r.len > 0 {
-            sock.send_to(&out[..r.len], from)?;
+        match sock.recv_from(&mut buf) {
+            Ok((n, from)) => {
+                let r = {
+                    let mut d = dev.lock().unwrap();
+                    let r = d.on_udp(ms(t0), peer_id(from), &buf[..n], &mut out);
+                    if d.arbiter().owner().is_some_and(|o| {
+                        o.source == rovi_core::arbiter::Source::Udp && o.id == peer_id(from)
+                    }) {
+                        owner_addr = Some(from);
+                    }
+                    r
+                };
+                if r.len > 0 {
+                    sock.send_to(&out[..r.len], from)?;
+                }
+                log_effects(r.effects, t0);
+            }
+            Err(e)
+                if matches!(
+                    e.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) => {}
+            Err(e) => return Err(e),
         }
-        log_effects(r.effects, t0);
+        let pending = dev.lock().unwrap().udp_status_notification(&mut out);
+        if let Some((peer, n)) = pending {
+            if let Some(to) = owner_addr.filter(|a| peer_id(*a) == peer) {
+                sock.send_to(&out[..n], to)?;
+            }
+        }
     }
 }
 

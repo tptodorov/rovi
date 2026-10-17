@@ -114,7 +114,7 @@ jobs:
         run: cargo build --locked --features ros
       - name: Product ROS scenarios
         run: apps/simcar/scenarios/ros-scenarios.sh
-      - name: Product capabilities (late subscriber, QoS, claim/release, reconnect)
+      - name: Product capabilities/status (late subscriber, shared errors, release, reconnect)
         run: apps/simcar/scenarios/ros-capabilities.sh
       - name: Product router frozen and resumed (TCP rejoins)
         run: apps/simcar/scenarios/ros-router-gone.sh 10000 tcp

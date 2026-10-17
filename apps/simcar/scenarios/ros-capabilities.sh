@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Capabilities fallback: late Jazzy subscriber, exact UDP parity, no claim by a reader,
-# immediate claim/release publication and router reconnect. Sim car only; no board access.
+# immediate claim/release publication, shared status/errors and router reconnect. Sim car only; no board access.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 name=rovi-capabilities-sim
@@ -30,7 +30,7 @@ wait_link() {
 probe() {
   docker exec -e ROVI_TARGET=127.0.0.1:17794 -e ROVI_CARLOG="$log" \
     -e ZENOH_SESSION_CONFIG_URI=/tmp/session.json5 "$name" \
-    bash -c 'source /opt/ros/jazzy/setup.bash && python3 /scenarios/ros_capabilities.py'
+    bash -c 'source /opt/ros/jazzy/setup.bash && python3 /scenarios/ros_capabilities.py && python3 /scenarios/ros_status.py'
 }
 wait_link 1
 sleep 2 # subscriber starts after initial publication
@@ -39,4 +39,4 @@ docker restart "$name" >/dev/null
 wait_link 2
 probe
 if grep -q 'state=Armed' "$log"; then echo 'FAIL: capabilities check armed the car'; exit 1; fi
-echo 'ros capabilities: ok (volatile fallback, including reconnect)'
+echo 'ros capabilities/status: ok (volatile fallback, including reconnect)'

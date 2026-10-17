@@ -1,0 +1,5 @@
+{"late_seconds": 0.789, "max_period_seconds": 0.909, "claim_seconds": 0.009, "release_seconds": 0.01, "capabilities": {"version": 1, "wheels_radius": 0.05000000074505806, "center_projection_sum": 0.20000000298023224, "max_vx": 1.0, "max_vy": 1.0, "max_wz": 3.0, "lease_ms": 1000, "claim_ms": 10000, "reclaim_ms": 5000}}
+{"status_late_seconds": 0.461, "max_period_seconds": 0.905, "claim_seconds": 0.01, "release_seconds": 0.01, "shared_errors_and_release": "passed"}
+{"late_seconds": 0.11, "max_period_seconds": 0.907, "claim_seconds": 0.01, "release_seconds": 0.011, "capabilities": {"version": 1, "wheels_radius": 0.05000000074505806, "center_projection_sum": 0.20000000298023224, "max_vx": 1.0, "max_vy": 1.0, "max_wz": 3.0, "lease_ms": 1000, "claim_ms": 10000, "reclaim_ms": 5000}}
+{"status_late_seconds": 0.42, "max_period_seconds": 0.906, "claim_seconds": 0.01, "release_seconds": 0.01, "shared_errors_and_release": "passed"}
+ros capabilities/status: ok (volatile fallback, including reconnect)

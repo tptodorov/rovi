@@ -7,6 +7,7 @@ use crate::graph::Graph;
 use crate::kinematics::{self, Geometry};
 use crate::rmw::Attachment;
 use crate::setpoint::Setpoint;
+use crate::status::Status;
 use crate::udp::{self, Header, Kind};
 
 /// Bytes of the `HELLO_ACK` payload.
@@ -56,9 +57,8 @@ pub struct Device {
     geometry: Geometry,
     arbiter: Arbiter,
     graph: Graph<16>,
-    /// The last error a BLE control write got, shown in the Status last-error byte until the
-    /// next control write that succeeds.
-    ble_error: Option<Error>,
+    /// The owner's last refused ARM/STOP, retained until its next successful control command.
+    owner_error: Option<Error>,
     /// Deadline effects an input processed but could not return (a refused BLE write); the
     /// next [`tick`](Self::tick) returns them.
     pending: Effects,
@@ -66,6 +66,8 @@ pub struct Device {
     marks: Marks,
     /// The last BLE connection's generation; 0 is never handed out.
     ble_generation: u32,
+    /// Last delivered UDP status, including owner identity; avoids duplicating direct replies.
+    last_udp_status: Option<(u128, Status)>,
 }
 
 /// Owner publishers the ROS ordering table tracks per session, as many as the graph holds (the
@@ -92,10 +94,19 @@ impl Marks {
         }
     }
 
+    fn is_new(&self, session: u32, gid: [u8; 16], seq: i64) -> bool {
+        seq >= 0
+            && (session != self.session
+                || self.gids[..self.len]
+                    .iter()
+                    .position(|g| *g == gid)
+                    .map_or(self.len < MARKS, |i| seq > self.seqs[i]))
+    }
+
     /// Records `seq` from `gid` if it is above that publisher's mark in `session` (a new session
     /// starts empty). False for a negative, repeated or older sequence, or a full table.
     fn accept(&mut self, session: u32, gid: [u8; 16], seq: i64) -> bool {
-        if seq < 0 {
+        if !self.is_new(session, gid, seq) {
             return false;
         }
         if session != self.session {
@@ -173,11 +184,34 @@ impl Device {
             geometry,
             arbiter: Arbiter::seeded(cfg, session_seed),
             graph: Graph::new(),
-            ble_error: None,
+            owner_error: None,
             pending: Effects::default(),
             marks: Marks::new(session_seed),
             ble_generation: 0,
+            last_udp_status: None,
         })
+    }
+
+    fn expire(&mut self, now: u64) -> Effects {
+        let fx = self.arbiter.tick(now);
+        if fx.released {
+            self.owner_error = None;
+        }
+        fx
+    }
+
+    fn control(&mut self, now: u64, who: Claimant, arm: Option<bool>) -> Result<Effects, Error> {
+        let result = match arm {
+            Some(true) => self.arbiter.arm(now, who).map(|()| Effects::default()),
+            Some(false) => self.arbiter.stop(now, who),
+            None => self.arbiter.check_owner(who).and(Err(Error::Invalid)),
+        };
+        match result {
+            Ok(_) => self.owner_error = None,
+            Err(e @ (Error::NotReady | Error::Invalid)) => self.owner_error = Some(e),
+            Err(_) => {}
+        }
+        result
     }
 
     /// May `source`'s radio be on? While one source owns the car, the others' radios are off.
@@ -201,7 +235,7 @@ impl Device {
 
     /// Handles one UDP datagram from `peer` (an id the shell keeps stable per remote address).
     pub fn on_udp(&mut self, now: u64, peer: u128, datagram: &[u8], out: &mut [u8]) -> Reply {
-        let due = self.arbiter.tick(now);
+        let due = self.expire(now);
         let mut r = self.udp_input(now, peer, datagram, out);
         r.effects = merge(due, r.effects);
         r
@@ -235,6 +269,9 @@ impl Device {
             },
             Kind::Hello => match self.arbiter.claim(now, who) {
                 Ok(effects) => {
+                    if effects.claimed.is_some() {
+                        self.owner_error = None;
+                    }
                     let caps = self.capabilities();
                     let len = reply(Kind::HelloAck, self.arbiter.session(), &caps, out);
                     Reply { len, effects }
@@ -252,36 +289,37 @@ impl Device {
                 },
                 Err(_) => Reply::default(),
             },
-            Kind::Arm if ours => match self.arbiter.arm(now, who) {
-                Ok(()) => self.status_reply(Effects::default(), None, h, out),
-                Err(Error::NotOwner) => Reply::default(),
-                Err(e) => self.status_reply(Effects::default(), Some(e), h, out),
-            },
-            Kind::Stop if ours => match self.arbiter.stop(now, who) {
-                Ok(effects) => self.status_reply(effects, None, h, out),
-                Err(_) => Reply::default(),
-            },
+            Kind::Arm | Kind::Stop if ours => {
+                let command = payload.is_empty().then_some(h.kind == Kind::Arm);
+                match self.control(now, who, command) {
+                    Ok(effects) => self.status_reply(effects, h, out),
+                    Err(Error::NotOwner) => Reply::default(),
+                    Err(_) => self.status_reply(Effects::default(), h, out),
+                }
+            }
             Kind::Bye if ours => match self.arbiter.release(now, who) {
-                Ok(effects) => Reply { len: 0, effects },
+                Ok(effects) => {
+                    self.owner_error = None;
+                    Reply { len: 0, effects }
+                }
                 Err(_) => Reply::default(),
             },
             _ => Reply::default(),
         }
     }
 
-    fn status_reply(
-        &self,
-        effects: Effects,
-        error: Option<Error>,
-        h: Header,
-        out: &mut [u8],
-    ) -> Reply {
+    fn status_reply(&mut self, effects: Effects, h: Header, out: &mut [u8]) -> Reply {
         let header = Header {
             kind: Kind::Status,
             session: self.arbiter.session(),
             seq: h.seq,
         };
-        let len = udp::write(out, header, &self.status(error)).unwrap_or(0);
+        let len = udp::write(out, header, &self.status()).unwrap_or(0);
+        if len > 0 {
+            if let Some(owner) = self.arbiter.owner() {
+                self.last_udp_status = Some((owner.id, self.status_snapshot()));
+            }
+        }
         Reply { len, effects }
     }
 
@@ -297,10 +335,10 @@ impl Device {
             handle,
             generation: self.ble_generation,
         };
-        let due = self.arbiter.tick(now);
+        let due = self.expire(now);
         let result = self.arbiter.claim(now, ble(conn));
         if result.is_ok() {
-            self.ble_error = None;
+            self.owner_error = None;
         }
         self.returned(due, result).map(|fx| (conn, fx))
     }
@@ -318,7 +356,7 @@ impl Device {
 
     /// A write to the Setpoint characteristic: `seq u32` (LE) then the CDR `TwistStamped`.
     pub fn on_ble_setpoint(&mut self, now: u64, conn: BleConn, data: &[u8]) -> Effects {
-        let due = self.arbiter.tick(now);
+        let due = self.expire(now);
         merge(due, self.ble_setpoint(now, conn, data))
     }
 
@@ -340,51 +378,51 @@ impl Device {
 
     /// A write to the Control characteristic: 1 = ARM, 2 = STOP. An error rejects the write.
     pub fn on_ble_control(&mut self, now: u64, conn: BleConn, cmd: u8) -> Result<Effects, Error> {
-        let due = self.arbiter.tick(now);
+        let due = self.expire(now);
         let result = self.ble_control(now, conn, cmd);
         self.returned(due, result)
     }
 
     fn ble_control(&mut self, now: u64, conn: BleConn, cmd: u8) -> Result<Effects, Error> {
-        let who = ble(conn);
-        let result = match cmd {
-            1 => self.arbiter.arm(now, who).map(|()| Effects::default()),
-            2 => self.arbiter.stop(now, who),
-            _ => self.arbiter.check_owner(who).and(Err(Error::Invalid)),
-        };
-        // Only the owner's writes show in Status.
-        match result {
-            Ok(_) => self.ble_error = None,
-            Err(Error::NotOwner) => {}
-            Err(e) => self.ble_error = Some(e),
-        }
-        result
+        self.control(
+            now,
+            ble(conn),
+            match cmd {
+                1 => Some(true),
+                2 => Some(false),
+                _ => None,
+            },
+        )
     }
 
     /// The Status characteristic for the BLE owner: the state and the last control error.
     pub fn ble_status(&self) -> [u8; STATUS_LEN] {
-        self.status(self.ble_error)
+        self.status()
     }
 
     /// The central disconnected.
     pub fn on_ble_disconnect(&mut self, now: u64, conn: BleConn) -> Effects {
-        let due = self.arbiter.tick(now);
-        merge(
-            due,
-            self.arbiter.release(now, ble(conn)).unwrap_or_default(),
-        )
+        let due = self.expire(now);
+        let fx = self.arbiter.release(now, ble(conn)).unwrap_or_default();
+        if fx.released {
+            self.owner_error = None;
+        }
+        merge(due, fx)
     }
 
     /// The ROS adapter lost its router session. A ROS owner is released at once (a stop if it was
     /// armed); without this, only its lease would stop the car. Other owners are not affected.
     pub fn on_ros_disconnect(&mut self, now: u64) -> Effects {
-        let due = self.arbiter.tick(now);
+        let due = self.expire(now);
         let fx = match self.arbiter.owner() {
             Some(owner) if owner.source == Source::Ros => {
                 self.arbiter.release(now, owner).unwrap_or_default()
             }
             _ => Effects::default(),
         };
+        if fx.released {
+            self.owner_error = None;
+        }
         merge(due, fx)
     }
 
@@ -416,7 +454,7 @@ impl Device {
     /// a lease expiry arms it again, so stock tools that publish only `cmd_vel` can drive. A STOP
     /// or an out-of-limits setpoint stays latched while the owner streams, until `rovi/arm` true.
     pub fn on_ros_cmd_vel(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
-        let due = self.arbiter.tick(now);
+        let due = self.expire(now);
         merge(due, self.ros_cmd_vel(now, attachment, payload))
     }
 
@@ -435,6 +473,9 @@ impl Device {
         let Ok(mut fx) = self.arbiter.claim(now, who) else {
             return Effects::default();
         };
+        if fx.claimed.is_some() {
+            self.owner_error = None;
+        }
         // Owner only from here: order the sample against its own publisher's mark.
         if !self.marks.accept(self.arbiter.session(), att.gid, att.seq) {
             return fx;
@@ -454,7 +495,7 @@ impl Device {
 
     /// A sample on `rovi/arm` (`std_msgs/Bool`): true arms, false stops.
     pub fn on_ros_arm(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
-        let due = self.arbiter.tick(now);
+        let due = self.expire(now);
         merge(due, self.ros_arm(now, attachment, payload))
     }
 
@@ -462,52 +503,33 @@ impl Device {
         let Some(att) = Attachment::decode(attachment) else {
             return Effects::default();
         };
-        if payload.len() < 5 || payload[..4] != [0, 1, 0, 0] {
-            return Effects::default();
-        }
         let Some(who) = self.ros_claimant(&att) else {
             return Effects::default();
         };
         if self.arbiter.owner() != Some(who)
-            || !self.marks.accept(self.arbiter.session(), att.gid, att.seq)
+            || !self.marks.is_new(self.arbiter.session(), att.gid, att.seq)
         {
             return Effects::default();
         }
-        if payload[4] != 0 {
-            let _ = self.arbiter.arm(now, who);
-            Effects::default()
-        } else {
-            self.arbiter.stop(now, who).unwrap_or_default()
+        let valid = payload.len() == 5 && payload[..4] == [0, 1, 0, 0] && payload[4] <= 1;
+        if !valid {
+            let _ = self.control(now, who, None);
+            return Effects::default();
         }
+        self.marks.accept(self.arbiter.session(), att.gid, att.seq);
+        self.control(now, who, Some(payload[4] == 1))
+            .unwrap_or_default()
     }
 
     /// Writes the `rovi/status` sample (`std_msgs/String` CDR) and returns its length.
     pub fn status_cdr(&self, out: &mut [u8]) -> usize {
-        use core::fmt::Write;
-        let state = match self.arbiter.state() {
-            State::Open => "open",
-            State::Claimed => "claimed",
-            State::Armed => "armed",
-            State::Stopped(_) => "stopped",
-        };
-        let mut text = crate::rmw::Key::<48>::new();
-        let _ = write!(text, "state={state} session={}", self.arbiter.session());
-        let text = text.as_str().as_bytes();
-        let len = 8 + text.len() + 1;
-        let Some(out) = out.get_mut(..len) else {
-            return 0;
-        };
-        out[..4].copy_from_slice(&[0, 1, 0, 0]);
-        out[4..8].copy_from_slice(&(text.len() as u32 + 1).to_le_bytes());
-        out[8..len - 1].copy_from_slice(text);
-        out[len - 1] = 0;
-        len
+        self.status_snapshot().encode_cdr(out).unwrap_or(0)
     }
 
     /// Call every control tick (10 ms). Also returns deadline effects a refused input kept.
     pub fn tick(&mut self, now: u64) -> Effects {
         let kept = core::mem::take(&mut self.pending);
-        merge(kept, self.arbiter.tick(now))
+        merge(kept, self.expire(now))
     }
 
     /// Motor control failed (the coordinator reports it): an out-of-limits stop.
@@ -547,21 +569,47 @@ impl Device {
     }
 
     /// The Status characteristic (and the `STATUS` payload).
-    pub fn status(&self, error: Option<Error>) -> [u8; STATUS_LEN] {
-        let (state, reason) = match self.arbiter.state() {
-            State::Open => (0, 0),
-            State::Claimed => (1, 0),
-            State::Armed => (2, 0),
-            State::Stopped(r) => (3, stop_code(r)),
+    pub fn status(&self) -> [u8; STATUS_LEN] {
+        self.status_snapshot().encode()
+    }
+
+    /// Current state/error/session for every source. Release exposes open with no stale error.
+    pub fn status_snapshot(&self) -> Status {
+        let owned = self.arbiter.owner().is_some();
+        Status {
+            state: self.arbiter.state(),
+            error: if owned { self.owner_error } else { None },
+            session: if owned { self.arbiter.session() } else { 0 },
+        }
+    }
+
+    /// A stop-transition STATUS for the UDP owner. Call even while no datagrams arrive.
+    /// Returns peer id / frame length; sequence 0 denotes an unsolicited transition.
+    pub fn udp_status_notification(&mut self, out: &mut [u8]) -> Option<(u128, usize)> {
+        let Some(owner) = self.arbiter.owner().filter(|o| o.source == Source::Udp) else {
+            self.last_udp_status = None;
+            return None;
         };
-        let error = match error {
-            None => 0,
-            Some(Error::Busy) => 1,
-            Some(Error::NotOwner) => 2,
-            Some(Error::NotReady) => 3,
-            Some(Error::Invalid) => 4,
-        };
-        [state, reason, error]
+        let status = self.status_snapshot();
+        let current = (owner.id, status);
+        if self.last_udp_status == Some(current) {
+            return None;
+        }
+        if !matches!(status.state, State::Stopped(_)) {
+            self.last_udp_status = Some(current);
+            return None;
+        }
+        let n = udp::write(
+            out,
+            Header {
+                kind: Kind::Status,
+                session: status.session,
+                seq: 0,
+            },
+            &status.encode(),
+        )?;
+        self.last_udp_status = Some(current);
+        Some((owner.id, n))
     }
 }
 
@@ -569,15 +617,6 @@ fn ble(conn: BleConn) -> Claimant {
     Claimant {
         source: Source::Ble,
         id: u128::from(conn.generation) << 16 | u128::from(conn.handle),
-    }
-}
-
-fn stop_code(r: StopReason) -> u8 {
-    match r {
-        StopReason::Stop => 1,
-        StopReason::LeaseExpired => 2,
-        StopReason::OwnerLost => 3,
-        StopReason::OutOfLimits => 4,
     }
 }
 
@@ -984,7 +1023,7 @@ mod tests {
         assert_eq!(b[8 + len - 1], 0, "NUL terminated");
         assert_eq!(
             core::str::from_utf8(&b[8..7 + len]).unwrap(),
-            "state=open session=0"
+            "state=open reason=none error=none session=0"
         );
         let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 2));
         d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
@@ -993,7 +1032,7 @@ mod tests {
         let len = u32::from_le_bytes(b[4..8].try_into().unwrap()) as usize;
         assert_eq!(
             core::str::from_utf8(&b[8..7 + len]).unwrap(),
-            "state=armed session=1"
+            "state=armed reason=none error=none session=1"
         );
         assert_eq!(n, 8 + len);
     }
@@ -1996,7 +2035,7 @@ mod tests {
     #[test]
     fn boot_and_claim_expiry_leave_zero_wheels_and_reopen_radios() {
         let mut d = dev();
-        assert_eq!(d.status(None), [0, 0, 0]);
+        assert_eq!(d.status(), [0, 0, 0]);
         assert!(d.arbiter().owner().is_none());
         assert_eq!(d.wheels(0), [0.0; 4]);
         assert!(d.wifi_allowed() && d.radio_allowed(Source::Ble));
@@ -2058,6 +2097,199 @@ mod tests {
             d.on_ros_cmd_vel(1, &at(&cmd, 2), &cdr(limit + f64::EPSILON))
                 .stop,
             Some(StopReason::OutOfLimits)
+        );
+    }
+
+    #[test]
+    fn udp_owner_error_persists_through_setpoints_echo_and_intruders() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        send(&mut d, 1, A, Kind::Stop, s, 3, &[]);
+        let (r, _) = send(&mut d, 2, A, Kind::Arm, s, 4, &[]);
+        assert_eq!(r.unwrap().1[..3], [3, 1, 3]);
+        assert_eq!(
+            d.ble_status(),
+            [3, 1, 3],
+            "same persistent snapshot on all sources"
+        );
+        send(&mut d, 3, A, Kind::Setpoint, s, 2, &cdr(0.5));
+        send(&mut d, 4, A, Kind::Echo, s, 99, b"probe");
+        send(&mut d, 5, B, Kind::Stop, s, 5, &[]);
+        send(&mut d, 6, A, Kind::Stop, s.wrapping_add(1), 5, &[]);
+        send(&mut d, 7, B, Kind::Hello, 0, 6, &[]);
+        assert_eq!(d.ble_status(), [3, 1, 3]);
+        send(&mut d, 8, A, Kind::Arm, s, 5, &[]);
+        assert_eq!(d.ble_status(), [2, 0, 0]);
+    }
+
+    #[test]
+    fn udp_control_payloads_must_be_empty_and_report_invalid_without_acting() {
+        for kind in [Kind::Arm, Kind::Stop] {
+            let mut d = dev();
+            let (r, _) = send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
+            let s = r.unwrap().0.session;
+            send(&mut d, 1, A, Kind::Setpoint, s, 1, &cdr(0.5));
+            if kind == Kind::Stop {
+                send(&mut d, 2, A, Kind::Arm, s, 2, &[]);
+            }
+            let before = d.arbiter().state();
+            let (r, _) = send(&mut d, 3, A, kind, s, 3, &[1]);
+            assert_eq!(r.unwrap().1[2], 4, "identifiable owner's malformed control");
+            assert_eq!(d.arbiter().state(), before);
+            assert_eq!(d.ble_status()[2], 4);
+            send(&mut d, 4, A, kind, s, 3, &[]);
+            assert_eq!(d.ble_status()[2], 0);
+        }
+    }
+
+    #[test]
+    fn ros_owner_error_persists_until_a_successful_fresh_control() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        let arm = publisher(&mut d, 1, 2, 1);
+        let intruder = publisher(&mut d, 2, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        d.on_ros_arm(1, &arm, &bool_cdr(false));
+        d.on_ros_arm(2, &at(&arm, 2), &bool_cdr(true));
+        assert_eq!(d.ble_status(), [3, 1, 3]);
+        d.on_ros_cmd_vel(3, &at(&cmd, 2), &cdr(0.5));
+        assert_eq!(echo(b"probe"), Some(&b"probe"[..]));
+        d.on_ros_arm(4, &intruder, &bool_cdr(false));
+        d.on_ros_arm(5, &arm, &bool_cdr(false)); // replay cannot clear the error
+        assert_eq!(d.ble_status(), [3, 1, 3]);
+        d.on_ros_arm(6, &at(&arm, 3), &bool_cdr(true));
+        assert_eq!(d.ble_status(), [2, 0, 0]);
+    }
+
+    #[test]
+    fn malformed_ros_bool_reports_invalid_without_consuming_the_arm_sequence() {
+        for bad in [
+            &[0, 1, 0, 0, 2][..],
+            &[0, 1, 0, 0, 255],
+            &[0, 1, 0, 0],
+            &[0, 0, 0, 0, 1],
+            &[0, 1, 0, 0, 1, 99],
+        ] {
+            let mut d = dev();
+            let cmd = publisher(&mut d, 1, 1, 1);
+            let arm = publisher(&mut d, 1, 2, 1);
+            d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+            d.on_ros_arm(1, &arm, bad);
+            assert_eq!(d.ble_status(), [2, 0, 4], "{bad:?}");
+            d.on_ros_arm(2, &arm, &bool_cdr(false));
+            assert_eq!(
+                d.ble_status(),
+                [3, 1, 0],
+                "invalid did not consume the sequence"
+            );
+            d.on_ros_arm(3, &arm, bad);
+            assert_eq!(
+                d.ble_status(),
+                [3, 1, 0],
+                "stale invalid cannot change the error"
+            );
+        }
+    }
+
+    #[test]
+    fn release_and_new_transport_claim_cannot_retain_a_previous_owners_error() {
+        let mut d = dev();
+        let conn = d.on_ble_connect(0, 1).unwrap().0;
+        assert_eq!(d.on_ble_control(1, conn, 99), Err(Error::Invalid));
+        d.on_ble_disconnect(2, conn);
+        assert_eq!(d.ble_status(), [0, 0, 0]);
+        let (r, _) = send(&mut d, 3, A, Kind::Hello, 0, 1, &[]);
+        let s = r.unwrap().0.session;
+        assert_eq!(d.ble_status(), [1, 0, 0]);
+        send(&mut d, 4, A, Kind::Arm, s, 2, &[]);
+        assert_eq!(d.ble_status(), [1, 0, 3]);
+        assert!(d.tick(10_003).released);
+        assert_eq!(d.ble_status(), [0, 0, 0]);
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(10_004, &cmd, &cdr(0.0));
+        assert_eq!(d.ble_status(), [2, 0, 0]);
+    }
+
+    #[test]
+    fn udp_lease_stop_notifies_the_owner_once_in_the_current_session() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        let mut out = [0; 32];
+        assert_eq!(d.udp_status_notification(&mut out), None);
+        d.tick(1_000);
+        assert_eq!(
+            d.udp_status_notification(&mut out[..14]),
+            None,
+            "retry when buffer fits"
+        );
+        let (peer, n) = d
+            .udp_status_notification(&mut out)
+            .expect("lease stop notification");
+        let (h, bytes) = udp::parse(&out[..n]).unwrap();
+        assert_eq!((peer, h.kind, h.session, h.seq), (A, Kind::Status, s, 0));
+        assert_eq!(bytes, [3, 2, 0]);
+        assert_eq!(d.udp_status_notification(&mut out), None);
+    }
+
+    #[test]
+    fn direct_udp_control_replies_do_not_duplicate_stop_notifications() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        let mut out = [0; 32];
+        send(&mut d, 1, A, Kind::Stop, s, 3, &[]);
+        assert_eq!(d.udp_status_notification(&mut out), None);
+        send(&mut d, 2, A, Kind::Arm, s, 4, &[]);
+        assert_eq!(d.udp_status_notification(&mut out), None);
+        send(&mut d, 3, A, Kind::Setpoint, s, 2, &cdr(0.5));
+        send(&mut d, 4, A, Kind::Arm, s, 5, &[]);
+        d.on_motor_fault(5);
+        let (_, n) = d
+            .udp_status_notification(&mut out)
+            .expect("motor fault notification");
+        assert_eq!(udp::parse(&out[..n]).unwrap().1, [3, 4, 0]);
+    }
+
+    #[test]
+    fn udp_notifications_never_leak_a_released_owners_session() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        d.tick(1_000);
+        send(&mut d, 1_001, A, Kind::Bye, s, 3, &[]);
+        let mut out = [0; 32];
+        assert_eq!(d.udp_status_notification(&mut out), None);
+        let (r, _) = send(&mut d, 1_002, B, Kind::Hello, 0, 1, &[]);
+        let new = r.unwrap().0.session;
+        assert_eq!(d.udp_status_notification(&mut out), None);
+        d.on_motor_fault(1_003);
+        let (peer, n) = d.udp_status_notification(&mut out).unwrap();
+        assert_eq!(peer, B);
+        assert_eq!(udp::parse(&out[..n]).unwrap().0.session, new);
+    }
+
+    #[test]
+    fn ble_reads_follow_claim_control_deadline_and_release_immediately() {
+        let mut d = dev();
+        let c = d.on_ble_connect(0, 1).unwrap().0;
+        assert_eq!(d.ble_status(), [1, 0, 0]);
+        assert_eq!(d.on_ble_control(1, c, 1), Err(Error::NotReady));
+        assert_eq!(d.ble_status(), [1, 0, 3]);
+        assert_eq!(d.on_ble_control(2, c, 99), Err(Error::Invalid));
+        d.on_ble_setpoint(3, c, &ble_sp(1, 0.5));
+        assert_eq!(d.ble_status(), [1, 0, 4]);
+        d.on_ble_control(4, c, 1).unwrap();
+        assert_eq!(d.ble_status(), [2, 0, 0]);
+        d.tick(1_003);
+        assert_eq!(d.ble_status(), [3, 2, 0]);
+        d.on_ble_control(1_004, c, 1).unwrap_err();
+        assert_eq!(d.ble_status(), [3, 2, 3]);
+        d.on_ble_disconnect(1_005, c);
+        assert_eq!(d.ble_status(), [0, 0, 0]);
+        assert_eq!(d.status_snapshot().session, 0);
+        let mut out = [0; crate::status::CDR_MAX];
+        let n = d.status_cdr(&mut out);
+        assert_eq!(
+            &out[8..n - 1],
+            b"state=open reason=none error=none session=0"
         );
     }
 }

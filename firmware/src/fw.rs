@@ -30,7 +30,7 @@ use esp_hal::{
 use esp_hal_smartled::{buffer_size, color_order, RmtSmartLeds};
 use esp_println::println;
 use esp_radio::wifi::{self, ap::AccessPointConfig, AuthenticationMethodConfig, WifiController};
-use rovi_core::arbiter::{Config, Effects, Error, Source, State};
+use rovi_core::arbiter::{Config, Effects, Source, State};
 use rovi_core::device::{self, Device};
 use rovi_core::events::{self, Event, Fault};
 use rovi_core::kinematics::Geometry;
@@ -329,17 +329,33 @@ async fn main(_spawner: Spawner) -> ! {
         let mut sock = UdpSocket::new(net, &mut rx_meta, &mut rx_buf, &mut tx_meta, &mut tx_buf);
         sock.bind(UDP_PORT).unwrap();
         let (mut buf, mut out) = ([0u8; 512], [0u8; 128]);
+        let mut owner_endpoint = None;
         loop {
-            let Ok((n, meta)) = sock.recv_from(&mut buf).await else {
-                continue;
-            };
-            let r = dev
-                .borrow_mut()
-                .on_udp(now(), peer_id(meta.endpoint), &buf[..n], &mut out);
-            if r.len > 0 {
-                let _ = sock.send_to(&out[..r.len], meta).await;
+            if let Either::First(Ok((n, meta))) =
+                select(sock.recv_from(&mut buf), Timer::after_millis(10)).await
+            {
+                let r = dev
+                    .borrow_mut()
+                    .on_udp(now(), peer_id(meta.endpoint), &buf[..n], &mut out);
+                if dev
+                    .borrow()
+                    .arbiter()
+                    .owner()
+                    .is_some_and(|o| o.source == Source::Udp && o.id == peer_id(meta.endpoint))
+                {
+                    owner_endpoint = Some(meta.endpoint);
+                }
+                if r.len > 0 {
+                    let _ = sock.send_to(&out[..r.len], meta).await;
+                }
+                log(r.effects);
             }
-            log(r.effects);
+            let pending = dev.borrow_mut().udp_status_notification(&mut out);
+            if let Some((peer, n)) = pending {
+                if let Some(to) = owner_endpoint.filter(|a| peer_id(*a) == peer) {
+                    let _ = sock.send_to(&out[..n], to).await;
+                }
+            }
         }
     };
     // BLE: connecting is the claim. While another source owns the car, do not advertise (the
@@ -419,6 +435,14 @@ async fn main(_spawner: Spawner) -> ! {
                 {
                     Either3::First(GattConnectionEvent::Disconnected { .. }) => break,
                     Either3::First(GattConnectionEvent::Gatt {
+                        event: GattEvent::Read(r),
+                    }) => {
+                        let _ = conn.set(&server.rovi.status, &dev.borrow().ble_status());
+                        if let Ok(reply) = r.accept() {
+                            reply.send().await;
+                        }
+                    }
+                    Either3::First(GattConnectionEvent::Gatt {
                         event: GattEvent::Write(w),
                     }) => {
                         let handle = w.handle();
@@ -434,6 +458,7 @@ async fn main(_spawner: Spawner) -> ! {
                             });
                             let fx = dev.borrow_mut().on_ble_setpoint(now(), ble, &data[..n]);
                             log(fx);
+                            let _ = conn.set(&server.rovi.status, &dev.borrow().ble_status());
                             if let Ok(reply) = w.accept() {
                                 reply.send().await;
                             }
@@ -454,11 +479,11 @@ async fn main(_spawner: Spawner) -> ! {
                                 let _ = server.rovi.echo.notify_raw(&conn, &data[..n], false).await;
                             }
                         } else if handle == server.rovi.control.handle {
-                            let cmd =
-                                w.with_data(|off, b| (off == 0 && b.len() == 1).then(|| b[0]));
-                            let res = cmd
-                                .ok_or(Error::Invalid)
-                                .and_then(|c| dev.borrow_mut().on_ble_control(now(), ble, c));
+                            let cmd = w.with_data(
+                                |off, b| if off == 0 && b.len() == 1 { b[0] } else { 0 },
+                            );
+                            let res = dev.borrow_mut().on_ble_control(now(), ble, cmd);
+                            let _ = conn.set(&server.rovi.status, &dev.borrow().ble_status());
                             match res {
                                 Ok(fx) => {
                                     log(fx);
@@ -474,6 +499,11 @@ async fn main(_spawner: Spawner) -> ! {
                             }
                         }
                     }
+                    Either3::First(GattConnectionEvent::Gatt { event }) => {
+                        // Other ATT reads also use the current value before their default reply.
+                        let _ = conn.set(&server.rovi.status, &dev.borrow().ble_status());
+                        drop(event);
+                    }
                     Either3::First(_) => {}
                     Either3::Second(()) => {
                         conn.raw().disconnect();
@@ -486,12 +516,13 @@ async fn main(_spawner: Spawner) -> ! {
                             mtu_seen = mtu;
                             logger::emit(Event::Mtu { id, mtu });
                         }
-                        let status = dev.borrow().ble_status();
-                        if status != last_status {
-                            last_status = status;
-                            let _ = server.rovi.status.notify(&conn, &status, true).await;
-                        }
                     }
+                }
+                let status = dev.borrow().ble_status();
+                let _ = conn.set(&server.rovi.status, &status);
+                if status != last_status {
+                    last_status = status;
+                    let _ = server.rovi.status.notify(&conn, &status, true).await;
                 }
             }
             let fx = dev.borrow_mut().on_ble_disconnect(now(), ble);

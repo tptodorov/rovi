@@ -365,18 +365,23 @@ async fn serve(
             },
             async {
                 let mut seq = 0i64;
+                let mut schedule = rovi_core::status::Publication::default();
+                let mut buf = [0u8; rovi_core::status::CDR_MAX];
                 loop {
-                    let mut buf = [0u8; 80];
-                    let n = d3.lock().unwrap().status_cdr(&mut buf);
-                    seq += 1;
-                    let att = Attachment {
-                        seq,
-                        timestamp: 0,
-                        gid: status_gid,
+                    let snapshot = d3.lock().unwrap().status_snapshot();
+                    if schedule.due(ms(t0), snapshot) {
+                        if let Some(n) = snapshot.encode_cdr(&mut buf) {
+                            seq += 1;
+                            let att = Attachment {
+                                seq,
+                                timestamp: 0,
+                                gid: status_gid,
+                            }
+                            .encode();
+                            let _ = status_pub.put(&buf[..n]).attachment(&att).finish().await;
+                        }
                     }
-                    .encode();
-                    let _ = status_pub.put(&buf[..n]).attachment(&att).finish().await;
-                    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
+                    embassy_time::Timer::after_millis(10).await;
                 }
             },
         ),

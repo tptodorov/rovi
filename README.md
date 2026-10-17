@@ -86,3 +86,35 @@ ros2 topic echo /rovi/capabilities std_msgs/msg/String --once --full-length \
 Parse the space-separated `key=value` tokens as numbers; preserve their precision when using
 limits. Scientific notation represents the exact canonical f32 values shared with BLE/UDP.
 Check the product sim car with `apps/simcar/scenarios/ros-capabilities.sh` after a ROS-enabled build.
+
+##### Status and owner errors
+
+BLE Status and UDP STATUS keep their three version-1 bytes (state, stop reason, last owner
+control error). A refused owner ARM/STOP records `not-ready` or `invalid` until the next
+successful owner control command. Setpoints, echo, non-owner and old-session input cannot
+clear it. Release clears the reason/error; each new session starts clean.
+
+BLE Status is readable immediately after connecting, refreshed before reads and after
+writes, and notifies subscribers on changes. UDP replies to owner ARM/STOP and pushes STATUS
+on stop transitions, including lease expiry while the laptop is silent. Direct replies echo
+the request sequence; unsolicited transitions carry sequence 0 and the current session.
+Controllers must check the sender, session and request sequence when matching replies and
+handle unsolicited frames separately. UDP delivery is best effort; use nonzero control
+request sequences to distinguish their replies from notifications. Setpoint sequences still
+wrap through zero.
+
+ROS `/rovi/status` (`std_msgs/String`) always has exactly these four keys, with explicit
+empty values: `state=open reason=none error=none session=0`. It publishes observed changes
+on a 10 ms poll and repeats at 900 ms; reconnect starts with a fresh snapshot. Use a reliable,
+volatile subscriber:
+
+```sh
+ros2 topic echo /rovi/status std_msgs/msg/String --once --full-length \
+  --qos-reliability reliable --qos-durability volatile
+```
+
+Status reports commands/state, with no measured velocity. The car has no encoders; the
+[M5 motion references](experiments/rovi-m5-mecanum-motion/MILESTONE.md) remain approximate.
+Run `ros-scenarios.sh` for ROS owner errors/latches and `ros-capabilities.sh` for heartbeat,
+shared UDP status and release/reconnect, using the product scenario directory above.
+Actual ESP32 notifications and pin behavior require separate board validation.
