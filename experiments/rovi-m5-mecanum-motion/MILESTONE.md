@@ -101,3 +101,5 @@ At `vx 0`, `vy 0.05` for 0.5 s, Todor reported **6.5 cm leftward travel**, with 
 A third identical leftward pulse gave **7 cm at both front and rear**, with no front/rear difference detected at the reported precision. Rear swing was not consistent across all three runs; travel variation remains to be characterized under controlled conditions. No compensation applied. Rightward motion and quantified stopping remain pending.
 
 For rightward strafe (`vy -0.05`, 0.5 s), a measured repeat gave **6.5 cm at the front and 7.5 cm at the rear** (rear travelled **1 cm farther right**). Todor observed apparent slip; its cause is unconfirmed. Rightward translation is demonstrated, but repeatability and quantified stopping remain pending. No firmware compensation applied; see [F4 notes](bench/2026-10-17-f4/notes.md).
+
+A second measured rightward run gave **7 cm at the front, 7.5 cm at the rear** (rear travelled **5 mm farther right**). Rear swing recurred in both measured rightward runs, with different magnitude. Further characterization across commands and battery/load conditions remains open; no compensation applied.
