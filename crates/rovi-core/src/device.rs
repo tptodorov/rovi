@@ -59,6 +59,8 @@ pub struct Device {
     graph: Graph<16>,
     /// The owner's last refused ARM/STOP, retained until its next successful control command.
     owner_error: Option<Error>,
+    /// Coordinator readiness, installed before transports start (the sim has no motor driver).
+    motor_ready: bool,
     /// Deadline effects an input processed but could not return (a refused BLE write); the
     /// next [`tick`](Self::tick) returns them.
     pending: Effects,
@@ -185,11 +187,26 @@ impl Device {
             arbiter: Arbiter::seeded(cfg, session_seed),
             graph: Graph::new(),
             owner_error: None,
+            motor_ready: true,
             pending: Effects::default(),
             marks: Marks::new(session_seed),
             ble_generation: 0,
             last_udp_status: None,
         })
+    }
+
+    /// Bind motor readiness before starting transports; invalid motor configuration inhibits ARM.
+    /// The simulator uses the default ready state without a physical driver dependency.
+    pub fn set_motor_ready(&mut self, ready: bool) {
+        self.motor_ready = ready;
+    }
+
+    fn arm(&mut self, now: u64, who: Claimant) -> Result<(), Error> {
+        self.arbiter.check_owner(who)?;
+        if !self.motor_ready {
+            return Err(Error::NotReady);
+        }
+        self.arbiter.arm(now, who)
     }
 
     fn expire(&mut self, now: u64) -> Effects {
@@ -202,7 +219,7 @@ impl Device {
 
     fn control(&mut self, now: u64, who: Claimant, arm: Option<bool>) -> Result<Effects, Error> {
         let result = match arm {
-            Some(true) => self.arbiter.arm(now, who).map(|()| Effects::default()),
+            Some(true) => self.arm(now, who).map(|()| Effects::default()),
             Some(false) => self.arbiter.stop(now, who),
             None => self.arbiter.check_owner(who).and(Err(Error::Invalid)),
         };
@@ -487,7 +504,7 @@ impl Device {
                 State::Claimed | State::Stopped(StopReason::LeaseExpired)
             );
             if e.stop.is_none() && auto_arm {
-                let _ = self.arbiter.arm(now, who);
+                let _ = self.arm(now, who);
             }
         }
         fx

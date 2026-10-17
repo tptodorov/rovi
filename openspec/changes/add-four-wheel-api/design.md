@@ -28,6 +28,8 @@ Copy the working core and tests into the product crates, preserving source histo
 
 `rovi-core` returns normalized wheel demands and state effects. It does not import the motor driver or HAL. `rovi-motor-control` has no dependency on the arbiter, kinematics or transports. The coordinator, `rovi-drive` (2026-10-17), connects them; it depends on both, so the integration and fault-injection tests run on the laptop, which a coordinator inside the ESP32-only firmware would not allow. A small output boundary (`rovi_motor_control::Driver`: STBY per driver, pins per bridge) exposes standby and bridge updates to the ESP implementation or a recording test double; no generic robotics framework is needed. All three crates build without `std`.
 
+`Drive::new(motor, &mut Device)` binds before transport startup. Invalid motor configuration inhibits explicit ARM with `not-ready` and prevents ROS auto-arm before the first tick; the core only sees readiness, with no dependency on the motor crate. The firmware logs invalid boot motor configuration as `motor_config`. The simulator defaults to ready without a physical driver.
+
 `Drive::tick(&mut Device, now)` runs every control tick: the device's timers first, then the motors. A change of the arbiter's `arm_count` is the only enable operation, so a STOP and re-ARM between two ticks still drops STBY first; while armed it updates the bridges, otherwise it puts both drivers in standby. It returns the device `Effects` and the tick's motor fault as an `events::Fault` (`ev=error src=motor_*`); `Drive::motor().fault()` gives the typed detail.
 
 ### Configuration and fault boundary

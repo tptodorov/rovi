@@ -1322,6 +1322,8 @@ Copy the working core and tests into the product crates, preserving source histo
 <p>
 <code>rovi-core</code> returns normalized wheel demands and state effects. It does not import the motor driver or HAL. <code>rovi-motor-control</code> has no dependency on the arbiter, kinematics or transports. The coordinator, <code>rovi-drive</code> (2026-10-17), connects them; it depends on both, so the integration and fault-injection tests run on the laptop, which a coordinator inside the ESP32-only firmware would not allow. A small output boundary (<code>rovi_motor_control::Driver</code>: STBY per driver, pins per bridge) exposes standby and bridge updates to the ESP implementation or a recording test double; no generic robotics framework is needed. All three crates build without <code>std</code>.</p>
 <p>
+<code>Drive::new(motor, &amp;mut Device)</code> binds before transport startup. Invalid motor configuration inhibits explicit ARM with <code>not-ready</code> and prevents ROS auto-arm before the first tick; the core only sees readiness, with no dependency on the motor crate. The firmware logs invalid boot motor configuration as <code>motor_config</code>. The simulator defaults to ready without a physical driver.</p>
+<p>
 <code>Drive::tick(&amp;mut Device, now)</code> runs every control tick: the device's timers first, then the motors. A change of the arbiter's <code>arm_count</code> is the only enable operation, so a STOP and re-ARM between two ticks still drops STBY first; while armed it updates the bridges, otherwise it puts both drivers in standby. It returns the device <code>Effects</code> and the tick's motor fault as an <code>events::Fault</code> (<code>ev=error src=motor_*</code>); <code>Drive::motor().fault()</code> gives the typed detail.</p>
 <h3 id="openspec--changes--add-four-wheel-api--design--configuration-and-fault-boundary">Configuration and fault boundary</h3><p>
 Validate immutable device and motor profiles before accepting control. Canonicalize advertised floating values through f32 and use those values for limit comparisons, so a limit read over BLE is actually accepted. Geometry normalization remains 40 rad/s and reference limits 1/1/3 in the named experimental profile, not measured physical maxima. The product motor profile is minimum duty 40%, deadband 0.02 and maximum 70% (O1); the experiment firmware keeps its 100% cap as the comparison reference. No profile is labelled production-qualified merely because it compiles.</p>
@@ -1605,7 +1607,7 @@ Old UDP/BLE generation injection and real router reconnect; distinct GID same-no
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-motor-validation-fault-integration">Motor validation fault integration</a></td>
 <td>
-Coordinator fault injection under continuing ROS stream; no drive until fresh setpoint and explicit ARM (2.3).</td>
+Coordinator (<code>cargo test -p rovi-drive</code>): <code>a_non_finite_wheel_demand_stops_the_device_and_no_tick_recovers_it</code>, <code>a_driver_failure_stops_and_only_a_fresh_setpoint_and_arm_recover</code>, <code>a_ros_stream_does_not_recover_a_motor_fault_but_an_explicit_arm_does</code>. Invalid boot configuration refuses before the first tick: <code>an_invalid_motor_configuration_never_enables</code>, <code>an_invalid_motor_configuration_refuses_ble_arm_before_any_tick</code>, <code>an_invalid_motor_configuration_blocks_ros_auto_and_explicit_arm</code> (2.3, 3.6 audit).</td>
 </tr>
 <tr>
 <td>
