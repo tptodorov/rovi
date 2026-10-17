@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>11 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>12 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
 <strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
@@ -1428,7 +1428,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.2 Implement wrapping BLE/UDP and full per-GID ROS sequence domains, session generations and reconnect cleanup. Test rollover, half-range, repeated HELLO, old-session input, multiple same-node publishers, unknown publishers and router disconnect/reconnect; update adapter docs. <strong>Done 2026-10-17:</strong> u32 serial order for BLE/UDP; per-GID i64 ROS marks (16, per session, kept across publisher removal, overflow discarded) for cmd_vel and arm; session IDs from a per-boot seed, skipping 0; <code>BleConn</code> tokens with a connection generation; <code>Device::on_ros_disconnect</code> releases a ROS owner and both adapters call it. Behaviour changes had failing tests first (the stale-callback test is compile-red: the old handle-only API could not express it). Sim car UDP and all five ROS scripts, and both firmware builds, pass.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.3 Preserve explicit/automatic arming and shared-radio policy. Run product UDP, fake-BLE and ROS scenarios covering latch reasons, claim/reclaim boundaries, owner isolation and echo; map actual test names to every applicable verification row.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.3 Preserve explicit/automatic arming and shared-radio policy. Run product UDP, fake-BLE and ROS scenarios covering latch reasons, claim/reclaim boundaries, owner isolation and echo; map actual test names to every applicable verification row. <strong>Done 2026-10-17:</strong> four failing reproductions exposed STOP/out-of-limits after lease expiry allowing ROS auto-arm, repeated STOP reusing an earlier setpoint, and reclaim releasing a resumed streaming owner. The shared arbiter now preserves the explicit-arm latch and live ownership without extending reclaim on repeated stops. 181 workspace tests, 12 UDP scenarios, 23 Python tests, all five ROS scripts and both ESP32 builds pass; test names are mapped. Physical delivery remains task 5.2, including the empty BLE Echo adapter gap recorded there.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 3.4 Implement canonical capabilities and ROS publication. Verify field/units/round-trip golden tests and a late Jazzy subscriber. Close O9 with evidence of working transient-local history or the specified one-second volatile fallback; document chosen QoS and reconnect behavior.</li>
 <li>
@@ -1448,7 +1448,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Bind the product motor driver to all four TB6612 channels and the 70% product profile. Cross-build both firmware variants and check pin mapping against the carrier schematic before proposing a flash.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 5.2 After separately announced/authorized board runs, record physical scenario results for outputs, stop triggers, radio operation and selected-profile reversal/thermal behavior across BLE/UDP/ROS. Use the verification map to distinguish software-only scenarios from physical claims.</li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 5.2 After separately announced/authorized board runs, record physical scenario results for outputs, stop triggers, radio operation and selected-profile reversal/thermal behavior across BLE/UDP/ROS. Use the verification map to distinguish software-only scenarios from physical claims. Known adapter follow-up: the current BLE Echo write path suppresses empty notifications (<code>n &gt; 0</code> in <code>firmware/src/fw.rs</code>); correct and bench-test that delivery before acceptance. Task 3.3 tests the shared echo policy, not ESP32 GATT delivery.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 5.3 Verify each requirement has its specified evidence, all blocking open items are resolved, and product acceptance is recorded; update PLAN and product instructions.</li>
 </ul>
@@ -1479,13 +1479,13 @@ Completion check</th>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-setpoint">Setpoint</a></td>
 <td>
-Host codec/device tests: positive and negative limit boundaries and invalid planar input; socket conformance (3.1, 3.3). Host: <code>rejects_out_of_plane_components</code>, <code>out_of_limits_setpoint_is_a_safety_stop</code>, <code>malformed_setpoints_neither_renew_the_lease_nor_use_the_sequence</code>, <code>a_limit_read_from_the_capabilities_is_accepted</code>.</td>
+Host codec/device tests: positive and negative limit boundaries and invalid planar input; socket conformance (3.1, 3.3). Host: <code>rejects_out_of_plane_components</code>, <code>out_of_limits_setpoint_is_a_safety_stop</code>, <code>malformed_setpoints_neither_renew_the_lease_nor_use_the_sequence</code>, <code>a_limit_read_from_the_capabilities_is_accepted</code>. Integration: <code>udp_scenarios.py::test_setpoints_reach_the_wheels_with_mecanum_signs</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-mecanum-kinematics">Mecanum kinematics</a></td>
 <td>
-Host golden kinematics and combined-input saturation tests; transport parity (3.1, 3.3). Host: <code>forward_drives_all_wheels_equally</code>, <code>combined_inputs_saturate_each_wheel_independently</code>, <code>a_non_finite_wheel_speed_stays_non_finite_for_motor_fault_handling</code>.</td>
+Host golden kinematics and combined-input saturation tests; transport parity (3.1, 3.3). Host: <code>forward_drives_all_wheels_equally</code>, <code>combined_inputs_saturate_each_wheel_independently</code>, <code>a_non_finite_wheel_speed_stays_non_finite_for_motor_fault_handling</code>, <code>identical_setpoints_give_identical_wheels_on_every_transport</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1497,13 +1497,13 @@ Review product docs/status fields against M5 evidence; no command-derived measur
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-latest-setpoint-wins">Latest setpoint wins</a></td>
 <td>
-Host ordering tests and duplicate socket input; lease unchanged on stale data (3.2, 3.3). Host: <code>latest_wins_and_old_sequences_never_apply</code>, <code>stale_setpoints_do_not_renew_the_lease</code>, <code>same_node_publishers_have_independent_counters</code>.</td>
+Host ordering tests and duplicate socket input; lease unchanged on stale data (3.2, 3.3). Host: <code>latest_wins_and_old_sequences_never_apply</code>, <code>stale_setpoints_do_not_renew_the_lease</code>, <code>same_node_publishers_have_independent_counters</code>. Integration: <code>udp_scenarios.py::test_stale_oversized_setpoints_do_not_stop_or_renew</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-single-owner">Single owner</a></td>
 <td>
-Host claim tests and UDP/ROS intruders; physical AP/BLE exclusion on board (3.3, 5.2).</td>
+Host claim tests and UDP/ROS intruders; physical AP/BLE exclusion on board (3.3, 5.2). Host: <code>second_peer_gets_busy_and_cannot_drive</code>, <code>another_ros_node_is_ignored_while_owned</code>, <code>ble_connect_claims_and_excludes_others</code>, <code>shared_wifi_intruders_cannot_renew_the_owners_lease</code>, <code>wifi_is_off_only_while_ble_owns_the_car</code>, <code>boot_and_claim_expiry_leave_zero_wheels_and_reopen_radios</code>. Integration: <code>udp_scenarios.py::test_non_owner_input_is_ignored</code>, <code>ros-scenarios.sh</code> (intruder node). Physical AP/BLE exclusion remains task 5.2.</td>
 </tr>
 <tr>
 <td>
@@ -1515,7 +1515,7 @@ Injected-clock host tests, including refused ARM and no valid setpoint (3.1). Ho
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-explicit-arming">Explicit arming</a></td>
 <td>
-BLE/UDP scenarios plus real Jazzy auto-arm and STOP-latch scenarios (3.3).</td>
+BLE/UDP scenarios plus real Jazzy auto-arm and STOP-latch scenarios (3.3). Host: <code>streams_setpoints_and_drives_wheels_only_when_armed</code>, <code>ble_setpoints_need_explicit_arm_after_claim_and_lease_expiry</code>, <code>udp_setpoints_need_explicit_arm_after_lease_expiry</code>, <code>ble_stop_and_out_of_limits_need_a_new_setpoint_then_arm</code>, <code>first_ros_setpoint_claims_and_arms</code>, <code>ros_stream_resuming_after_a_lease_expiry_arms_again</code>, <code>ros_stop_latches_while_the_owner_streams_until_it_arms</code>, <code>ros_stop_at_the_lease_deadline_requires_explicit_rearm</code>, <code>ros_out_of_limits_after_lease_expiry_requires_explicit_rearm</code>, <code>a_repeated_stop_needs_a_setpoint_after_the_latest_stop</code>. Integration: <code>udp_scenarios.py::test_repeated_stop_needs_a_later_setpoint</code>, <code>ros-scenarios.sh</code> / <code>ros_controller.py</code> (stock auto-arm, STOP latch, out-of-limits after lease expiry, explicit recovery).</td>
 </tr>
 <tr>
 <td>
@@ -1527,19 +1527,19 @@ Injected-time detection tests and physical log timing; detection only, no numeri
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-safety-stop">Safety stop</a></td>
 <td>
-Host transition tests; every physical stop trigger with all four channels (3.3, 5.2).</td>
+Host transition tests; every physical stop trigger with all four channels (3.3, 5.2). Host: <code>ble_disconnect_while_armed_stops_and_reopens</code>, <code>owner_release_while_armed_stops_then_opens</code>, <code>out_of_limits_setpoint_is_a_safety_stop</code>, <code>a_router_disconnect_releases_a_ros_owner</code>, <code>ros_out_of_limits_after_lease_expiry_requires_explicit_rearm</code>, <code>ble_stop_and_out_of_limits_need_a_new_setpoint_then_arm</code>. Coordinator: <code>a_lease_expiry_puts_both_drivers_in_standby_in_the_same_tick</code>, <code>a_release_puts_both_drivers_in_standby</code>. Physical stop triggers remain task 5.2.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-reclaim-window">Reclaim window</a></td>
 <td>
-Injected-clock tests for retained streaming owner, quiet owner, boundary and explicit/automatic recovery (3.1, 3.3). Host: <code>reclaim_window_boundary_after_a_lease_expiry</code>, <code>reclaim_window_boundary_after_a_quiet_owners_stop</code>, <code>stop_keeps_the_owner_while_it_keeps_streaming</code>, <code>arm_and_setpoint_on_the_reclaim_deadline_cannot_drive_the_expired_session</code>.</td>
+Injected-clock tests for retained streaming owner, quiet owner, boundary and explicit/automatic recovery (3.1, 3.3). Host: <code>reclaim_window_boundary_after_a_lease_expiry</code>, <code>reclaim_window_boundary_after_a_quiet_owners_stop</code>, <code>stop_keeps_the_owner_while_it_keeps_streaming</code>, <code>arm_and_setpoint_on_the_reclaim_deadline_cannot_drive_the_expired_session</code>, <code>a_latched_owner_resuming_setpoints_cancels_the_reclaim_deadline</code>, <code>changing_stop_reasons_does_not_extend_the_reclaim_window</code>, <code>ros_owner_that_goes_quiet_after_a_stop_is_released_and_a_new_stream_arms</code>, <code>ble_setpoints_need_explicit_arm_after_claim_and_lease_expiry</code>, <code>udp_setpoints_need_explicit_arm_after_lease_expiry</code>. Integration: <code>udp_scenarios.py::test_resuming_a_stopped_stream_retains_ownership</code>, <code>udp_scenarios.py::test_owner_released_after_reclaim_window_and_session_changes</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-boot-state">Boot state</a></td>
 <td>
-Host initial state plus actual reset/power-loss observations on product firmware (3.3, 5.2).</td>
+Host initial state plus actual reset/power-loss observations on product firmware (3.3, 5.2). Host: <code>boot_and_claim_expiry_leave_zero_wheels_and_reopen_radios</code>; motor crate: <code>new_starts_in_standby</code>. Physical reset/power-loss checks remain task 5.2.</td>
 </tr>
 <tr>
 <td>
@@ -1635,7 +1635,7 @@ Injected-time tests at deadline-1, deadline and deadline+1 for each window (3.1)
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-echo-is-observational">Echo is observational</a></td>
 <td>
-Existing UDP/fake-BLE echo patterns with state/lease/error snapshots and oversized payloads (3.3).</td>
+Existing UDP/fake-BLE echo patterns with state/lease/error snapshots and oversized payloads (3.3). Host: <code>echo_answers_any_peer_with_the_same_bytes</code>, <code>echo_never_claims_nor_renews_the_lease</code>, <code>oversize_echo_is_dropped</code>, <code>ble_echo_preserves_state_error_and_setpoint_sequence</code> (device policy, including empty payload; does not exercise ESP32 GATT notifications). Integration: <code>udp_scenarios.py::test_echo_from_any_peer_leaves_the_owner_alone</code>. Actual BLE notification delivery remains a board check (5.2); the firmware currently suppresses empty notifications, with correction tracked in 5.2. Shared UDP/ROS owner-error persistence is task 3.5.</td>
 </tr>
 <tr>
 <td>

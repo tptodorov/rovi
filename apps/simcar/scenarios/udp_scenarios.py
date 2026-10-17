@@ -145,6 +145,37 @@ class Scenarios(unittest.TestCase):
         self.a.send(SETPOINT, cdr(0.5), session=s1)  # old session is never valid again
         self.assertIsNone(self.a.recv())
 
+    def test_repeated_stop_needs_a_later_setpoint(self):
+        self.a.hello(); self.drive(self.a); self.a.status(ARM)
+        self.assertEqual(self.a.status(STOP), (3, 1, 0))
+        self.drive(self.a)
+        self.assertEqual(self.a.status(STOP), (3, 1, 0))
+        self.assertEqual(self.a.status(ARM), (3, 1, 3), "setpoint must follow the latest STOP")
+        self.drive(self.a)
+        self.assertEqual(self.a.status(ARM), (2, 0, 0))
+
+    def test_stale_oversized_setpoints_do_not_stop_or_renew(self):
+        self.a.hello(); self.drive(self.a)
+        accepted = self.a.seq
+        self.assertEqual(self.a.status(ARM), (2, 0, 0))
+        end = time.monotonic() + LEASE / 1000 + 0.15
+        while time.monotonic() < end:
+            for seq in (accepted, accepted - 1):
+                self.a.send(SETPOINT, cdr(9.0), seq=seq)
+            time.sleep(0.03)
+        self.saw(ev("stop", reason="LeaseExpired"))
+
+    def test_resuming_a_stopped_stream_retains_ownership(self):
+        self.a.hello(); self.drive(self.a); self.a.status(ARM)
+        self.assertEqual(self.a.status(STOP), (3, 1, 0))
+        time.sleep(LEASE / 1000 + 0.1)  # enter reclaim before resuming the stream
+        end = time.monotonic() + RECLAIM / 1000 + 0.2
+        while time.monotonic() < end:
+            self.drive(self.a)
+            time.sleep(0.02)
+        self.assertEqual(self.b.hello()[0], BUSY, "a live stopped owner keeps the car")
+        self.assertEqual(self.a.status(ARM), (2, 0, 0), "same session can explicitly resume")
+
     def test_claim_window_expires_if_owner_stays_silent(self):
         self.a.hello()
         time.sleep(CLAIM / 1000 + 0.2)

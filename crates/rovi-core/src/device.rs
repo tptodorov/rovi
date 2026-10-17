@@ -1797,4 +1797,214 @@ mod tests {
         assert_eq!(d.on_ros_disconnect(10), Effects::default());
         assert_eq!(d.arbiter().state(), State::Armed);
     }
+
+    #[test]
+    fn ros_stop_at_the_lease_deadline_requires_explicit_rearm() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        let arm = publisher(&mut d, 1, 2, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        let session = d.arbiter().session();
+        d.on_ros_arm(1_000, &arm, &bool_cdr(false));
+        assert_eq!(d.arbiter().state(), State::Stopped(StopReason::Stop));
+        d.on_ros_arm(1_001, &at(&arm, 2), &bool_cdr(true));
+        assert_eq!(d.wheels(1_001), [0.0; 4], "a new setpoint is required");
+        d.on_ros_cmd_vel(1_002, &at(&cmd, 2), &cdr(0.5));
+        assert_eq!(d.wheels(1_002), [0.0; 4], "the stream cannot clear STOP");
+        d.on_ros_arm(1_003, &at(&arm, 3), &bool_cdr(true));
+        assert_eq!(d.wheels(1_003), [0.25; 4]);
+        assert_eq!(d.arbiter().session(), session);
+    }
+
+    #[test]
+    fn ros_out_of_limits_after_lease_expiry_requires_explicit_rearm() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        let arm = publisher(&mut d, 1, 2, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        d.tick(1_000);
+        assert_eq!(
+            d.on_ros_cmd_vel(1_001, &at(&cmd, 2), &cdr(9.0)).stop,
+            Some(StopReason::OutOfLimits)
+        );
+        d.on_ros_cmd_vel(1_002, &at(&cmd, 3), &cdr(0.5));
+        assert_eq!(d.arbiter().state(), State::Stopped(StopReason::OutOfLimits));
+        assert_eq!(d.wheels(1_002), [0.0; 4]);
+        d.on_ros_arm(1_003, &arm, &bool_cdr(true));
+        assert_eq!(d.wheels(1_003), [0.25; 4]);
+    }
+
+    #[test]
+    fn ble_setpoints_need_explicit_arm_after_claim_and_lease_expiry() {
+        let mut d = dev();
+        let conn = d.on_ble_connect(0, 1).unwrap().0;
+        d.on_ble_setpoint(1, conn, &ble_sp(1, 1.0));
+        assert_eq!(d.wheels(1), [0.0; 4]);
+        d.on_ble_control(2, conn, 1).unwrap();
+        assert_eq!(d.wheels(2), [0.5; 4]);
+        assert_eq!(d.tick(1_001).stop, Some(StopReason::LeaseExpired));
+        let session = d.arbiter().session();
+        d.on_ble_setpoint(1_002, conn, &ble_sp(2, 1.0));
+        assert_eq!(d.wheels(1_002), [0.0; 4]);
+        d.on_ble_control(1_003, conn, 1).unwrap();
+        assert_eq!(d.wheels(1_003), [0.5; 4]);
+        assert_eq!(d.arbiter().session(), session);
+    }
+
+    #[test]
+    fn udp_setpoints_need_explicit_arm_after_lease_expiry() {
+        let mut d = dev();
+        let session = armed(&mut d);
+        d.tick(1_000);
+        send(&mut d, 1_001, A, Kind::Setpoint, session, 2, &cdr(0.5));
+        assert_eq!(d.wheels(1_001), [0.0; 4]);
+        let (r, _) = send(&mut d, 1_002, A, Kind::Arm, session, 3, &[]);
+        assert_eq!(r.unwrap().1[..3], [2, 0, 0]);
+        assert_eq!(d.wheels(1_002), [0.25; 4]);
+        assert_eq!(d.arbiter().session(), session);
+    }
+
+    #[test]
+    fn ble_stop_and_out_of_limits_need_a_new_setpoint_then_arm() {
+        for reason in [StopReason::Stop, StopReason::OutOfLimits] {
+            let mut d = dev();
+            let conn = d.on_ble_connect(0, 1).unwrap().0;
+            d.on_ble_setpoint(1, conn, &ble_sp(1, 1.0));
+            d.on_ble_control(2, conn, 1).unwrap();
+            if reason == StopReason::Stop {
+                d.on_ble_control(3, conn, 2).unwrap();
+            } else {
+                d.on_ble_setpoint(3, conn, &ble_sp(2, 9.0));
+            }
+            assert_eq!(d.on_ble_control(4, conn, 1), Err(Error::NotReady));
+            d.on_ble_setpoint(5, conn, &ble_sp(3, 0.5));
+            assert_eq!(d.arbiter().state(), State::Stopped(reason));
+            assert_eq!(d.wheels(5), [0.0; 4]);
+            d.on_ble_control(6, conn, 1).unwrap();
+            assert_eq!(d.wheels(6), [0.25; 4]);
+        }
+    }
+
+    #[test]
+    fn identical_setpoints_give_identical_wheels_on_every_transport() {
+        let mut payload = [0; 68];
+        Setpoint {
+            sec: 0,
+            nanosec: 0,
+            vx: 0.4,
+            vy: 0.2,
+            wz: 0.5,
+        }
+        .encode(&mut payload)
+        .unwrap();
+        let mut udp = dev();
+        let (r, _) = send(&mut udp, 0, A, Kind::Hello, 0, 1, &[]);
+        let session = r.unwrap().0.session;
+        send(&mut udp, 1, A, Kind::Setpoint, session, 1, &payload);
+        send(&mut udp, 2, A, Kind::Arm, session, 2, &[]);
+
+        let mut ble = dev();
+        let conn = ble.on_ble_connect(0, 1).unwrap().0;
+        let mut sample = [0; 72];
+        sample[..4].copy_from_slice(&1u32.to_le_bytes());
+        sample[4..].copy_from_slice(&payload);
+        ble.on_ble_setpoint(1, conn, &sample);
+        ble.on_ble_control(2, conn, 1).unwrap();
+
+        let mut ros = dev();
+        let cmd = publisher(&mut ros, 1, 1, 1);
+        ros.on_ros_cmd_vel(1, &cmd, &payload);
+        assert_ne!(udp.wheels(2), [0.0; 4]);
+        assert_eq!(ble.wheels(2), udp.wheels(2));
+        assert_eq!(ros.wheels(2), udp.wheels(2));
+    }
+
+    #[test]
+    fn shared_wifi_intruders_cannot_renew_the_owners_lease() {
+        let mut udp = dev();
+        let session = armed(&mut udp);
+        let cmd = publisher(&mut udp, 1, 1, 1);
+        let arm = publisher(&mut udp, 1, 2, 1);
+        assert_eq!(udp.on_ros_cmd_vel(999, &cmd, &cdr(0.5)), Effects::default());
+        assert_eq!(
+            udp.on_ros_arm(999, &arm, &bool_cdr(false)),
+            Effects::default()
+        );
+        assert!(udp.wifi_allowed() && !udp.radio_allowed(Source::Ble));
+        assert_eq!(udp.arbiter().session(), session);
+        assert_eq!(udp.tick(1_000).stop, Some(StopReason::LeaseExpired));
+
+        let mut ros = dev();
+        let cmd = publisher(&mut ros, 1, 1, 1);
+        ros.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        let session = ros.arbiter().session();
+        let (r, _) = send(&mut ros, 999, A, Kind::Hello, 0, 1, &[]);
+        assert_eq!(r.unwrap().0.kind, Kind::Busy);
+        let setpoint = cdr(0.5);
+        for kind in [Kind::Setpoint, Kind::Arm, Kind::Stop, Kind::Bye] {
+            let payload = if kind == Kind::Setpoint {
+                &setpoint[..]
+            } else {
+                &[]
+            };
+            let (r, fx) = send(&mut ros, 999, A, kind, session, 2, payload);
+            assert!(r.is_none());
+            assert_eq!(fx, Effects::default());
+        }
+        assert!(ros.wifi_allowed() && !ros.radio_allowed(Source::Ble));
+        assert_eq!(ros.arbiter().session(), session);
+        assert_eq!(ros.tick(1_000).stop, Some(StopReason::LeaseExpired));
+    }
+
+    #[test]
+    fn ble_echo_preserves_state_error_and_setpoint_sequence() {
+        let mut d = dev();
+        let conn = d.on_ble_connect(0, 1).unwrap().0;
+        assert_eq!(d.on_ble_control(1, conn, 1), Err(Error::NotReady));
+        d.on_ble_setpoint(2, conn, &ble_sp(1, 0.5));
+        let before = (
+            d.ble_status(),
+            d.arbiter().session(),
+            d.arbiter().owner(),
+            d.wheels(2),
+        );
+        for data in [&[][..], &[2; ECHO_MAX][..], &[2; ECHO_MAX + 1][..]] {
+            assert_eq!(echo(data), (data.len() <= ECHO_MAX).then_some(data));
+            assert_eq!(
+                (
+                    d.ble_status(),
+                    d.arbiter().session(),
+                    d.arbiter().owner(),
+                    d.wheels(2)
+                ),
+                before
+            );
+        }
+        // Echo payloads cannot consume this next setpoint's sequence or clear NotReady.
+        d.on_ble_setpoint(3, conn, &ble_sp(2, 1.0));
+        assert_eq!(d.ble_status()[2], before.0[2]);
+        d.on_ble_control(4, conn, 1).unwrap();
+        assert_eq!(d.wheels(4), [0.5; 4]);
+        assert_eq!(
+            echo(b"still only a probe"),
+            Some(&b"still only a probe"[..])
+        );
+        assert_eq!(d.tick(1_003).stop, Some(StopReason::LeaseExpired));
+    }
+
+    #[test]
+    fn boot_and_claim_expiry_leave_zero_wheels_and_reopen_radios() {
+        let mut d = dev();
+        assert_eq!(d.status(None), [0, 0, 0]);
+        assert!(d.arbiter().owner().is_none());
+        assert_eq!(d.wheels(0), [0.0; 4]);
+        assert!(d.wifi_allowed() && d.radio_allowed(Source::Ble));
+        let conn = d.on_ble_connect(0, 1).unwrap().0;
+        assert!(!d.wifi_allowed());
+        assert!(!d.tick(9_999).released);
+        assert!(d.tick(10_000).released);
+        assert_eq!(d.wheels(10_000), [0.0; 4]);
+        assert!(d.wifi_allowed() && d.radio_allowed(Source::Ble));
+        assert!(!d.ble_owns(conn));
+    }
 }
