@@ -1,15 +1,15 @@
 # Rovi M5: mecanum motion and feedback characterization
 
-**Status:** proposed; no firmware package yet. Create the independent Cargo package when this experiment starts, following [`../README.md`](../README.md).
+**Status:** in progress. The 2026-10-17 session demonstrated low-command forward/reverse, strafe, rotation, diagonals and automatic lease stopping on the floor. Calibration and controlled battery/load variation remain open; see [MILESTONE.md](MILESTONE.md#results).
 
-Reuse the assembled chassis, motor drivers, power system, and wiring from M4. Do not add encoders or other sensors unless inspection confirms they are already present or a later product requirement calls for them.
+M5 reuses M4's assembled car and the [M8 firmware and BLE client](../rovi-m8-setpoint-ros/README.md); no separate firmware package is needed. The motors have no encoders, and adding sensors is out of scope. Control is untethered over BLE, with distances from tape and video.
 
-## Measuring motion without new hardware
+* [TESTPLAN.md](TESTPLAN.md): overall procedure and the 1 × 1 m test area.
+* [CALIBRATION.md](CALIBRATION.md): next command-response and battery/load measurements, on parquet.
+* [MILESTONE.md](MILESTONE.md): measurements, acceptance and remaining limits.
 
-A printed ArUco marker on the car and the laptop camera give measured motion to set against the commanded motion in the car log: `scripts/cam.sh` records, `scripts/track_marker.py` tracks the marker, `sim/compare_track.py` (in M8) prints distance and heading drift and draws both paths. Commands, marker print size and placement, and the limits of an oblique laptop view: [feedback loops, rank 11](../../docs/FEEDBACK-LOOPS.md). So far verified on synthetic frames only, never on the real car.
+Every motor run is announced and waits for Todor's "go". Keep command values distinct from measured m/s and rad/s: the geometry is measured, but the motor/velocity mapping remains uncalibrated.
 
-## Firmware and results
+## Optional camera measurements
 
-Firmware, wheel mapping, and build/flash commands will be added when implementation begins. Record wheel behavior, calibration, and any feedback hardware in [`MILESTONE.md`](MILESTONE.md#results).
-
-Bench procedure: [TESTPLAN.md](TESTPLAN.md) (untethered, BLE control, tape and video).
+A printed ArUco marker and the laptop camera can compare observed motion with the commanded path using `scripts/cam.sh`, `scripts/track_marker.py` and M8's `sim/compare_track.py`. These tools have synthetic-frame evidence only, not validation on this car. Setup and camera limits: [feedback loops, rank 11](../../docs/FEEDBACK-LOOPS.md). They are optional for the tape/video procedure.
