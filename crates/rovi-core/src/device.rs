@@ -31,6 +31,19 @@ pub struct Reply {
     pub effects: Effects,
 }
 
+/// Why a device profile is refused. The device does not start, so nothing can claim it and the
+/// motors are never enabled.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ProfileError {
+    /// Radius, centre projection sum or maximum wheel speed is not a positive finite f32, or a
+    /// frame offset is not finite.
+    Geometry,
+    /// A speed limit is not a finite, nonnegative f32.
+    Limits,
+    /// A lease or window length is outside `1..=65535` ms (the capabilities carry u16).
+    Times,
+}
+
 pub struct Device {
     cfg: Config,
     geometry: Geometry,
@@ -42,6 +55,39 @@ pub struct Device {
     /// Deadline effects an input processed but could not return (a refused BLE write); the
     /// next [`tick`](Self::tick) returns them.
     pending: Effects,
+}
+
+/// The profile with its speed limits as the advertised f32 values, or why it is refused.
+fn validated(cfg: Config, g: &Geometry) -> Result<Config, ProfileError> {
+    // Advertised as f32, so a positive f64 must stay positive and finite as an f32.
+    let positive = |x: f64| x.is_finite() && (x as f32).is_finite() && x as f32 > 0.0;
+    let offsets = [g.offset_x, g.offset_y, g.offset_theta];
+    if !(positive(g.wheels_radius)
+        && positive(g.center_projection_sum)
+        && positive(g.max_wheel_speed)
+        && offsets.iter().all(|o| o.is_finite()))
+    {
+        return Err(ProfileError::Geometry);
+    }
+    let limit = |x: f64| {
+        let advertised = x as f32;
+        (x.is_finite() && x >= 0.0 && advertised.is_finite()).then_some(f64::from(advertised))
+    };
+    let (Some(max_vx), Some(max_vy), Some(max_wz)) =
+        (limit(cfg.max_vx), limit(cfg.max_vy), limit(cfg.max_wz))
+    else {
+        return Err(ProfileError::Limits);
+    };
+    let time = |ms: u64| (1..=u64::from(u16::MAX)).contains(&ms);
+    if !(time(cfg.lease_ms) && time(cfg.claim_window_ms) && time(cfg.reclaim_window_ms)) {
+        return Err(ProfileError::Times);
+    }
+    Ok(Config {
+        max_vx,
+        max_vy,
+        max_wz,
+        ..cfg
+    })
 }
 
 /// `a` then `b`, as one set of effects. `events::effects` logs a stop, then a release, then a
@@ -56,15 +102,18 @@ fn merge(a: Effects, b: Effects) -> Effects {
 }
 
 impl Device {
-    pub fn new(cfg: Config, geometry: Geometry) -> Self {
-        Self {
+    /// Starts the device with a validated profile. Speed limits are kept as the f32 values the
+    /// capabilities advertise, so a limit a controller reads is one it can send.
+    pub fn new(cfg: Config, geometry: Geometry) -> Result<Self, ProfileError> {
+        let cfg = validated(cfg, &geometry)?;
+        Ok(Self {
             cfg,
             geometry,
             arbiter: Arbiter::new(cfg),
             graph: Graph::new(),
             ble_error: None,
             pending: Effects::default(),
-        }
+        })
     }
 
     /// May `source`'s radio be on? While one source owns the car, the others' radios are off.
@@ -453,7 +502,7 @@ mod tests {
     const B: u128 = 0xB;
 
     fn dev() -> Device {
-        Device::new(Config::DEFAULT, GEOMETRY)
+        Device::new(Config::DEFAULT, GEOMETRY).unwrap()
     }
 
     fn frame(kind: Kind, session: u32, seq: u32, payload: &[u8]) -> ([u8; 96], usize) {
@@ -1234,5 +1283,224 @@ mod tests {
             d.tick(6_005).released,
             "the release reaches the log on the next tick"
         );
+    }
+
+    // Valid operating profile.
+
+    #[test]
+    fn the_car_profile_is_valid() {
+        assert!(Device::new(Config::DEFAULT, Geometry::CAR).is_ok());
+    }
+
+    #[test]
+    fn an_invalid_geometry_fails_to_start() {
+        for g in [
+            Geometry {
+                max_wheel_speed: 0.0,
+                ..GEOMETRY
+            },
+            Geometry {
+                max_wheel_speed: f64::NAN,
+                ..GEOMETRY
+            },
+            Geometry {
+                max_wheel_speed: -40.0,
+                ..GEOMETRY
+            },
+            Geometry {
+                wheels_radius: 0.0,
+                ..GEOMETRY
+            },
+            Geometry {
+                wheels_radius: f64::INFINITY,
+                ..GEOMETRY
+            },
+            Geometry {
+                wheels_radius: 1e-300,
+                ..GEOMETRY
+            }, // advertised as f32 0.0
+            Geometry {
+                center_projection_sum: -0.2,
+                ..GEOMETRY
+            },
+            Geometry {
+                offset_x: f64::NAN,
+                ..GEOMETRY
+            },
+            Geometry {
+                offset_theta: f64::INFINITY,
+                ..GEOMETRY
+            },
+        ] {
+            assert_eq!(
+                Device::new(Config::DEFAULT, g).err(),
+                Some(ProfileError::Geometry),
+                "{g:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_speed_limits_fail_to_start() {
+        for cfg in [
+            Config {
+                max_vx: f64::NAN,
+                ..Config::DEFAULT
+            },
+            Config {
+                max_vy: -0.1,
+                ..Config::DEFAULT
+            },
+            Config {
+                max_wz: 1e39,
+                ..Config::DEFAULT
+            }, // not an f32
+            Config {
+                max_wz: f64::INFINITY,
+                ..Config::DEFAULT
+            },
+        ] {
+            assert_eq!(
+                Device::new(cfg, GEOMETRY).err(),
+                Some(ProfileError::Limits),
+                "{cfg:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn times_outside_one_to_65535_ms_fail_to_start() {
+        for cfg in [
+            Config {
+                lease_ms: 0,
+                ..Config::DEFAULT
+            },
+            Config {
+                lease_ms: 65_536,
+                ..Config::DEFAULT
+            },
+            Config {
+                claim_window_ms: 70_000,
+                ..Config::DEFAULT
+            },
+            Config {
+                reclaim_window_ms: 0,
+                ..Config::DEFAULT
+            },
+        ] {
+            assert_eq!(
+                Device::new(cfg, GEOMETRY).err(),
+                Some(ProfileError::Times),
+                "{cfg:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn boundary_profiles_start() {
+        let cfg = Config {
+            lease_ms: 1,
+            claim_window_ms: 65_535,
+            reclaim_window_ms: 65_535,
+            max_vx: 0.0,
+            ..Config::DEFAULT
+        };
+        assert!(Device::new(cfg, GEOMETRY).is_ok());
+    }
+
+    #[test]
+    fn a_limit_read_from_the_capabilities_is_accepted() {
+        // 0.3 is not an f32: the car advertises 0.30000001192..., and a controller that sends
+        // exactly that must not be stopped for exceeding 0.3.
+        let cfg = Config {
+            max_vx: 0.3,
+            ..Config::DEFAULT
+        };
+        let mut d = Device::new(cfg, GEOMETRY).unwrap();
+        let caps = d.capabilities();
+        let max_vx = f64::from(f32::from_le_bytes(caps[9..13].try_into().unwrap()));
+        let (r, _) = send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
+        let s = r.unwrap().0.session;
+        send(&mut d, 0, A, Kind::Setpoint, s, 1, &cdr(0.1));
+        send(&mut d, 0, A, Kind::Arm, s, 2, &[]);
+        let (_, fx) = send(&mut d, 10, A, Kind::Setpoint, s, 3, &cdr(max_vx));
+        assert_eq!(fx.stop, None, "{max_vx} is the advertised limit");
+        assert_eq!(d.arbiter().state(), State::Armed);
+    }
+
+    // Input validation before state changes.
+
+    /// Setpoint payloads that must not renew a lease or use a sequence.
+    fn malformed() -> std::vec::Vec<std::vec::Vec<u8>> {
+        let mut nan = cdr(0.5);
+        nan[20..28].copy_from_slice(&f64::NAN.to_le_bytes());
+        let mut out_of_plane = cdr(0.5);
+        out_of_plane[36..44].copy_from_slice(&0.1f64.to_le_bytes()); // linear.z
+        std::vec![
+            nan.to_vec(),
+            cdr(0.5)[..40].to_vec(),
+            std::vec::Vec::new(),
+            out_of_plane.to_vec(),
+            crate::setpoint::tests::with_frame(b"map", 0, 0.5),
+        ]
+    }
+
+    #[test]
+    fn malformed_setpoints_neither_renew_the_lease_nor_use_the_sequence() {
+        let mut d = dev();
+        let s = armed(&mut d); // seq 1 at t=0: lease until 1000
+        for p in malformed() {
+            let (_, fx) = send(&mut d, 500, A, Kind::Setpoint, s, 3, &p);
+            assert_eq!(fx, Effects::default());
+        }
+        assert_eq!(
+            d.wheels(500),
+            [0.25; 4],
+            "the previous output (0.5 m/s) stays"
+        );
+        assert_eq!(
+            d.tick(1_000).stop,
+            Some(StopReason::LeaseExpired),
+            "not renewed"
+        );
+
+        let mut d = dev();
+        let s = armed(&mut d);
+        for p in malformed() {
+            send(&mut d, 500, A, Kind::Setpoint, s, 3, &p);
+        }
+        send(&mut d, 600, A, Kind::Setpoint, s, 3, &cdr(0.25));
+        assert_eq!(
+            d.wheels(600),
+            [0.125; 4],
+            "sequence 3 (0.25 m/s) was still free"
+        );
+    }
+
+    #[test]
+    fn stale_or_non_owner_oversized_input_cannot_stop_the_owner() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        send(&mut d, 10, A, Kind::Setpoint, s, 10, &cdr(0.5));
+        let (_, fx) = send(&mut d, 20, A, Kind::Setpoint, s, 9, &cdr(9.0));
+        assert_eq!(fx.stop, None, "stale: sequence 9 after 10");
+        let (_, fx) = send(&mut d, 30, B, Kind::Setpoint, s, 11, &cdr(9.0));
+        assert_eq!(fx.stop, None, "not the owner");
+        assert_eq!(d.arbiter().state(), State::Armed);
+        assert_eq!(
+            d.tick(1_010).stop,
+            Some(StopReason::LeaseExpired),
+            "neither renewed it"
+        );
+    }
+
+    #[test]
+    fn another_ros_nodes_oversized_sample_cannot_stop_the_owner() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        let other = publisher(&mut d, 2, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        assert_eq!(d.on_ros_cmd_vel(10, &other, &cdr(9.0)).stop, None);
+        assert_eq!(d.arbiter().state(), State::Armed);
     }
 }

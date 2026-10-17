@@ -102,7 +102,9 @@ fn main() -> std::io::Result<()> {
         offset_theta: 0.0,
         max_wheel_speed: 40.0,
     };
-    let dev: Shared = Arc::new(Mutex::new(Device::new(cfg, geometry)));
+    let dev: Shared = Arc::new(Mutex::new(
+        Device::new(cfg, geometry).expect("the sim profile is valid"),
+    ));
     let t0 = Instant::now();
     log(Event::Boot { reset: None }, t0);
 

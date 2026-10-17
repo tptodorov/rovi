@@ -676,4 +676,51 @@ mod tests {
         assert_eq!(a.fault_stop(0), Effects::default());
         assert_eq!(a.state(), State::Open);
     }
+
+    // Deadline boundaries: the deadline itself counts as passed (`now >= deadline`), and a tick
+    // after it changes nothing more. With the 10 ms control tick that is within lease + 10 ms.
+
+    #[test]
+    fn claim_window_boundary() {
+        let mut a = Arbiter::new(CFG);
+        a.claim(0, PHONE).unwrap();
+        assert!(!a.tick(9_999).released, "deadline - 1");
+        assert!(a.tick(10_000).released, "deadline");
+        assert_eq!(a.tick(10_001), Effects::default(), "deadline + 1");
+        assert_eq!(a.state(), State::Open);
+    }
+
+    #[test]
+    fn lease_boundary() {
+        let mut a = armed(); // setpoint at 0, lease 1000 ms
+        assert_eq!(a.tick(999).stop, None, "deadline - 1");
+        assert_eq!(a.drive(999).map(|s| s.vx), Some(0.5));
+        assert_eq!(
+            a.tick(1_000).stop,
+            Some(StopReason::LeaseExpired),
+            "deadline"
+        );
+        assert_eq!(a.drive(1_000), None);
+        assert_eq!(a.tick(1_001), Effects::default(), "deadline + 1");
+    }
+
+    #[test]
+    fn reclaim_window_boundary_after_a_lease_expiry() {
+        let mut a = armed();
+        a.tick(1_000); // the window starts at once: until 6000
+        assert!(!a.tick(5_999).released, "deadline - 1");
+        assert!(a.tick(6_000).released, "deadline");
+        assert_eq!(a.tick(6_001), Effects::default(), "deadline + 1");
+    }
+
+    #[test]
+    fn reclaim_window_boundary_after_a_quiet_owners_stop() {
+        let mut a = armed();
+        a.stop(10, PHONE).unwrap(); // the owner is quiet; its lease lapses at 1000
+        assert!(!a.tick(999).released);
+        a.tick(1_000); // the window starts when the lease lapses: until 6000
+        assert!(!a.tick(5_999).released, "deadline - 1");
+        assert!(a.tick(6_000).released, "deadline");
+        assert_eq!(a.tick(6_001), Effects::default(), "deadline + 1");
+    }
 }

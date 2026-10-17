@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>9 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>10 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
 <strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
@@ -1424,7 +1424,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--tasks--3-device-and-transport-conformance-laptop">3. Device and transport conformance (laptop)</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Implement input/profile validation, supported frame handling, boundary timing and initial ROS claim validation. Add failing reproductions for changed behavior, then verify the validation/clock scenarios in the map with deterministic time; retain CDR golden vectors and version-1 byte layouts.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.1 Implement input/profile validation, supported frame handling, boundary timing and initial ROS claim validation. Add failing reproductions for changed behavior, then verify the validation/clock scenarios in the map with deterministic time; retain CDR golden vectors and version-1 byte layouts. <strong>Done 2026-10-17:</strong> frames (empty or <code>base_link</code>) and nanosecond range; no claim from an out-of-limits first ROS sample; every input processes due deadlines first; <code>Device::new</code> validates the profile (with <code>Geometry::CAR</code>) and keeps limits as the advertised f32 values; overflow stays NaN for motor fault handling. Each change had a failing test first; boundary and malformed-corpus tests pin behaviour that already held. Golden CDR vectors and version-1 layouts unchanged; the sim car scenarios (UDP and all five ROS scripts) and both firmware builds pass.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Implement wrapping BLE/UDP and full per-GID ROS sequence domains, session generations and reconnect cleanup. Test rollover, half-range, repeated HELLO, old-session input, multiple same-node publishers, unknown publishers and router disconnect/reconnect; update adapter docs.</li>
 <li>
@@ -1463,7 +1463,9 @@ After acceptance, run archive and validation per <a href="../docs/SPECIFICATION.
 All checks below are <strong>planned product checks</strong>, not claims that the new implementation exists. Reuse the M8 unit tests and BLE/UDP/ROS harnesses where applicable, then record concrete product test names and evidence as tasks complete. Each row covers every scenario under that requirement. Task numbers refer to <a href="#openspec--changes--add-four-wheel-api--tasks">tasks.md</a>.</p>
 <p>
 Host: deterministic tests/recording driver. Integration: real sockets or Jazzy on the laptop. Physical: separately authorized product firmware bench evidence; old M4/M5 evidence is a reference only.</p>
-<h2 id="openspec--changes--add-four-wheel-api--verification--car-control-api">car-control-api</h2><table>
+<h2 id="openspec--changes--add-four-wheel-api--verification--car-control-api">car-control-api</h2><p>
+Host test names are <code>rovi-core</code> unit tests (<code>cargo test -p rovi-core</code>).</p>
+<table>
 <thead>
 <tr>
 <th>
@@ -1477,13 +1479,13 @@ Completion check</th>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-setpoint">Setpoint</a></td>
 <td>
-Host codec/device tests: positive and negative limit boundaries and invalid planar input; socket conformance (3.1, 3.3).</td>
+Host codec/device tests: positive and negative limit boundaries and invalid planar input; socket conformance (3.1, 3.3). Host: <code>rejects_out_of_plane_components</code>, <code>out_of_limits_setpoint_is_a_safety_stop</code>, <code>malformed_setpoints_neither_renew_the_lease_nor_use_the_sequence</code>, <code>a_limit_read_from_the_capabilities_is_accepted</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-mecanum-kinematics">Mecanum kinematics</a></td>
 <td>
-Host golden kinematics and combined-input saturation tests; transport parity (3.1, 3.3).</td>
+Host golden kinematics and combined-input saturation tests; transport parity (3.1, 3.3). Host: <code>forward_drives_all_wheels_equally</code>, <code>combined_inputs_saturate_each_wheel_independently</code>, <code>a_non_finite_wheel_speed_stays_non_finite_for_motor_fault_handling</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1507,7 +1509,7 @@ Host claim tests and UDP/ROS intruders; physical AP/BLE exclusion on board (3.3,
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-claim-window">Claim window</a></td>
 <td>
-Injected-clock host tests, including refused ARM and no valid setpoint (3.1).</td>
+Injected-clock host tests, including refused ARM and no valid setpoint (3.1). Host: <code>claim_window_boundary</code>, <code>claim_window_expiry_releases</code>, <code>a_setpoint_on_the_claim_deadline_cannot_revive_the_claim</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1519,7 +1521,7 @@ BLE/UDP scenarios plus real Jazzy auto-arm and STOP-latch scenarios (3.3).</td>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-lease-and-watchdog-timeout">Lease and watchdog timeout</a></td>
 <td>
-Injected-time detection tests and physical log timing; detection only, no numeric disable bound (O4 deferred) (3.1, 5.2).</td>
+Injected-time detection tests and physical log timing; detection only, no numeric disable bound (O4 deferred) (3.1, 5.2). Host: <code>lease_boundary</code>, <code>a_setpoint_on_the_lease_deadline_cannot_renew_the_expired_lease</code>, <code>an_old_stamp_is_accepted_and_the_lease_runs_from_receive_time</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1531,7 +1533,7 @@ Host transition tests; every physical stop trigger with all four channels (3.3, 
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-reclaim-window">Reclaim window</a></td>
 <td>
-Injected-clock tests for retained streaming owner, quiet owner, boundary and explicit/automatic recovery (3.1, 3.3).</td>
+Injected-clock tests for retained streaming owner, quiet owner, boundary and explicit/automatic recovery (3.1, 3.3). Host: <code>reclaim_window_boundary_after_a_lease_expiry</code>, <code>reclaim_window_boundary_after_a_quiet_owners_stop</code>, <code>stop_keeps_the_owner_while_it_keeps_streaming</code>, <code>arm_and_setpoint_on_the_reclaim_deadline_cannot_drive_the_expired_session</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1579,13 +1581,13 @@ Cross-transport test sequence STOP, refused ARM, setpoint, successful ARM, non-o
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-input-validation-before-state-changes">Input validation before state changes</a></td>
 <td>
-Malformed corpus and non-owner/stale oversized samples; assert state, sequence and lease snapshots (3.1).</td>
+Malformed corpus and non-owner/stale oversized samples; assert state, sequence and lease snapshots (3.1). Host: <code>malformed_setpoints_neither_renew_the_lease_nor_use_the_sequence</code>, <code>stale_or_non_owner_oversized_input_cannot_stop_the_owner</code>, <code>another_ros_nodes_oversized_sample_cannot_stop_the_owner</code>, <code>a_bad_first_ros_input_does_not_claim</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-setpoint-frame-and-time-interpretation">Setpoint frame and time interpretation</a></td>
 <td>
-Host CDR cases for empty/base_link/map, string bounds, nanoseconds and stale header stamp (3.1).</td>
+Host CDR cases for empty/base_link/map, string bounds, nanoseconds and stale header stamp (3.1). Host: <code>empty_and_base_link_frames_are_accepted</code>, <code>other_frames_are_rejected</code>, <code>a_frame_id_that_is_not_utf8_is_malformed</code>, <code>a_64_byte_frame_id_is_in_bounds_and_65_is_not</code>, <code>nanoseconds_must_be_below_one_second</code>, <code>an_unsupported_frame_neither_renews_the_lease_nor_uses_the_sequence</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1621,13 +1623,13 @@ BLE readable/notify tests, UDP reply and stop-frame capture, ROS release snapsho
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-valid-operating-profile">Valid operating profile</a></td>
 <td>
-Constructor boundary tests for finite geometry, f32 limits and u16 time ranges; no enable on failure (3.1).</td>
+Constructor boundary tests for finite geometry, f32 limits and u16 time ranges; no enable on failure (3.1). Host: <code>the_car_profile_is_valid</code>, <code>an_invalid_geometry_fails_to_start</code>, <code>invalid_speed_limits_fail_to_start</code>, <code>times_outside_one_to_65535_ms_fail_to_start</code>, <code>boundary_profiles_start</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-deadline-ordering">Deadline ordering</a></td>
 <td>
-Injected-time tests at deadline-1, deadline and deadline+1 for each window (3.1).</td>
+Injected-time tests at deadline-1, deadline and deadline+1 for each window (3.1). Host: <code>a_setpoint_on_the_lease_deadline_cannot_renew_the_expired_lease</code>, <code>a_setpoint_on_the_claim_deadline_cannot_revive_the_claim</code>, <code>arm_and_setpoint_on_the_reclaim_deadline_cannot_drive_the_expired_session</code>, <code>a_ros_sample_on_the_reclaim_deadline_releases_then_claims_anew</code>, <code>a_refused_ble_write_after_a_deadline_still_reports_the_release</code>.</td>
 </tr>
 <tr>
 <td>
