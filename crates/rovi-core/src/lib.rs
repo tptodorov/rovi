@@ -8,7 +8,6 @@ pub mod device;
 pub mod events;
 pub mod graph;
 pub mod kinematics;
-pub mod motor;
 pub mod rmw;
 pub mod setpoint;
 pub mod udp;

@@ -1847,6 +1847,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rovi-drive"
+version = "0.1.0"
+dependencies = [
+ "rovi-core",
+ "rovi-motor-control",
+]
+
+[[package]]
 name = "rovi-firmware"
 version = "0.1.0"
 dependencies = [
@@ -1866,12 +1874,18 @@ dependencies = [
  "getrandom",
  "heapless 0.9.3",
  "rovi-core",
+ "rovi-drive",
+ "rovi-motor-control",
  "smart-leds",
  "static_cell",
  "trouble-host",
  "zenoh-embassy",
  "zenoh-nostd",
 ]
+
+[[package]]
+name = "rovi-motor-control"
+version = "0.1.0"
 
 [[package]]
 name = "rustversion"

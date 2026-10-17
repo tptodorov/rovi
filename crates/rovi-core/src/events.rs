@@ -20,6 +20,12 @@ pub enum Link {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fault {
     WifiAp,
+    /// Motor control got a NaN or infinite wheel command.
+    MotorNonFinite,
+    /// The motor configuration is invalid.
+    MotorConfig,
+    /// A motor pin write failed.
+    MotorDriver,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -140,6 +146,9 @@ impl fmt::Display for Record {
                 }
             )?,
             Event::Fault(Fault::WifiAp) => f.write_str("ev=error src=wifi_ap")?,
+            Event::Fault(Fault::MotorNonFinite) => f.write_str("ev=error src=motor_nonfinite")?,
+            Event::Fault(Fault::MotorConfig) => f.write_str("ev=error src=motor_config")?,
+            Event::Fault(Fault::MotorDriver) => f.write_str("ev=error src=motor_driver")?,
             Event::Dropped(n) => write!(f, "ev=dropped n={n}")?,
         }
         write!(f, " at_ms={}", self.at_ms)
@@ -248,6 +257,18 @@ mod tests {
             (Event::Ros(Link::Retry), "ev=ros link=retry at_ms=42"),
             (Event::Ros(Link::Refresh), "ev=ros link=refresh at_ms=42"),
             (Event::Fault(Fault::WifiAp), "ev=error src=wifi_ap at_ms=42"),
+            (
+                Event::Fault(Fault::MotorNonFinite),
+                "ev=error src=motor_nonfinite at_ms=42",
+            ),
+            (
+                Event::Fault(Fault::MotorConfig),
+                "ev=error src=motor_config at_ms=42",
+            ),
+            (
+                Event::Fault(Fault::MotorDriver),
+                "ev=error src=motor_driver at_ms=42",
+            ),
             (Event::Dropped(3), "ev=dropped n=3 at_ms=42"),
         ];
         for (ev, want) in cases {
