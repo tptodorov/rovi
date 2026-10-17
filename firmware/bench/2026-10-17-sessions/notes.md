@@ -29,9 +29,12 @@ Both subsequent runs completed ([retry2-car.log](retry2-car.log), [retry2-runs.t
 
 | Run | Command | Serial/client evidence | Physical observation |
 | --- | --- | --- | --- |
-| 1 | `vx 0.1`, 3 s, STOP, disconnect | 60 setpoints; armed at 7,766 ms, STOP at 10,821 ms, released at 13,882 ms | Pending Todor's confirmation |
-| 2 | Reconnect, `vx 0.1`, 3 s, STOP, disconnect | 60 setpoints; armed at 21,090 ms, STOP at 24,142 ms, released at 26,887 ms | Pending Todor's confirmation |
+| 1 | `vx 0.1`, 3 s, STOP, disconnect | 60 setpoints; armed at 7,766 ms, STOP at 10,821 ms, released at 13,882 ms | Todor confirmed: all four forward, stopped cleanly |
+| 2 | Reconnect, `vx 0.1`, 3 s, STOP, disconnect | 60 setpoints; armed at 21,090 ms, STOP at 24,142 ms, released at 26,887 ms | Todor confirmed: all four forward, stopped cleanly |
 
 Both connections reused handle 1 and reported claimed → armed → stopped (STOP) with no error.
 All four wheel commands were 83 ‰. The final state was open with all wheel commands zero,
 and the serial capture was stopped.
+
+Todor confirmed both repeated runs with “all worked” on 2026-10-17. The original runs remain
+log-only evidence; this confirmation applies to the requested repeat.
