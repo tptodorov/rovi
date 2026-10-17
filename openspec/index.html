@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>7 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>8 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
 <strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
@@ -1415,7 +1415,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.1 Introduce the standalone motor module and recording driver. Reproduce all-low versus documented coast with a failing test before correction; verify per-wheel independence, safe pin ordering, zero/deadband boundaries, clamping and duty caps, including coast under a 70% drive cap. <strong>Done 2026-10-17:</strong> <code>crates/rovi-motor-control</code> (no dependencies) with a recording test driver; the coast test failed on the copied all-low mapping (PWM 0) before the fix to PWM high. 15 tests; names in the <a href="#openspec--changes--add-four-wheel-api--verification--motor-control">verification map</a>. The firmware still uses the core's mapping until 2.3.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Implement configuration validation and latched command faults; test every invalid numeric class, mapping collision, non-finite fourth wheel, update-after-fault and explicit enable with a new vector. Verify the crate builds without device, transport or std dependencies.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.2 Implement configuration validation and latched command faults; test every invalid numeric class, mapping collision, non-finite fourth wheel, update-after-fault and explicit enable with a new vector. Verify the crate builds without device, transport or std dependencies. <strong>Done 2026-10-17:</strong> <code>Config::validate</code>, <code>MotorControl::configure</code> (standby before validation) and a latched <code>Fault</code>; 8 tests failed against stub behaviour first. 25 crate tests; no dependencies; builds for <code>xtensa-esp32s3-none-elf</code> against <code>core</code> alone.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Connect device outputs to motor control through the coordinator. Fault-injection tests must prove stopped/out-of-limits, both standby outputs inactive, no repeated-tick or ROS-stream recovery, and explicit fresh-setpoint/ARM recovery. Document the fault diagnostic and integration API.</li>
 </ul>
@@ -1668,13 +1668,13 @@ Recording driver verifies one wheel at a time; physical direction on each wheel 
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-independent-of-transport-and-kinematics">Independent of transport and kinematics</a></td>
 <td>
-Standalone no_std crate build/test and dependency inspection (2.2).</td>
+Standalone no_std crate build/test and dependency inspection (2.2). Host: <code>cargo tree -p rovi-motor-control</code> shows no dependencies; <code>cargo build -p rovi-motor-control --target xtensa-esp32s3-none-elf -Zbuild-std=core</code> builds against <code>core</code> alone.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-invalid-wheel-commands-stop-the-wheels">Invalid wheel commands stop the wheels</a></td>
 <td>
-Clamp both signs; inject NaN and both infinities at each wheel, inspect all outputs (2.2). Host: <code>the_product_profile_caps_drive_duty_at_70_percent</code>, <code>nan_while_driving_puts_both_drivers_in_standby</code>.</td>
+Clamp both signs; inject NaN and both infinities at each wheel, inspect all outputs (2.2). Host: <code>every_non_finite_value_at_every_wheel_latches_standby</code>, <code>clamping_works_in_both_directions</code>, <code>the_product_profile_caps_drive_duty_at_70_percent</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1722,19 +1722,19 @@ Host mapping/inversion tests; compare schematic and confirm all four physical ch
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-configuration-validation">Configuration validation</a></td>
 <td>
-Rejected min/max/deadband/mapping cases and config replacement while disabled (2.2).</td>
+Rejected min/max/deadband/mapping cases and config replacement while disabled (2.2). Host: <code>invalid_duty_limits_cannot_enable</code>, <code>a_mapping_that_is_not_one_to_one_cannot_enable</code>, <code>an_invalid_deadband_is_reported_before_any_enable</code>, <code>boundary_configurations_are_valid</code>, <code>replacing_the_configuration_disables_first</code>, <code>an_invalid_replacement_latches_and_a_valid_one_clears_it</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-fault-recovery-requires-explicit-enable">Fault recovery requires explicit enable</a></td>
 <td>
-Host stateful fault/update/enable sequence; stale vector never replayed (2.2).</td>
+Host stateful fault/update/enable sequence; stale vector never replayed (2.2). Host: <code>finite_updates_do_not_clear_a_fault_and_enable_applies_only_the_new_vector</code>, <code>standby_works_in_every_fault_state</code>, <code>nan_while_driving_puts_both_drivers_in_standby</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-complete-vector-validation-before-output">Complete vector validation before output</a></td>
 <td>
-Recording driver verifies no partial writes and standby/prepare/enable ordering (2.1, 2.2). Host: <code>a_non_finite_fourth_wheel_cannot_drive_the_first_three</code>, <code>enable_prepares_every_bridge_before_asserting_stby</code>, <code>standby_deasserts_both_stby_outputs_first</code>, <code>driver_failures_reach_the_caller</code>.</td>
+Recording driver verifies no partial writes and standby/prepare/enable ordering (2.1, 2.2). Host: <code>a_non_finite_fourth_wheel_cannot_drive_the_first_three</code>, <code>every_non_finite_value_at_every_wheel_latches_standby</code>, <code>enable_prepares_every_bridge_before_asserting_stby</code>, <code>standby_deasserts_both_stby_outputs_first</code>, <code>driver_failures_reach_the_caller</code>.</td>
 </tr>
 <tr>
 <td>
