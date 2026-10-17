@@ -5,7 +5,8 @@ Setup: all four wheels clear of the floor, FRONT marked on the chassis, red tape
 | Check | Command / evidence | Result |
 | --- | --- | --- |
 | Gentle forward | `drive --vx 0.1 --seconds 5`; [client output](forward-client.txt): 101 setpoints, Claimed → Armed → Stopped (`Stop`), no reported error | Todor confirmed all four started, turned forward and stopped, without rubbing or hesitation. Pass. |
+| Gentle strafe left | `drive --vx 0 --vy 0.1 --seconds 5`; [client output](strafe-client.txt): 101 setpoints, Claimed → Armed → Stopped (`Stop`), no reported error | Todor reported no movement. Fail; cause not established. Check the motor bank is awake before repeating. |
 
-Strafe, rotation and wheel-speed measurement remain pending. F1 is not complete.
+A successful strafe check, rotation and wheel-speed measurement remain pending. F1 is not complete. Client status alone does not establish motor movement or motor-supply voltage.
 
 The connected firmware still reports placeholder geometry: wheel radius 0.050 m and centre projection sum 0.200 m. The measured car geometry has not been applied; this run checks direction and motion only, not speed calibration.
