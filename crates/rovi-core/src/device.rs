@@ -1,9 +1,7 @@
 //! The device core: the arbiter plus kinematics, driven by UDP datagrams. The BLE and ROS
 //! adapters will feed the same arbiter. Time is passed in; the firmware shell owns the sockets.
 
-use crate::arbiter::{
-    Applied, Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason,
-};
+use crate::arbiter::{Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason};
 use crate::graph::Graph;
 use crate::kinematics::{self, Geometry};
 use crate::rmw::Attachment;
@@ -55,6 +53,57 @@ pub struct Device {
     /// Deadline effects an input processed but could not return (a refused BLE write); the
     /// next [`tick`](Self::tick) returns them.
     pending: Effects,
+    /// ROS ordering for the current owner session, per publisher.
+    marks: Marks,
+}
+
+/// Owner publishers the ROS ordering table tracks per session. A node usually has two (cmd_vel
+/// and arm); input from one more is discarded rather than taken without a replay check.
+const MARKS: usize = 8;
+
+/// The highest accepted ROS sequence per owner publisher GID in one session. Kept apart from the
+/// graph, so a publisher's removal or other announcements cannot reset it.
+struct Marks {
+    session: u32,
+    gids: [[u8; 16]; MARKS],
+    seqs: [i64; MARKS],
+    len: usize,
+}
+
+impl Marks {
+    fn new(session: u32) -> Self {
+        Self {
+            session,
+            gids: [[0; 16]; MARKS],
+            seqs: [0; MARKS],
+            len: 0,
+        }
+    }
+
+    /// Records `seq` from `gid` if it is above that publisher's mark in `session` (a new session
+    /// starts empty). False for a negative, repeated or older sequence, or a full table.
+    fn accept(&mut self, session: u32, gid: [u8; 16], seq: i64) -> bool {
+        if seq < 0 {
+            return false;
+        }
+        if session != self.session {
+            *self = Marks::new(session);
+        }
+        match self.gids[..self.len].iter().position(|g| *g == gid) {
+            Some(i) if seq > self.seqs[i] => {
+                self.seqs[i] = seq;
+                true
+            }
+            Some(_) => false,
+            None if self.len < MARKS => {
+                self.gids[self.len] = gid;
+                self.seqs[self.len] = seq;
+                self.len += 1;
+                true
+            }
+            None => false,
+        }
+    }
 }
 
 /// The profile with its speed limits as the advertised f32 values, or why it is refused.
@@ -113,6 +162,7 @@ impl Device {
             graph: Graph::new(),
             ble_error: None,
             pending: Effects::default(),
+            marks: Marks::new(0),
         })
     }
 
@@ -341,20 +391,24 @@ impl Device {
         let Some(who) = self.ros_claimant(&att) else {
             return Effects::default();
         };
-        // An out-of-limits sample is a stop for an owner, but must not claim a free car.
-        if self.arbiter.owner().is_none() && !self.arbiter.within_limits(&sp) {
+        // An out-of-limits or negatively numbered sample must not claim a free car.
+        if self.arbiter.owner().is_none() && (!self.arbiter.within_limits(&sp) || att.seq < 0) {
             return Effects::default();
         }
         let Ok(mut fx) = self.arbiter.claim(now, who) else {
             return Effects::default();
         };
-        if let Ok((applied, e)) = self.arbiter.setpoint(now, who, att.seq as u32, sp) {
+        // Owner only from here: order the sample against its own publisher's mark.
+        if !self.marks.accept(self.arbiter.session(), att.gid, att.seq) {
+            return fx;
+        }
+        if let Ok(e) = self.arbiter.setpoint_ordered(now, who, sp) {
             fx.stop = e.stop;
             let auto_arm = matches!(
                 self.arbiter.state(),
                 State::Claimed | State::Stopped(StopReason::LeaseExpired)
             );
-            if applied == Applied::Applied && e.stop.is_none() && auto_arm {
+            if e.stop.is_none() && auto_arm {
                 let _ = self.arbiter.arm(now, who);
             }
         }
@@ -377,6 +431,11 @@ impl Device {
         let Some(who) = self.ros_claimant(&att) else {
             return Effects::default();
         };
+        if self.arbiter.owner() != Some(who)
+            || !self.marks.accept(self.arbiter.session(), att.gid, att.seq)
+        {
+            return Effects::default();
+        }
         if payload[4] != 0 {
             let _ = self.arbiter.arm(now, who);
             Effects::default()
@@ -1502,5 +1561,137 @@ mod tests {
         d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
         assert_eq!(d.on_ros_cmd_vel(10, &other, &cdr(9.0)).stop, None);
         assert_eq!(d.arbiter().state(), State::Armed);
+    }
+
+    // ROS sequence domains: strictly increasing i64 per publisher GID, per session.
+
+    fn lv_key(nid: u8, id: u8) -> std::string::String {
+        format!(
+            "@ros2_lv/0/9ad20db4c929c8189ca587de2f90c2e2/{nid}/{id}/MP/%/%/n{nid}/%t{id}/std_msgs::msg::dds_::Bool_/RIHS01_x/::,10:,:,:,,"
+        )
+    }
+
+    #[test]
+    fn same_node_publishers_have_independent_counters() {
+        let mut d = dev();
+        let (a, b, arm) = (
+            publisher(&mut d, 1, 1, 1),
+            publisher(&mut d, 1, 3, 1),
+            publisher(&mut d, 1, 2, 1),
+        );
+        d.on_ros_cmd_vel(0, &at(&a, 100), &cdr(1.0));
+        d.on_ros_cmd_vel(10, &at(&b, 1), &cdr(0.5));
+        assert_eq!(d.wheels(10), [0.25; 4], "B's first sample is accepted");
+        d.on_ros_cmd_vel(20, &at(&a, 100), &cdr(1.0));
+        assert_eq!(d.wheels(20), [0.25; 4], "A's duplicate is dropped");
+        let fx = d.on_ros_arm(30, &at(&arm, 1), &bool_cdr(false));
+        assert_eq!(
+            fx.stop,
+            Some(StopReason::Stop),
+            "the arm publisher's 1 is its own counter"
+        );
+    }
+
+    #[test]
+    fn ros_sequences_compare_the_full_i64() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &at(&cmd, u32::MAX as i64), &cdr(0.5));
+        d.on_ros_cmd_vel(10, &at(&cmd, 1 << 32), &cdr(1.0));
+        assert_eq!(d.wheels(10), [0.5; 4], "2^32 follows 2^32 - 1");
+    }
+
+    #[test]
+    fn a_negative_ros_sequence_is_rejected() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        assert_eq!(
+            d.on_ros_cmd_vel(0, &at(&cmd, -1), &cdr(0.5)),
+            Effects::default()
+        );
+        assert_eq!(d.arbiter().state(), State::Open);
+    }
+
+    #[test]
+    fn a_replayed_ros_arm_is_ignored() {
+        let mut d = dev();
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        d.on_ros_arm(5, &at(&arm, 5), &bool_cdr(false)); // STOP
+        d.on_ros_cmd_vel(10, &at(&cmd, 2), &cdr(1.0)); // a fresh setpoint
+        d.on_ros_arm(15, &at(&arm, 5), &bool_cdr(true));
+        assert_eq!(
+            d.wheels(15),
+            [0.0; 4],
+            "ARM with an old sequence is a replay"
+        );
+        d.on_ros_arm(20, &at(&arm, 6), &bool_cdr(true));
+        assert_eq!(d.wheels(20), [0.5; 4]);
+    }
+
+    #[test]
+    fn ordering_marks_survive_a_publishers_removal() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &at(&cmd, 100), &cdr(1.0));
+        d.on_ros_liveliness(&lv_key(1, 1), false);
+        d.on_ros_liveliness(&lv_key(1, 1), true);
+        d.on_ros_cmd_vel(10, &at(&cmd, 99), &cdr(0.5));
+        assert_eq!(
+            d.wheels(10),
+            [0.5; 4],
+            "99 after 100 is rejected after re-announcement"
+        );
+    }
+
+    #[test]
+    fn unrelated_announcements_cannot_reset_ordering() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &at(&cmd, 100), &cdr(1.0));
+        for nid in 2..40 {
+            publisher(&mut d, nid, 1, 1);
+        }
+        d.on_ros_cmd_vel(10, &at(&cmd, 99), &cdr(0.5));
+        assert_ne!(d.wheels(10), [0.25; 4], "99 did not drive");
+        assert_eq!(
+            d.tick(1_000).stop,
+            Some(StopReason::LeaseExpired),
+            "nor renew the lease"
+        );
+    }
+
+    #[test]
+    fn an_owner_publisher_beyond_the_ordering_table_is_discarded() {
+        let mut d = dev();
+        let pubs: std::vec::Vec<_> = (1..=9)
+            .map(|id| publisher(&mut d, 1, id * 2 + 1, 1))
+            .collect();
+        for (i, p) in pubs.iter().take(8).enumerate() {
+            d.on_ros_cmd_vel(i as u64, p, &cdr(0.1 * (i + 1) as f64));
+        }
+        assert_eq!(
+            d.wheels(7),
+            [0.4; 4],
+            "the eighth publisher (0.8 m/s) is tracked"
+        );
+        d.on_ros_cmd_vel(8, &pubs[8], &cdr(0.2));
+        assert_eq!(
+            d.wheels(8),
+            [0.4; 4],
+            "the ninth cannot be ordered, so it is discarded"
+        );
+    }
+
+    #[test]
+    fn a_new_ros_session_starts_fresh_marks() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &at(&cmd, 100), &cdr(1.0));
+        d.tick(1_000); // lease expiry
+        assert!(d.tick(6_000).released);
+        let fx = d.on_ros_cmd_vel(6_100, &at(&cmd, 50), &cdr(0.5));
+        assert_eq!(fx.claimed, Some(Source::Ros));
+        assert_eq!(d.wheels(6_100), [0.25; 4], "50 is fine in the new session");
     }
 }
