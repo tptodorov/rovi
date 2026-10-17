@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>6 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>7 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
 <strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
@@ -1413,7 +1413,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--tasks--2-independent-motor-control-laptop-test-first">2. Independent motor control (laptop, test-first)</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.1 Introduce the standalone motor module and recording driver. Reproduce all-low versus documented coast with a failing test before correction; verify per-wheel independence, safe pin ordering, zero/deadband boundaries, clamping and duty caps, including coast under a 70% drive cap.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.1 Introduce the standalone motor module and recording driver. Reproduce all-low versus documented coast with a failing test before correction; verify per-wheel independence, safe pin ordering, zero/deadband boundaries, clamping and duty caps, including coast under a 70% drive cap. <strong>Done 2026-10-17:</strong> <code>crates/rovi-motor-control</code> (no dependencies) with a recording test driver; the coast test failed on the copied all-low mapping (PWM 0) before the fix to PWM high. 15 tests; names in the <a href="#openspec--changes--add-four-wheel-api--verification--motor-control">verification map</a>. The firmware still uses the core's mapping until 2.3.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Implement configuration validation and latched command faults; test every invalid numeric class, mapping collision, non-finite fourth wheel, update-after-fault and explicit enable with a new vector. Verify the crate builds without device, transport or std dependencies.</li>
 <li>
@@ -1646,7 +1646,9 @@ Fill/churn graph and ordering tables, remove/reannounce owner GID, reject replay
 </tr>
 </tbody>
 </table>
-<h2 id="openspec--changes--add-four-wheel-api--verification--motor-control">motor-control</h2><table>
+<h2 id="openspec--changes--add-four-wheel-api--verification--motor-control">motor-control</h2><p>
+Host test names are <code>rovi-motor-control</code> unit tests (<code>cargo test -p rovi-motor-control</code>).</p>
+<table>
 <thead>
 <tr>
 <th>
@@ -1660,7 +1662,7 @@ Completion check</th>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-four-independent-wheel-commands">Four independent wheel commands</a></td>
 <td>
-Recording driver verifies one wheel at a time; physical direction on each wheel (2.1, 5.2).</td>
+Recording driver verifies one wheel at a time; physical direction on each wheel (2.1, 5.2). Host: <code>each_wheel_is_driven_on_its_own</code>, <code>sign_sets_direction_and_inversion_flips_it</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1672,13 +1674,13 @@ Standalone no_std crate build/test and dependency inspection (2.2).</td>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-invalid-wheel-commands-stop-the-wheels">Invalid wheel commands stop the wheels</a></td>
 <td>
-Clamp both signs; inject NaN and both infinities at each wheel, inspect all outputs (2.2).</td>
+Clamp both signs; inject NaN and both infinities at each wheel, inspect all outputs (2.2). Host: <code>the_product_profile_caps_drive_duty_at_70_percent</code>, <code>nan_while_driving_puts_both_drivers_in_standby</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-standby-until-explicitly-enabled">Standby until explicitly enabled</a></td>
 <td>
-Recording driver checks boot/disable; physical reset and power-loss STBY verification (2.1, 5.2).</td>
+Recording driver checks boot/disable; physical reset and power-loss STBY verification (2.1, 5.2). Host: <code>new_starts_in_standby</code>, <code>updates_need_an_explicit_enable</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1690,31 +1692,31 @@ Recording driver checks same-tick disable before any bridge update; physical: ev
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-full-scale-maps-to-the-configured-limit">Full-scale maps to the configured limit</a></td>
 <td>
-Host duty-cap tests including the 70% product profile; current is not measured (O1 deferred) (2.1, 5.1).</td>
+Host duty-cap tests including the 70% product profile; current is not measured (O1 deferred) (2.1, 5.1). Host: <code>the_product_profile_caps_drive_duty_at_70_percent</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-zero-command-behaviour">Zero command behaviour</a></td>
 <td>
-Failing coast-pin reproduction first, neighbor independence; coast distance not claimed (O5) (2.1, 5.2).</td>
+Failing coast-pin reproduction first, neighbor independence; coast distance not claimed (O5) (2.1, 5.2). Host: <code>zero_requests_coast_with_both_direction_pins_low_and_pwm_high</code>, <code>coast_keeps_pwm_high_under_a_70_percent_drive_cap</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-dead-zone-handling">Dead zone handling</a></td>
 <td>
-Exact zero, deadband-minus/at/plus, both signs and rounding table (2.1).</td>
+Exact zero, deadband-minus/at/plus, both signs and rounding table (2.1). Host: <code>deadband_and_duty_follow_the_rule</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-starts-and-reversals-do-not-reset-the-controller">Starts and reversals do not reset the controller</a></td>
 <td>
-Host signed transitions; product reversal/thermal/radio run at the 70% cap (2.1, 5.2).</td>
+Host signed transitions; product reversal/thermal/radio run at the 70% cap (2.1, 5.2). Host: <code>full_reversal_is_direct_with_the_drivers_kept_enabled</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-calibrated-wheel-mapping">Calibrated wheel mapping</a></td>
 <td>
-Host mapping/inversion tests; compare schematic and confirm all four physical channels (2.1, 5.1, 5.2).</td>
+Host mapping/inversion tests; compare schematic and confirm all four physical channels (2.1, 5.1, 5.2). Host: <code>the_car_mapping_puts_each_wheel_on_its_bridge</code>, <code>sign_sets_direction_and_inversion_flips_it</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1732,13 +1734,13 @@ Host stateful fault/update/enable sequence; stale vector never replayed (2.2).</
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-complete-vector-validation-before-output">Complete vector validation before output</a></td>
 <td>
-Recording driver verifies no partial writes and standby/prepare/enable ordering (2.1, 2.2).</td>
+Recording driver verifies no partial writes and standby/prepare/enable ordering (2.1, 2.2). Host: <code>a_non_finite_fourth_wheel_cannot_drive_the_first_three</code>, <code>enable_prepares_every_bridge_before_asserting_stby</code>, <code>standby_deasserts_both_stby_outputs_first</code>, <code>driver_failures_reach_the_caller</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-coast-is-independent-of-the-drive-duty-cap">Coast is independent of the drive duty cap</a></td>
 <td>
-70%-cap neighbor test checks PWM-high coast with both direction pins low (2.1).</td>
+70%-cap neighbor test checks PWM-high coast with both direction pins low (2.1). Host: <code>coast_keeps_pwm_high_under_a_70_percent_drive_cap</code>.</td>
 </tr>
 </tbody>
 </table>

@@ -10,7 +10,7 @@ Host tests establish software behavior only. Physical acceptance uses [ADR-0002]
 
 ## 2. Independent motor control (laptop, test-first)
 
-- [ ] 2.1 Introduce the standalone motor module and recording driver. Reproduce all-low versus documented coast with a failing test before correction; verify per-wheel independence, safe pin ordering, zero/deadband boundaries, clamping and duty caps, including coast under a 70% drive cap.
+- [x] 2.1 Introduce the standalone motor module and recording driver. Reproduce all-low versus documented coast with a failing test before correction; verify per-wheel independence, safe pin ordering, zero/deadband boundaries, clamping and duty caps, including coast under a 70% drive cap. **Done 2026-10-17:** `crates/rovi-motor-control` (no dependencies) with a recording test driver; the coast test failed on the copied all-low mapping (PWM 0) before the fix to PWM high. 15 tests; names in the [verification map](verification.md#motor-control). The firmware still uses the core's mapping until 2.3.
 - [ ] 2.2 Implement configuration validation and latched command faults; test every invalid numeric class, mapping collision, non-finite fourth wheel, update-after-fault and explicit enable with a new vector. Verify the crate builds without device, transport or std dependencies.
 - [ ] 2.3 Connect device outputs to motor control through the coordinator. Fault-injection tests must prove stopped/out-of-limits, both standby outputs inactive, no repeated-tick or ROS-stream recovery, and explicit fresh-setpoint/ARM recovery. Document the fault diagnostic and integration API.
 
