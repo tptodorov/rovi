@@ -2,6 +2,7 @@
 //! adapters will feed the same arbiter. Time is passed in; the firmware shell owns the sockets.
 
 use crate::arbiter::{Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason};
+use crate::capabilities::Capabilities;
 use crate::graph::Graph;
 use crate::kinematics::{self, Geometry};
 use crate::rmw::Attachment;
@@ -527,22 +528,22 @@ impl Device {
 
     /// The Capabilities characteristic (and the `HELLO_ACK` payload).
     pub fn capabilities(&self) -> [u8; CAPABILITIES_LEN] {
-        let mut b = [0u8; CAPABILITIES_LEN];
-        b[0] = udp::VERSION;
-        let f = [
-            self.geometry.wheels_radius,
-            self.geometry.center_projection_sum,
-            self.cfg.max_vx,
-            self.cfg.max_vy,
-            self.cfg.max_wz,
-        ];
-        for (i, v) in f.iter().enumerate() {
-            b[1 + 4 * i..5 + 4 * i].copy_from_slice(&(*v as f32).to_le_bytes());
+        self.capabilities_snapshot().encode()
+    }
+
+    /// The same canonical values for every transport, readable without claiming the device.
+    pub fn capabilities_snapshot(&self) -> Capabilities {
+        Capabilities {
+            version: udp::VERSION,
+            wheels_radius: self.geometry.wheels_radius as f32,
+            center_projection_sum: self.geometry.center_projection_sum as f32,
+            max_vx: self.cfg.max_vx as f32,
+            max_vy: self.cfg.max_vy as f32,
+            max_wz: self.cfg.max_wz as f32,
+            lease_ms: self.cfg.lease_ms as u16,
+            claim_ms: self.cfg.claim_window_ms as u16,
+            reclaim_ms: self.cfg.reclaim_window_ms as u16,
         }
-        b[21..23].copy_from_slice(&(self.cfg.lease_ms as u16).to_le_bytes());
-        b[23..25].copy_from_slice(&(self.cfg.claim_window_ms as u16).to_le_bytes());
-        b[25..27].copy_from_slice(&(self.cfg.reclaim_window_ms as u16).to_le_bytes());
-        b
     }
 
     /// The Status characteristic (and the `STATUS` payload).
@@ -2006,5 +2007,57 @@ mod tests {
         assert_eq!(d.wheels(10_000), [0.0; 4]);
         assert!(d.wifi_allowed() && d.radio_allowed(Source::Ble));
         assert!(!d.ble_owns(conn));
+    }
+
+    #[test]
+    fn capabilities_are_the_same_before_claim_and_on_every_transport() {
+        let mut d = dev();
+        let snapshot = d.capabilities_snapshot();
+        let binary = snapshot.encode();
+        let mut out = [0; crate::capabilities::CDR_MAX];
+        assert!(snapshot.encode_cdr(&mut out).is_some());
+        assert_eq!(d.arbiter().state(), State::Open);
+        assert_eq!(d.wheels(0), [0.0; 4]);
+        assert!(d.wifi_allowed() && d.radio_allowed(Source::Ble));
+        let conn = d.on_ble_connect(0, 1).unwrap().0;
+        assert_eq!(d.capabilities(), binary, "BLE characteristic");
+        d.on_ble_disconnect(1, conn);
+        let (r, _) = send(&mut d, 2, A, Kind::Hello, 0, 1, &[]);
+        let (header, payload) = r.unwrap();
+        assert_eq!(payload[..CAPABILITIES_LEN], binary, "UDP HELLO_ACK");
+        send(&mut d, 3, A, Kind::Bye, header.session, 2, &[]);
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(4, &cmd, &cdr(0.0));
+        assert_eq!(d.capabilities_snapshot(), snapshot, "ROS typed values");
+    }
+
+    #[test]
+    fn a_limit_read_from_ros_capabilities_is_accepted_without_rounding_up() {
+        let mut d = Device::new(
+            Config {
+                max_vx: 0.7,
+                ..Config::DEFAULT
+            },
+            GEOMETRY,
+            0,
+        )
+        .unwrap();
+        let mut out = [0; crate::capabilities::CDR_MAX];
+        let n = d.capabilities_snapshot().encode_cdr(&mut out).unwrap();
+        let text = core::str::from_utf8(&out[8..n - 1]).unwrap();
+        let limit = text
+            .split(' ')
+            .find_map(|t| t.strip_prefix("max_vx="))
+            .unwrap()
+            .parse::<f64>()
+            .unwrap();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(limit));
+        assert_eq!(d.arbiter().state(), State::Armed);
+        assert_eq!(
+            d.on_ros_cmd_vel(1, &at(&cmd, 2), &cdr(limit + f64::EPSILON))
+                .stop,
+            Some(StopReason::OutOfLimits)
+        );
     }
 }

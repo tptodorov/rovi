@@ -178,6 +178,12 @@ async fn serve(
         hash: rmw::STRING.1,
     };
 
+    let capabilities_t = Topic {
+        name: "rovi/capabilities",
+        ty: rmw::STRING.0,
+        hash: rmw::STRING.1,
+    };
+
     // Liveliness: the node, then each endpoint, so the car shows up in the ROS graph.
     let node = rmw::node_token(DOMAIN, zid, NODE).unwrap();
     let _node = session
@@ -189,6 +195,7 @@ async fn serve(
         (3, Kind::Publisher, &status_t, rmw::QOS_DEFAULT_10),
         (4, Kind::Subscription, &echo_t, rmw::QOS_BEST_EFFORT_1),
         (5, Kind::Publisher, &echo_reply_t, rmw::QOS_BEST_EFFORT_1),
+        (6, Kind::Publisher, &capabilities_t, ":1:,1:,:,:,,"),
     ]
     .map(|(id, kind, topic, qos)| {
         rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
@@ -203,6 +210,7 @@ async fn serve(
     }
     let status_gid = rmw::gid(tokens[2].as_str());
     let echo_gid = rmw::gid(tokens[4].as_str());
+    let capabilities_gid = rmw::gid(tokens[5].as_str());
 
     let key = |t: &Topic| leak(rmw::topic_key(DOMAIN, t).unwrap().as_str().into());
     let cmd_sub = session
@@ -235,6 +243,10 @@ async fn serve(
         .declare_publisher(zenoh::keyexpr::new(key(&status_t))?)
         .finish()
         .await?;
+    let capabilities_pub = session
+        .declare_publisher(zenoh::keyexpr::new(key(&capabilities_t))?)
+        .finish()
+        .await?;
     println!("ros node /{NODE} up, zid {zid}, router {router}");
     log(Event::Ros(Link::Up), t0);
 
@@ -261,6 +273,33 @@ async fn serve(
                 let _ = echo_pub.put(bytes).attachment(&att).finish().await;
             }
         }
+    };
+    // O9 probe: startup publication, then a delayed live control using the same publisher.
+    let capabilities_loop = async {
+        let mut buf = [0; rovi_core::capabilities::CDR_MAX];
+        let n = dev
+            .lock()
+            .unwrap()
+            .capabilities_snapshot()
+            .encode_cdr(&mut buf)
+            .unwrap();
+        for seq in 1..=2 {
+            let att = Attachment {
+                seq,
+                timestamp: 0,
+                gid: capabilities_gid,
+            }
+            .encode();
+            capabilities_pub
+                .put(&buf[..n])
+                .attachment(&att)
+                .finish()
+                .await
+                .unwrap();
+            println!("capabilities history probe: seq={seq} at_ms={}", ms(t0));
+            embassy_time::Timer::after_secs(12).await;
+        }
+        core::future::pending::<()>().await;
     };
     let ended = select(
         select5(
@@ -331,7 +370,7 @@ async fn serve(
                 }
             },
         ),
-        echo_loop,
+        select(echo_loop, capabilities_loop),
     )
     .await;
     // Only the session loop ends on its own; say why it did.

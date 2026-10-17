@@ -4,6 +4,7 @@
 extern crate std;
 
 pub mod arbiter;
+pub mod capabilities;
 pub mod device;
 pub mod events;
 pub mod graph;
