@@ -31,7 +31,7 @@ The car drives **untethered**, controlled over BLE from the laptop (`sim/ble_cli
 | 7 | Wheel speed at full duty, wheels in the air | tape flag on a wheel, 5 s of video, count turns | `max_wheel_speed`: makes speed commands real m/s |
 | 8 | Power bank charge (LED bars), start and end of a session | look | explains speed drop (F8) |
 
-Items 1-5 are recorded in [the milestone results](MILESTONE.md#results). Firmware source now uses radius 0.030 m and centre projection sum 0.1275 m; flashing and board verification are pending. This changes duty at a given command (forward `vx 1.0` becomes about 90%, previously 70%); repeat a gentle stand check before floor driving. Item 7 and the floor runs are still needed for speed calibration. With open-loop motors and minimum-duty compensation, geometry alone does not make commanded m/s match actual speed.
+Items 1-5 are recorded in [the milestone results](MILESTONE.md#results). Firmware with radius 0.030 m and centre projection sum 0.1275 m is flashed; boot and BLE capabilities are verified ([evidence](bench/2026-10-17-geometry/notes.md)). This changes duty at a given command (forward `vx 1.0` becomes about 90%, previously 70%); repeat a gentle stand check before floor driving. Item 7 and the floor runs are still needed for speed calibration. With open-loop motors and minimum-duty compensation, geometry alone does not make commanded m/s match actual speed.
 * **Stopping the car:** Ctrl-C the client or walk out of range: the 1 s lease stops it. Unplugging the motor bank stops it at once. Start every run with the car pointing along the tape.
 
 ## Tests
