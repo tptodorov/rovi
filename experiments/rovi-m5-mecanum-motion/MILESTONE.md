@@ -2,7 +2,7 @@
 
 ## M5: mecanum motion and feedback characterization
 
-**Status:** planned (2026-10-17), next after M4. Bench procedure: [TESTPLAN.md](TESTPLAN.md).
+**Status:** in progress (2026-10-17): mounted-wheel checks and low-command floor movement/stop tests recorded; calibration and battery/load variation remain open. Bench procedure: [TESTPLAN.md](TESTPLAN.md).
 **Setup:** M4's car and carrier with the wheels mounted, untethered: ESP32 and motors on their own power banks, controlled over BLE from the laptop. Measured with tape and phone video (no car log off the cable).
 
 ### Goal
@@ -127,3 +127,5 @@ At `vx 0.05`, `vy -0.05` for 0.5 s, Todor reported the same component distances:
 At `vx 0.05`, streamed for 0.3 s then stayed connected but silent for 2 s. The client observed **Stopped (`LeaseExpired`)**, and Todor confirmed forward motion followed by **a physical stop without further setpoints**. Travel distance was unknown. Total travel, distance after the last setpoint, coast distance and exact physical stop timing remain unmeasured. See [F7 notes and output](bench/2026-10-17-f7/notes.md). This is low-command functional evidence, not a high-speed stopping-distance result.
 
 A repeat with a marked starting front edge produced **22.5 cm total forward travel** and again reported `LeaseExpired`. This includes motion during the 0.3 s stream, lease wait and any coast; it is not distance after the last setpoint or motor disable. Exact physical stop timing and coast distance remain unmeasured. A matching explicit-STOP comparison remains pending.
+
+The matching 0.3 s stream followed by explicit STOP gave **6.5 cm total forward travel**, reported by Todor; the client reported `Stop`. Thus the lease run travelled **16 cm farther overall** in these two observations. These are whole-run distances, not isolated coast distances or a worst-case stopping bound. One measured run per condition; see [F7 comparison](bench/2026-10-17-f7/notes.md).

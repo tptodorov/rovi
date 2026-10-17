@@ -13,3 +13,17 @@ Automatic lease stopping is demonstrated on the floor at this command. **Total t
 Repeated the same command after a 5 s lead-in, with a request to mark the car's front edge before starting and measure to the same edge after stopping. [Client output](lease-forward-005-repeat2-client.txt): 7 setpoints, Armed → Stopped (`LeaseExpired`), no reported error.
 
 Todor reported **22.5 cm total forward travel**. This includes travel during the 0.3 s stream, the remaining lease interval, and any coast. It is **not** a measured distance from the final setpoint or from motor-output disable. Those positions and exact stop timing remain unknown. A matching 0.3 s run ending in explicit STOP has not yet been measured for comparison.
+
+## Explicit STOP comparison
+
+Command: `drive --vx 0.05 --seconds 0.3` after a 5 s lead-in, resetting to the same starting mark. [Client output](stop-forward-005-client.txt): 7 setpoints, Armed → Stopped (`Stop`), no reported error.
+
+Todor measured **6.5 cm total forward travel**. Compared with the measured lease-expiry run:
+
+| End condition after 0.3 s stream | Total travel from initial mark |
+| --- | --- |
+| Explicit STOP | 6.5 cm |
+| 1 s lease expiry | 22.5 cm |
+| Difference between these runs | 16.0 cm |
+
+The 16 cm difference is additional whole-run travel in the lease case under the observed conditions. It is not an independently measured lease-period distance or mechanical coast distance. There is only one distance measurement per condition; timing, surface, battery/load and measurement uncertainty were not controlled or quantified. No high-speed stopping-distance limit can be set from this comparison.
