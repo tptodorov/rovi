@@ -97,3 +97,5 @@ Three distance observations with the same command were **10, 11 and 10 cm**, mea
 #### First floor strafe, 2026-10-17
 
 At `vx 0`, `vy 0.05` for 0.5 s, Todor reported **6.5 cm leftward travel**, with the **rear moving 1–2 mm farther left than the front**: a small heading change, not rearward translation. A second identical pulse gave **5.5 cm at the front, 6.0 cm at the rear** (rear travelled **5 mm farther left**). Reference points and angle were not measured, so the first run's single distance and the second run's two distances are not treated as equivalent measurements. Both clients reported STOP without an error; physical stopping was not separately confirmed. See [F4 notes and output](bench/2026-10-17-f4/notes.md). More repeat measurements and rightward motion remain pending; no compensation has been applied.
+
+A third identical leftward pulse gave **7 cm at both front and rear**, with no front/rear difference detected at the reported precision. Rear swing was not consistent across all three runs; travel variation remains to be characterized under controlled conditions. No compensation applied. Rightward motion and quantified stopping remain pending.

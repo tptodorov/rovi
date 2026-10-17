@@ -14,4 +14,16 @@ Same command and a 5 s lead-in. [Client output](strafe-left-005-repeat2-client.t
 
 Todor measured **5.5 cm left at the front and 6.0 cm left at the rear**. The rear travelled **5 mm farther left**, compared with the first run's reported 1–2 mm difference. Reference-point positions and heading angle were not measured; do not combine the first run's single distance with these two distances as equivalent measurements. Physical stopping was not separately reported.
 
-Two leftward runs show rear swing, with differing magnitude. More repeat measurements and rightward motion remain pending; no compensation has been applied from these observations.
+## Third leftward run
+
+Same command and a 5 s lead-in. [Client output](strafe-left-005-repeat3-client.txt): 11 setpoints, Claimed → Armed → Stopped (`Stop`), no reported error.
+
+Todor measured **7 cm left at both front and rear**, using the same requested reference points. No front/rear difference was detected at the reported precision; physical stop timing was not separately reported.
+
+| Leftward run | Front travel | Rear travel | Rear minus front |
+| --- | --- | --- | --- |
+| 1 | Single reported distance 6.5 cm; exact reference unspecified | Rear travelled 1–2 mm farther than front | 1–2 mm |
+| 2 | 5.5 cm | 6.0 cm | 5 mm |
+| 3 | 7.0 cm | 7.0 cm | No detected difference |
+
+Leftward translation is demonstrated at this command. Travel varies between runs and rear swing was not consistent across all three; no compensation has been applied. Bank charge, surface variation and measurement uncertainty were not controlled or quantified. Rightward motion remains untested.
