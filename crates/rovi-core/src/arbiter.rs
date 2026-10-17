@@ -103,6 +103,8 @@ pub struct Arbiter {
     reclaim_until: Option<u64>,
     /// After a STOP or an out-of-limits setpoint, arming needs a setpoint sent after it.
     fresh_needed: bool,
+    /// Transitions into `Armed`, wrapping.
+    arms: u32,
 }
 
 impl Arbiter {
@@ -118,6 +120,32 @@ impl Arbiter {
             deadline: 0,
             reclaim_until: None,
             fresh_needed: false,
+            arms: 0,
+        }
+    }
+
+    /// How many times the device has been armed (wrapping). A repeated ARM while armed does not
+    /// count, so a change means a new arming even if a stop came and went between two reads.
+    pub fn arm_count(&self) -> u32 {
+        self.arms
+    }
+
+    /// A fault below the device (motor control): latches an out-of-limits stop while owned, so
+    /// resuming needs a fresh setpoint and an explicit arm, and ROS does not arm it on its own.
+    pub fn fault_stop(&mut self, now: u64) -> Effects {
+        match self.state {
+            State::Open | State::Stopped(StopReason::OutOfLimits) => Effects::default(),
+            // Already stopped for another reason: keep its lease and reclaim timing, but latch
+            // the fault so no stream can arm it again.
+            State::Stopped(_) => {
+                self.state = State::Stopped(StopReason::OutOfLimits);
+                self.fresh_needed = true;
+                Effects {
+                    stop: Some(StopReason::OutOfLimits),
+                    ..Effects::default()
+                }
+            }
+            State::Claimed | State::Armed => self.stop_with(now, StopReason::OutOfLimits),
         }
     }
 
@@ -162,6 +190,9 @@ impl Arbiter {
             return Err(Error::NotReady);
         }
         self.reclaim_until = None;
+        if self.state != State::Armed {
+            self.arms = self.arms.wrapping_add(1);
+        }
         self.state = State::Armed;
         Ok(())
     }
@@ -592,5 +623,53 @@ mod tests {
         a.setpoint(12, PHONE, 2, sp(0.2)).unwrap();
         a.arm(12, PHONE).unwrap();
         assert_eq!(a.drive(12), Some(sp(0.2)));
+    }
+
+    #[test]
+    fn arm_count_counts_each_arming_once() {
+        let mut a = armed();
+        assert_eq!(a.arm_count(), 1);
+        a.arm(1, PHONE).unwrap();
+        assert_eq!(
+            a.arm_count(),
+            1,
+            "a repeated ARM while armed is not a new arming"
+        );
+        a.stop(2, PHONE).unwrap();
+        a.setpoint(3, PHONE, 2, sp(0.5)).unwrap();
+        a.arm(3, PHONE).unwrap();
+        assert_eq!(a.arm_count(), 2, "stop and re-arm is a new arming");
+    }
+
+    #[test]
+    fn a_fault_stop_latches_out_of_limits_until_a_fresh_setpoint_and_arm() {
+        let mut a = armed();
+        assert_eq!(a.fault_stop(10).stop, Some(StopReason::OutOfLimits));
+        assert_eq!(a.state(), State::Stopped(StopReason::OutOfLimits));
+        assert_eq!(a.drive(10), None);
+        assert_eq!(
+            a.arm(20, PHONE),
+            Err(Error::NotReady),
+            "needs a fresh setpoint"
+        );
+        a.setpoint(30, PHONE, 2, sp(0.5)).unwrap();
+        assert_eq!(a.arm(30, PHONE), Ok(()));
+        assert_eq!(a.fault_stop(40).stop, Some(StopReason::OutOfLimits));
+        assert_eq!(a.fault_stop(50), Effects::default(), "already latched");
+    }
+
+    #[test]
+    fn a_fault_stop_overrides_an_earlier_stop_reason() {
+        let mut a = armed();
+        assert_eq!(a.tick(1_000).stop, Some(StopReason::LeaseExpired));
+        assert_eq!(a.fault_stop(1_010).stop, Some(StopReason::OutOfLimits));
+        assert_eq!(a.state(), State::Stopped(StopReason::OutOfLimits));
+    }
+
+    #[test]
+    fn a_fault_stop_without_an_owner_does_nothing() {
+        let mut a = Arbiter::new(CFG);
+        assert_eq!(a.fault_stop(0), Effects::default());
+        assert_eq!(a.state(), State::Open);
     }
 }

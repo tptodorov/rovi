@@ -1,0 +1,4 @@
+== run 4: armed at zero, 15 s
+sent 300 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, error=None), Status(state='Stopped', reason='Stop', error=None)]
+== run 5: vx 0.5 for 3 s, then silent 3 s
+sent 60 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, error=None), Status(state='Stopped', reason='LeaseExpired', error=None)]

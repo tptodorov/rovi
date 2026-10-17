@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>8 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>9 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
 <strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
@@ -1310,6 +1310,7 @@ See <a href="#openspec--changes--add-four-wheel-api--proposal">proposal</a> for 
 <h2 id="openspec--changes--add-four-wheel-api--design--decisions">Decisions</h2><h3 id="openspec--changes--add-four-wheel-api--design--package-boundaries">Package boundaries</h3><pre><code class="language-text">Cargo.toml                      workspace: reusable no_std crates only
 crates/rovi-core/                codecs, arbiter, geometry, graph, device
 crates/rovi-motor-control/       configuration, mapping, enable/fault state
+crates/rovi-drive/               coordinator: device state → motor control, fault → device stop
 apps/simcar/                    separate workspace/lockfile; host adapters
 firmware/                      separate workspace/lockfile; ESP32 adapters
 experiments/                   retained standalone bench reference
@@ -1319,7 +1320,9 @@ Exclude <code>apps/simcar</code>, <code>firmware</code> and the existing experim
 <p>
 Copy the working core and tests into the product crates, preserving source history through the extraction commit. Experiments stay independently buildable and frozen as evidence; subsequent product fixes live in the product crates. This bounded duplication preserves rollback and avoids silently changing the firmware used to obtain old results. After product acceptance, archive the experiments as references rather than maintaining two active implementations.</p>
 <p>
-<code>rovi-core</code> returns normalized wheel demands and state effects. It does not import the motor driver or HAL. <code>rovi-motor-control</code> has no dependency on the arbiter, kinematics or transports. The application coordinator connects them. A small output boundary exposes standby and bridge updates to the ESP implementation or a recording test double; no generic robotics framework is needed. Both crates build without <code>std</code>; application tests exercise their integration.</p>
+<code>rovi-core</code> returns normalized wheel demands and state effects. It does not import the motor driver or HAL. <code>rovi-motor-control</code> has no dependency on the arbiter, kinematics or transports. The coordinator, <code>rovi-drive</code> (2026-10-17), connects them; it depends on both, so the integration and fault-injection tests run on the laptop, which a coordinator inside the ESP32-only firmware would not allow. A small output boundary (<code>rovi_motor_control::Driver</code>: STBY per driver, pins per bridge) exposes standby and bridge updates to the ESP implementation or a recording test double; no generic robotics framework is needed. All three crates build without <code>std</code>.</p>
+<p>
+<code>Drive::tick(&amp;mut Device, now)</code> runs every control tick: the device's timers first, then the motors. A change of the arbiter's <code>arm_count</code> is the only enable operation, so a STOP and re-ARM between two ticks still drops STBY first; while armed it updates the bridges, otherwise it puts both drivers in standby. It returns the device <code>Effects</code> and the tick's motor fault as an <code>events::Fault</code> (<code>ev=error src=motor_*</code>); <code>Drive::motor().fault()</code> gives the typed detail.</p>
 <h3 id="openspec--changes--add-four-wheel-api--design--configuration-and-fault-boundary">Configuration and fault boundary</h3><p>
 Validate immutable device and motor profiles before accepting control. Canonicalize advertised floating values through f32 and use those values for limit comparisons, so a limit read over BLE is actually accepted. Geometry normalization remains 40 rad/s and reference limits 1/1/3 in the named experimental profile, not measured physical maxima. The product motor profile is minimum duty 40%, deadband 0.02 and maximum 70% (O1); the experiment firmware keeps its 100% cap as the comparison reference. No profile is labelled production-qualified merely because it compiles.</p>
 <p>
@@ -1417,7 +1420,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.2 Implement configuration validation and latched command faults; test every invalid numeric class, mapping collision, non-finite fourth wheel, update-after-fault and explicit enable with a new vector. Verify the crate builds without device, transport or std dependencies. <strong>Done 2026-10-17:</strong> <code>Config::validate</code>, <code>MotorControl::configure</code> (standby before validation) and a latched <code>Fault</code>; 8 tests failed against stub behaviour first. 25 crate tests; no dependencies; builds for <code>xtensa-esp32s3-none-elf</code> against <code>core</code> alone.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Connect device outputs to motor control through the coordinator. Fault-injection tests must prove stopped/out-of-limits, both standby outputs inactive, no repeated-tick or ROS-stream recovery, and explicit fresh-setpoint/ARM recovery. Document the fault diagnostic and integration API.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.3 Connect device outputs to motor control through the coordinator. Fault-injection tests must prove stopped/out-of-limits, both standby outputs inactive, no repeated-tick or ROS-stream recovery, and explicit fresh-setpoint/ARM recovery. Document the fault diagnostic and integration API. <strong>Done 2026-10-17:</strong> coordinator <code>crates/rovi-drive</code> (agreed with Todor); the arbiter's <code>arm_count</code> is the only enable operation and <code>Device::on_motor_fault</code> raises the out-of-limits stop. 8 coordinator tests (all failed against a stub first) and 6 core tests. The firmware drives its pins through it with the 70% product profile (builds and clippy, not flashed); the core's old <code>motor</code> module is removed. Diagnostic <code>ev=error src=motor_*</code> in <a href="../docs/LOGGING.md">LOGGING</a>; API in the <a href="#openspec--changes--add-four-wheel-api--design--package-boundaries">design</a>.</li>
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--tasks--3-device-and-transport-conformance-laptop">3. Device and transport conformance (laptop)</h2><ul>
 <li>
@@ -1686,7 +1689,7 @@ Recording driver checks boot/disable; physical reset and power-loss STBY verific
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-standby-on-safety-stop">Standby on safety stop</a></td>
 <td>
-Recording driver checks same-tick disable before any bridge update; physical: every wheel stops on each trigger. Numeric pin bound deferred (O4, needs a logic analyzer) (2.1, 2.3, 5.2).</td>
+Recording driver checks same-tick disable before any bridge update; physical: every wheel stops on each trigger. Numeric pin bound deferred (O4, needs a logic analyzer) (2.1, 2.3, 5.2). Coordinator (<code>cargo test -p rovi-drive</code>): <code>a_lease_expiry_puts_both_drivers_in_standby_in_the_same_tick</code>, <code>a_stop_and_rearm_between_ticks_still_drops_stby_first</code>, <code>a_release_puts_both_drivers_in_standby</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1728,7 +1731,7 @@ Rejected min/max/deadband/mapping cases and config replacement while disabled (2
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-fault-recovery-requires-explicit-enable">Fault recovery requires explicit enable</a></td>
 <td>
-Host stateful fault/update/enable sequence; stale vector never replayed (2.2). Host: <code>finite_updates_do_not_clear_a_fault_and_enable_applies_only_the_new_vector</code>, <code>standby_works_in_every_fault_state</code>, <code>nan_while_driving_puts_both_drivers_in_standby</code>.</td>
+Host stateful fault/update/enable sequence; stale vector never replayed (2.2). Host: <code>finite_updates_do_not_clear_a_fault_and_enable_applies_only_the_new_vector</code>, <code>standby_works_in_every_fault_state</code>, <code>nan_while_driving_puts_both_drivers_in_standby</code>. Coordinator: <code>a_non_finite_wheel_demand_stops_the_device_and_no_tick_recovers_it</code>, <code>a_driver_failure_stops_and_only_a_fresh_setpoint_and_arm_recover</code>, <code>a_ros_stream_does_not_recover_a_motor_fault_but_an_explicit_arm_does</code>, <code>an_invalid_motor_configuration_never_enables</code>.</td>
 </tr>
 <tr>
 <td>

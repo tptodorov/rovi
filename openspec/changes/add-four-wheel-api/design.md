@@ -16,6 +16,7 @@ See [proposal](proposal.md) for scope and evidence. M8 has a host-tested `no_std
 Cargo.toml                      workspace: reusable no_std crates only
 crates/rovi-core/                codecs, arbiter, geometry, graph, device
 crates/rovi-motor-control/       configuration, mapping, enable/fault state
+crates/rovi-drive/               coordinator: device state → motor control, fault → device stop
 apps/simcar/                    separate workspace/lockfile; host adapters
 firmware/                      separate workspace/lockfile; ESP32 adapters
 experiments/                   retained standalone bench reference
@@ -25,7 +26,9 @@ Exclude `apps/simcar`, `firmware` and the existing experimental packages from th
 
 Copy the working core and tests into the product crates, preserving source history through the extraction commit. Experiments stay independently buildable and frozen as evidence; subsequent product fixes live in the product crates. This bounded duplication preserves rollback and avoids silently changing the firmware used to obtain old results. After product acceptance, archive the experiments as references rather than maintaining two active implementations.
 
-`rovi-core` returns normalized wheel demands and state effects. It does not import the motor driver or HAL. `rovi-motor-control` has no dependency on the arbiter, kinematics or transports. The application coordinator connects them. A small output boundary exposes standby and bridge updates to the ESP implementation or a recording test double; no generic robotics framework is needed. Both crates build without `std`; application tests exercise their integration.
+`rovi-core` returns normalized wheel demands and state effects. It does not import the motor driver or HAL. `rovi-motor-control` has no dependency on the arbiter, kinematics or transports. The coordinator, `rovi-drive` (2026-10-17), connects them; it depends on both, so the integration and fault-injection tests run on the laptop, which a coordinator inside the ESP32-only firmware would not allow. A small output boundary (`rovi_motor_control::Driver`: STBY per driver, pins per bridge) exposes standby and bridge updates to the ESP implementation or a recording test double; no generic robotics framework is needed. All three crates build without `std`.
+
+`Drive::tick(&mut Device, now)` runs every control tick: the device's timers first, then the motors. A change of the arbiter's `arm_count` is the only enable operation, so a STOP and re-ARM between two ticks still drops STBY first; while armed it updates the bridges, otherwise it puts both drivers in standby. It returns the device `Effects` and the tick's motor fault as an `events::Fault` (`ev=error src=motor_*`); `Drive::motor().fault()` gives the typed detail.
 
 ### Configuration and fault boundary
 

@@ -32,7 +32,7 @@ ev=stop reason=LeaseExpired at_ms=7210
 | `mtu` | `id`; `mtu` | The central's ATT MTU exchange completed (once per connection). The `mtu` in `ble link=up` is the value at connect, before the exchange (23 by default) |
 | `wifi` | `ap` = `on`, `off` | The Wi-Fi AP was switched |
 | `ros` | `link` = `up`, `down`, `retry`, `refresh` | The zenoh session changed |
-| `error` | `src` | A fault. `sim/carlog.py` flags it. |
+| `error` | `src` | A fault. `sim/carlog.py` flags it. `src`: `wifi_ap` (the AP switch failed); `motor_nonfinite`, `motor_config`, `motor_driver` (motor control refused a NaN/infinite wheel command, has an invalid configuration, or a pin write failed; the car raises an out-of-limits stop). |
 | `dropped` | `n` | `n` events were lost because the ring was full. Flagged too. |
 
 The catalog is `src/events.rs` (`Event` and its `Display`); `sim/carlog.py` has the same list, and `sim/test_carlog.py` fails if the two differ.

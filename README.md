@@ -63,7 +63,9 @@ The M6 layout follows its [design](openspec/changes/add-four-wheel-api/design.md
 
 | Path | What | Build and test |
 | --- | --- | --- |
-| `crates/rovi-core` | Device core (`no_std`): codecs, arbiter, kinematics, graph, device | From the repo root: `cargo test --locked`, `cargo clippy --locked --workspace --all-targets -- -D warnings` |
+| `crates/rovi-core` | Device core (`no_std`): codecs, arbiter, kinematics, graph, device | From the repo root: `cargo test --locked`, `cargo clippy --locked --workspace --all-targets -- -D warnings` (all three crates) |
+| `crates/rovi-motor-control` | Motor control (`no_std`, no dependencies): wheel commands to TB6612 pins, standby, faults | As above, or `cargo test -p rovi-motor-control` |
+| `crates/rovi-drive` | Coordinator (`no_std`): device state to motor control, motor faults to a device stop | As above, or `cargo test -p rovi-drive` |
 | `apps/simcar` | Sim car on laptop sockets, optional ROS 2 node; own lockfile | `cargo build --locked [--features ros]` |
 | `apps/simcar/scenarios` | UDP and ROS scenario harness (Python, Docker) | From the repo root: `python3 apps/simcar/scenarios/udp_scenarios.py`; with `--features ros`: `apps/simcar/scenarios/ros-scenarios.sh` (also `ros-router-gone.sh`, `ros-reconnect.sh`, `ros-refresh.sh`, `ros-stale-session.sh`) |
 | `firmware` | ESP32-S3 firmware; own lockfile, `esp` toolchain | `ROVI_WIFI_PASSWORD=… cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc`; add `--features ros` with `CARGO_TARGET_DIR=target/ros` to keep both builds |

@@ -299,6 +299,11 @@ impl Device {
         self.arbiter.tick(now)
     }
 
+    /// Motor control failed (the coordinator reports it): an out-of-limits stop.
+    pub fn on_motor_fault(&mut self, now: u64) -> Effects {
+        self.arbiter.fault_stop(now)
+    }
+
     /// Wheel commands (FL, FR, RR, RL) in -1.0..=1.0: zero unless armed with a valid lease.
     pub fn wheels(&self, now: u64) -> [f32; 4] {
         match self.arbiter.drive(now) {
@@ -965,5 +970,38 @@ mod tests {
         assert_eq!(d.ros_publisher_known(&late), Some(false));
         d.on_ros_liveliness(key, true);
         assert_eq!(d.ros_publisher_known(&late), Some(true));
+    }
+
+    #[test]
+    fn a_motor_fault_stops_and_a_ros_stream_does_not_rearm_it() {
+        let mut d = dev();
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        assert_eq!(d.on_motor_fault(5).stop, Some(StopReason::OutOfLimits));
+        d.on_ros_cmd_vel(10, &at(&cmd, 2), &cdr(1.0));
+        assert_eq!(d.arbiter().state(), State::Stopped(StopReason::OutOfLimits));
+        assert_eq!(
+            d.wheels(10),
+            [0.0; 4],
+            "the stream does not recover a motor fault"
+        );
+        d.on_ros_arm(15, &at(&arm, 2), &bool_cdr(true));
+        assert_eq!(
+            d.wheels(15),
+            [0.5; 4],
+            "an explicit arm after a fresh setpoint resumes"
+        );
+    }
+
+    #[test]
+    fn a_udp_arm_after_a_motor_fault_needs_a_fresh_setpoint() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        d.on_motor_fault(5);
+        let (r, _) = send(&mut d, 10, A, Kind::Arm, s, 3, &[]);
+        assert_ne!(r.unwrap().1[0], 2, "not armed without a fresh setpoint");
+        send(&mut d, 20, A, Kind::Setpoint, s, 4, &cdr(0.5));
+        let (r, _) = send(&mut d, 20, A, Kind::Arm, s, 5, &[]);
+        assert_eq!(r.unwrap().1[0], 2, "armed");
     }
 }
