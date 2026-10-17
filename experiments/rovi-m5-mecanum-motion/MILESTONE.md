@@ -121,3 +121,7 @@ Three pulses at `vx -0.05` for 0.5 s were sent; the first two were repeated with
 At `vx 0.05`, `vy 0.05` for 0.5 s, Todor measured **4.5 cm forward and 4.5 cm left**: approximately **45° left of forward**, total displacement **6.4 cm**. Heading change and physical stopping were not separately reported; diagonal direction does not prove unchanged heading. See [F6 notes and output](bench/2026-10-17-f6/notes.md). Forward-right motion and diagonal repeatability remain pending.
 
 At `vx 0.05`, `vy -0.05` for 0.5 s, Todor reported the same component distances: **4.5 cm forward, 4.5 cm right**, approximately **45° right of forward**, total displacement **6.4 cm**. One measurement per diagonal direction; heading change and physical stopping were not separately reported, and repeatability remains uncharacterized.
+
+#### Automatic lease stop on the floor, 2026-10-17
+
+At `vx 0.05`, streamed for 0.3 s then stayed connected but silent for 2 s. The client observed **Stopped (`LeaseExpired`)**, and Todor confirmed forward motion followed by **a physical stop without further setpoints**. Travel distance was unknown. Total travel, distance after the last setpoint, coast distance and exact physical stop timing remain unmeasured. See [F7 notes and output](bench/2026-10-17-f7/notes.md). This is low-command functional evidence, not a high-speed stopping-distance result.
