@@ -26,4 +26,15 @@ Todor measured **7 cm left at both front and rear**, using the same requested re
 | 2 | 5.5 cm | 6.0 cm | 5 mm |
 | 3 | 7.0 cm | 7.0 cm | No detected difference |
 
-Leftward translation is demonstrated at this command. Travel varies between runs and rear swing was not consistent across all three; no compensation has been applied. Bank charge, surface variation and measurement uncertainty were not controlled or quantified. Rightward motion remains untested.
+Leftward translation is demonstrated at this command. Travel varies between runs and rear swing was not consistent across all three; no compensation has been applied. Bank charge, surface variation and measurement uncertainty were not controlled or quantified.
+
+## Rightward runs
+
+Command: `drive --vx 0 --vy -0.05 --seconds 0.5`, with a 5 s lead-in for each attempt.
+
+| Attempt | Client evidence | Observation |
+| --- | --- | --- |
+| Initial rightward pulse | [Output](strafe-right-005-client.txt): 11 setpoints, Armed → Stopped (`Stop`), no reported error | No distance or physical result supplied; Todor requested a repeat. |
+| Repeat | [Output](strafe-right-005-repeat2-client.txt): 11 setpoints, Armed → Stopped (`Stop`), no reported error | Todor measured **6.5 cm right at the front, 7.5 cm at the rear** and said it seemed to slip. |
+
+The rear travelled **1 cm farther right than the front**, indicating a heading change. Slip is an observer impression, not an independently established cause. Stop timing was not measured and physical stopping was not separately confirmed. One measured rightward run is insufficient for compensation; firmware remains unchanged.
