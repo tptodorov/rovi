@@ -13,3 +13,15 @@ Five 30 s runs; commanded duty per channel from the car log (FL, FR, RR, RL; ≤
 | 5 | `vx = 0.5, vy = −0.5, wz = 3` | 16 % | 24 % | 64 % | −24 % | RR only | RR only ✔ |
 
 **Result:** every motor is on its intended channel and turns forward for a forward command; no firmware inversion needed (directions were set at the connectors). Mapping and direction (O8, M4 part) confirmed. Mecanum roller orientation is checked in M5 with the wheels on.
+
+## Minimum-duty firmware (PR #42), same day
+
+Duty now runs from 40 % (any command outside a 2 % deadband) to 100 % at 1.0. Flashed, booted cleanly (`car-min-duty.log`). Bank woken, all four motors connected:
+
+| Run | Wheel command | Duty | Observed |
+| --- | --- | --- | --- |
+| Gentle forward, `vx` 0.1 | 5 % each | 43 % | all four start and turn forward ✔ |
+| Rotate left, `wz` 3.0 | −30, +30, +30, −30 % (FL, FR, RR, RL) | 58 % | left backward, right forward ✔ |
+| Forward, `vx` 1.0 | 50 % each | 70 % | all four, faster than before ✔ |
+
+The dead zone (O6) is handled in the motor layer: the gentlest command starts every motor, rotation works.
