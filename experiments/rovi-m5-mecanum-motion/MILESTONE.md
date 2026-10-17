@@ -150,3 +150,7 @@ The matching 0.3 s stream followed by explicit STOP gave **6.5 cm total forward 
 #### End-of-session forward repeat, 2026-10-17
 
 Repeating `vx 0.05` for 0.5 s gave **10 cm**, within the earlier 10, 11, 10 cm baseline. This one run shows no observed reduction in travel at this setting over the session. Bank charge, surface and load were not controlled for comparison, so this does not settle the battery/load acceptance item. See [F8 notes and output](bench/2026-10-17-f8/notes.md).
+
+#### Command-response calibration on parquet, 2026-10-17
+
+Surface confirmed by Todor: **parquet**. With unchanged measured-geometry firmware, three forward pulses at `vx 0.20` for 0.5 s (approximately 50% duty), each ending in explicit STOP, gave **13.5, 14, 14 cm**, mean **13.8 cm**, spread **0.5 cm**. All clients reported `Stop` without error; drift, heading and physical stopping were not separately described. Bank charge and current load were not recorded for this phase. These are whole-pulse distances, not steady-state speed or a calibrated m/s contract. See [calibration notes](bench/2026-10-17-calibration/notes.md). The next setting, `vx 0.40` (approximately 60% duty), remains untested.

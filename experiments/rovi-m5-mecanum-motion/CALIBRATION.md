@@ -11,8 +11,8 @@ Every motor run is separately announced and waits for Todor's "go". Use the 1 ×
 | Forward command | Approximate wheel duty | Stream duration | Repeats | State |
 | --- | --- | --- | --- | --- |
 | `vx 0.05` | 42.5% | 0.5 s | 3 + session-end repeat | Earlier total travel 10, 11, 10 cm; end repeat 10 cm |
-| `vx 0.20` | 50% | 0.5 s | First run, then up to 2 repeats after observation | Next; not run |
-| `vx 0.40` | 60% | 0.5 s | Only after reviewing the 50% results | Pending; do not run automatically |
+| `vx 0.20` | 50% | 0.5 s | 3 | 13.5, 14, 14 cm; mean 13.8 cm, spread 0.5 cm ([evidence](bench/2026-10-17-calibration/notes.md)) |
+| `vx 0.40` | 60% | 0.5 s | First run, then up to 2 repeats after observation | Next setting; announce and wait for go |
 
 Each run ends with explicit STOP. Measure forward displacement, lateral displacement of the same front/rear reference points, heading change where visible, and whether the car stops cleanly. The first run at a new setting determines whether the duration and available space remain appropriate; cancel later runs if the car approaches the boundary or motion is abnormal. Do not combine this phase with lease-expiry tests or increase duty and duration together.
 
