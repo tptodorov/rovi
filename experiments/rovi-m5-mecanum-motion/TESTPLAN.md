@@ -36,6 +36,8 @@ Items 1-5 are recorded in [the milestone results](MILESTONE.md#results). Firmwar
 
 ## Tests
 
+The first low-command floor session is recorded in [MILESTONE.md](MILESTONE.md#results). Use [CALIBRATION.md](CALIBRATION.md) for the existing approximate motion references. Todor accepted those estimates and reported no performance change noticed; the extended measurement sweep is stopped. Do not repeat the higher command values in this original matrix automatically; geometry changes duty, and command values are not calibrated speeds.
+
 | # | Test | Command | Measure | Pass / output |
 | --- | --- | --- | --- | --- |
 | F1 | **Wheels-in-the-air check** with the wheels mounted (car on a box) | forward, strafe left, rotate left, 5 s each; then forward at full duty for item 7 | which way each wheel turns; roller X; wheel turns in 5 s | Same pattern as M4; rollers form an X; wheel speed |

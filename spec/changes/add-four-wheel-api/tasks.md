@@ -24,7 +24,7 @@ Laptop tasks are development evidence only ([ADR-0002](../../../docs/adr/0002-si
 
 - [ ] 4.1 M4 settles O1, O4, O5 (brake), O7. Write the measured values into the spec.
 - [ ] 4.2 M5 settles O2, O3, O5 (stopping distance), O6, O8. Write the measured values into the spec.
-- [ ] 4.3 Close PLAN Q11 from O3; record an ADR if closed-loop control is chosen.
+- [x] 4.3 Close PLAN Q11 from O3: open-loop duty control selected (2026-10-17); no encoders, added sensors out of scope, existing approximate motion references accepted. No closed-loop ADR needed.
 
 ## 5. Implement and accept (bench)
 

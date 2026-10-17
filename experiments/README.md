@@ -17,7 +17,7 @@ After bench-testing a milestone, add a `## Results` section to its `MILESTONE.md
 * ✅ [`rovi-m2-ble/`](rovi-m2-ble/) — ESP32-S3 BLE peripheral and custom GATT drive-command write. Bench-tested successfully; see its `MILESTONE.md` results.
 * ✅ [`rovi-m3-wifi-queue/`](rovi-m3-wifi-queue/) — direct Wi-Fi car AP and shared BLE/Wi-Fi command ingress. Hardware-validated 2026-10-04 (5 of 6 acceptance items); M8 supersedes its TCP+FIFO design.
 * ✅ [`rovi-m4-four-motor-safety/`](rovi-m4-four-motor-safety/) — complete 2026-10-17: four motors on the soldered carrier, both power banks, direction mapping, stop triggers, reversals and thermal run verified. Software fail-safe ([ADR-0014](../docs/adr/0014-m4-minimal-wiring-software-fail-safe.md)); see its `MILESTONE.md` for scope and limits.
-* 🔬 [`rovi-m5-mecanum-motion/`](rovi-m5-mecanum-motion/) — in progress 2026-10-17: measured geometry and low-command floor motion/stop observations recorded. Calibration, battery/load variation and stopping bounds remain open; see its `MILESTONE.md`.
+* 🔬 [`rovi-m5-mecanum-motion/`](rovi-m5-mecanum-motion/) — basic characterization recorded 2026-10-17: measured geometry, floor motion and stops; existing approximate motion references accepted for open-loop control. Extended sweep stopped; accuracy, controlled battery/load effects and stopping bounds remain unverified. See its `MILESTONE.md`.
 * 📝 [`rovi-m8-setpoint-ros/`](rovi-m8-setpoint-ros/) — setpoint protocol (`TwistStamped`/CDR) over BLE and UDP, single owner with arming, optional ROS 2 node via zenoh-nostd; board-only. Design approved.
 
 M6 is the spec-driven low-level API milestone, not a hardware experiment; it is tracked in [`../docs/PLAN.md`](../docs/PLAN.md#roadmap).
