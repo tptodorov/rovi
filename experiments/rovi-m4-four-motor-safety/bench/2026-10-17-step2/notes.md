@@ -25,3 +25,13 @@ Duty now runs from 40 % (any command outside a 2 % deadband) to 100 % at 1.0. Fl
 | Forward, `vx` 1.0 | 50 % each | 70 % | all four, faster than before ✔ |
 
 The dead zone (O6) is handled in the motor layer: the gentlest command starts every motor, rotation works.
+
+## Reversal, lease expiry, thermal (same session, `car-min-duty.log`)
+
+| Test | Log | Observed (Todor) |
+| --- | --- | --- |
+| Reversal: one session, +70 % ⇄ −70 % every 2 s, 10 changes | No `ev=boot` (no brownout reset), no BLE drop mid-run, STOP at the end | All four reverse cleanly; motor bank stays on ✔ |
+| Lease expiry with four turning: 3 s at 70 %, then silent | Armed 190.0 s → `LeaseExpired` 194.1 s (1 s after the stream) | All four stop by themselves ✔ |
+| Thermal: 5 min at 70 % | 300 s, 6000 setpoints, clean STOP, no reset | Drivers and motors at most warm ✔ |
+
+STOP with four turning is shown by every run above (each ends with a client STOP, all wheels stop). Left for step 2: RST button and ESP32 power loss with four turning.

@@ -69,3 +69,48 @@ ev=released at_ms=61307
 ev=ble link=down id=1 at_ms=61307
 ev=wifi ap=on at_ms=61320
 ev=state state=Open wheels_pm=0,0,0,0 at_ms=61321
+ev=claimed source=Ble at_ms=158640
+ev=ble link=up id=1 mtu=23 at_ms=158640
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=158642
+ev=wifi ap=off at_ms=158661
+ev=mtu id=1 mtu=247 at_ms=158741
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=160220
+ev=state state=Armed wheels_pm=-500,-500,-500,-500 at_ms=162343
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=164405
+ev=state state=Armed wheels_pm=-500,-500,-500,-500 at_ms=166436
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=168508
+ev=state state=Armed wheels_pm=-500,-500,-500,-500 at_ms=170530
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=172602
+ev=state state=Armed wheels_pm=-500,-500,-500,-500 at_ms=174664
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=176696
+ev=state state=Armed wheels_pm=-500,-500,-500,-500 at_ms=178758
+ev=stop reason=Stop at_ms=180783
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=180791
+ev=released at_ms=183303
+ev=ble link=down id=1 at_ms=183303
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=183308
+ev=wifi ap=on at_ms=183323
+ev=claimed source=Ble at_ms=189255
+ev=ble link=up id=1 mtu=23 at_ms=189255
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=189259
+ev=wifi ap=off at_ms=189276
+ev=mtu id=1 mtu=247 at_ms=189456
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=190013
+ev=stop reason=LeaseExpired at_ms=194074
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=194074
+ev=released at_ms=198288
+ev=ble link=down id=1 at_ms=198288
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=198295
+ev=wifi ap=on at_ms=198316
+ev=claimed source=Ble at_ms=203555
+ev=ble link=up id=1 mtu=23 at_ms=203555
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=203561
+ev=wifi ap=off at_ms=203568
+ev=mtu id=1 mtu=247 at_ms=203756
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=204324
+ev=stop reason=Stop at_ms=504425
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=504431
+ev=released at_ms=507305
+ev=ble link=down id=1 at_ms=507305
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=507310
+ev=wifi ap=on at_ms=507333

@@ -23,9 +23,9 @@ Real hardware only.
 - [x] `STBY` is low through boot, reset and while disarmed; high only while armed. *(Step 1: shown by S3 on one motor; S1's meter check skipped.)*
 - [x] Each motor follows speed and direction; mapping and inversion recorded for all four wheels. *(Step 2, 2026-10-17: every channel drives its intended wheel, all forward; directions set at the connectors, no firmware inversion. [notes](bench/2026-10-17-step2/notes.md))*
 - [ ] STOP, lease expiry, controller disconnect, reset and ESP32 power loss each stop every wheel, and nothing restarts until a client arms again. *(S3, step 2)*
-- [ ] Four motors starting and reversing together do not reset the ESP32 or cut out the power bank. *(step 2)*
-- [x] The radio keeps working while the motors run. *(Step 1: 5 min at 40 %, no reboot, no BLE drop. Repeat with four motors in step 2.)*
-- [ ] Driver and motor stay at most warm in a 5 min run; duty cap and current recorded for M5. *(S5, step 2)*
+- [x] Four motors starting and reversing together do not reset the ESP32 or cut out the power bank. *(Step 2, 2026-10-17: 10 reversals at ±70 %, no reset, bank stayed on; the bank must be woken before a session.)*
+- [x] The radio keeps working while the motors run. *(Step 1: 5 min at 40 %; step 2: 5 min at 70 % with four motors; no reboot, no BLE drop.)*
+- [x] Driver and motor stay at most warm in a 5 min run; duty cap and current recorded for M5. *(Step 2: 5 min at 70 %, at most warm. Duty range 40-100 %, start threshold 35 %, 150 mA per motor running.)*
 
 ### Results
 
