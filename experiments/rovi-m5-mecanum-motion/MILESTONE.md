@@ -107,3 +107,5 @@ A second measured rightward run gave **7 cm at the front, 7.5 cm at the rear** (
 #### First floor rotation, 2026-10-17
 
 At `vx 0`, `wz 0.5` for 0.5 s, Todor reported approximately **40° left rotation**. The client reported STOP without an error; centre displacement and physical stopping were not separately reported. Angle divided by command duration is approximately **1.40 rad/s**, including any unseparated acceleration/coast; it is not steady-state turn rate. Commanded `wz` is not calibrated. See [F5 notes and output](bench/2026-10-17-f5/notes.md). Repeatability and clockwise rotation remain pending.
+
+After two further identical leftward pulses, the first without a reported observation, Todor reported **40° left again with no noticeable centre shift** on the latest. Thus two reported angles agree at approximately 40°; measurement precision and battery/load effects remain uncharacterized. Clockwise rotation and quantified stopping remain pending.
