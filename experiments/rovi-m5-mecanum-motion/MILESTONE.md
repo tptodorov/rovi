@@ -93,3 +93,7 @@ At `vx 0.05` for 0.5 s (approximately 42.5% duty), Todor confirmed the car moved
 A subsequent identical pulse produced approximately **10 cm forward travel with no obvious drift**, reported by Todor. Displacement divided by command duration is approximately **0.20 m/s**, not steady-state speed: acceleration and coast after STOP were not separated. Repeatability, quantified drift, heading change and stopping distance remain pending. Commanded `vx` is not calibrated to actual chassis velocity.
 
 Three distance observations with the same command were **10, 11 and 10 cm**, mean **10.3 cm**, range **1 cm**. This is a baseline at one command under the current conditions, not a test across battery/load states. Drift and physical stopping were not separately reported for the second or third runs. Mean displacement divided by command duration is approximately 0.207 m/s, including any coast after STOP; it is not steady-state speed.
+
+#### First floor strafe, 2026-10-17
+
+At `vx 0`, `vy 0.05` for 0.5 s, Todor reported **6.5 cm leftward travel** with **"1-2mm drift in the back"**. Drift frame/heading interpretation remains to be clarified. The BLE client reported STOP without an error; physical stopping was not separately confirmed. See [F4 notes and output](bench/2026-10-17-f4/notes.md). This is one lateral run; repeatability and rightward motion remain untested.
