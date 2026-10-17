@@ -479,10 +479,10 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>14 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>15 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
-<strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
+<strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product crates, sim car and firmware are implemented; laptop conformance and CI are tracked in tasks 1–3. Existing experiments remain the comparison/rollback reference; unverified physical limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
 </div>
       <h3>Why this matters</h3><p>
 <a href="../docs/VISION.md">VISION</a> layer 2 needs a product API that drives the car's four wheels independently, stays independent of transport and mecanum math, and fails safe. M8 (<a href="../experiments/rovi-m8-setpoint-ros/README.md">README</a>) proved the transport and ownership model on the board. M4 added four physical motor outputs and verified stops, reversals and a thermal run; M5 demonstrated floor movement and recorded approximate motion references. This change turns that experimental behavior into a reusable product API, separating motor control from the device state machine. It reuses the working code and evidence rather than starting another firmware experiment.</p>
@@ -493,7 +493,7 @@ footer {
 <li>
 <strong><code>car-control-api</code> (new):</strong> the car's device control API, extracted from M8 with its explicit transport differences (including ROS auto-arm). This proposal corrects validation, ordering, fault recovery and status gaps described in the design; it does not claim behavior-identical extraction.</li>
 <li>
-<strong>No firmware changes</strong> in this proposal. BLE/UDP byte layouts and numeric codes stay as M8 defines them (<a href="../experiments/rovi-m8-setpoint-ros/README.md#transports">README</a>); this spec states behaviour, not wire formats.</li>
+<strong>Firmware integration follows the accepted laptop implementation tasks; flashing and motor runs require separate authorization.</strong> BLE/UDP byte layouts and numeric codes stay as M8 defines them (<a href="../experiments/rovi-m8-setpoint-ros/README.md#transports">README</a>); this spec states behaviour, not wire formats.</li>
 </ul>
 
       <a class="button" href="#openspec--changes--add-four-wheel-api--proposal--evidence-and-remaining-decisions">Open decisions &amp; evidence →</a></div>
@@ -1436,7 +1436,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.5 Implement shared owner-error persistence and status delivery for BLE/UDP/ROS. Test immediate BLE reads, UDP transition/reply frames, ROS change/periodic publication, none values, release and non-owner isolation; update client/runbook documentation without changing numeric wire codes. <strong>Done 2026-10-17:</strong> canonical <code>Status</code> snapshot and persistent owner control error shared by all sources; malformed UDP controls/ROS Bool report invalid without acting or consuming the ROS sequence. Six regression tests failed on old behavior and four delivery tests failed against stubs first. BLE refreshes before reads/after writes; UDP adapters send owner stop notifications while idle; ROS publishes four keys on observed changes plus a 900 ms heartbeat. Queued notifications exposed three UDP client failures, now fixed by sequence matching. 203 workspace tests, 14 UDP scenarios, 23 Python tests, all six ROS scripts and both firmware builds/clippy pass. <a href="../apps/simcar/scenarios/evidence/2026-10-17-status/README.md">Jazzy evidence</a>; actual ESP32 GATT/radio delivery remains 5.2.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.6 Add product CI alongside experiment checks. Verify format, clippy, core/motor tests, socket/ROS scenarios, and ESP32 builds with/without ROS; complete the verification map with test names and clearly label remaining physical checks. <em>CI part added early (2026-10-17, before section 3): product crates, sim car with/without ROS, UDP and ROS scenarios, both firmware builds. The verification-map completion remains.</em></li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.6 Add product CI alongside experiment checks. Verify format, clippy, core/motor tests, socket/ROS scenarios, and ESP32 builds with/without ROS; complete the verification map with test names and clearly label remaining physical checks. <strong>Done 2026-10-17:</strong> retained experiment jobs and completed product CI with all six ROS scripts plus sim clippy with/without ROS. Audited all 43 requirement rows (78 scenarios), checked named tests against compiled inventories, and labelled outstanding physical acceptance in the <a href="#openspec--changes--add-four-wheel-api--verification--physical-acceptance-still-pending">verification map</a>. The audit reproduced invalid motor configuration accepting ARM before the first tick on BLE/UDP/ROS; coordinator boot readiness now refuses it with not-ready and prevents ROS auto-arm (three failing reproductions first). 205 workspace tests, 14 UDP scenarios, 23 Python tests, all six ROS scripts and both firmware builds/clippy pass locally. <a href="https://github.com/tptodorov/rovi/actions/runs/39061923183">Merged main CI</a> passed all four jobs through 3.5; the audit PRs run the expanded workflow. Updated PLAN/proposal status; tasks 5.1–5.3 remain open.</li>
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--tasks--4-physical-profile-decisions-2026-10-17">4. Physical profile decisions (2026-10-17)</h2><ul>
 <li>
@@ -1462,11 +1462,11 @@ After acceptance, run archive and validation per <a href="../docs/SPECIFICATION.
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-four-wheel-api/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-four-wheel-api/verification.md</div></header>
     
     <h1 id="openspec--changes--add-four-wheel-api--verification--m6-verification-map">M6 verification map</h1><p>
-All checks below are <strong>planned product checks</strong>, not claims that the new implementation exists. Reuse the M8 unit tests and BLE/UDP/ROS harnesses where applicable, then record concrete product test names and evidence as tasks complete. Each row covers every scenario under that requirement. Task numbers refer to <a href="#openspec--changes--add-four-wheel-api--tasks">tasks.md</a>.</p>
+Rows name implemented software checks and separately identify physical acceptance still pending. Test names were checked against the compiled test lists in task 3.6: 170 core, 25 motor-control and 10 coordinator tests. Each row covers the scenarios under that requirement; a software pass does not close its physical checks. Task numbers refer to <a href="#openspec--changes--add-four-wheel-api--tasks">tasks.md</a>.</p>
 <p>
 Host: deterministic tests/recording driver. Integration: real sockets or Jazzy on the laptop. Physical: separately authorized product firmware bench evidence; old M4/M5 evidence is a reference only.</p>
 <h2 id="openspec--changes--add-four-wheel-api--verification--car-control-api">car-control-api</h2><p>
-Host test names are <code>rovi-core</code> unit tests (<code>cargo test -p rovi-core</code>).</p>
+Host test names are <code>rovi-core</code> unit tests (<code>cargo test -p rovi-core</code>), unless explicitly labelled motor crate or coordinator (<code>rovi-drive</code>).</p>
 <table>
 <thead>
 <tr>
@@ -1487,7 +1487,7 @@ Host codec/device tests: positive and negative limit boundaries and invalid plan
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-mecanum-kinematics">Mecanum kinematics</a></td>
 <td>
-Host golden kinematics and combined-input saturation tests; transport parity (3.1, 3.3). Host: <code>forward_drives_all_wheels_equally</code>, <code>combined_inputs_saturate_each_wheel_independently</code>, <code>a_non_finite_wheel_speed_stays_non_finite_for_motor_fault_handling</code>, <code>identical_setpoints_give_identical_wheels_on_every_transport</code>.</td>
+Host golden kinematics and combined-input saturation tests; transport parity (3.1, 3.3). Host: <code>forward_drives_all_wheels_equally</code>, <code>strafe_left_turns_diagonals</code>, <code>rotate_ccw_turns_left_side_back</code>, <code>base_frame_offset_translation</code>, <code>base_frame_offset_rotation</code>, <code>normalise_scales_and_saturates</code>, <code>combined_inputs_saturate_each_wheel_independently</code>, <code>a_non_finite_wheel_speed_stays_non_finite_for_motor_fault_handling</code>, <code>identical_setpoints_give_identical_wheels_on_every_transport</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1517,7 +1517,7 @@ Injected-clock host tests, including refused ARM and no valid setpoint (3.1). Ho
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-explicit-arming">Explicit arming</a></td>
 <td>
-BLE/UDP scenarios plus real Jazzy auto-arm and STOP-latch scenarios (3.3). Host: <code>streams_setpoints_and_drives_wheels_only_when_armed</code>, <code>ble_setpoints_need_explicit_arm_after_claim_and_lease_expiry</code>, <code>udp_setpoints_need_explicit_arm_after_lease_expiry</code>, <code>ble_stop_and_out_of_limits_need_a_new_setpoint_then_arm</code>, <code>first_ros_setpoint_claims_and_arms</code>, <code>ros_stream_resuming_after_a_lease_expiry_arms_again</code>, <code>ros_stop_latches_while_the_owner_streams_until_it_arms</code>, <code>ros_stop_at_the_lease_deadline_requires_explicit_rearm</code>, <code>ros_out_of_limits_after_lease_expiry_requires_explicit_rearm</code>, <code>a_repeated_stop_needs_a_setpoint_after_the_latest_stop</code>. Integration: <code>udp_scenarios.py::test_repeated_stop_needs_a_later_setpoint</code>, <code>ros-scenarios.sh</code> / <code>ros_controller.py</code> (stock auto-arm, STOP latch, out-of-limits after lease expiry, explicit recovery).</td>
+BLE/UDP scenarios plus real Jazzy auto-arm and STOP-latch scenarios (3.3). Host: <code>arm_needs_a_valid_lease</code>, <code>arm_without_a_fresh_setpoint_is_refused_with_status</code>, <code>streams_setpoints_and_drives_wheels_only_when_armed</code>, <code>ble_setpoints_need_explicit_arm_after_claim_and_lease_expiry</code>, <code>udp_setpoints_need_explicit_arm_after_lease_expiry</code>, <code>ble_stop_and_out_of_limits_need_a_new_setpoint_then_arm</code>, <code>first_ros_setpoint_claims_and_arms</code>, <code>ros_stream_resuming_after_a_lease_expiry_arms_again</code>, <code>ros_stop_latches_while_the_owner_streams_until_it_arms</code>, <code>ros_stop_at_the_lease_deadline_requires_explicit_rearm</code>, <code>ros_out_of_limits_after_lease_expiry_requires_explicit_rearm</code>, <code>a_repeated_stop_needs_a_setpoint_after_the_latest_stop</code>. Integration: <code>udp_scenarios.py::test_repeated_stop_needs_a_later_setpoint</code>, <code>ros-scenarios.sh</code> / <code>ros_controller.py</code> (stock auto-arm, STOP latch, out-of-limits after lease expiry, explicit recovery).</td>
 </tr>
 <tr>
 <td>
@@ -1535,7 +1535,7 @@ Host transition tests; every physical stop trigger with all four channels (3.3, 
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-reclaim-window">Reclaim window</a></td>
 <td>
-Injected-clock tests for retained streaming owner, quiet owner, boundary and explicit/automatic recovery (3.1, 3.3). Host: <code>reclaim_window_boundary_after_a_lease_expiry</code>, <code>reclaim_window_boundary_after_a_quiet_owners_stop</code>, <code>stop_keeps_the_owner_while_it_keeps_streaming</code>, <code>arm_and_setpoint_on_the_reclaim_deadline_cannot_drive_the_expired_session</code>, <code>a_latched_owner_resuming_setpoints_cancels_the_reclaim_deadline</code>, <code>changing_stop_reasons_does_not_extend_the_reclaim_window</code>, <code>ros_owner_that_goes_quiet_after_a_stop_is_released_and_a_new_stream_arms</code>, <code>ble_setpoints_need_explicit_arm_after_claim_and_lease_expiry</code>, <code>udp_setpoints_need_explicit_arm_after_lease_expiry</code>. Integration: <code>udp_scenarios.py::test_resuming_a_stopped_stream_retains_ownership</code>, <code>udp_scenarios.py::test_owner_released_after_reclaim_window_and_session_changes</code>.</td>
+Injected-clock tests for retained streaming owner, quiet owner, boundary and explicit/automatic recovery (3.1, 3.3). Host: <code>reclaim_window_boundary_after_a_lease_expiry</code>, <code>reclaim_window_boundary_after_a_quiet_owners_stop</code>, <code>stop_keeps_the_owner_while_it_keeps_streaming</code>, <code>arm_and_setpoint_on_the_reclaim_deadline_cannot_drive_the_expired_session</code>, <code>a_latched_owner_resuming_setpoints_cancels_the_reclaim_deadline</code>, <code>changing_stop_reasons_does_not_extend_the_reclaim_window</code>, <code>ros_out_of_limits_latches_while_the_owner_streams</code>, <code>ros_owner_that_goes_quiet_after_a_stop_is_released_and_a_new_stream_arms</code>, <code>ble_setpoints_need_explicit_arm_after_claim_and_lease_expiry</code>, <code>udp_setpoints_need_explicit_arm_after_lease_expiry</code>. Integration: <code>udp_scenarios.py::test_resuming_a_stopped_stream_retains_ownership</code>, <code>udp_scenarios.py::test_owner_released_after_reclaim_window_and_session_changes</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1601,7 +1601,7 @@ Host u32 wrap/half-range and full-i64 per-GID tests; same-node multiple-publishe
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-session-isolation-and-ros-identity">Session isolation and ROS identity</a></td>
 <td>
-Old UDP/BLE generation injection and real router reconnect; distinct GID same-node ARM (3.2). Host: <code>wrong_session_and_garbage_are_dropped</code>, <code>a_callback_from_a_closed_connection_cannot_act_for_a_new_one_with_the_same_handle</code>, <code>another_ros_node_is_ignored_while_owned</code>, <code>a_router_disconnect_releases_a_ros_owner</code>, <code>a_router_disconnect_leaves_other_owners_alone</code>. Integration: <code>apps/simcar/scenarios/ros-reconnect.sh</code> (real router restarts).</td>
+Old UDP/BLE generation injection and real router reconnect; distinct GID same-node ARM (3.2). Host: <code>wrong_session_and_garbage_are_dropped</code>, <code>a_callback_from_a_closed_connection_cannot_act_for_a_new_one_with_the_same_handle</code>, <code>another_ros_node_is_ignored_while_owned</code>, <code>a_router_disconnect_releases_a_ros_owner</code>, <code>a_router_disconnect_leaves_other_owners_alone</code>. Graph: <code>publishers_of_one_node_share_a_node_id</code>, <code>unknown_gids_and_non_publisher_tokens_are_not_mapped</code>; same-node explicit ARM: <code>ros_stop_latches_while_the_owner_streams_until_it_arms</code>. Integration: <code>ros-reconnect.sh</code> (three real router restarts), <code>ros-router-gone.sh</code> (independent lease while router is frozen), <code>ros-refresh.sh</code> (missed liveliness, negative/positive controls), <code>ros-stale-session.sh</code> (abandoned UDP router session).</td>
 </tr>
 <tr>
 <td>
@@ -1751,11 +1751,135 @@ Recording driver verifies no partial writes and standby/prepare/enable ordering 
 </tr>
 </tbody>
 </table>
+<h2 id="openspec--changes--add-four-wheel-api--verification--ci-coverage-task-36">CI coverage (task 3.6)</h2><p>
+<a href="../.github/workflows/ci.yml">Workflow</a>, with experiments retained alongside product checks:</p>
+<table>
+<thead>
+<tr>
+<th>
+Job</th>
+<th>
+Product checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+OpenSpec</td>
+<td>
+Strict active/baseline/archive validation; generated reader coverage, links and freshness.</td>
+</tr>
+<tr>
+<td>
+Host</td>
+<td>
+All three crates: format, 205 unit tests and clippy. Sim car: format, clippy/build with and without ROS; 14 real UDP socket scenarios. Product Python: 23 codec/log/latency tests.</td>
+</tr>
+<tr>
+<td>
+ROS</td>
+<td>
+All six scripts: <code>ros-scenarios.sh</code>, <code>ros-router-gone.sh</code>, <code>ros-reconnect.sh</code>, <code>ros-refresh.sh</code>, <code>ros-stale-session.sh</code>, <code>ros-capabilities.sh</code> (includes capabilities and status observers). Scripts run sequentially because three use the same host router port/container name.</td>
+</tr>
+<tr>
+<td>
+Firmware</td>
+<td>
+Product and experiment: clippy/build for ESP32-S3, with and without ROS. Product <code>no_std</code> crates are linked into both firmware variants. Motor crate dependency inspection shows no dependencies.</td>
+</tr>
+</tbody>
+</table>
+<p>
+The merged software through task 3.5 passed <a href="https://github.com/tptodorov/rovi/actions/runs/39061923183">all four main checks</a>.
+The audit added the three previously local-only ROS scripts and sim clippy without ROS.
+It also reproduced and fixed invalid motor configuration reporting a successful ARM before
+the coordinator tick: ARM now reports not-ready on every source, including before the first tick.
+No test-count or existence check alone proves scenario coverage; the rows describe the assertions reviewed.</p>
+<h2 id="openspec--changes--add-four-wheel-api--verification--physical-acceptance-still-pending">Physical acceptance still pending</h2><p>
+Earlier product runs are development evidence: <a href="../firmware/bench/2026-10-17-coordinator/notes.md">coordinator</a>,
+<a href="../firmware/bench/2026-10-17-validation/notes.md">validation</a> and
+<a href="../firmware/bench/2026-10-17-sessions/notes.md">BLE reconnect</a>. They used earlier firmware;
+they do not accept the current product. M4/M5 remain the comparison/rollback reference.
+Each physical motor run is announced separately and waits for Todor's go.</p>
+<table>
+<thead>
+<tr>
+<th>
+Check</th>
+<th>
+Required product evidence</th>
+<th>
+Task</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Mapping and profile</td>
+<td>
+Compare all four direction/PWM channels and both STBY outputs with the carrier schematic; confirm 0.02 deadband, 40–70% drive range and no inversions. Then verify each physical wheel/direction.</td>
+<td>
+5.1 review; 5.2 bench</td>
+</tr>
+<tr>
+<td>
+Boot/reset/power loss</td>
+<td>
+With motor power present, no unintended wheel movement on startup/reset or ESP32 power loss/recovery; record what was observed rather than infer pin levels from logs.</td>
+<td>
+5.2</td>
+</tr>
+<tr>
+<td>
+Stops and recovery</td>
+<td>
+All four wheels stop on STOP, lease expiry, BLE disconnect, UDP BYE, ROS owner/router loss and out-of-limits. Verify retained/released owner and fresh-input/explicit-ARM recovery rules; check lease detection within lease + 50 ms using client/serial timing.</td>
+<td>
+5.2</td>
+</tr>
+<tr>
+<td>
+Coast and neighbour</td>
+<td>
+Documented zero-wheel pin levels (PWM high, directions low), free rotation and a driven neighbour remaining enabled. A hand-spin alone does not prove pin levels. Coast distance is not claimed.</td>
+<td>
+5.2</td>
+</tr>
+<tr>
+<td>
+Radio and delivery</td>
+<td>
+Actual BLE/AP exclusion and recovery; shared Wi-Fi owner isolation; immediate BLE Status reads and changed notifications; UDP stop notifications; ROS capabilities/status and router recovery. Correct the known empty BLE Echo suppression and verify empty/nonempty notifications on the board.</td>
+<td>
+5.2</td>
+</tr>
+<tr>
+<td>
+Reversal and heat</td>
+<td>
+Product motor module at the 70% cap: direct full reversals on all four, owner/radio survives with no reset; supervised thermal run. Use a motor-module bench harness for full-scale vectors; do not raise API limits to force full duty.</td>
+<td>
+5.2</td>
+</tr>
+<tr>
+<td>
+Acceptance</td>
+<td>
+Reconcile these results with every requirement; record acceptance and update instructions before archive.</td>
+<td>
+5.3</td>
+</tr>
+</tbody>
+</table>
+<p>
+Deferred outside this change: start/stall current or current protection, operation above 70%,
+a numeric GPIO disable bound (O4), coast distance and measured maximum speeds. These are not
+missing host tests or implicit product claims; the equipment/scope decisions are in the proposal.</p>
 </section><section class="document" id="openspec--changes--add-four-wheel-api--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-four-wheel-api/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/add-four-wheel-api/proposal.md</div></header>
     
     <h1 id="openspec--changes--add-four-wheel-api--proposal--m6-low-level-four-wheel-api">M6: low-level four-wheel API</h1><p>
-<strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
+<strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product crates, sim car and firmware are implemented; laptop conformance and CI are tracked in tasks 1–3. Existing experiments remain the comparison/rollback reference; unverified physical limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--why">Why</h2><p>
 <a href="../docs/VISION.md">VISION</a> layer 2 needs a product API that drives the car's four wheels independently, stays independent of transport and mecanum math, and fails safe. M8 (<a href="../experiments/rovi-m8-setpoint-ros/README.md">README</a>) proved the transport and ownership model on the board. M4 added four physical motor outputs and verified stops, reversals and a thermal run; M5 demonstrated floor movement and recorded approximate motion references. This change turns that experimental behavior into a reusable product API, separating motor control from the device state machine. It reuses the working code and evidence rather than starting another firmware experiment.</p>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--what-changes">What Changes</h2><ul>
@@ -1764,7 +1888,7 @@ Recording driver verifies no partial writes and standby/prepare/enable ordering 
 <li>
 <strong><code>car-control-api</code> (new):</strong> the car's device control API, extracted from M8 with its explicit transport differences (including ROS auto-arm). This proposal corrects validation, ordering, fault recovery and status gaps described in the design; it does not claim behavior-identical extraction.</li>
 <li>
-<strong>No firmware changes</strong> in this proposal. BLE/UDP byte layouts and numeric codes stay as M8 defines them (<a href="../experiments/rovi-m8-setpoint-ros/README.md#transports">README</a>); this spec states behaviour, not wire formats.</li>
+<strong>Firmware integration follows the accepted laptop implementation tasks; flashing and motor runs require separate authorization.</strong> BLE/UDP byte layouts and numeric codes stay as M8 defines them (<a href="../experiments/rovi-m8-setpoint-ros/README.md#transports">README</a>); this spec states behaviour, not wire formats.</li>
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--capabilities">Capabilities</h2><h3 id="openspec--changes--add-four-wheel-api--proposal--new-capabilities">New Capabilities</h3><ul>
 <li>
@@ -1780,7 +1904,7 @@ None; this is the first product specification change.</p>
 <li>
 <strong>Controllers cannot send wheel commands directly.</strong> The device control API accepts setpoints only. Exposing four wheel velocities stays deferred, as ADR-0006 records; motor control is a firmware-internal boundary.</li>
 <li>
-<strong>ROS 2 controllers read capabilities from a latched topic.</strong> A ROS 2 controller claims with its first setpoint, so it needs the limits before it claims. The car publishes <code>/rovi/capabilities</code> (<code>std_msgs/String</code>, <code>key=value</code>, transient local), readable without a claim; O9 decides whether zenoh-nostd can serve it as latched. Rejected: a custom message type (every controller must build a Rovi interface package) and ROS 2 parameters (they need services, which the car does not serve).</li>
+<strong>ROS 2 controllers read capabilities before claiming.</strong> A ROS 2 controller claims with its first setpoint, so it needs the limits before it claims. The car publishes <code>/rovi/capabilities</code> (<code>std_msgs/String</code>, <code>key=value</code>) without a claim. O9 selected the specified reliable/volatile/depth-1 fallback: changes plus a 900 ms heartbeat; retained history was unavailable with the pinned publisher. Rejected: a custom message type (every controller must build a Rovi interface package) and ROS 2 parameters (they need services, which the car does not serve).</li>
 <li>
 <strong>Safety is enforced twice.</strong> The device layer raises safety stops (<a href="../docs/adr/0004-single-owner-latest-setpoint.md">ADR-0004</a>); motor control independently holds standby until it is explicitly enabled and on any invalid wheel command.</li>
 </ul>
@@ -1892,12 +2016,12 @@ Do not flash or start a motor test as part of extraction or host validation. Eac
 <li>
 Planning: <code>openspec/changes/add-four-wheel-api/</code>, following the <a href="../docs/SPECIFICATION.md">product specification standard</a> and <a href="../docs/adr/0015-native-openspec-workflow.md">ADR-0015</a>.</li>
 <li>
-Code: none now. Implementation (see <a href="#openspec--changes--add-four-wheel-api--tasks">tasks</a>) extracts M8's existing core and motor output behavior into product modules; it starts the shared Cargo workspace PLAN defers until this point.</li>
+Code: <code>crates/rovi-core</code>, <code>crates/rovi-motor-control</code> and <code>crates/rovi-drive</code> in the root workspace, with separate <code>apps/simcar</code> and <code>firmware</code> packages/lockfiles. The <a href="#openspec--changes--add-four-wheel-api--tasks">tasks</a> and <a href="#openspec--changes--add-four-wheel-api--verification">verification map</a> record software checks and pending physical acceptance.</li>
 <li>
 Evidence: host tests and the sim car are development evidence only (<a href="../docs/adr/0002-simulation-never-proves-hardware.md">ADR-0002</a>). Acceptance needs the M4/M5 bench setup.</li>
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--review-status">Review status</h2><p>
-The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and <a href="#openspec--changes--add-four-wheel-api--verification">verification map</a> accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not accept the unimplemented product or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 closed with the specified volatile fallback and recorded Jazzy evidence.</p>
+The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and <a href="#openspec--changes--add-four-wheel-api--verification">verification map</a> accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not establish product hardware acceptance or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 closed with the specified volatile fallback and recorded Jazzy evidence.</p>
 </section>
 <footer>Generated from OpenSpec Markdown. Make changes in the source, then run <code>npm run spec:build</code>. This reader does not approve a proposal or authorize hardware tests.</footer></main><script>const requirements = [...document.querySelectorAll('.requirement')];
 const search = document.querySelector('#search');

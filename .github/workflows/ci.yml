@@ -73,6 +73,7 @@ jobs:
         working-directory: apps/simcar
         run: |
           cargo clippy --locked --features ros -- -D warnings
+          cargo clippy --locked -- -D warnings
           cargo build --locked --features ros
           cargo build --locked
       - name: Product UDP scenarios against the sim car
@@ -118,6 +119,12 @@ jobs:
         run: apps/simcar/scenarios/ros-capabilities.sh
       - name: Product router frozen and resumed (TCP rejoins)
         run: apps/simcar/scenarios/ros-router-gone.sh 10000 tcp
+      - name: Product router reconnect (three cycles)
+        run: apps/simcar/scenarios/ros-reconnect.sh
+      - name: Product missed-liveliness recovery (negative and positive controls)
+        run: apps/simcar/scenarios/ros-refresh.sh
+      - name: Product stale UDP router session recovery
+        run: apps/simcar/scenarios/ros-stale-session.sh
 
   firmware:
     name: firmware (ESP32-S3)

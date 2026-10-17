@@ -1,6 +1,6 @@
 # M6: low-level four-wheel API
 
-**Status:** proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of [#48](https://github.com/tptodorov/rovi/pull/48). Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in [`GLOSSARY.md`](../../../GLOSSARY.md).
+**Status:** proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of [#48](https://github.com/tptodorov/rovi/pull/48). Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product crates, sim car and firmware are implemented; laptop conformance and CI are tracked in tasks 1–3. Existing experiments remain the comparison/rollback reference; unverified physical limits below remain explicit. Terms are as defined in [`GLOSSARY.md`](../../../GLOSSARY.md).
 
 ## Why
 
@@ -10,7 +10,7 @@
 
 * **`motor-control` (new):** the reusable layer that takes four wheel commands (FL, FR, RR, RL, normalised −1..1) and drives the motor drivers. It knows nothing of setpoints, kinematics or transports. It owns driver standby, the boot-safe state and the limits M4 measures.
 * **`car-control-api` (new):** the car's device control API, extracted from M8 with its explicit transport differences (including ROS auto-arm). This proposal corrects validation, ordering, fault recovery and status gaps described in the design; it does not claim behavior-identical extraction.
-* **No firmware changes** in this proposal. BLE/UDP byte layouts and numeric codes stay as M8 defines them ([README](../../../experiments/rovi-m8-setpoint-ros/README.md#transports)); this spec states behaviour, not wire formats.
+* **Firmware integration follows the accepted laptop implementation tasks; flashing and motor runs require separate authorization.** BLE/UDP byte layouts and numeric codes stay as M8 defines them ([README](../../../experiments/rovi-m8-setpoint-ros/README.md#transports)); this spec states behaviour, not wire formats.
 
 ## Capabilities
 
@@ -27,7 +27,7 @@ None; this is the first product specification change.
 
 * **The motor control boundary is normalised wheel commands, not SI wheel speeds.** M5 confirmed no encoders; the current car uses open-loop duty control (Q11/O3, 2026-10-17). A normalised command survives both: 1.0 means the configured maximum, whether that is a duty or a wheel speed. The device layer still converts setpoints to SI wheel speeds first, as `mecanum_drive_controller` does ([ADR-0006](../../../docs/adr/0006-twiststamped-cdr-setpoint.md)).
 * **Controllers cannot send wheel commands directly.** The device control API accepts setpoints only. Exposing four wheel velocities stays deferred, as ADR-0006 records; motor control is a firmware-internal boundary.
-* **ROS 2 controllers read capabilities from a latched topic.** A ROS 2 controller claims with its first setpoint, so it needs the limits before it claims. The car publishes `/rovi/capabilities` (`std_msgs/String`, `key=value`, transient local), readable without a claim; O9 decides whether zenoh-nostd can serve it as latched. Rejected: a custom message type (every controller must build a Rovi interface package) and ROS 2 parameters (they need services, which the car does not serve).
+* **ROS 2 controllers read capabilities before claiming.** A ROS 2 controller claims with its first setpoint, so it needs the limits before it claims. The car publishes `/rovi/capabilities` (`std_msgs/String`, `key=value`) without a claim. O9 selected the specified reliable/volatile/depth-1 fallback: changes plus a 900 ms heartbeat; retained history was unavailable with the pinned publisher. Rejected: a custom message type (every controller must build a Rovi interface package) and ROS 2 parameters (they need services, which the car does not serve).
 * **Safety is enforced twice.** The device layer raises safety stops ([ADR-0004](../../../docs/adr/0004-single-owner-latest-setpoint.md)); motor control independently holds standby until it is explicitly enabled and on any invalid wheel command.
 
 Implementation boundaries, migration and the reviewed contract changes are in [design.md](design.md). Existing ADRs remain authoritative; no new irreversible architectural decision is introduced.
@@ -61,9 +61,9 @@ No unresolved product decisions remain. Deferred items are outside this change: 
 ## Impact
 
 * Planning: `openspec/changes/add-four-wheel-api/`, following the [product specification standard](../../../docs/SPECIFICATION.md) and [ADR-0015](../../../docs/adr/0015-native-openspec-workflow.md).
-* Code: none now. Implementation (see [tasks](tasks.md)) extracts M8's existing core and motor output behavior into product modules; it starts the shared Cargo workspace PLAN defers until this point.
+* Code: `crates/rovi-core`, `crates/rovi-motor-control` and `crates/rovi-drive` in the root workspace, with separate `apps/simcar` and `firmware` packages/lockfiles. The [tasks](tasks.md) and [verification map](verification.md) record software checks and pending physical acceptance.
 * Evidence: host tests and the sim car are development evidence only ([ADR-0002](../../../docs/adr/0002-simulation-never-proves-hardware.md)). Acceptance needs the M4/M5 bench setup.
 
 ## Review status
 
-The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and [verification map](verification.md) accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not accept the unimplemented product or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 closed with the specified volatile fallback and recorded Jazzy evidence.
+The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and [verification map](verification.md) accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not establish product hardware acceptance or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 closed with the specified volatile fallback and recorded Jazzy evidence.
