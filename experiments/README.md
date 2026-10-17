@@ -16,8 +16,8 @@ After bench-testing a milestone, add a `## Results` section to its `MILESTONE.md
 * ✅ [`rovi-m1-tb6612/`](rovi-m1-tb6612/) — ESP32-S3-N16R8 + one TB6612FNG channel, single-motor bring-up. Bench-tested successfully; see its `MILESTONE.md` results.
 * ✅ [`rovi-m2-ble/`](rovi-m2-ble/) — ESP32-S3 BLE peripheral and custom GATT drive-command write. Bench-tested successfully; see its `MILESTONE.md` results.
 * ✅ [`rovi-m3-wifi-queue/`](rovi-m3-wifi-queue/) — direct Wi-Fi car AP and shared BLE/Wi-Fi command ingress. Hardware-validated 2026-10-04 (5 of 6 acceptance items); M8 supersedes its TCP+FIFO design.
-* 📝 [`rovi-m4-four-motor-safety/`](rovi-m4-four-motor-safety/) — four motors on the M8 firmware, minimal wiring (M1's pins, power bank), software fail-safe ([ADR-0014](../docs/adr/0014-m4-minimal-wiring-software-fail-safe.md)). Step 1 (one motor) ready for the bench 2026-10-14; nothing run on hardware.
-* 📝 [`rovi-m5-mecanum-motion/`](rovi-m5-mecanum-motion/) — mecanum mapping and feedback characterization; reuse M4's setup.
+* ✅ [`rovi-m4-four-motor-safety/`](rovi-m4-four-motor-safety/) — complete 2026-10-17: four motors on the soldered carrier, both power banks, direction mapping, stop triggers, reversals and thermal run verified. Software fail-safe ([ADR-0014](../docs/adr/0014-m4-minimal-wiring-software-fail-safe.md)); see its `MILESTONE.md` for scope and limits.
+* 🔬 [`rovi-m5-mecanum-motion/`](rovi-m5-mecanum-motion/) — in progress 2026-10-17: measured geometry and low-command floor motion/stop observations recorded. Calibration, battery/load variation and stopping bounds remain open; see its `MILESTONE.md`.
 * 📝 [`rovi-m8-setpoint-ros/`](rovi-m8-setpoint-ros/) — setpoint protocol (`TwistStamped`/CDR) over BLE and UDP, single owner with arming, optional ROS 2 node via zenoh-nostd; board-only. Design approved.
 
 M6 is the spec-driven low-level API milestone, not a hardware experiment; it is tracked in [`../docs/PLAN.md`](../docs/PLAN.md#roadmap).

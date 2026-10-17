@@ -41,6 +41,23 @@ Real hardware only; reuse the verified M4 setup and stay within its recorded ele
 
 ### Results
 
+#### Session summary, 2026-10-17
+
+Low-command floor motion is demonstrated; M5 remains in progress. All floor pulses below used the measured geometry and lasted 0.5 s unless noted. Command values remain uncalibrated.
+
+| Check | Reported result |
+| --- | --- |
+| Forward `vx 0.05` | 10, 11, 10 cm; end-of-session repeat 10 cm |
+| Reverse `vx -0.05` | 10 cm, straight, clean stop |
+| Strafe left `vy 0.05` | First 6.5 cm, rear 1–2 mm farther; then front/rear 5.5/6.0 cm and 7/7 cm |
+| Strafe right `vy -0.05` | Front/rear 6.5/7.5 cm and 7/7.5 cm; apparent slip reported in the first measured run |
+| Rotate `wz ±0.5` | Left 40° twice; right 40–45°; centre stable by observation in the latest measured left run |
+| Diagonals `vx 0.05`, `vy ±0.05` | Both 4.5 cm forward and 4.5 cm laterally |
+| 0.3 s forward stream, explicit STOP | 6.5 cm total travel |
+| Same stream, then silence until lease expires | 22.5 cm total travel; physical automatic stop confirmed |
+
+**Still open:** calibration across command/duty levels and wheels, full-duty wheel speed, controlled battery/load variation, a usable speed/units contract for M6, and physical stop timing/coast distance. The 16 cm difference between STOP and lease runs is additional whole-run travel, not a mechanical braking distance. No maximum-speed stopping bound was established. Original videos were not supplied for independent analysis; detailed entries below distinguish reported observations from client status.
+
 #### Car measurements, 2026-10-17
 
 Reported by Todor before the floor tests:
@@ -55,7 +72,7 @@ Reported by Todor before the floor tests:
 
 Derived geometry: `wheels_radius = 0.030 m`; `center_projection_sum = (0.115 + 0.140) / 2 = 0.1275 m`.
 
-At the time these dimensions were recorded, firmware geometry was still the placeholder. Subsequent stand measurements are recorded below; floor speed, drift and stopping distance remain unmeasured.
+At the time these dimensions were recorded, firmware geometry was still the placeholder. Subsequent stand and floor observations are recorded below; steady-state speed and physical stop timing/coast distance remain unmeasured.
 
 #### Top-view inspection, 2026-10-17
 
@@ -64,7 +81,7 @@ At the time these dimensions were recorded, firmware geometry was still the plac
 Source: Todor's `IMG_0522.HEIC`, supplied from `experiments/rovi-m4-four-motor-safety/`; the JPEG is resized and stripped of metadata. The [earlier unmarked photo](bench/2026-10-17-setup/top.jpg) is retained as setup evidence.
 
 * All four mecanum wheels and both power banks are visible.
-* The visible roller axes appear to form the expected X pattern ([WPILib reference](https://docs.wpilib.org/en/stable/docs/software/hardware-apis/motors/wpi-drive-classes.html)). This is photo evidence only; the F1 motion check remains pending.
+* The visible roller axes appear to form the expected X pattern ([WPILib reference](https://docs.wpilib.org/en/stable/docs/software/hardware-apis/motors/wpi-drive-classes.html)). Subsequent F1 and floor observations are recorded below.
 * The FRONT arrow points toward the top of the image, beside the black power bank. Viewed this way: FL is upper-left, FR upper-right, RL (BL) lower-left and RR (BR) lower-right. Left and right are the car's own sides when facing forward.
 * Wiring continuity, wheel clearance through a full turn and secure mounting cannot be established from this view.
 
@@ -129,3 +146,7 @@ At `vx 0.05`, streamed for 0.3 s then stayed connected but silent for 2 s. The c
 A repeat with a marked starting front edge produced **22.5 cm total forward travel** and again reported `LeaseExpired`. This includes motion during the 0.3 s stream, lease wait and any coast; it is not distance after the last setpoint or motor disable. Exact physical stop timing and coast distance remain unmeasured. A matching explicit-STOP comparison remains pending.
 
 The matching 0.3 s stream followed by explicit STOP gave **6.5 cm total forward travel**, reported by Todor; the client reported `Stop`. Thus the lease run travelled **16 cm farther overall** in these two observations. These are whole-run distances, not isolated coast distances or a worst-case stopping bound. One measured run per condition; see [F7 comparison](bench/2026-10-17-f7/notes.md).
+
+#### End-of-session forward repeat, 2026-10-17
+
+Repeating `vx 0.05` for 0.5 s gave **10 cm**, within the earlier 10, 11, 10 cm baseline. This one run shows no observed reduction in travel at this setting over the session. Bank charge, surface and load were not controlled for comparison, so this does not settle the battery/load acceptance item. See [F8 notes and output](bench/2026-10-17-f8/notes.md).
