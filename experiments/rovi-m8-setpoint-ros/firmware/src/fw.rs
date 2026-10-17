@@ -94,9 +94,15 @@ const GEOMETRY: Geometry = Geometry {
     max_wheel_speed: 40.0,
 };
 
-/// Duty for a wheel command of 1.0, until M4 measures the limits. With the placeholder geometry
-/// `vx` 1.0 m/s is a wheel command of 0.5, so 40 % duty: the top of M1's bench-proven ramp.
-const MOTOR: motor::Config = motor::Config { max_duty_pm: 800 };
+/// Duty range for the wheels (M4 step 2, 2026-10-16/17): the mounted TT motors need about 35 %
+/// to start with all four connected, so any command outside the 2 % deadband starts at 40 %; a
+/// command of 1.0 is 100 % (5 V, within the TT motors' 3-6 V rating). With the placeholder
+/// geometry `vx` 1.0 m/s is a wheel command of 0.5, so 70 % duty.
+const MOTOR: motor::Config = motor::Config {
+    min_duty_pm: 400,
+    max_duty_pm: 1000,
+    deadband: 0.02,
+};
 /// Bridge order: driver 1 A, driver 1 B, driver 2 A, driver 2 B (M4 WIRING). Driver 1 takes the
 /// left wheels, driver 2 the right. Inversion is a placeholder until M4 step 2 records which
 /// motors turn backwards.
