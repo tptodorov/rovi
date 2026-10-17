@@ -29,7 +29,7 @@ Copy the working core and tests into the product crates, preserving source histo
 
 ### Configuration and fault boundary
 
-Validate immutable device and motor profiles before accepting control. Canonicalize advertised floating values through f32 and use those values for limit comparisons, so a limit read over BLE is actually accepted. Geometry normalization remains 40 rad/s and reference limits 1/1/3 in the named experimental profile, not measured physical maxima. Minimum duty 40%, deadband 0.02 and the current 100% configured cap remain explicit experimental profile values; O1/O7 gate qualification of the chosen product cap. No profile is labelled production-qualified merely because it compiles.
+Validate immutable device and motor profiles before accepting control. Canonicalize advertised floating values through f32 and use those values for limit comparisons, so a limit read over BLE is actually accepted. Geometry normalization remains 40 rad/s and reference limits 1/1/3 in the named experimental profile, not measured physical maxima. The product motor profile is minimum duty 40%, deadband 0.02 and maximum 70% (O1); the experiment firmware keeps its 100% cap as the comparison reference. No profile is labelled production-qualified merely because it compiles.
 
 Motor operations are explicit enable with a complete vector, update while enabled, and standby. Validate the full vector before any drive output. A bad vector disables and latches the motor layer; ordinary updates cannot clear it. Prepare all bridge states while standby is inactive before enabling. Preserve 20 kHz PWM and the separate standby pins. Coast uses the datasheet pin state even when the *drive* duty cap is less than 100%.
 
@@ -73,4 +73,13 @@ The scenario-to-test index is created before implementation and completed with a
 
 ## Deferred qualification
 
-O1/O4/O5/O7 concern electrical limits, standby timing, coast distance and operation at the selected maximum; O2 concerns physical interpretation of the explicit operating profile. They block qualified product acceptance, not implementation of configurable host modules. Resolve them through the recorded bench acceptance tasks with Todor; until then, label the values unqualified and keep those tasks unchecked. O9 is the laptop capability test with the fixed fallback above. No new measurement sweep is scheduled.
+O1, O2, O5 and O7 are decided (2026-10-17): 70% product cap, measured geometry with approximate references, coast for a zero wheel, direct reversals within the cap. This change does not claim what was not measured:
+
+| Not claimed | Needs |
+| --- | --- |
+| Start and stall current (O1) | A current monitor (INA226) or an oscilloscope with a shunt |
+| Numeric STBY disable bound (O4) | A logic analyzer or oscilloscope |
+| Operation above 70% (O1, O7) | Requalification with the equipment above |
+| Coast distance and maximum speeds (O5, O2) | Tape and video; not scheduled |
+
+They return as a new change when a requirement needs them. O9 is the laptop capability test with the fixed fallback above. No new measurement sweep is scheduled.

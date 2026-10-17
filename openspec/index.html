@@ -479,10 +479,10 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>2 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>5 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
-<strong>Status:</strong> proposed 2026-10-10; review corrections and implementation design completed 2026-10-17; proposed for acceptance of host implementation. Qualified product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
+<strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
 </div>
       <h3>Why this matters</h3><p>
 <a href="../docs/VISION.md">VISION</a> layer 2 needs a product API that drives the car's four wheels independently, stays independent of transport and mecanum math, and fails safe. M8 (<a href="../experiments/rovi-m8-setpoint-ros/README.md">README</a>) proved the transport and ownership model on the board. M4 added four physical motor outputs and verified stops, reversals and a thermal run; M5 demonstrated floor movement and recorded approximate motion references. This change turns that experimental behavior into a reusable product API, separating motor control from the device state machine. It reuses the working code and evidence rather than starting another firmware experiment.</p>
@@ -546,7 +546,7 @@ The car's device control API SHALL accept a setpoint as a <code>geometry_msgs/Tw
 <strong>THEN</strong> a safety stop is raised with reason out-of-limits</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-mecanum-kinematics"><h3>Mecanum kinematics</h3><p>
-The car SHALL use <code>mecanum_drive_controller</code> inverse kinematics and parameter names, divide wheel-speed references by configured <code>max_wheel_speed</code>, and clamp to −1.0..=1.0. The current geometry SHALL use radius 0.030 m and centre projection sum 0.1275 m, with zero frame offset. <strong>OPEN (O2):</strong> qualified profile normalization and input limits; the experiment's 40 rad/s and 1/1/3 limits are not measured physical maxima.</p>
+The car SHALL use <code>mecanum_drive_controller</code> inverse kinematics and parameter names, divide wheel-speed references by configured <code>max_wheel_speed</code>, and clamp to −1.0..=1.0. The current geometry SHALL use radius 0.030 m and centre projection sum 0.1275 m, with zero frame offset. The profile's 40 rad/s normalization and 1/1/3 input limits are experimental values, not measured physical maxima; speed tracking is approximate (O2).</p>
 <details class="scenario" id="openspec--changes--add-four-wheel-api--specs--car-control-api--spec--scenario-same-result-as-mecanum_drive_controller"><summary>Same result as mecanum_drive_controller</summary><ul>
 <li>
 <strong>GIVEN</strong> a <code>wheels_radius</code>, <code>sum_of_robot_center_projection_on_X_Y_axis</code> and <code>max_wheel_speed</code></li>
@@ -1166,30 +1166,32 @@ Every motor driver SHALL be in standby from power-up, through reset and firmware
 <li>
 <strong>AND</strong> no wheel turns</li>
 </ul>
-</details></article><article class="requirement" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-standby-on-safety-stop-within-a-bound"><h3>Standby on safety stop within a bound</h3><p>
-When the device raises a safety stop, motor control SHALL set every wheel command to zero and put every driver in standby within a measured bound. <strong>OPEN (O4, M4):</strong> the bound, under four-motor load.</p>
+</details></article><article class="requirement" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-standby-on-safety-stop"><h3>Standby on safety stop</h3><p>
+When the device raises a safety stop, the coordinator SHALL request standby in the control tick that processes the stop, and motor control SHALL set every wheel command to zero and deassert both STBY outputs before any further bridge update. A measured pin-level bound is deferred (O4: needs a logic analyzer or oscilloscope); this change SHALL NOT claim one.</p>
 <details class="scenario" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--scenario-watchdog-timeout-puts-every-driver-in-standby"><summary>Watchdog timeout puts every driver in standby</summary><ul>
 <li>
 <strong>GIVEN</strong> the car is armed and all four wheels are driven</li>
 <li>
 <strong>WHEN</strong> a watchdog timeout raises a safety stop</li>
 <li>
-<strong>THEN</strong> every driver's STBY input is inactive within the O4 bound</li>
+<strong>THEN</strong> both STBY outputs are deasserted in that control tick, before any further bridge update</li>
+<li>
+<strong>AND</strong> on the bench every wheel stops</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-full-scale-maps-to-the-configured-limit"><h3>Full-scale maps to the configured limit</h3><p>
-Wheel command 1.0 SHALL map to the configured maximum PWM duty. The car SHALL use open-loop duty control without encoder feedback. The configured duty cap SHALL be enforced independently for each wheel. <strong>OPEN (O1):</strong> the electrically qualified maximum; 70% reversal/thermal evidence does not validate 100% operation. Duty limiting SHALL NOT be advertised as measured current protection.</p>
-<details class="scenario" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--scenario-all-wheels-at-full-scale-stay-in-limits"><summary>All wheels at full scale stay in limits</summary><ul>
+Wheel command 1.0 SHALL map to the configured maximum PWM duty, enforced independently for each wheel. The car SHALL use open-loop duty control without encoder feedback. The product profile SHALL cap drive duty at 70%, the envelope M4 verified (O1). Raising the cap SHALL require new qualification. Duty limiting SHALL NOT be advertised as current protection; start and stall current are not measured.</p>
+<details class="scenario" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--scenario-product-profile-full-scale"><summary>Product profile full scale</summary><ul>
 <li>
-<strong>GIVEN</strong> the car on the M4 bench with its intended supply</li>
+<strong>GIVEN</strong> the product profile: deadband 0.02, minimum duty 40%, maximum duty 70%</li>
 <li>
-<strong>WHEN</strong> all four wheels are commanded at 1.0</li>
+<strong>WHEN</strong> a wheel receives 1.0, then 0.5, then 1.5</li>
 <li>
-<strong>THEN</strong> measured per-channel and combined current stay within the O1 limits</li>
+<strong>THEN</strong> the requested duties are 70%, 55% and 70%</li>
 <li>
-<strong>AND</strong> the logic rail stays above brownout</li>
+<strong>AND</strong> no command drives any wheel above 70%</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-zero-command-behaviour"><h3>Zero command behaviour</h3><p>
-A zero wheel command SHALL request coast for that wheel without disabling a driven neighbour on the same driver. On the TB6612, this SHALL use IN1=IN2=low and PWM=high while STBY is high. A safety stop SHALL instead deassert both drivers' STBY inputs. <strong>OPEN (O5):</strong> physical coast distance, not the selected mode. Source: Toshiba <a href="../docs/reference/tb6612fng/datasheet.pdf">H-SW table, page 4</a>.</p>
+A zero wheel command SHALL request coast for that wheel without disabling a driven neighbour on the same driver. On the TB6612, this SHALL use IN1=IN2=low and PWM=high while STBY is high. A safety stop SHALL instead deassert both drivers' STBY inputs. Coast distance is not measured or claimed (O5). Source: Toshiba <a href="../docs/reference/tb6612fng/datasheet.pdf">H-SW table, page 4</a>.</p>
 <details class="scenario" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--scenario-zero-coasts-a-turning-wheel"><summary>Zero coasts a turning wheel</summary><ul>
 <li>
 <strong>GIVEN</strong> a wheel driven at 0.5</li>
@@ -1221,10 +1223,10 @@ Exact zero or a magnitude below the configured deadband SHALL request coast. Oth
 <strong>AND</strong> negative commands use the same duty magnitude with reversed direction</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-starts-and-reversals-do-not-reset-the-controller"><h3>Starts and reversals do not reset the controller</h3><p>
-Motor control SHALL support direct signed changes within the qualified operating envelope. M4 observed reversals at ±70% without reset or BLE loss; no slew limit is required by that evidence. The product SHALL NOT claim the same result above the qualified duty without validation. <strong>OPEN (O7):</strong> qualification at the selected product maximum.</p>
+Motor control SHALL support direct signed changes, without a slew limit, up to the product cap. M4 reversed all four wheels between ±70% ten times without an ESP32 reset or BLE loss (O7). Operation above 70% SHALL NOT be claimed without new qualification.</p>
 <details class="scenario" id="openspec--changes--add-four-wheel-api--specs--motor-control--spec--scenario-full-reversal-on-all-wheels"><summary>Full reversal on all wheels</summary><ul>
 <li>
-<strong>GIVEN</strong> a configured maximum within the qualified operating envelope and all four wheels at 1.0</li>
+<strong>GIVEN</strong> the product profile (maximum 70%) and all four wheels at 1.0</li>
 <li>
 <strong>WHEN</strong> all four are commanded to −1.0 in one control tick</li>
 <li>
@@ -1319,7 +1321,7 @@ Copy the working core and tests into the product crates, preserving source histo
 <p>
 <code>rovi-core</code> returns normalized wheel demands and state effects. It does not import the motor driver or HAL. <code>rovi-motor-control</code> has no dependency on the arbiter, kinematics or transports. The application coordinator connects them. A small output boundary exposes standby and bridge updates to the ESP implementation or a recording test double; no generic robotics framework is needed. Both crates build without <code>std</code>; application tests exercise their integration.</p>
 <h3 id="openspec--changes--add-four-wheel-api--design--configuration-and-fault-boundary">Configuration and fault boundary</h3><p>
-Validate immutable device and motor profiles before accepting control. Canonicalize advertised floating values through f32 and use those values for limit comparisons, so a limit read over BLE is actually accepted. Geometry normalization remains 40 rad/s and reference limits 1/1/3 in the named experimental profile, not measured physical maxima. Minimum duty 40%, deadband 0.02 and the current 100% configured cap remain explicit experimental profile values; O1/O7 gate qualification of the chosen product cap. No profile is labelled production-qualified merely because it compiles.</p>
+Validate immutable device and motor profiles before accepting control. Canonicalize advertised floating values through f32 and use those values for limit comparisons, so a limit read over BLE is actually accepted. Geometry normalization remains 40 rad/s and reference limits 1/1/3 in the named experimental profile, not measured physical maxima. The product motor profile is minimum duty 40%, deadband 0.02 and maximum 70% (O1); the experiment firmware keeps its 100% cap as the comparison reference. No profile is labelled production-qualified merely because it compiles.</p>
 <p>
 Motor operations are explicit enable with a complete vector, update while enabled, and standby. Validate the full vector before any drive output. A bad vector disables and latches the motor layer; ordinary updates cannot clear it. Prepare all bridge states while standby is inactive before enabling. Preserve 20 kHz PWM and the separate standby pins. Coast uses the datasheet pin state even when the <em>drive</em> duty cap is less than 100%.</p>
 <p>
@@ -1357,7 +1359,45 @@ Implement in the order in <a href="#openspec--changes--add-four-wheel-api--tasks
 <p>
 The scenario-to-test index is created before implementation and completed with actual test names/results as each task lands. Host-only scenarios stay host-only; radio, physical output, timing and thermal claims require their corresponding bench evidence. No motor run or flash is implicit in proposal acceptance.</p>
 <h2 id="openspec--changes--add-four-wheel-api--design--deferred-qualification">Deferred qualification</h2><p>
-O1/O4/O5/O7 concern electrical limits, standby timing, coast distance and operation at the selected maximum; O2 concerns physical interpretation of the explicit operating profile. They block qualified product acceptance, not implementation of configurable host modules. Resolve them through the recorded bench acceptance tasks with Todor; until then, label the values unqualified and keep those tasks unchecked. O9 is the laptop capability test with the fixed fallback above. No new measurement sweep is scheduled.</p>
+O1, O2, O5 and O7 are decided (2026-10-17): 70% product cap, measured geometry with approximate references, coast for a zero wheel, direct reversals within the cap. This change does not claim what was not measured:</p>
+<table>
+<thead>
+<tr>
+<th>
+Not claimed</th>
+<th>
+Needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Start and stall current (O1)</td>
+<td>
+A current monitor (INA226) or an oscilloscope with a shunt</td>
+</tr>
+<tr>
+<td>
+Numeric STBY disable bound (O4)</td>
+<td>
+A logic analyzer or oscilloscope</td>
+</tr>
+<tr>
+<td>
+Operation above 70% (O1, O7)</td>
+<td>
+Requalification with the equipment above</td>
+</tr>
+<tr>
+<td>
+Coast distance and maximum speeds (O5, O2)</td>
+<td>
+Tape and video; not scheduled</td>
+</tr>
+</tbody>
+</table>
+<p>
+They return as a new change when a requirement needs them. O9 is the laptop capability test with the fixed fallback above. No new measurement sweep is scheduled.</p>
 </section><section class="document" id="openspec--changes--add-four-wheel-api--tasks" aria-label="tasks">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-four-wheel-api/tasks.md">Markdown source ↗</a><div class="path">openspec/changes/add-four-wheel-api/tasks.md</div></header>
     
@@ -1365,7 +1405,7 @@ O1/O4/O5/O7 concern electrical limits, standby timing, coast distance and operat
 Host tests establish software behavior only. Physical acceptance uses <a href="../docs/adr/0002-simulation-never-proves-hardware.md">ADR-0002</a>. <a href="#openspec--changes--add-four-wheel-api--design">Design</a> defines package boundaries; <a href="#openspec--changes--add-four-wheel-api--verification">verification</a> maps every requirement to its check. Existing experiments remain the rollback reference.</p>
 <h2 id="openspec--changes--add-four-wheel-api--tasks--1-accept-and-extract-laptop">1. Accept and extract (laptop)</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 1.1 Record Todor's explicit acceptance or the merge of this acceptance PR in the proposal; verify the approved scope excludes automatic physical tests.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 1.1 Accepted: Todor merged <a href="https://github.com/tptodorov/rovi/pull/48">#48</a> on 2026-10-17, which explicitly proposed acceptance of the laptop implementation tasks. The scope excludes flashing and motor runs; each board run is announced and waits for Todor's go.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 1.2 ROS capabilities selected as product work (2026-10-11); exact keys, QoS and fallback are now specified.</li>
 <li>
@@ -1393,17 +1433,17 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 3.6 Add product CI alongside experiment checks. Verify format, clippy, core/motor tests, socket/ROS scenarios, and ESP32 builds with/without ROS; complete the verification map with test names and clearly label remaining physical checks.</li>
 </ul>
-<h2 id="openspec--changes--add-four-wheel-api--tasks--4-qualify-the-physical-profile-bench-separate-go-for-each-run">4. Qualify the physical profile (bench, separate go for each run)</h2><ul>
+<h2 id="openspec--changes--add-four-wheel-api--tasks--4-physical-profile-decisions-2026-10-17">4. Physical profile decisions (2026-10-17)</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 4.1 Record O1/O4/O7 qualified limits and pin-level disable timing for the selected profile. Distinguish configured 100% from 70% bench evidence; acceptance requires the recorded bounds and corresponding physical results, not inferred current protection.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.1 O1/O7: product cap 70%, within M4's ±70% reversal and thermal evidence; direct reversals, no ramp. Start/stall current and operation above 70% are deferred (current monitor needed) and not claimed.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 4.2 Review O2 profile suitability and O5 coast-distance qualification using accepted approximate references. Record any remaining physical bounds explicitly; no extended calibration sweep is authorized by this task.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.2 O2/O5: measured geometry with approximate references, experimental normalization labelled; coast for a zero wheel. O4's numeric disable bound (logic analyzer needed), coast distance and maximum speeds are deferred and not claimed.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.3 Q11/O3 is settled (2026-10-17): open-loop duty, no added sensors. O6 deadband and O8 mapping are recorded in the requirements.</li>
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--tasks--5-product-hardware-acceptance">5. Product hardware acceptance</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Bind the product motor driver to all four TB6612 channels and the qualified profile. Cross-build both firmware variants and check pin mapping against the carrier schematic before proposing a flash.</li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Bind the product motor driver to all four TB6612 channels and the 70% product profile. Cross-build both firmware variants and check pin mapping against the carrier schematic before proposing a flash.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 5.2 After separately announced/authorized board runs, record physical scenario results for outputs, stop triggers, radio operation and selected-profile reversal/thermal behavior across BLE/UDP/ROS. Use the verification map to distinguish software-only scenarios from physical claims.</li>
 <li>
@@ -1476,7 +1516,7 @@ BLE/UDP scenarios plus real Jazzy auto-arm and STOP-latch scenarios (3.3).</td>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-lease-and-watchdog-timeout">Lease and watchdog timeout</a></td>
 <td>
-Injected-time detection tests and physical log/pin timing; distinguish detection from O4 disable bound (3.1, 4.1, 5.2).</td>
+Injected-time detection tests and physical log timing; detection only, no numeric disable bound (O4 deferred) (3.1, 5.2).</td>
 </tr>
 <tr>
 <td>
@@ -1642,21 +1682,21 @@ Recording driver checks boot/disable; physical reset and power-loss STBY verific
 </tr>
 <tr>
 <td>
-<a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-standby-on-safety-stop-within-a-bound">Standby on safety stop within a bound</a></td>
+<a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-standby-on-safety-stop">Standby on safety stop</a></td>
 <td>
-Recording driver checks immediate disable ordering; measured O4 pin-level bound required (2.1, 4.1, 5.2).</td>
+Recording driver checks same-tick disable before any bridge update; physical: every wheel stops on each trigger. Numeric pin bound deferred (O4, needs a logic analyzer) (2.1, 2.3, 5.2).</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-full-scale-maps-to-the-configured-limit">Full-scale maps to the configured limit</a></td>
 <td>
-Host duty-cap tests; electrical/current and brownout qualification at selected maximum remains O1 (2.1, 4.1).</td>
+Host duty-cap tests including the 70% product profile; current is not measured (O1 deferred) (2.1, 5.1).</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-zero-command-behaviour">Zero command behaviour</a></td>
 <td>
-Failing coast-pin reproduction first, neighbor independence; physical coast check remains O5 (2.1, 4.2, 5.2).</td>
+Failing coast-pin reproduction first, neighbor independence; coast distance not claimed (O5) (2.1, 5.2).</td>
 </tr>
 <tr>
 <td>
@@ -1668,7 +1708,7 @@ Exact zero, deadband-minus/at/plus, both signs and rounding table (2.1).</td>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-starts-and-reversals-do-not-reset-the-controller">Starts and reversals do not reset the controller</a></td>
 <td>
-Host signed transitions; product reversal/thermal/radio evidence at selected maximum remains O7 (2.1, 4.1, 5.2).</td>
+Host signed transitions; product reversal/thermal/radio run at the 70% cap (2.1, 5.2).</td>
 </tr>
 <tr>
 <td>
@@ -1706,7 +1746,7 @@ Recording driver verifies no partial writes and standby/prepare/enable ordering 
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-four-wheel-api/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/add-four-wheel-api/proposal.md</div></header>
     
     <h1 id="openspec--changes--add-four-wheel-api--proposal--m6-low-level-four-wheel-api">M6: low-level four-wheel API</h1><p>
-<strong>Status:</strong> proposed 2026-10-10; review corrections and implementation design completed 2026-10-17; proposed for acceptance of host implementation. Qualified product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
+<strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--why">Why</h2><p>
 <a href="../docs/VISION.md">VISION</a> layer 2 needs a product API that drives the car's four wheels independently, stays independent of transport and mecanum math, and fails safe. M8 (<a href="../experiments/rovi-m8-setpoint-ros/README.md">README</a>) proved the transport and ownership model on the board. M4 added four physical motor outputs and verified stops, reversals and a thermal run; M5 demonstrated floor movement and recorded approximate motion references. This change turns that experimental behavior into a reusable product API, separating motor control from the device state machine. It reuses the working code and evidence rather than starting another firmware experiment.</p>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--what-changes">What Changes</h2><ul>
@@ -1745,7 +1785,9 @@ Use <a href="../experiments/rovi-m4-four-motor-safety/MILESTONE.md#results">M4 r
 <th>
 ID</th>
 <th>
-Current answer / remaining limit</th>
+Status</th>
+<th>
+Answer</th>
 </tr>
 </thead>
 <tbody>
@@ -1753,60 +1795,78 @@ Current answer / remaining limit</th>
 <td>
 O1</td>
 <td>
-Existing mapping is 40–100% PWM, 20 kHz; running current reported as 150 mA per motor. Four-motor reversal and thermal evidence covers 70% duty, not continuous full-scale 100% operation. Start/stall current and a qualified electrical maximum remain unknown. Implement configurable duty limits; do not describe them as measured current protection.</td>
+<strong>Closed</strong> 2026-10-17</td>
+<td>
+Duty limits stay configurable. The product profile caps drive duty at <strong>70%</strong>, the envelope M4 verified on the bench (ten ±70% reversals, 5-minute thermal run, radio up). The experiment firmware's 100% is not a product value. <strong>Deferred, needs a current monitor (INA226) or an oscilloscope with a shunt:</strong> start and stall current. Needed only to raise the cap or to claim current protection; this change claims neither.</td>
 </tr>
 <tr>
 <td>
 O2</td>
 <td>
-Geometry is radius 0.030 m, wheelbase 0.115 m, track 0.140 m, centre projection sum 0.1275 m. Use existing approximate motion references. Experiment normalization 40 rad/s and input limits 1/1/3 are operational placeholders, not measured maximum speeds. Profile values must stay explicit; no single gain fitted from short pulses is justified.</td>
+<strong>Closed</strong> 2026-10-17</td>
+<td>
+Measured geometry: radius 0.030 m, wheelbase 0.115 m, track 0.140 m, centre projection sum 0.1275 m. Open-loop with the accepted approximate motion references; no calibration sweep. The 40 rad/s normalization and 1/1/3 input limits stay in the profile, labelled experimental, not measured maxima. The references were recorded on the experiment's 40–100% mapping; under the 70% cap the same command gives less duty (<code>vx 0.20</code>: 45% instead of 50%). Maximum physical speeds are not claimed.</td>
 </tr>
 <tr>
 <td>
 O3</td>
 <td>
-Resolved: open-loop duty control; no encoders, added sensing out of scope.</td>
+<strong>Closed</strong></td>
+<td>
+Open-loop duty control; no encoders, added sensing out of scope.</td>
 </tr>
 <tr>
 <td>
 O4</td>
 <td>
-Physical stopping is observed; a numeric pin-level disable bound is not measured. Keep driver-disable validation separate from lease detection and mechanical stopping. Implement immediate standby when the motor layer receives disable; no invented physical timing claim.</td>
+<strong>Deferred, needs a logic analyzer or oscilloscope</strong></td>
+<td>
+A numeric pin-level STBY disable bound. This change specifies and host-tests that a safety stop deasserts both STBY outputs in the control tick that processes it, before any further bridge update. M4 observed all four wheels stop on every trigger. No numeric bound is claimed.</td>
 </tr>
 <tr>
 <td>
 O5</td>
 <td>
-Select coast for an individual zero wheel and standby for every safety stop. Encode the TB6612 documented coast pin state explicitly; the experimental all-low zero pins must not be assumed to prove coast. Whole-run STOP/lease travel is 6.5/22.5 cm at one low command; maximum-speed coast distance remains unknown.</td>
+<strong>Closed</strong> 2026-10-17</td>
+<td>
+Coast for an individual zero wheel (TB6612 IN1=IN2=low, PWM=high), standby for every safety stop. The experiment's all-low zero pins do not prove coast; task 2.1 corrects them test-first. Coast distance is not measured or claimed (tape and video, if a later requirement needs it).</td>
 </tr>
 <tr>
 <td>
 O6</td>
 <td>
-Resolved rule: exact zero and magnitudes below 0.02 do not drive; other commands map linearly from 40% toward configured maximum duty. About 35% starting duty observed on the stand. No precise per-wheel minimum steady speed or floor threshold is claimed.</td>
+<strong>Closed</strong></td>
+<td>
+Exact zero and magnitudes below 0.02 coast; other commands map linearly from 40% to the configured maximum. About 35% starting duty observed on the stand; no per-wheel threshold is claimed.</td>
 </tr>
 <tr>
 <td>
 O7</td>
 <td>
-Direct reversals at ±70% did not reset the ESP32 or drop BLE; retain direct transitions within the qualified operating envelope, with no speculative ramping. Behavior beyond that evidence remains to be qualified before claiming full-scale reversal.</td>
+<strong>Closed</strong> 2026-10-17</td>
+<td>
+Direct reversals, no ramp, up to the 70% cap: M4's ten ±70% reversals caused no ESP32 reset or BLE loss. Raising the cap reopens O7 together with O1.</td>
 </tr>
 <tr>
 <td>
 O8</td>
 <td>
-Resolved: D1 A→FL, D1 B→RL, D2 A→FR, D2 B→RR. Directions corrected at connectors, all software inversions false. Each driver has its own STBY, both disabled on a safety stop.</td>
+<strong>Closed</strong></td>
+<td>
+D1 A→FL, D1 B→RL, D2 A→FR, D2 B→RR; directions corrected at connectors, all software inversions false, reconfirmed after the motor rework. Each driver has its own STBY, both disabled on a safety stop.</td>
 </tr>
 <tr>
 <td>
 O9</td>
 <td>
-Software question: can zenoh-nostd serve transient-local late joiners for <code>/rovi/capabilities</code>? Test on the laptop; if unsupported, use reliable/volatile depth 1 and republish every second and on claim/release/reconnect, with compatible subscriber QoS. This blocks choosing/documenting the ROS publication mode, not other host work.</td>
+<strong>Open, laptop test (task 3.4)</strong></td>
+<td>
+Can zenoh-nostd serve transient-local late joiners for <code>/rovi/capabilities</code>? If not, use reliable/volatile depth 1, republished every second and on claim/release/reconnect, with compatible subscriber QoS. Blocks only choosing the ROS publication mode.</td>
 </tr>
 </tbody>
 </table>
 <p>
-The remaining electrical/physical bounds do not prevent implementing and host-testing configurable modules. They do prevent claiming qualified maxima, exact velocity tracking or completed product hardware acceptance. Retain the experiment firmware for comparison; product acceptance is a separate checklist.</p>
+Only O9 remains open. Deferred items are outside this change: it does not claim measured current, a numeric disable bound, coast distance, maximum speeds or operation above 70%. Equipment-gated items return as a new change when the equipment is available. Retain the experiment firmware for comparison; product acceptance is a separate checklist.</p>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--first-implementation-scope">First implementation scope</h2><ul>
 <li>
 Reuse M8's core, motor mapping and tests in a shared Cargo workspace; isolate motor control from the arbiter and transports.</li>
@@ -1828,7 +1888,7 @@ Code: none now. Implementation (see <a href="#openspec--changes--add-four-wheel-
 Evidence: host tests and the sim car are development evidence only (<a href="../docs/adr/0002-simulation-never-proves-hardware.md">ADR-0002</a>). Acceptance needs the M4/M5 bench setup.</li>
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--review-status">Review status</h2><p>
-The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and <a href="#openspec--changes--add-four-wheel-api--verification">verification map</a> accompany the requirements. This PR proposes acceptance for the laptop implementation tasks; merging it explicitly accepts that scope and allows task 1.1 to be recorded as accepted. It does not accept the unimplemented product or authorize a flash/motor run. O1/O2/O4/O5/O7 physical qualification remains open and blocks final product acceptance; O9 has a specified laptop test and fallback.</p>
+The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and <a href="#openspec--changes--add-four-wheel-api--verification">verification map</a> accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not accept the unimplemented product or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 has a specified laptop test and fallback.</p>
 </section>
 <footer>Generated from OpenSpec Markdown. Make changes in the source, then run <code>npm run spec:build</code>. This reader does not approve a proposal or authorize hardware tests.</footer></main><script>const requirements = [...document.querySelectorAll('.requirement')];
 const search = document.querySelector('#search');

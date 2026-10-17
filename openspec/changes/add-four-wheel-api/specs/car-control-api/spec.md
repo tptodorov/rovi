@@ -23,7 +23,7 @@ The car's device control API SHALL accept a setpoint as a `geometry_msgs/TwistSt
 
 ### Requirement: Mecanum kinematics
 
-The car SHALL use `mecanum_drive_controller` inverse kinematics and parameter names, divide wheel-speed references by configured `max_wheel_speed`, and clamp to −1.0..=1.0. The current geometry SHALL use radius 0.030 m and centre projection sum 0.1275 m, with zero frame offset. **OPEN (O2):** qualified profile normalization and input limits; the experiment's 40 rad/s and 1/1/3 limits are not measured physical maxima.
+The car SHALL use `mecanum_drive_controller` inverse kinematics and parameter names, divide wheel-speed references by configured `max_wheel_speed`, and clamp to −1.0..=1.0. The current geometry SHALL use radius 0.030 m and centre projection sum 0.1275 m, with zero frame offset. The profile's 40 rad/s normalization and 1/1/3 input limits are experimental values, not measured physical maxima; speed tracking is approximate (O2).
 
 #### Scenario: Same result as mecanum_drive_controller
 
