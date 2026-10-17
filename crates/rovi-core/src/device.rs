@@ -39,6 +39,20 @@ pub struct Device {
     /// The last error a BLE control write got, shown in the Status last-error byte until the
     /// next control write that succeeds.
     ble_error: Option<Error>,
+    /// Deadline effects an input processed but could not return (a refused BLE write); the
+    /// next [`tick`](Self::tick) returns them.
+    pending: Effects,
+}
+
+/// `a` then `b`, as one set of effects. `events::effects` logs a stop, then a release, then a
+/// claim, which is also the order they happen in when a deadline releases the car and the same
+/// input claims it again.
+fn merge(a: Effects, b: Effects) -> Effects {
+    Effects {
+        claimed: b.claimed.or(a.claimed),
+        released: a.released || b.released,
+        stop: a.stop.or(b.stop),
+    }
 }
 
 impl Device {
@@ -49,6 +63,7 @@ impl Device {
             arbiter: Arbiter::new(cfg),
             graph: Graph::new(),
             ble_error: None,
+            pending: Effects::default(),
         }
     }
 
@@ -73,6 +88,13 @@ impl Device {
 
     /// Handles one UDP datagram from `peer` (an id the shell keeps stable per remote address).
     pub fn on_udp(&mut self, now: u64, peer: u128, datagram: &[u8], out: &mut [u8]) -> Reply {
+        let due = self.arbiter.tick(now);
+        let mut r = self.udp_input(now, peer, datagram, out);
+        r.effects = merge(due, r.effects);
+        r
+    }
+
+    fn udp_input(&mut self, now: u64, peer: u128, datagram: &[u8], out: &mut [u8]) -> Reply {
         let Some((h, payload)) = udp::parse(datagram) else {
             return Reply::default();
         };
@@ -152,13 +174,32 @@ impl Device {
 
     /// A BLE central connected: that is the claim.
     pub fn on_ble_connect(&mut self, now: u64, conn: u16) -> Result<Effects, Error> {
-        let fx = self.arbiter.claim(now, ble(conn))?;
-        self.ble_error = None;
-        Ok(fx)
+        let due = self.arbiter.tick(now);
+        let result = self.arbiter.claim(now, ble(conn));
+        if result.is_ok() {
+            self.ble_error = None;
+        }
+        self.returned(due, result)
+    }
+
+    /// Returns `due` with an accepted input's effects, or keeps it for the next tick.
+    fn returned(&mut self, due: Effects, result: Result<Effects, Error>) -> Result<Effects, Error> {
+        match result {
+            Ok(fx) => Ok(merge(due, fx)),
+            Err(e) => {
+                self.pending = merge(self.pending, due);
+                Err(e)
+            }
+        }
     }
 
     /// A write to the Setpoint characteristic: `seq u32` (LE) then the CDR `TwistStamped`.
     pub fn on_ble_setpoint(&mut self, now: u64, conn: u16, data: &[u8]) -> Effects {
+        let due = self.arbiter.tick(now);
+        merge(due, self.ble_setpoint(now, conn, data))
+    }
+
+    fn ble_setpoint(&mut self, now: u64, conn: u16, data: &[u8]) -> Effects {
         let Some((seq, cdr)) = data.split_first_chunk::<4>() else {
             return Effects::default();
         };
@@ -176,6 +217,12 @@ impl Device {
 
     /// A write to the Control characteristic: 1 = ARM, 2 = STOP. An error rejects the write.
     pub fn on_ble_control(&mut self, now: u64, conn: u16, cmd: u8) -> Result<Effects, Error> {
+        let due = self.arbiter.tick(now);
+        let result = self.ble_control(now, conn, cmd);
+        self.returned(due, result)
+    }
+
+    fn ble_control(&mut self, now: u64, conn: u16, cmd: u8) -> Result<Effects, Error> {
         let who = ble(conn);
         let result = match cmd {
             1 => self.arbiter.arm(now, who).map(|()| Effects::default()),
@@ -198,7 +245,11 @@ impl Device {
 
     /// The central disconnected.
     pub fn on_ble_disconnect(&mut self, now: u64, conn: u16) -> Effects {
-        self.arbiter.release(now, ble(conn)).unwrap_or_default()
+        let due = self.arbiter.tick(now);
+        merge(
+            due,
+            self.arbiter.release(now, ble(conn)).unwrap_or_default(),
+        )
     }
 
     /// A liveliness token appeared (`alive`) or went away. Samples are attributed to a ROS node
@@ -229,6 +280,11 @@ impl Device {
     /// a lease expiry arms it again, so stock tools that publish only `cmd_vel` can drive. A STOP
     /// or an out-of-limits setpoint stays latched while the owner streams, until `rovi/arm` true.
     pub fn on_ros_cmd_vel(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
+        let due = self.arbiter.tick(now);
+        merge(due, self.ros_cmd_vel(now, attachment, payload))
+    }
+
+    fn ros_cmd_vel(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
         let (Some(att), Ok(sp)) = (Attachment::decode(attachment), Setpoint::decode(payload))
         else {
             return Effects::default();
@@ -236,6 +292,10 @@ impl Device {
         let Some(who) = self.ros_claimant(&att) else {
             return Effects::default();
         };
+        // An out-of-limits sample is a stop for an owner, but must not claim a free car.
+        if self.arbiter.owner().is_none() && !self.arbiter.within_limits(&sp) {
+            return Effects::default();
+        }
         let Ok(mut fx) = self.arbiter.claim(now, who) else {
             return Effects::default();
         };
@@ -254,6 +314,11 @@ impl Device {
 
     /// A sample on `rovi/arm` (`std_msgs/Bool`): true arms, false stops.
     pub fn on_ros_arm(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
+        let due = self.arbiter.tick(now);
+        merge(due, self.ros_arm(now, attachment, payload))
+    }
+
+    fn ros_arm(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
         let Some(att) = Attachment::decode(attachment) else {
             return Effects::default();
         };
@@ -294,9 +359,10 @@ impl Device {
         len
     }
 
-    /// Call every control tick (10 ms).
+    /// Call every control tick (10 ms). Also returns deadline effects a refused input kept.
     pub fn tick(&mut self, now: u64) -> Effects {
-        self.arbiter.tick(now)
+        let kept = core::mem::take(&mut self.pending);
+        merge(kept, self.arbiter.tick(now))
     }
 
     /// Motor control failed (the coordinator reports it): an out-of-limits stop.
@@ -1003,5 +1069,170 @@ mod tests {
         send(&mut d, 20, A, Kind::Setpoint, s, 4, &cdr(0.5));
         let (r, _) = send(&mut d, 20, A, Kind::Arm, s, 5, &[]);
         assert_eq!(r.unwrap().1[0], 2, "armed");
+    }
+
+    #[test]
+    fn an_unsupported_frame_neither_renews_the_lease_nor_uses_the_sequence() {
+        use crate::setpoint::tests::with_frame;
+        let mut d = dev();
+        let s = armed(&mut d); // setpoint seq 1 and ARM at t=0
+        send(
+            &mut d,
+            900,
+            A,
+            Kind::Setpoint,
+            s,
+            3,
+            &with_frame(b"map", 0, 0.5),
+        );
+        assert_eq!(
+            d.tick(1_000).stop,
+            Some(StopReason::LeaseExpired),
+            "map did not renew"
+        );
+
+        let mut d = dev();
+        let s = armed(&mut d);
+        send(
+            &mut d,
+            900,
+            A,
+            Kind::Setpoint,
+            s,
+            3,
+            &with_frame(b"map", 0, 0.5),
+        );
+        send(
+            &mut d,
+            950,
+            A,
+            Kind::Setpoint,
+            s,
+            3,
+            &with_frame(b"base_link", 0, 0.5),
+        );
+        assert_eq!(
+            d.tick(1_000).stop,
+            None,
+            "the same sequence in base_link is still accepted"
+        );
+    }
+
+    #[test]
+    fn an_old_stamp_is_accepted_and_the_lease_runs_from_receive_time() {
+        use crate::setpoint::tests::with_frame;
+        let mut d = dev();
+        let s = armed(&mut d);
+        send(
+            &mut d,
+            900,
+            A,
+            Kind::Setpoint,
+            s,
+            3,
+            &with_frame(b"", 0, 0.5),
+        );
+        assert_eq!(
+            d.tick(1_000).stop,
+            None,
+            "renewed at 900 despite a zero stamp"
+        );
+        assert_eq!(d.tick(1_900).stop, Some(StopReason::LeaseExpired));
+    }
+
+    #[test]
+    fn a_bad_first_ros_input_does_not_claim() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        let fx = d.on_ros_cmd_vel(0, &cmd, &cdr(9.0));
+        assert_eq!(fx, Effects::default(), "out of limits: no claim, no stop");
+        assert_eq!(d.arbiter().state(), State::Open);
+        let mut nan = cdr(0.5);
+        nan[20..28].copy_from_slice(&f64::NAN.to_le_bytes());
+        assert_eq!(d.on_ros_cmd_vel(10, &at(&cmd, 2), &nan), Effects::default());
+        assert_eq!(d.arbiter().state(), State::Open);
+        assert_eq!(
+            d.on_ros_cmd_vel(20, &at(&cmd, 3), &cdr(1.0)).claimed,
+            Some(Source::Ros)
+        );
+    }
+
+    // Deadline ordering: input at time t first processes every deadline at or before t, even when
+    // no control tick ran in between.
+
+    #[test]
+    fn a_setpoint_on_the_lease_deadline_cannot_renew_the_expired_lease() {
+        let mut d = dev();
+        let s = armed(&mut d); // lease until 1000
+        let (_, fx) = send(&mut d, 1_000, A, Kind::Setpoint, s, 3, &cdr(0.5));
+        assert_eq!(fx.stop, Some(StopReason::LeaseExpired));
+        assert_eq!(
+            d.arbiter().state(),
+            State::Stopped(StopReason::LeaseExpired)
+        );
+        assert_eq!(d.wheels(1_000), [0.0; 4]);
+    }
+
+    #[test]
+    fn a_setpoint_on_the_claim_deadline_cannot_revive_the_claim() {
+        let mut d = dev();
+        let (r, _) = send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
+        let s = r.unwrap().0.session;
+        let (_, fx) = send(&mut d, 10_000, A, Kind::Setpoint, s, 2, &cdr(0.5));
+        assert!(fx.released, "the claim window ended first");
+        assert_eq!(d.arbiter().state(), State::Open, "UDP needs a new claim");
+    }
+
+    #[test]
+    fn arm_and_setpoint_on_the_reclaim_deadline_cannot_drive_the_expired_session() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        assert_eq!(d.tick(1_000).stop, Some(StopReason::LeaseExpired)); // reclaim until 6000
+        let (_, fx) = send(&mut d, 6_000, A, Kind::Setpoint, s, 3, &cdr(0.5));
+        assert!(fx.released, "released first");
+        send(&mut d, 6_000, A, Kind::Arm, s, 4, &[]);
+        assert_eq!(d.arbiter().state(), State::Open);
+        assert_eq!(d.wheels(6_000), [0.0; 4]);
+    }
+
+    #[test]
+    fn a_ros_sample_on_the_reclaim_deadline_releases_then_claims_anew() {
+        let mut d = dev();
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        d.on_ros_arm(5, &arm, &bool_cdr(false)); // STOP latched
+        d.tick(1_000); // lease lapses: reclaim until 6000
+        let fx = d.on_ros_cmd_vel(6_000, &at(&cmd, 2), &cdr(1.0));
+        assert!(fx.released && fx.claimed == Some(Source::Ros), "{fx:?}");
+        let mut log = std::vec::Vec::new();
+        crate::events::effects(fx, |e| log.push(e));
+        assert_eq!(
+            log,
+            [
+                crate::events::Event::Released,
+                crate::events::Event::Claimed(Source::Ros)
+            ],
+            "release logged before the new claim"
+        );
+    }
+
+    #[test]
+    fn a_refused_ble_write_after_a_deadline_still_reports_the_release() {
+        let mut d = dev();
+        d.on_ble_connect(0, 7).unwrap();
+        let mut w = [0u8; 4 + 68];
+        w[4..].copy_from_slice(&cdr(0.5));
+        d.on_ble_setpoint(0, 7, &w);
+        d.on_ble_control(0, 7, 1).unwrap();
+        d.tick(1_000); // lease expiry, reclaim until 6000
+        assert_eq!(
+            d.on_ble_control(6_000, 7, 1),
+            Err(Error::NotOwner),
+            "the session is over"
+        );
+        assert!(
+            d.tick(6_005).released,
+            "the release reaches the log on the next tick"
+        );
     }
 }

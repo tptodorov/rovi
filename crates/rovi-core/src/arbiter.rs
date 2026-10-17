@@ -209,10 +209,7 @@ impl Arbiter {
             return Ok((Applied::Stale, Effects::default()));
         }
         self.last_seq = Some(seq);
-        let within = sp.vx.abs() <= self.cfg.max_vx
-            && sp.vy.abs() <= self.cfg.max_vy
-            && sp.wz.abs() <= self.cfg.max_wz;
-        let fx = if !within {
+        let fx = if !self.within_limits(&sp) {
             self.stop_with(now, StopReason::OutOfLimits)
         } else {
             self.latest = Some(sp);
@@ -258,6 +255,13 @@ impl Arbiter {
         (self.state == State::Armed && self.lease_valid(now))
             .then_some(self.latest)
             .flatten()
+    }
+
+    /// Is every component within its capability limit?
+    pub fn within_limits(&self, sp: &Setpoint) -> bool {
+        sp.vx.abs() <= self.cfg.max_vx
+            && sp.vy.abs() <= self.cfg.max_vy
+            && sp.wz.abs() <= self.cfg.max_wz
     }
 
     pub fn check_owner(&self, who: Claimant) -> Result<(), Error> {
