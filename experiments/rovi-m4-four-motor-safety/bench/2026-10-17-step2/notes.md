@@ -1,6 +1,6 @@
 # 2026-10-17 M4 step 2: channel mapping and direction, after the motor rework
 
-Todor tuned the motors (after the 2026-10-16 FR start problem) and reconnected all four. Setup as 2026-10-16, motor bank woken before the runs, wheels not mounted (watching the shafts). Firmware `main` 28854d7. Log: `car.log`.
+Todor tuned the motors (after the 2026-10-16 FR start problem) and reconnected all four. Setup as 2026-10-16, motor bank woken before the runs, wheels not mounted (watching the shafts). Firmware `main` 28854d7. Log: `car.log`. Setup photo: [`setup.jpg`](setup.jpg) (chassis with FRONT/BACK marked, ESP32 and both drivers, C1/C2 next to the drivers).
 
 Five 30 s runs; commanded duty per channel from the car log (FL, FR, RR, RL; ≤ 24 % doesn't start a motor here):
 
