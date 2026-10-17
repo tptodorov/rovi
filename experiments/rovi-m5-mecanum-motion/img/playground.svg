@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 1000" width="980" height="1000" font-family="Helvetica, Arial, sans-serif">
+<title>M5 floor test area</title>
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="#555"/></marker></defs>
+<rect width="980" height="1000" fill="#fff"/>
+<text x="20" y="40" font-size="22" font-weight="bold" fill="#222">M5 playground: the floor test area (to scale, top view)</text>
+<text x="20" y="66" font-size="14" fill="#555">Masking tape on a flat, hard floor. Mark once; every test starts from the same START line, car pointing up the centre line.</text>
+<rect x="90.0" y="100.0" width="600.0" height="600.0" rx="18" fill="#fff3d6" stroke="#e0a030" stroke-width="3" stroke-dasharray="14,8"/>
+<rect x="140" y="150" width="500.0" height="500.0" fill="#f4efe6" stroke="#8a7a60" stroke-width="2"/>
+<text x="390" y="86" font-size="14" text-anchor="middle" font-weight="normal" fill="#a06000">keep clear: 25 cm margin around the area, no cables or obstacles</text>
+<line x1="240.0" y1="150" x2="240.0" y2="650.0" stroke="#ddd5c5" stroke-width="1"/>
+<line x1="140" y1="250.0" x2="640.0" y2="250.0" stroke="#ddd5c5" stroke-width="1"/>
+<line x1="340.0" y1="150" x2="340.0" y2="650.0" stroke="#ddd5c5" stroke-width="1"/>
+<line x1="140" y1="350.0" x2="640.0" y2="350.0" stroke="#ddd5c5" stroke-width="1"/>
+<line x1="440.0" y1="150" x2="440.0" y2="650.0" stroke="#ddd5c5" stroke-width="1"/>
+<line x1="140" y1="450.0" x2="640.0" y2="450.0" stroke="#ddd5c5" stroke-width="1"/>
+<line x1="540.0" y1="150" x2="540.0" y2="650.0" stroke="#ddd5c5" stroke-width="1"/>
+<line x1="140" y1="550.0" x2="640.0" y2="550.0" stroke="#ddd5c5" stroke-width="1"/>
+<line x1="390.0" y1="170.0" x2="390.0" y2="640.0" stroke="#1f6feb" stroke-width="4"/>
+<text x="400" y="294" font-size="13" text-anchor="start" font-weight="normal" fill="#1f6feb">centre line, 10 cm ticks</text>
+<line x1="300.0" y1="590.0" x2="480.0" y2="590.0" stroke="#cf222e" stroke-width="5"/>
+<text x="490" y="595" font-size="16" text-anchor="start" font-weight="bold" fill="#cf222e">START</text>
+<line x1="300.0" y1="390.0" x2="480.0" y2="390.0" stroke="#1a7f37" stroke-width="5"/>
+<text x="490" y="395" font-size="16" text-anchor="start" font-weight="bold" fill="#1a7f37">1 m</text>
+<line x1="300.0" y1="190.00000000000003" x2="480.0" y2="190.00000000000003" stroke="#1a7f37" stroke-width="5"/>
+<text x="490" y="195" font-size="16" text-anchor="start" font-weight="bold" fill="#1a7f37">2 m</text>
+<line x1="378.0" y1="570.0" x2="402.0" y2="570.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="550.0" x2="402.0" y2="550.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="530.0" x2="402.0" y2="530.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="510.00000000000006" x2="402.0" y2="510.00000000000006" stroke="#1f6feb" stroke-width="2"/>
+<line x1="366.0" y1="490.00000000000006" x2="414.0" y2="490.00000000000006" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="470.0" x2="402.0" y2="470.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="450.0" x2="402.0" y2="450.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="430.0" x2="402.0" y2="430.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="410.00000000000006" x2="402.0" y2="410.00000000000006" stroke="#1f6feb" stroke-width="2"/>
+<line x1="366.0" y1="390.0" x2="414.0" y2="390.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="370.0" x2="402.0" y2="370.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="350.0" x2="402.0" y2="350.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="330.0" x2="402.0" y2="330.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="310.0" x2="402.0" y2="310.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="366.0" y1="290.0" x2="414.0" y2="290.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="270.0" x2="402.0" y2="270.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="250.0" x2="402.0" y2="250.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="230.00000000000003" x2="402.0" y2="230.00000000000003" stroke="#1f6feb" stroke-width="2"/>
+<line x1="378.0" y1="210.0" x2="402.0" y2="210.0" stroke="#1f6feb" stroke-width="2"/>
+<line x1="366.0" y1="190.00000000000003" x2="414.0" y2="190.00000000000003" stroke="#1f6feb" stroke-width="2"/>
+<line x1="169.99999999999997" y1="470.0" x2="610.0" y2="470.0" stroke="#8250df" stroke-width="3" stroke-dasharray="10,6"/>
+<line x1="190.0" y1="456.0" x2="190.0" y2="484.0" stroke="#8250df" stroke-width="4"/>
+<text x="176" y="450" font-size="13" text-anchor="middle" font-weight="normal" fill="#8250df">1 m</text>
+<line x1="290.0" y1="456.0" x2="290.0" y2="484.0" stroke="#8250df" stroke-width="4"/>
+<text x="276" y="450" font-size="13" text-anchor="middle" font-weight="normal" fill="#8250df">0.5 m</text>
+<line x1="490.0" y1="456.0" x2="490.0" y2="484.0" stroke="#8250df" stroke-width="4"/>
+<text x="504" y="450" font-size="13" text-anchor="middle" font-weight="normal" fill="#8250df">0.5 m</text>
+<line x1="590.0" y1="456.0" x2="590.0" y2="484.0" stroke="#8250df" stroke-width="4"/>
+<text x="604" y="450" font-size="13" text-anchor="middle" font-weight="normal" fill="#8250df">1 m</text>
+<text x="620" y="500" font-size="13" text-anchor="end" font-weight="normal" fill="#8250df">strafe line (F4): car centred on it</text>
+<circle cx="240.0" cy="270.0" r="70.0" fill="none" stroke="#9a6700" stroke-width="3"/>
+<line x1="240" y1="212" x2="240" y2="188" stroke="#9a6700" stroke-width="3"/>
+<line x1="281" y1="229" x2="298" y2="212" stroke="#9a6700" stroke-width="3"/>
+<line x1="298" y1="270" x2="322" y2="270" stroke="#9a6700" stroke-width="3"/>
+<line x1="281" y1="311" x2="298" y2="328" stroke="#9a6700" stroke-width="3"/>
+<line x1="240" y1="328" x2="240" y2="352" stroke="#9a6700" stroke-width="3"/>
+<line x1="199" y1="311" x2="182" y2="328" stroke="#9a6700" stroke-width="3"/>
+<line x1="182" y1="270" x2="158" y2="270" stroke="#9a6700" stroke-width="3"/>
+<line x1="199" y1="229" x2="182" y2="212" stroke="#9a6700" stroke-width="3"/>
+<text x="240" y="362" font-size="13" text-anchor="middle" font-weight="normal" fill="#9a6700">rotation spot (F5)</text>
+<text x="240" y="378" font-size="12" text-anchor="middle" font-weight="normal" fill="#9a6700">70 cm circle, marks every 45°</text>
+<line x1="390.0" y1="590.0" x2="190.0" y2="390.0" stroke="#57606a" stroke-width="2" stroke-dasharray="6,6"/>
+<text x="306" y="546" font-size="13" text-anchor="end" font-weight="normal" fill="#57606a">45° diagonal (F6)</text>
+<rect x="370.0" y="590.0" width="40.0" height="50.0" rx="6" fill="#444" opacity="0.85"/>
+<rect x="365.0" y="592.0" width="7.000000000000001" height="10.0" rx="2" fill="#f0d000" stroke="#333"/>
+<rect x="365.0" y="628.0" width="7.000000000000001" height="10.0" rx="2" fill="#f0d000" stroke="#333"/>
+<rect x="408.0" y="592.0" width="7.000000000000001" height="10.0" rx="2" fill="#f0d000" stroke="#333"/>
+<rect x="408.0" y="628.0" width="7.000000000000001" height="10.0" rx="2" fill="#f0d000" stroke="#333"/>
+<path d="M390.0,564.0 l-10,16 h20 z" fill="#cf222e"/>
+<text x="390" y="621" font-size="13" text-anchor="middle" font-weight="bold" fill="#fff">CAR</text>
+<text x="450" y="636" font-size="12" text-anchor="start" font-weight="normal" fill="#222">front edge on START,</text>
+<text x="450" y="652" font-size="12" text-anchor="start" font-weight="normal" fill="#222">front pointing up</text>
+<rect x="719.0" y="364.0" width="32" height="52" rx="6" fill="#222"/>
+<circle cx="735.0" cy="376.0" r="5" fill="#69b"/>
+<text x="735" y="436" font-size="13" text-anchor="middle" font-weight="bold" fill="#222">phone, side view</text>
+<text x="735" y="452" font-size="12" text-anchor="middle" font-weight="normal" fill="#222">level with the 1 m mark, ~1 m out</text>
+<rect x="694.0" y="74.0" width="32" height="52" rx="6" fill="#222"/>
+<circle cx="710.0" cy="86.0" r="5" fill="#69b"/>
+<text x="710" y="146" font-size="13" text-anchor="middle" font-weight="bold" fill="#222">phone, overhead</text>
+<text x="710" y="162" font-size="12" text-anchor="middle" font-weight="normal" fill="#222">for rotation: hold above the spot</text>
+<rect x="80.0" y="750.0" width="120" height="70" rx="6" fill="#9aa4ad"/>
+<rect x="90.0" y="758.0" width="100" height="50" rx="3" fill="#cfe3ff"/>
+<text x="140" y="842" font-size="13" text-anchor="middle" font-weight="bold" fill="#222">laptop (BLE), outside the area,</text>
+<text x="140" y="858" font-size="12" text-anchor="middle" font-weight="normal" fill="#222">within ~5 m of the car</text>
+<line x1="140" y1="700.0" x2="640.0" y2="700.0" stroke="#555" stroke-width="1.5" marker-start="url(#a)" marker-end="url(#a)"/>
+<text x="390" y="692" font-size="14" text-anchor="middle" font-weight="normal" fill="#222">2.5 m</text>
+<line x1="90" y1="150" x2="90" y2="650.0" stroke="#555" stroke-width="1.5" marker-start="url(#a)" marker-end="url(#a)"/>
+<text x="78" y="400" font-size="14" text-anchor="end" font-weight="normal" fill="#222">2.5 m</text>
+<rect x="320.0" y="829.0" width="26" height="8" fill="#cf222e"/>
+<text x="356" y="838" font-size="13" text-anchor="start" font-weight="normal" fill="#222">start line: front edge of the car here</text>
+<rect x="320.0" y="851.0" width="26" height="8" fill="#1a7f37"/>
+<text x="356" y="860" font-size="13" text-anchor="start" font-weight="normal" fill="#222">1 m and 2 m marks: distance (F3, F7, F8)</text>
+<rect x="320.0" y="873.0" width="26" height="8" fill="#1f6feb"/>
+<text x="356" y="882" font-size="13" text-anchor="start" font-weight="normal" fill="#222">centre line with 10 cm ticks: drift and stopping distance</text>
+<rect x="320.0" y="895.0" width="26" height="8" fill="#8250df"/>
+<text x="356" y="904" font-size="13" text-anchor="start" font-weight="normal" fill="#222">strafe line, marks at 0.5 m and 1 m (F4)</text>
+<rect x="320.0" y="917.0" width="26" height="8" fill="#9a6700"/>
+<text x="356" y="926" font-size="13" text-anchor="start" font-weight="normal" fill="#222">rotation spot (F5)</text>
+<rect x="320.0" y="939.0" width="26" height="8" fill="#57606a"/>
+<text x="356" y="948" font-size="13" text-anchor="start" font-weight="normal" fill="#222">45° guide (F6)</text>
+</svg>
