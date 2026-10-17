@@ -2,7 +2,7 @@
 
 ## M4: four motors on the M8 firmware
 
-**Status:** step 1 passed on the bench (2026-10-14); step 2 (four motors) not started.
+**Status:** step 1 passed (2026-10-14); step 2 in progress: wiring, mapping and direction done, start duty 35 %; stops, reversal and thermal to do.
 **Setup:** M1's wiring plus motors and the 5 V power bank ([WIRING.md](WIRING.md)); wheels off the ground.
 
 ### Goal
@@ -21,7 +21,7 @@ Simplified on 2026-10-14 ([ADR-0014](../../docs/adr/0014-m4-minimal-wiring-softw
 Real hardware only.
 
 - [x] `STBY` is low through boot, reset and while disarmed; high only while armed. *(Step 1: shown by S3 on one motor; S1's meter check skipped.)*
-- [ ] Each motor follows speed and direction; mapping and inversion recorded for all four wheels. *(S2, step 2)*
+- [x] Each motor follows speed and direction; mapping and inversion recorded for all four wheels. *(Step 2, 2026-10-17: every channel drives its intended wheel, all forward; directions set at the connectors, no firmware inversion. [notes](bench/2026-10-17-step2/notes.md))*
 - [ ] STOP, lease expiry, controller disconnect, reset and ESP32 power loss each stop every wheel, and nothing restarts until a client arms again. *(S3, step 2)*
 - [ ] Four motors starting and reversing together do not reset the ESP32 or cut out the power bank. *(step 2)*
 - [x] The radio keeps working while the motors run. *(Step 1: 5 min at 40 %, no reboot, no BLE drop. Repeat with four motors in step 2.)*
