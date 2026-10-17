@@ -308,7 +308,9 @@ async fn main(_spawner: Spawner) -> ! {
 
     // The profile is checked on the host (`Geometry::CAR` with `Config::DEFAULT`); an invalid one
     // halts here with both drivers still in standby, before anything can claim the car.
-    let Ok(device) = Device::new(Config::DEFAULT, Geometry::CAR) else {
+    // A random session seed per boot keeps a client's packets from before a reboot out of the
+    // new sessions (not authentication).
+    let Ok(device) = Device::new(Config::DEFAULT, Geometry::CAR, Rng::new().random()) else {
         panic!("invalid device profile");
     };
     let dev = RefCell::new(device);
@@ -383,14 +385,17 @@ async fn main(_spawner: Spawner) -> ! {
                 continue;
             };
             let id = conn.raw().handle().raw();
-            let claim = dev.borrow_mut().on_ble_connect(now(), id);
-            match claim {
-                Ok(fx) => log(fx),
+            // The token, not the reusable handle, identifies this connection to the device.
+            let ble = match dev.borrow_mut().on_ble_connect(now(), id) {
+                Ok((ble, fx)) => {
+                    log(fx);
+                    ble
+                }
                 Err(_) => {
                     conn.raw().disconnect();
                     continue;
                 }
-            }
+            };
             logger::emit(Event::Ble {
                 id,
                 mtu: Some(conn.raw().att_mtu()),
@@ -407,7 +412,7 @@ async fn main(_spawner: Spawner) -> ! {
             loop {
                 match select3(
                     conn.next(),
-                    until(|| !dev.borrow().ble_owns(id)),
+                    until(|| !dev.borrow().ble_owns(ble)),
                     tick.next(),
                 )
                 .await
@@ -427,7 +432,7 @@ async fn main(_spawner: Spawner) -> ! {
                                     0
                                 }
                             });
-                            let fx = dev.borrow_mut().on_ble_setpoint(now(), id, &data[..n]);
+                            let fx = dev.borrow_mut().on_ble_setpoint(now(), ble, &data[..n]);
                             log(fx);
                             if let Ok(reply) = w.accept() {
                                 reply.send().await;
@@ -453,7 +458,7 @@ async fn main(_spawner: Spawner) -> ! {
                                 w.with_data(|off, b| (off == 0 && b.len() == 1).then(|| b[0]));
                             let res = cmd
                                 .ok_or(Error::Invalid)
-                                .and_then(|c| dev.borrow_mut().on_ble_control(now(), id, c));
+                                .and_then(|c| dev.borrow_mut().on_ble_control(now(), ble, c));
                             match res {
                                 Ok(fx) => {
                                     log(fx);
@@ -489,7 +494,7 @@ async fn main(_spawner: Spawner) -> ! {
                     }
                 }
             }
-            let fx = dev.borrow_mut().on_ble_disconnect(now(), id);
+            let fx = dev.borrow_mut().on_ble_disconnect(now(), ble);
             log(fx);
             logger::emit(Event::Ble { id, mtu: None });
         }

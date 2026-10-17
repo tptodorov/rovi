@@ -125,6 +125,8 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
         };
         println!("ros session ended ({:?}), reconnecting", result.err());
         log(Event::Ros(Link::Down), t0);
+        // The router is gone: a ROS owner is released now, not only by its lease.
+        log_effects(dev.lock().unwrap().on_ros_disconnect(ms(t0)), t0);
         // SAFETY: `serve` returned, so every borrow of the session (tokens, subscribers,
         // publisher) is gone. The session points into the resources, so it goes first.
         drop(unsafe { Box::from_raw(session) });

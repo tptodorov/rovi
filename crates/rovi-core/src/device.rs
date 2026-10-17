@@ -1,9 +1,7 @@
 //! The device core: the arbiter plus kinematics, driven by UDP datagrams. The BLE and ROS
 //! adapters will feed the same arbiter. Time is passed in; the firmware shell owns the sockets.
 
-use crate::arbiter::{
-    Applied, Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason,
-};
+use crate::arbiter::{Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason};
 use crate::graph::Graph;
 use crate::kinematics::{self, Geometry};
 use crate::rmw::Attachment;
@@ -31,6 +29,14 @@ pub struct Reply {
     pub effects: Effects,
 }
 
+/// One BLE connection: the stack's handle, which it reuses, and a generation the device counts,
+/// so a callback from a closed connection cannot act for a newer one with the same handle.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BleConn {
+    pub handle: u16,
+    generation: u32,
+}
+
 /// Why a device profile is refused. The device does not start, so nothing can claim it and the
 /// motors are never enabled.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -55,6 +61,60 @@ pub struct Device {
     /// Deadline effects an input processed but could not return (a refused BLE write); the
     /// next [`tick`](Self::tick) returns them.
     pending: Effects,
+    /// ROS ordering for the current owner session, per publisher.
+    marks: Marks,
+    /// The last BLE connection's generation; 0 is never handed out.
+    ble_generation: u32,
+}
+
+/// Owner publishers the ROS ordering table tracks per session, as many as the graph holds (the
+/// design's 16). A node usually has two (cmd_vel and arm); marks outlive a publisher's removal,
+/// so input from one more is discarded rather than taken without a replay check.
+const MARKS: usize = 16;
+
+/// The highest accepted ROS sequence per owner publisher GID in one session. Kept apart from the
+/// graph, so a publisher's removal or other announcements cannot reset it.
+struct Marks {
+    session: u32,
+    gids: [[u8; 16]; MARKS],
+    seqs: [i64; MARKS],
+    len: usize,
+}
+
+impl Marks {
+    fn new(session: u32) -> Self {
+        Self {
+            session,
+            gids: [[0; 16]; MARKS],
+            seqs: [0; MARKS],
+            len: 0,
+        }
+    }
+
+    /// Records `seq` from `gid` if it is above that publisher's mark in `session` (a new session
+    /// starts empty). False for a negative, repeated or older sequence, or a full table.
+    fn accept(&mut self, session: u32, gid: [u8; 16], seq: i64) -> bool {
+        if seq < 0 {
+            return false;
+        }
+        if session != self.session {
+            *self = Marks::new(session);
+        }
+        match self.gids[..self.len].iter().position(|g| *g == gid) {
+            Some(i) if seq > self.seqs[i] => {
+                self.seqs[i] = seq;
+                true
+            }
+            Some(_) => false,
+            None if self.len < MARKS => {
+                self.gids[self.len] = gid;
+                self.seqs[self.len] = seq;
+                self.len += 1;
+                true
+            }
+            None => false,
+        }
+    }
 }
 
 /// The profile with its speed limits as the advertised f32 values, or why it is refused.
@@ -103,16 +163,19 @@ fn merge(a: Effects, b: Effects) -> Effects {
 
 impl Device {
     /// Starts the device with a validated profile. Speed limits are kept as the f32 values the
-    /// capabilities advertise, so a limit a controller reads is one it can send.
-    pub fn new(cfg: Config, geometry: Geometry) -> Result<Self, ProfileError> {
+    /// capabilities advertise, so a limit a controller reads is one it can send. Session IDs start
+    /// after `session_seed`, which the apps draw at random each boot.
+    pub fn new(cfg: Config, geometry: Geometry, session_seed: u32) -> Result<Self, ProfileError> {
         let cfg = validated(cfg, &geometry)?;
         Ok(Self {
             cfg,
             geometry,
-            arbiter: Arbiter::new(cfg),
+            arbiter: Arbiter::seeded(cfg, session_seed),
             graph: Graph::new(),
             ble_error: None,
             pending: Effects::default(),
+            marks: Marks::new(session_seed),
+            ble_generation: 0,
         })
     }
 
@@ -127,7 +190,7 @@ impl Device {
     }
 
     /// Is `conn` still the BLE owner?
-    pub fn ble_owns(&self, conn: u16) -> bool {
+    pub fn ble_owns(&self, conn: BleConn) -> bool {
         self.arbiter.owner() == Some(ble(conn))
     }
 
@@ -222,13 +285,23 @@ impl Device {
     }
 
     /// A BLE central connected: that is the claim.
-    pub fn on_ble_connect(&mut self, now: u64, conn: u16) -> Result<Effects, Error> {
+    /// Returns the connection's token for every later call; a refused claim leaves the
+    /// connection without one (the adapter disconnects it).
+    pub fn on_ble_connect(&mut self, now: u64, handle: u16) -> Result<(BleConn, Effects), Error> {
+        self.ble_generation = match self.ble_generation.wrapping_add(1) {
+            0 => 1,
+            g => g,
+        };
+        let conn = BleConn {
+            handle,
+            generation: self.ble_generation,
+        };
         let due = self.arbiter.tick(now);
         let result = self.arbiter.claim(now, ble(conn));
         if result.is_ok() {
             self.ble_error = None;
         }
-        self.returned(due, result)
+        self.returned(due, result).map(|fx| (conn, fx))
     }
 
     /// Returns `due` with an accepted input's effects, or keeps it for the next tick.
@@ -243,12 +316,12 @@ impl Device {
     }
 
     /// A write to the Setpoint characteristic: `seq u32` (LE) then the CDR `TwistStamped`.
-    pub fn on_ble_setpoint(&mut self, now: u64, conn: u16, data: &[u8]) -> Effects {
+    pub fn on_ble_setpoint(&mut self, now: u64, conn: BleConn, data: &[u8]) -> Effects {
         let due = self.arbiter.tick(now);
         merge(due, self.ble_setpoint(now, conn, data))
     }
 
-    fn ble_setpoint(&mut self, now: u64, conn: u16, data: &[u8]) -> Effects {
+    fn ble_setpoint(&mut self, now: u64, conn: BleConn, data: &[u8]) -> Effects {
         let Some((seq, cdr)) = data.split_first_chunk::<4>() else {
             return Effects::default();
         };
@@ -265,13 +338,13 @@ impl Device {
     }
 
     /// A write to the Control characteristic: 1 = ARM, 2 = STOP. An error rejects the write.
-    pub fn on_ble_control(&mut self, now: u64, conn: u16, cmd: u8) -> Result<Effects, Error> {
+    pub fn on_ble_control(&mut self, now: u64, conn: BleConn, cmd: u8) -> Result<Effects, Error> {
         let due = self.arbiter.tick(now);
         let result = self.ble_control(now, conn, cmd);
         self.returned(due, result)
     }
 
-    fn ble_control(&mut self, now: u64, conn: u16, cmd: u8) -> Result<Effects, Error> {
+    fn ble_control(&mut self, now: u64, conn: BleConn, cmd: u8) -> Result<Effects, Error> {
         let who = ble(conn);
         let result = match cmd {
             1 => self.arbiter.arm(now, who).map(|()| Effects::default()),
@@ -293,12 +366,25 @@ impl Device {
     }
 
     /// The central disconnected.
-    pub fn on_ble_disconnect(&mut self, now: u64, conn: u16) -> Effects {
+    pub fn on_ble_disconnect(&mut self, now: u64, conn: BleConn) -> Effects {
         let due = self.arbiter.tick(now);
         merge(
             due,
             self.arbiter.release(now, ble(conn)).unwrap_or_default(),
         )
+    }
+
+    /// The ROS adapter lost its router session. A ROS owner is released at once (a stop if it was
+    /// armed); without this, only its lease would stop the car. Other owners are not affected.
+    pub fn on_ros_disconnect(&mut self, now: u64) -> Effects {
+        let due = self.arbiter.tick(now);
+        let fx = match self.arbiter.owner() {
+            Some(owner) if owner.source == Source::Ros => {
+                self.arbiter.release(now, owner).unwrap_or_default()
+            }
+            _ => Effects::default(),
+        };
+        merge(due, fx)
     }
 
     /// A liveliness token appeared (`alive`) or went away. Samples are attributed to a ROS node
@@ -341,20 +427,24 @@ impl Device {
         let Some(who) = self.ros_claimant(&att) else {
             return Effects::default();
         };
-        // An out-of-limits sample is a stop for an owner, but must not claim a free car.
-        if self.arbiter.owner().is_none() && !self.arbiter.within_limits(&sp) {
+        // An out-of-limits or negatively numbered sample must not claim a free car.
+        if self.arbiter.owner().is_none() && (!self.arbiter.within_limits(&sp) || att.seq < 0) {
             return Effects::default();
         }
         let Ok(mut fx) = self.arbiter.claim(now, who) else {
             return Effects::default();
         };
-        if let Ok((applied, e)) = self.arbiter.setpoint(now, who, att.seq as u32, sp) {
+        // Owner only from here: order the sample against its own publisher's mark.
+        if !self.marks.accept(self.arbiter.session(), att.gid, att.seq) {
+            return fx;
+        }
+        if let Ok(e) = self.arbiter.setpoint_ordered(now, who, sp) {
             fx.stop = e.stop;
             let auto_arm = matches!(
                 self.arbiter.state(),
                 State::Claimed | State::Stopped(StopReason::LeaseExpired)
             );
-            if applied == Applied::Applied && e.stop.is_none() && auto_arm {
+            if e.stop.is_none() && auto_arm {
                 let _ = self.arbiter.arm(now, who);
             }
         }
@@ -377,6 +467,11 @@ impl Device {
         let Some(who) = self.ros_claimant(&att) else {
             return Effects::default();
         };
+        if self.arbiter.owner() != Some(who)
+            || !self.marks.accept(self.arbiter.session(), att.gid, att.seq)
+        {
+            return Effects::default();
+        }
         if payload[4] != 0 {
             let _ = self.arbiter.arm(now, who);
             Effects::default()
@@ -469,10 +564,10 @@ impl Device {
     }
 }
 
-fn ble(conn: u16) -> Claimant {
+fn ble(conn: BleConn) -> Claimant {
     Claimant {
         source: Source::Ble,
-        id: conn as u128,
+        id: u128::from(conn.generation) << 16 | u128::from(conn.handle),
     }
 }
 
@@ -502,7 +597,7 @@ mod tests {
     const B: u128 = 0xB;
 
     fn dev() -> Device {
-        Device::new(Config::DEFAULT, GEOMETRY).unwrap()
+        Device::new(Config::DEFAULT, GEOMETRY, 0).unwrap()
     }
 
     fn frame(kind: Kind, session: u32, seq: u32, payload: &[u8]) -> ([u8; 96], usize) {
@@ -905,10 +1000,18 @@ mod tests {
     #[test]
     fn ble_connect_claims_and_excludes_others() {
         let mut d = dev();
-        assert_eq!(d.on_ble_connect(0, 1).unwrap().claimed, Some(Source::Ble));
+        assert_eq!(d.on_ble_connect(0, 1).unwrap().1.claimed, Some(Source::Ble));
         assert_eq!(d.on_ble_connect(1, 2), Err(Error::Busy));
         let (r, _) = send(&mut d, 1, A, Kind::Hello, 0, 1, &[]);
         assert_eq!(r.unwrap().0.kind, Kind::Busy);
+    }
+
+    /// A BLE connection the device never handed out.
+    fn fake(handle: u16) -> BleConn {
+        BleConn {
+            handle,
+            generation: 0,
+        }
     }
 
     fn ble_sp(seq: u32, vx: f64) -> [u8; 72] {
@@ -921,19 +1024,19 @@ mod tests {
     #[test]
     fn ble_setpoint_then_arm_drives_and_stop_disarms() {
         let mut d = dev();
-        d.on_ble_connect(0, 1).unwrap();
+        let c = d.on_ble_connect(0, 1).unwrap().0;
         assert_eq!(
-            d.on_ble_control(1, 1, 1),
+            d.on_ble_control(1, c, 1),
             Err(Error::NotReady),
             "arm needs a setpoint"
         );
-        d.on_ble_setpoint(2, 1, &ble_sp(1, 1.0));
-        assert_eq!(d.on_ble_control(3, 1, 1), Ok(Effects::default()));
+        d.on_ble_setpoint(2, c, &ble_sp(1, 1.0));
+        assert_eq!(d.on_ble_control(3, c, 1), Ok(Effects::default()));
         assert_eq!(d.wheels(3), [0.5; 4]);
-        d.on_ble_setpoint(4, 1, &ble_sp(2, -1.0));
+        d.on_ble_setpoint(4, c, &ble_sp(2, -1.0));
         assert_eq!(d.wheels(4), [-0.5; 4]);
         assert_eq!(
-            d.on_ble_control(5, 1, 2).unwrap().stop,
+            d.on_ble_control(5, c, 2).unwrap().stop,
             Some(StopReason::Stop)
         );
         assert_eq!(d.wheels(5), [0.0; 4]);
@@ -942,12 +1045,15 @@ mod tests {
     #[test]
     fn ble_non_owner_malformed_and_unknown_input_is_ignored() {
         let mut d = dev();
-        d.on_ble_connect(0, 1).unwrap();
-        assert_eq!(d.on_ble_setpoint(1, 2, &ble_sp(1, 1.0)), Effects::default());
-        assert_eq!(d.on_ble_control(1, 2, 1), Err(Error::NotOwner));
-        assert_eq!(d.on_ble_setpoint(1, 1, &[1, 2, 3]), Effects::default());
+        let c = d.on_ble_connect(0, 1).unwrap().0;
         assert_eq!(
-            d.on_ble_control(1, 1, 9),
+            d.on_ble_setpoint(1, fake(2), &ble_sp(1, 1.0)),
+            Effects::default()
+        );
+        assert_eq!(d.on_ble_control(1, fake(2), 1), Err(Error::NotOwner));
+        assert_eq!(d.on_ble_setpoint(1, c, &[1, 2, 3]), Effects::default());
+        assert_eq!(
+            d.on_ble_control(1, c, 9),
             Err(Error::Invalid),
             "unknown command"
         );
@@ -957,18 +1063,18 @@ mod tests {
     #[test]
     fn ble_disconnect_while_armed_stops_and_reopens() {
         let mut d = dev();
-        d.on_ble_connect(0, 1).unwrap();
-        d.on_ble_setpoint(1, 1, &ble_sp(1, 1.0));
-        d.on_ble_control(2, 1, 1).unwrap();
-        let fx = d.on_ble_disconnect(3, 1);
+        let c = d.on_ble_connect(0, 1).unwrap().0;
+        d.on_ble_setpoint(1, c, &ble_sp(1, 1.0));
+        d.on_ble_control(2, c, 1).unwrap();
+        let fx = d.on_ble_disconnect(3, c);
         assert!(fx.released);
         assert_eq!(fx.stop, Some(StopReason::OwnerLost));
         assert_eq!(
-            d.on_ble_disconnect(4, 1),
+            d.on_ble_disconnect(4, c),
             Effects::default(),
             "not the owner any more"
         );
-        assert_eq!(d.on_ble_connect(5, 2).unwrap().claimed, Some(Source::Ble));
+        assert_eq!(d.on_ble_connect(5, 2).unwrap().1.claimed, Some(Source::Ble));
     }
 
     #[test]
@@ -979,15 +1085,15 @@ mod tests {
                 && d.radio_allowed(Source::Udp)
                 && d.radio_allowed(Source::Ros)
         );
-        d.on_ble_connect(0, 7).unwrap();
+        let c = d.on_ble_connect(0, 7).unwrap().0;
         assert!(
             d.radio_allowed(Source::Ble)
                 && !d.radio_allowed(Source::Udp)
                 && !d.radio_allowed(Source::Ros)
         );
-        assert!(d.ble_owns(7) && !d.ble_owns(8));
-        d.on_ble_disconnect(1, 7);
-        assert!(d.radio_allowed(Source::Udp) && !d.ble_owns(7));
+        assert!(d.ble_owns(c) && !d.ble_owns(fake(8)));
+        d.on_ble_disconnect(1, c);
+        assert!(d.radio_allowed(Source::Udp) && !d.ble_owns(c));
     }
 
     #[test]
@@ -998,9 +1104,9 @@ mod tests {
         assert!(d.wifi_allowed(), "UDP owns the car, so the AP stays up");
         d.on_udp(1, A, &[], &mut [0u8; 8]);
         let mut d = dev();
-        d.on_ble_connect(0, 1).unwrap();
+        let c = d.on_ble_connect(0, 1).unwrap().0;
         assert!(!d.wifi_allowed());
-        d.on_ble_disconnect(1, 1);
+        d.on_ble_disconnect(1, c);
         assert!(d.wifi_allowed());
         let mut d = dev();
         let cmd = publisher(&mut d, 1, 1, 1);
@@ -1011,23 +1117,23 @@ mod tests {
     #[test]
     fn ble_status_carries_the_last_control_error_until_a_control_write_succeeds() {
         let mut d = dev();
-        d.on_ble_connect(0, 1).unwrap();
+        let c = d.on_ble_connect(0, 1).unwrap().0;
         assert_eq!(
             d.ble_status(),
             [1, 0, 0],
             "claimed, no error, readable right after connect"
         );
-        assert_eq!(d.on_ble_control(1, 1, 1), Err(Error::NotReady));
+        assert_eq!(d.on_ble_control(1, c, 1), Err(Error::NotReady));
         assert_eq!(
             d.ble_status(),
             [1, 0, 3],
             "a refused ARM shows as NotReady, as over UDP"
         );
-        assert_eq!(d.on_ble_control(2, 1, 9), Err(Error::Invalid));
+        assert_eq!(d.on_ble_control(2, c, 9), Err(Error::Invalid));
         assert_eq!(d.ble_status(), [1, 0, 4]);
-        d.on_ble_setpoint(3, 1, &ble_sp(1, 1.0));
+        d.on_ble_setpoint(3, c, &ble_sp(1, 1.0));
         assert_eq!(d.ble_status(), [1, 0, 4], "a setpoint does not clear it");
-        d.on_ble_control(4, 1, 1).unwrap();
+        d.on_ble_control(4, c, 1).unwrap();
         assert_eq!(
             d.ble_status(),
             [2, 0, 0],
@@ -1038,9 +1144,9 @@ mod tests {
     #[test]
     fn a_new_ble_connection_starts_without_an_error() {
         let mut d = dev();
-        d.on_ble_connect(0, 1).unwrap();
-        let _ = d.on_ble_control(1, 1, 1);
-        d.on_ble_disconnect(2, 1);
+        let c = d.on_ble_connect(0, 1).unwrap().0;
+        let _ = d.on_ble_control(1, c, 1);
+        d.on_ble_disconnect(2, c);
         d.on_ble_connect(3, 2).unwrap();
         assert_eq!(d.ble_status(), [1, 0, 0]);
     }
@@ -1049,7 +1155,7 @@ mod tests {
     fn a_non_owner_write_does_not_change_the_owners_status() {
         let mut d = dev();
         d.on_ble_connect(0, 1).unwrap();
-        assert_eq!(d.on_ble_control(1, 2, 1), Err(Error::NotOwner));
+        assert_eq!(d.on_ble_control(1, fake(2), 1), Err(Error::NotOwner));
         assert_eq!(d.ble_status(), [1, 0, 0]);
     }
 
@@ -1268,14 +1374,14 @@ mod tests {
     #[test]
     fn a_refused_ble_write_after_a_deadline_still_reports_the_release() {
         let mut d = dev();
-        d.on_ble_connect(0, 7).unwrap();
+        let c = d.on_ble_connect(0, 7).unwrap().0;
         let mut w = [0u8; 4 + 68];
         w[4..].copy_from_slice(&cdr(0.5));
-        d.on_ble_setpoint(0, 7, &w);
-        d.on_ble_control(0, 7, 1).unwrap();
+        d.on_ble_setpoint(0, c, &w);
+        d.on_ble_control(0, c, 1).unwrap();
         d.tick(1_000); // lease expiry, reclaim until 6000
         assert_eq!(
-            d.on_ble_control(6_000, 7, 1),
+            d.on_ble_control(6_000, c, 1),
             Err(Error::NotOwner),
             "the session is over"
         );
@@ -1289,7 +1395,7 @@ mod tests {
 
     #[test]
     fn the_car_profile_is_valid() {
-        assert!(Device::new(Config::DEFAULT, Geometry::CAR).is_ok());
+        assert!(Device::new(Config::DEFAULT, Geometry::CAR, 0).is_ok());
     }
 
     #[test]
@@ -1333,7 +1439,7 @@ mod tests {
             },
         ] {
             assert_eq!(
-                Device::new(Config::DEFAULT, g).err(),
+                Device::new(Config::DEFAULT, g, 0).err(),
                 Some(ProfileError::Geometry),
                 "{g:?}"
             );
@@ -1361,7 +1467,7 @@ mod tests {
             },
         ] {
             assert_eq!(
-                Device::new(cfg, GEOMETRY).err(),
+                Device::new(cfg, GEOMETRY, 0).err(),
                 Some(ProfileError::Limits),
                 "{cfg:?}"
             );
@@ -1389,7 +1495,7 @@ mod tests {
             },
         ] {
             assert_eq!(
-                Device::new(cfg, GEOMETRY).err(),
+                Device::new(cfg, GEOMETRY, 0).err(),
                 Some(ProfileError::Times),
                 "{cfg:?}"
             );
@@ -1405,7 +1511,7 @@ mod tests {
             max_vx: 0.0,
             ..Config::DEFAULT
         };
-        assert!(Device::new(cfg, GEOMETRY).is_ok());
+        assert!(Device::new(cfg, GEOMETRY, 0).is_ok());
     }
 
     #[test]
@@ -1416,7 +1522,7 @@ mod tests {
             max_vx: 0.3,
             ..Config::DEFAULT
         };
-        let mut d = Device::new(cfg, GEOMETRY).unwrap();
+        let mut d = Device::new(cfg, GEOMETRY, 0).unwrap();
         let caps = d.capabilities();
         let max_vx = f64::from(f32::from_le_bytes(caps[9..13].try_into().unwrap()));
         let (r, _) = send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
@@ -1501,6 +1607,194 @@ mod tests {
         let other = publisher(&mut d, 2, 1, 1);
         d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
         assert_eq!(d.on_ros_cmd_vel(10, &other, &cdr(9.0)).stop, None);
+        assert_eq!(d.arbiter().state(), State::Armed);
+    }
+
+    // ROS sequence domains: strictly increasing i64 per publisher GID, per session.
+
+    fn lv_key(nid: u8, id: u8) -> std::string::String {
+        format!(
+            "@ros2_lv/0/9ad20db4c929c8189ca587de2f90c2e2/{nid}/{id}/MP/%/%/n{nid}/%t{id}/std_msgs::msg::dds_::Bool_/RIHS01_x/::,10:,:,:,,"
+        )
+    }
+
+    #[test]
+    fn same_node_publishers_have_independent_counters() {
+        let mut d = dev();
+        let (a, b, arm) = (
+            publisher(&mut d, 1, 1, 1),
+            publisher(&mut d, 1, 3, 1),
+            publisher(&mut d, 1, 2, 1),
+        );
+        d.on_ros_cmd_vel(0, &at(&a, 100), &cdr(1.0));
+        d.on_ros_cmd_vel(10, &at(&b, 1), &cdr(0.5));
+        assert_eq!(d.wheels(10), [0.25; 4], "B's first sample is accepted");
+        d.on_ros_cmd_vel(20, &at(&a, 100), &cdr(1.0));
+        assert_eq!(d.wheels(20), [0.25; 4], "A's duplicate is dropped");
+        let fx = d.on_ros_arm(30, &at(&arm, 1), &bool_cdr(false));
+        assert_eq!(
+            fx.stop,
+            Some(StopReason::Stop),
+            "the arm publisher's 1 is its own counter"
+        );
+    }
+
+    #[test]
+    fn ros_sequences_compare_the_full_i64() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &at(&cmd, u32::MAX as i64), &cdr(0.5));
+        d.on_ros_cmd_vel(10, &at(&cmd, 1 << 32), &cdr(1.0));
+        assert_eq!(d.wheels(10), [0.5; 4], "2^32 follows 2^32 - 1");
+    }
+
+    #[test]
+    fn a_negative_ros_sequence_is_rejected() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        assert_eq!(
+            d.on_ros_cmd_vel(0, &at(&cmd, -1), &cdr(0.5)),
+            Effects::default()
+        );
+        assert_eq!(d.arbiter().state(), State::Open);
+    }
+
+    #[test]
+    fn a_replayed_ros_arm_is_ignored() {
+        let mut d = dev();
+        let (cmd, arm) = (publisher(&mut d, 1, 1, 1), publisher(&mut d, 1, 2, 1));
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        d.on_ros_arm(5, &at(&arm, 5), &bool_cdr(false)); // STOP
+        d.on_ros_cmd_vel(10, &at(&cmd, 2), &cdr(1.0)); // a fresh setpoint
+        d.on_ros_arm(15, &at(&arm, 5), &bool_cdr(true));
+        assert_eq!(
+            d.wheels(15),
+            [0.0; 4],
+            "ARM with an old sequence is a replay"
+        );
+        d.on_ros_arm(20, &at(&arm, 6), &bool_cdr(true));
+        assert_eq!(d.wheels(20), [0.5; 4]);
+    }
+
+    #[test]
+    fn ordering_marks_survive_a_publishers_removal() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &at(&cmd, 100), &cdr(1.0));
+        d.on_ros_liveliness(&lv_key(1, 1), false);
+        d.on_ros_liveliness(&lv_key(1, 1), true);
+        d.on_ros_cmd_vel(10, &at(&cmd, 99), &cdr(0.5));
+        assert_eq!(
+            d.wheels(10),
+            [0.5; 4],
+            "99 after 100 is rejected after re-announcement"
+        );
+    }
+
+    #[test]
+    fn unrelated_announcements_cannot_reset_ordering() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &at(&cmd, 100), &cdr(1.0));
+        for nid in 2..40 {
+            publisher(&mut d, nid, 1, 1);
+        }
+        d.on_ros_cmd_vel(10, &at(&cmd, 99), &cdr(0.5));
+        assert_ne!(d.wheels(10), [0.25; 4], "99 did not drive");
+        assert_eq!(
+            d.tick(1_000).stop,
+            Some(StopReason::LeaseExpired),
+            "nor renew the lease"
+        );
+    }
+
+    #[test]
+    fn an_owner_publisher_beyond_the_ordering_table_is_discarded() {
+        let mut d = dev();
+        let pubs: std::vec::Vec<_> = (1..=16).map(|id| publisher(&mut d, 1, id, 1)).collect();
+        for (i, p) in pubs.iter().enumerate() {
+            d.on_ros_cmd_vel(i as u64, p, &cdr(0.05 * (i + 1) as f64));
+        }
+        assert_eq!(
+            d.wheels(15),
+            [0.4; 4],
+            "all sixteen (the last at 0.8 m/s) are tracked"
+        );
+        // One leaves the graph but keeps its mark, so a seventeenth has no ordering slot.
+        d.on_ros_liveliness(&lv_key(1, 1), false);
+        let extra = publisher(&mut d, 1, 17, 1);
+        d.on_ros_cmd_vel(16, &extra, &cdr(0.2));
+        assert_eq!(d.wheels(16), [0.4; 4], "the seventeenth is discarded");
+        assert_eq!(
+            d.tick(1_015).stop,
+            Some(StopReason::LeaseExpired),
+            "and did not renew"
+        );
+    }
+
+    #[test]
+    fn a_new_ros_session_starts_fresh_marks() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &at(&cmd, 100), &cdr(1.0));
+        d.tick(1_000); // lease expiry
+        assert!(d.tick(6_000).released);
+        let fx = d.on_ros_cmd_vel(6_100, &at(&cmd, 50), &cdr(0.5));
+        assert_eq!(fx.claimed, Some(Source::Ros));
+        assert_eq!(d.wheels(6_100), [0.25; 4], "50 is fine in the new session");
+    }
+
+    #[test]
+    fn a_repeated_hello_keeps_the_session_and_its_deadlines() {
+        let mut d = dev();
+        let (r, _) = send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
+        let (h1, caps1) = r.unwrap();
+        let (r, _) = send(&mut d, 5_000, A, Kind::Hello, 0, 2, &[]);
+        let (h2, caps2) = r.unwrap();
+        assert_eq!((h2.kind, h2.session), (Kind::HelloAck, h1.session));
+        assert_eq!(caps1, caps2);
+        assert!(
+            d.tick(10_000).released,
+            "the claim window still ends at 10 s"
+        );
+    }
+
+    #[test]
+    fn a_callback_from_a_closed_connection_cannot_act_for_a_new_one_with_the_same_handle() {
+        let mut d = dev();
+        let old = d.on_ble_connect(0, 0).unwrap().0;
+        d.on_ble_disconnect(1, old);
+        let new = d.on_ble_connect(2, 0).unwrap().0;
+        assert_eq!(old.handle, new.handle, "the stack reused the handle");
+        assert_eq!(
+            d.on_ble_setpoint(3, old, &ble_sp(1, 1.0)),
+            Effects::default()
+        );
+        assert_eq!(d.on_ble_control(4, old, 1), Err(Error::NotOwner));
+        assert_eq!(d.on_ble_disconnect(5, old), Effects::default());
+        assert!(d.ble_owns(new) && !d.ble_owns(old));
+        d.on_ble_setpoint(6, new, &ble_sp(1, 1.0));
+        assert_eq!(d.on_ble_control(7, new, 1), Ok(Effects::default()));
+        assert_eq!(d.wheels(7), [0.5; 4]);
+    }
+
+    #[test]
+    fn a_router_disconnect_releases_a_ros_owner() {
+        let mut d = dev();
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(0, &cmd, &cdr(1.0));
+        let fx = d.on_ros_disconnect(10);
+        assert_eq!(fx.stop, Some(StopReason::OwnerLost));
+        assert!(fx.released);
+        assert_eq!(d.arbiter().state(), State::Open);
+        assert_eq!(d.wheels(10), [0.0; 4]);
+    }
+
+    #[test]
+    fn a_router_disconnect_leaves_other_owners_alone() {
+        let mut d = dev();
+        armed(&mut d); // UDP
+        assert_eq!(d.on_ros_disconnect(10), Effects::default());
         assert_eq!(d.arbiter().state(), State::Armed);
     }
 }

@@ -109,11 +109,16 @@ pub struct Arbiter {
 
 impl Arbiter {
     pub fn new(cfg: Config) -> Self {
+        Self::seeded(cfg, 0)
+    }
+
+    /// Session IDs start after `seed` (random per boot in the apps).
+    pub fn seeded(cfg: Config, seed: u32) -> Self {
         Self {
             cfg,
             state: State::Open,
             owner: None,
-            session: 0,
+            session: seed,
             last_seq: None,
             latest: None,
             lease_until: None,
@@ -157,7 +162,9 @@ impl Arbiter {
         self.state
     }
 
-    /// The current owner's session, incremented on every claim. 0 before the first claim.
+    /// The current owner's session, incremented on every claim and never 0 once claimed. It
+    /// separates a client's stale packets from a newer session; it is not authentication and
+    /// does not stop a deliberate replay (ADR-0008: the AP's WPA2 is the access control).
     pub fn session(&self) -> u32 {
         self.session
     }
@@ -167,7 +174,10 @@ impl Arbiter {
             Some(owner) if owner == who => Ok(Effects::default()),
             Some(_) => Err(Error::Busy),
             None => {
-                self.session += 1;
+                self.session = match self.session.wrapping_add(1) {
+                    0 => 1,
+                    s => s,
+                };
                 self.owner = Some(who);
                 self.state = State::Claimed;
                 self.last_seq = None;
@@ -197,6 +207,8 @@ impl Arbiter {
         Ok(())
     }
 
+    /// A BLE/UDP setpoint with the session's u32 sequence: applied only if `seq` is newer than
+    /// the last one in serial order (ahead by 1 to 2^31 - 1, so it survives the wrap).
     pub fn setpoint(
         &mut self,
         now: u64,
@@ -205,19 +217,34 @@ impl Arbiter {
         sp: Setpoint,
     ) -> Result<(Applied, Effects), Error> {
         self.check_owner(who)?;
-        if self.last_seq.is_some_and(|last| seq <= last) {
+        if self.last_seq.is_some_and(|last| !newer(seq, last)) {
             return Ok((Applied::Stale, Effects::default()));
         }
         self.last_seq = Some(seq);
-        let fx = if !self.within_limits(&sp) {
+        Ok((Applied::Applied, self.apply(now, sp)))
+    }
+
+    /// A setpoint the caller has already ordered (ROS: per publisher, `Device`). Samples from
+    /// different publishers are taken in the order they arrive.
+    pub fn setpoint_ordered(
+        &mut self,
+        now: u64,
+        who: Claimant,
+        sp: Setpoint,
+    ) -> Result<Effects, Error> {
+        self.check_owner(who)?;
+        Ok(self.apply(now, sp))
+    }
+
+    fn apply(&mut self, now: u64, sp: Setpoint) -> Effects {
+        if !self.within_limits(&sp) {
             self.stop_with(now, StopReason::OutOfLimits)
         } else {
             self.latest = Some(sp);
             self.lease_until = Some(now + self.cfg.lease_ms);
             self.fresh_needed = false;
             Effects::default()
-        };
-        Ok((Applied::Applied, fx))
+        }
     }
 
     pub fn stop(&mut self, now: u64, who: Claimant) -> Result<Effects, Error> {
@@ -342,6 +369,12 @@ impl Arbiter {
         self.reclaim_until = None;
         self.fresh_needed = false;
     }
+}
+
+/// Serial number order for u32: `seq` is newer than `last` if it is ahead by 1 to 2^31 - 1.
+/// Equal and exactly half the range away are not newer.
+fn newer(seq: u32, last: u32) -> bool {
+    (1..1 << 31).contains(&seq.wrapping_sub(last))
 }
 
 #[cfg(test)]
@@ -722,5 +755,57 @@ mod tests {
         assert!(!a.tick(5_999).released, "deadline - 1");
         assert!(a.tick(6_000).released, "deadline");
         assert_eq!(a.tick(6_001), Effects::default(), "deadline + 1");
+    }
+
+    // Sequence domains: BLE/UDP use u32 serial ordering (RFC 1982 style).
+
+    /// Is `seq` applied after `last`? The arbiter is armed, so an applied setpoint drives.
+    fn applies(last: u32, seq: u32) -> bool {
+        let mut a = Arbiter::new(CFG);
+        a.claim(0, PHONE).unwrap();
+        a.setpoint(0, PHONE, last, sp(0.1)).unwrap();
+        a.setpoint(1, PHONE, seq, sp(0.2)).unwrap().0 == Applied::Applied
+    }
+
+    #[test]
+    fn a_wrapped_sequence_is_newer() {
+        assert!(applies(u32::MAX, 0), "0 follows 4294967295");
+        let mut a = Arbiter::new(CFG);
+        a.claim(0, PHONE).unwrap();
+        a.setpoint(0, PHONE, u32::MAX, sp(0.1)).unwrap();
+        a.setpoint(1, PHONE, 0, sp(0.2)).unwrap();
+        assert_eq!(
+            a.setpoint(2, PHONE, u32::MAX, sp(0.3)).unwrap().0,
+            Applied::Stale
+        );
+    }
+
+    #[test]
+    fn newer_means_up_to_half_the_range_ahead() {
+        assert!(applies(0, 1));
+        assert!(applies(0, (1 << 31) - 1), "half range - 1 is newer");
+        assert!(!applies(0, 1 << 31), "exactly half range is dropped");
+        assert!(!applies(0, u32::MAX), "behind by one");
+        assert!(!applies(7, 7), "equal");
+        assert!(applies(u32::MAX - 5, 10), "across the wrap");
+    }
+
+    // New session allocation.
+
+    #[test]
+    fn sessions_start_after_the_boot_seed_and_count_up() {
+        let mut a = Arbiter::seeded(CFG, 41);
+        a.claim(0, PHONE).unwrap();
+        assert_eq!(a.session(), 42);
+        a.release(1, PHONE).unwrap();
+        a.claim(2, LAPTOP).unwrap();
+        assert_eq!(a.session(), 43);
+    }
+
+    #[test]
+    fn a_session_id_is_never_zero() {
+        let mut a = Arbiter::seeded(CFG, u32::MAX);
+        a.claim(0, PHONE).unwrap();
+        assert_eq!(a.session(), 1, "the wrap skips 0");
     }
 }
