@@ -59,13 +59,13 @@ These values are recorded here; firmware geometry has not yet been updated. Whee
 
 #### Top-view inspection, 2026-10-17
 
-![Assembled car, viewed from above](bench/2026-10-17-setup/top.jpg)
+![Assembled car, viewed from above, with FRONT pointing to the top of the image](bench/2026-10-17-setup/top-front.jpg)
 
-Source: Todor's `IMG_0521.HEIC`, supplied from `experiments/rovi-m4-four-motor-safety/`; the JPEG is resized and stripped of metadata.
+Source: Todor's `IMG_0522.HEIC`, supplied from `experiments/rovi-m4-four-motor-safety/`; the JPEG is resized and stripped of metadata. The [earlier unmarked photo](bench/2026-10-17-setup/top.jpg) is retained as setup evidence.
 
 * All four mecanum wheels and both power banks are visible.
 * The visible roller axes appear to form the expected X pattern ([WPILib reference](https://docs.wpilib.org/en/stable/docs/software/hardware-apis/motors/wpi-drive-classes.html)). This is photo evidence only; the F1 motion check remains pending.
-* No front marker is visible, so front/rear labels have not been inferred from this photo.
+* The FRONT arrow points toward the top of the image, beside the black power bank. Viewed this way: FL is upper-left, FR upper-right, RL (BL) lower-left and RR (BR) lower-right. Left and right are the car's own sides when facing forward.
 * Wiring continuity, wheel clearance through a full turn and secure mounting cannot be established from this view.
 
 Record firmware revision, floor surface, battery state, observations and evidence for each subsequent run.
