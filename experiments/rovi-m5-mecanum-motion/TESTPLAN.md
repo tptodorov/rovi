@@ -1,0 +1,38 @@
+# M5 test plan: the car on the floor
+
+The car drives **untethered**, controlled over BLE from the laptop (`sim/ble_client.py drive`, from `experiments/rovi-m8-setpoint-ros` in the repo `nix-shell`). There is no car log off the cable: the client reports the car's state and stop reason, and distances and speeds come from a **tape measure** and **phone video**. Each run is announced first and starts on Todor's "go".
+
+## Setup
+
+* **Wheels mounted in an X:** seen from above, the rollers of the four wheels point toward the centre of the car (a diamond pattern). The wrong arrangement drives forward but strafes wrongly; F1 checks it.
+* **Firmware:** `main` (M4: duty 40-100 %, mapping and direction confirmed). Flash over USB, then unplug.
+* **Power:** the ESP32 power bank on the board's USB-C port, the motor power bank on the carrier. **Wake the motor bank before each run** (it sleeps at 2.7 V when idle; M4).
+* **Floor:** a clear, flat area of at least 2 × 2 m, the same surface for every run. Tape a start line and a 1 m and 2 m mark; a centre line for drift.
+* **Measure once:** wheel diameter, wheelbase (front-rear axle distance), track width (left-right wheel centres), total mass with both power banks.
+* **Stopping the car:** Ctrl-C the client or walk out of range: the 1 s lease stops it. Unplugging the motor bank stops it at once. Start every run with the car pointing along the tape.
+
+## Tests
+
+| # | Test | Command | Measure | Pass / output |
+| --- | --- | --- | --- | --- |
+| F1 | **Wheels-in-the-air check** with the wheels mounted (car on a box) | forward, strafe left, rotate left, 5 s each | which way each wheel turns; roller X | Same pattern as M4; rollers form an X |
+| F2 | **Smallest command that moves the car** on the floor | `vx` 0.05, 0.1, 0.2, 0.3, 3 s each | does it move | The lowest `vx` that moves it (start duty under load, O6) |
+| F3 | **Straight line** | `vx` 0.5 and 1.0 for 2 s, 3 times each, plus reverse | distance travelled, sideways drift, end heading (video) | Speed in m/s per command; drift per metre |
+| F4 | **Strafe** | `vy` 0.5 and 1.0 for 2 s, both directions | sideways distance, forward drift, rotation | Strafe works; speed and drift |
+| F5 | **Rotate** | `wz` 1.5 and 3.0 for 3 s, both directions | angle turned (video from above), drift of the centre | Turn rate in rad/s |
+| F6 | **Diagonal** | `vx = vy = 0.5` for 2 s | direction of travel | Close to 45° |
+| F7 | **Stopping** | `vx` 1.0, then STOP; then `vx` 1.0 with `--quiet` (lease stop) | stopping distance (video against the tape) | Stopping distance for STOP and for the lease (adds about 1 s of travel) |
+| F8 | **Battery drift** | repeat F3 at `vx` 1.0 at the end of the session | distance vs the first F3 | Speed change as the banks drain |
+
+Every movement in F3-F7 is open loop: the car has no encoders (M4), so speed follows battery voltage and floor.
+
+## What comes out
+
+* **Real speeds:** m/s and rad/s per command. These replace the placeholder geometry in the firmware (`wheels_radius`, `max_wheel_speed`), so `vx` 1.0 means a real 1.0 m/s or the car's top speed, whichever is lower.
+* **Open-loop decision (Q11):** with no encoders, is open-loop drift acceptable for teleoperation? This sets the M6 API's speed semantics.
+* **Stopping distance** at top speed for STOP and for a lease expiry (O4/O5 on the floor).
+* **The power decision:** how long the banks last driving, and whether the motor bank's sleep is acceptable or a battery pack is needed.
+
+## Evidence
+
+`bench/<date>-f<N>/`: `notes.md` (measurements, battery state, surface), the BLE client output, videos kept outside git (a few frames or a contact sheet in git).

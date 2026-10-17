@@ -2,8 +2,8 @@
 
 ## M5: mecanum motion and feedback characterization
 
-**Status:** proposed — not yet implemented or bench-tested
-**Setup count:** reuse M4's integrated four-motor chassis setup; no additional electrical setup
+**Status:** planned (2026-10-17), next after M4. Bench procedure: [TESTPLAN.md](TESTPLAN.md).
+**Setup:** M4's car and carrier with the wheels mounted, untethered: ESP32 and motors on their own power banks, controlled over BLE from the laptop. Measured with tape and phone video (no car log off the cable).
 
 ### Goal
 
@@ -15,6 +15,11 @@ Measure whether the received chassis and motor setup can provide useful open-loo
 * Whether normalized PWM/duty commands are adequate or wheel speed feedback is required.
 * Wheel-to-wheel calibration and variation under changing load/battery voltage.
 * Whether encoders are present; do not assume them from the listing.
+
+### Known from M4 (2026-10-17)
+
+* Motor-to-channel mapping and direction confirmed; the motor layer runs 40-100 % duty (start threshold 35 % with the wheels off the ground).
+* **No encoders:** the TT motors have two wires only. M5 is open loop; closed-loop speed would need added sensors (out of scope now).
 
 ### Test plan
 
@@ -28,10 +33,10 @@ Measure whether the received chassis and motor setup can provide useful open-loo
 
 Real hardware only; reuse the verified M4 setup and stay within its recorded electrical limits.
 
-- [ ] Motor, driver, wheel, and direction mapping is documented.
+- [x] Motor, driver, wheel, and direction mapping is documented. *(M4 step 2; roller orientation checked in F1.)*
 - [ ] Four basic mecanum movement combinations and stop are demonstrated at safe speed.
 - [ ] Repeatability and calibration variation are recorded across battery/load conditions.
-- [ ] Encoder availability is confirmed; the open-loop versus closed-loop API decision has evidence and limitations.
+- [ ] Encoder availability is confirmed; the open-loop versus closed-loop API decision has evidence and limitations. *(No encoders: confirmed in M4. The open-loop evidence comes from F3-F8.)*
 - [ ] The API/spec can state units, bounds, stop behavior, update timing, and calibration needs without hidden assumptions.
 
 ### Results

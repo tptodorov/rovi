@@ -11,3 +11,5 @@ A printed ArUco marker on the car and the laptop camera give measured motion to 
 ## Firmware and results
 
 Firmware, wheel mapping, and build/flash commands will be added when implementation begins. Record wheel behavior, calibration, and any feedback hardware in [`MILESTONE.md`](MILESTONE.md#results).
+
+Bench procedure: [TESTPLAN.md](TESTPLAN.md) (untethered, BLE control, tape and video).
