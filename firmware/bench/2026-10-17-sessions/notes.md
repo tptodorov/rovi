@@ -16,3 +16,22 @@ appears in [car.log](car.log); [runs.txt](runs.txt) contains both client results
 No serial capture remains running. The board remains on this firmware.
 
 Not exercised physically: stale callback injection, sequence rollover, UDP or ROS sessions.
+
+## Requested repeat
+
+Todor requested a repeat because physical confirmation of the original runs was unavailable.
+The first repeat attempt did not connect: opening the monitor with `--no-reset` left the board
+in its bootloader. No drive command reached the car ([retry-car.log](retry-car.log),
+[retry-runs.txt](retry-runs.txt)). Restarting the same firmware with the normal monitor reset
+restored advertising; no firmware was flashed during the repeat.
+
+Both subsequent runs completed ([retry2-car.log](retry2-car.log), [retry2-runs.txt](retry2-runs.txt)):
+
+| Run | Command | Serial/client evidence | Physical observation |
+| --- | --- | --- | --- |
+| 1 | `vx 0.1`, 3 s, STOP, disconnect | 60 setpoints; armed at 7,766 ms, STOP at 10,821 ms, released at 13,882 ms | Pending Todor's confirmation |
+| 2 | Reconnect, `vx 0.1`, 3 s, STOP, disconnect | 60 setpoints; armed at 21,090 ms, STOP at 24,142 ms, released at 26,887 ms | Pending Todor's confirmation |
+
+Both connections reused handle 1 and reported claimed → armed → stopped (STOP) with no error.
+All four wheel commands were 83 ‰. The final state was open with all wheel commands zero,
+and the serial capture was stopped.
