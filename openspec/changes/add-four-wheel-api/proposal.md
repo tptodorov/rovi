@@ -1,6 +1,6 @@
 # M6: low-level four-wheel API
 
-**Status:** proposed 2026-10-10; review corrections and implementation design completed 2026-10-17; proposed for acceptance of host implementation. Qualified product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in [`GLOSSARY.md`](../../../GLOSSARY.md).
+**Status:** proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of [#48](https://github.com/tptodorov/rovi/pull/48). Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in [`GLOSSARY.md`](../../../GLOSSARY.md).
 
 ## Why
 
@@ -36,19 +36,19 @@ Implementation boundaries, migration and the reviewed contract changes are in [d
 
 Use [M4 results](../../../experiments/rovi-m4-four-motor-safety/MILESTONE.md#results), [M5 results](../../../experiments/rovi-m5-mecanum-motion/MILESTONE.md#results) and the [accepted motion references](../../../experiments/rovi-m5-mecanum-motion/CALIBRATION.md). Todor stopped the extended measurement sweep; no new motor tests are queued by this proposal. Approximate references are not guaranteed velocity tracking.
 
-| ID | Current answer / remaining limit |
-| --- | --- |
-| O1 | Existing mapping is 40–100% PWM, 20 kHz; running current reported as 150 mA per motor. Four-motor reversal and thermal evidence covers 70% duty, not continuous full-scale 100% operation. Start/stall current and a qualified electrical maximum remain unknown. Implement configurable duty limits; do not describe them as measured current protection. |
-| O2 | Geometry is radius 0.030 m, wheelbase 0.115 m, track 0.140 m, centre projection sum 0.1275 m. Use existing approximate motion references. Experiment normalization 40 rad/s and input limits 1/1/3 are operational placeholders, not measured maximum speeds. Profile values must stay explicit; no single gain fitted from short pulses is justified. |
-| O3 | Resolved: open-loop duty control; no encoders, added sensing out of scope. |
-| O4 | Physical stopping is observed; a numeric pin-level disable bound is not measured. Keep driver-disable validation separate from lease detection and mechanical stopping. Implement immediate standby when the motor layer receives disable; no invented physical timing claim. |
-| O5 | Select coast for an individual zero wheel and standby for every safety stop. Encode the TB6612 documented coast pin state explicitly; the experimental all-low zero pins must not be assumed to prove coast. Whole-run STOP/lease travel is 6.5/22.5 cm at one low command; maximum-speed coast distance remains unknown. |
-| O6 | Resolved rule: exact zero and magnitudes below 0.02 do not drive; other commands map linearly from 40% toward configured maximum duty. About 35% starting duty observed on the stand. No precise per-wheel minimum steady speed or floor threshold is claimed. |
-| O7 | Direct reversals at ±70% did not reset the ESP32 or drop BLE; retain direct transitions within the qualified operating envelope, with no speculative ramping. Behavior beyond that evidence remains to be qualified before claiming full-scale reversal. |
-| O8 | Resolved: D1 A→FL, D1 B→RL, D2 A→FR, D2 B→RR. Directions corrected at connectors, all software inversions false. Each driver has its own STBY, both disabled on a safety stop. |
-| O9 | Software question: can zenoh-nostd serve transient-local late joiners for `/rovi/capabilities`? Test on the laptop; if unsupported, use reliable/volatile depth 1 and republish every second and on claim/release/reconnect, with compatible subscriber QoS. This blocks choosing/documenting the ROS publication mode, not other host work. |
+| ID | Status | Answer |
+| --- | --- | --- |
+| O1 | **Closed** 2026-10-17 | Duty limits stay configurable. The product profile caps drive duty at **70%**, the envelope M4 verified on the bench (ten ±70% reversals, 5-minute thermal run, radio up). The experiment firmware's 100% is not a product value. **Deferred, needs a current monitor (INA226) or an oscilloscope with a shunt:** start and stall current. Needed only to raise the cap or to claim current protection; this change claims neither. |
+| O2 | **Closed** 2026-10-17 | Measured geometry: radius 0.030 m, wheelbase 0.115 m, track 0.140 m, centre projection sum 0.1275 m. Open-loop with the accepted approximate motion references; no calibration sweep. The 40 rad/s normalization and 1/1/3 input limits stay in the profile, labelled experimental, not measured maxima. The references were recorded on the experiment's 40–100% mapping; under the 70% cap the same command gives less duty (`vx 0.20`: 45% instead of 50%). Maximum physical speeds are not claimed. |
+| O3 | **Closed** | Open-loop duty control; no encoders, added sensing out of scope. |
+| O4 | **Deferred, needs a logic analyzer or oscilloscope** | A numeric pin-level STBY disable bound. This change specifies and host-tests that a safety stop deasserts both STBY outputs in the control tick that processes it, before any further bridge update. M4 observed all four wheels stop on every trigger. No numeric bound is claimed. |
+| O5 | **Closed** 2026-10-17 | Coast for an individual zero wheel (TB6612 IN1=IN2=low, PWM=high), standby for every safety stop. The experiment's all-low zero pins do not prove coast; task 2.1 corrects them test-first. Coast distance is not measured or claimed (tape and video, if a later requirement needs it). |
+| O6 | **Closed** | Exact zero and magnitudes below 0.02 coast; other commands map linearly from 40% to the configured maximum. About 35% starting duty observed on the stand; no per-wheel threshold is claimed. |
+| O7 | **Closed** 2026-10-17 | Direct reversals, no ramp, up to the 70% cap: M4's ten ±70% reversals caused no ESP32 reset or BLE loss. Raising the cap reopens O7 together with O1. |
+| O8 | **Closed** | D1 A→FL, D1 B→RL, D2 A→FR, D2 B→RR; directions corrected at connectors, all software inversions false, reconfirmed after the motor rework. Each driver has its own STBY, both disabled on a safety stop. |
+| O9 | **Open, laptop test (task 3.4)** | Can zenoh-nostd serve transient-local late joiners for `/rovi/capabilities`? If not, use reliable/volatile depth 1, republished every second and on claim/release/reconnect, with compatible subscriber QoS. Blocks only choosing the ROS publication mode. |
 
-The remaining electrical/physical bounds do not prevent implementing and host-testing configurable modules. They do prevent claiming qualified maxima, exact velocity tracking or completed product hardware acceptance. Retain the experiment firmware for comparison; product acceptance is a separate checklist.
+Only O9 remains open. Deferred items are outside this change: it does not claim measured current, a numeric disable bound, coast distance, maximum speeds or operation above 70%. Equipment-gated items return as a new change when the equipment is available. Retain the experiment firmware for comparison; product acceptance is a separate checklist.
 
 ## First implementation scope
 
@@ -66,4 +66,4 @@ The remaining electrical/physical bounds do not prevent implementing and host-te
 
 ## Review status
 
-The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and [verification map](verification.md) accompany the requirements. This PR proposes acceptance for the laptop implementation tasks; merging it explicitly accepts that scope and allows task 1.1 to be recorded as accepted. It does not accept the unimplemented product or authorize a flash/motor run. O1/O2/O4/O5/O7 physical qualification remains open and blocks final product acceptance; O9 has a specified laptop test and fallback.
+The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and [verification map](verification.md) accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not accept the unimplemented product or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 has a specified laptop test and fallback.

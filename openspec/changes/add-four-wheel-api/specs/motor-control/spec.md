@@ -59,30 +59,31 @@ Every motor driver SHALL be in standby from power-up, through reset and firmware
 - **THEN** every driver's STBY input stays inactive until motor control is enabled
 - **AND** no wheel turns
 
-### Requirement: Standby on safety stop within a bound
+### Requirement: Standby on safety stop
 
-When the device raises a safety stop, motor control SHALL set every wheel command to zero and put every driver in standby within a measured bound. **OPEN (O4, M4):** the bound, under four-motor load.
+When the device raises a safety stop, the coordinator SHALL request standby in the control tick that processes the stop, and motor control SHALL set every wheel command to zero and deassert both STBY outputs before any further bridge update. A measured pin-level bound is deferred (O4: needs a logic analyzer or oscilloscope); this change SHALL NOT claim one.
 
 #### Scenario: Watchdog timeout puts every driver in standby
 
 - **GIVEN** the car is armed and all four wheels are driven
 - **WHEN** a watchdog timeout raises a safety stop
-- **THEN** every driver's STBY input is inactive within the O4 bound
+- **THEN** both STBY outputs are deasserted in that control tick, before any further bridge update
+- **AND** on the bench every wheel stops
 
 ### Requirement: Full-scale maps to the configured limit
 
-Wheel command 1.0 SHALL map to the configured maximum PWM duty. The car SHALL use open-loop duty control without encoder feedback. The configured duty cap SHALL be enforced independently for each wheel. **OPEN (O1):** the electrically qualified maximum; 70% reversal/thermal evidence does not validate 100% operation. Duty limiting SHALL NOT be advertised as measured current protection.
+Wheel command 1.0 SHALL map to the configured maximum PWM duty, enforced independently for each wheel. The car SHALL use open-loop duty control without encoder feedback. The product profile SHALL cap drive duty at 70%, the envelope M4 verified (O1). Raising the cap SHALL require new qualification. Duty limiting SHALL NOT be advertised as current protection; start and stall current are not measured.
 
-#### Scenario: All wheels at full scale stay in limits
+#### Scenario: Product profile full scale
 
-- **GIVEN** the car on the M4 bench with its intended supply
-- **WHEN** all four wheels are commanded at 1.0
-- **THEN** measured per-channel and combined current stay within the O1 limits
-- **AND** the logic rail stays above brownout
+- **GIVEN** the product profile: deadband 0.02, minimum duty 40%, maximum duty 70%
+- **WHEN** a wheel receives 1.0, then 0.5, then 1.5
+- **THEN** the requested duties are 70%, 55% and 70%
+- **AND** no command drives any wheel above 70%
 
 ### Requirement: Zero command behaviour
 
-A zero wheel command SHALL request coast for that wheel without disabling a driven neighbour on the same driver. On the TB6612, this SHALL use IN1=IN2=low and PWM=high while STBY is high. A safety stop SHALL instead deassert both drivers' STBY inputs. **OPEN (O5):** physical coast distance, not the selected mode. Source: Toshiba [H-SW table, page 4](../../../../../docs/reference/tb6612fng/datasheet.pdf).
+A zero wheel command SHALL request coast for that wheel without disabling a driven neighbour on the same driver. On the TB6612, this SHALL use IN1=IN2=low and PWM=high while STBY is high. A safety stop SHALL instead deassert both drivers' STBY inputs. Coast distance is not measured or claimed (O5). Source: Toshiba [H-SW table, page 4](../../../../../docs/reference/tb6612fng/datasheet.pdf).
 
 #### Scenario: Zero coasts a turning wheel
 
@@ -110,11 +111,11 @@ Exact zero or a magnitude below the configured deadband SHALL request coast. Oth
 
 ### Requirement: Starts and reversals do not reset the controller
 
-Motor control SHALL support direct signed changes within the qualified operating envelope. M4 observed reversals at ±70% without reset or BLE loss; no slew limit is required by that evidence. The product SHALL NOT claim the same result above the qualified duty without validation. **OPEN (O7):** qualification at the selected product maximum.
+Motor control SHALL support direct signed changes, without a slew limit, up to the product cap. M4 reversed all four wheels between ±70% ten times without an ESP32 reset or BLE loss (O7). Operation above 70% SHALL NOT be claimed without new qualification.
 
 #### Scenario: Full reversal on all wheels
 
-- **GIVEN** a configured maximum within the qualified operating envelope and all four wheels at 1.0
+- **GIVEN** the product profile (maximum 70%) and all four wheels at 1.0
 - **WHEN** all four are commanded to −1.0 in one control tick
 - **THEN** the ESP32-S3 does not reset and the owner's session survives
 

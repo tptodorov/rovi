@@ -4,7 +4,7 @@ Host tests establish software behavior only. Physical acceptance uses [ADR-0002]
 
 ## 1. Accept and extract (laptop)
 
-- [ ] 1.1 Record Todor's explicit acceptance or the merge of this acceptance PR in the proposal; verify the approved scope excludes automatic physical tests.
+- [x] 1.1 Accepted: Todor merged [#48](https://github.com/tptodorov/rovi/pull/48) on 2026-10-17, which explicitly proposed acceptance of the laptop implementation tasks. The scope excludes flashing and motor runs; each board run is announced and waits for Todor's go.
 - [x] 1.2 ROS capabilities selected as product work (2026-10-11); exact keys, QoS and fallback are now specified.
 - [ ] 1.3 Extract the M8 core/tests into the reusable Cargo workspace and create separate product simulator/firmware manifests as designed. Verify all carried-over core tests, simulator scenarios and both ESP32 feature builds before behavior changes; preserve experiment builds and document new commands.
 
@@ -23,15 +23,15 @@ Host tests establish software behavior only. Physical acceptance uses [ADR-0002]
 - [ ] 3.5 Implement shared owner-error persistence and status delivery for BLE/UDP/ROS. Test immediate BLE reads, UDP transition/reply frames, ROS change/periodic publication, none values, release and non-owner isolation; update client/runbook documentation without changing numeric wire codes.
 - [ ] 3.6 Add product CI alongside experiment checks. Verify format, clippy, core/motor tests, socket/ROS scenarios, and ESP32 builds with/without ROS; complete the verification map with test names and clearly label remaining physical checks.
 
-## 4. Qualify the physical profile (bench, separate go for each run)
+## 4. Physical profile decisions (2026-10-17)
 
-- [ ] 4.1 Record O1/O4/O7 qualified limits and pin-level disable timing for the selected profile. Distinguish configured 100% from 70% bench evidence; acceptance requires the recorded bounds and corresponding physical results, not inferred current protection.
-- [ ] 4.2 Review O2 profile suitability and O5 coast-distance qualification using accepted approximate references. Record any remaining physical bounds explicitly; no extended calibration sweep is authorized by this task.
+- [x] 4.1 O1/O7: product cap 70%, within M4's ±70% reversal and thermal evidence; direct reversals, no ramp. Start/stall current and operation above 70% are deferred (current monitor needed) and not claimed.
+- [x] 4.2 O2/O5: measured geometry with approximate references, experimental normalization labelled; coast for a zero wheel. O4's numeric disable bound (logic analyzer needed), coast distance and maximum speeds are deferred and not claimed.
 - [x] 4.3 Q11/O3 is settled (2026-10-17): open-loop duty, no added sensors. O6 deadband and O8 mapping are recorded in the requirements.
 
 ## 5. Product hardware acceptance
 
-- [ ] 5.1 Bind the product motor driver to all four TB6612 channels and the qualified profile. Cross-build both firmware variants and check pin mapping against the carrier schematic before proposing a flash.
+- [ ] 5.1 Bind the product motor driver to all four TB6612 channels and the 70% product profile. Cross-build both firmware variants and check pin mapping against the carrier schematic before proposing a flash.
 - [ ] 5.2 After separately announced/authorized board runs, record physical scenario results for outputs, stop triggers, radio operation and selected-profile reversal/thermal behavior across BLE/UDP/ROS. Use the verification map to distinguish software-only scenarios from physical claims.
 - [ ] 5.3 Verify each requirement has its specified evidence, all blocking open items are resolved, and product acceptance is recorded; update PLAN and product instructions.
 

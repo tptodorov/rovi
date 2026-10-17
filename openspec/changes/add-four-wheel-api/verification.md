@@ -15,7 +15,7 @@ Host: deterministic tests/recording driver. Integration: real sockets or Jazzy o
 | [Single owner](specs/car-control-api/spec.md#requirement-single-owner) | Host claim tests and UDP/ROS intruders; physical AP/BLE exclusion on board (3.3, 5.2). |
 | [Claim window](specs/car-control-api/spec.md#requirement-claim-window) | Injected-clock host tests, including refused ARM and no valid setpoint (3.1). |
 | [Explicit arming](specs/car-control-api/spec.md#requirement-explicit-arming) | BLE/UDP scenarios plus real Jazzy auto-arm and STOP-latch scenarios (3.3). |
-| [Lease and watchdog timeout](specs/car-control-api/spec.md#requirement-lease-and-watchdog-timeout) | Injected-time detection tests and physical log/pin timing; distinguish detection from O4 disable bound (3.1, 4.1, 5.2). |
+| [Lease and watchdog timeout](specs/car-control-api/spec.md#requirement-lease-and-watchdog-timeout) | Injected-time detection tests and physical log timing; detection only, no numeric disable bound (O4 deferred) (3.1, 5.2). |
 | [Safety stop](specs/car-control-api/spec.md#requirement-safety-stop) | Host transition tests; every physical stop trigger with all four channels (3.3, 5.2). |
 | [Reclaim window](specs/car-control-api/spec.md#requirement-reclaim-window) | Injected-clock tests for retained streaming owner, quiet owner, boundary and explicit/automatic recovery (3.1, 3.3). |
 | [Boot state](specs/car-control-api/spec.md#requirement-boot-state) | Host initial state plus actual reset/power-loss observations on product firmware (3.3, 5.2). |
@@ -46,11 +46,11 @@ Host: deterministic tests/recording driver. Integration: real sockets or Jazzy o
 | [Independent of transport and kinematics](specs/motor-control/spec.md#requirement-independent-of-transport-and-kinematics) | Standalone no_std crate build/test and dependency inspection (2.2). |
 | [Invalid wheel commands stop the wheels](specs/motor-control/spec.md#requirement-invalid-wheel-commands-stop-the-wheels) | Clamp both signs; inject NaN and both infinities at each wheel, inspect all outputs (2.2). |
 | [Standby until explicitly enabled](specs/motor-control/spec.md#requirement-standby-until-explicitly-enabled) | Recording driver checks boot/disable; physical reset and power-loss STBY verification (2.1, 5.2). |
-| [Standby on safety stop within a bound](specs/motor-control/spec.md#requirement-standby-on-safety-stop-within-a-bound) | Recording driver checks immediate disable ordering; measured O4 pin-level bound required (2.1, 4.1, 5.2). |
-| [Full-scale maps to the configured limit](specs/motor-control/spec.md#requirement-full-scale-maps-to-the-configured-limit) | Host duty-cap tests; electrical/current and brownout qualification at selected maximum remains O1 (2.1, 4.1). |
-| [Zero command behaviour](specs/motor-control/spec.md#requirement-zero-command-behaviour) | Failing coast-pin reproduction first, neighbor independence; physical coast check remains O5 (2.1, 4.2, 5.2). |
+| [Standby on safety stop](specs/motor-control/spec.md#requirement-standby-on-safety-stop) | Recording driver checks same-tick disable before any bridge update; physical: every wheel stops on each trigger. Numeric pin bound deferred (O4, needs a logic analyzer) (2.1, 2.3, 5.2). |
+| [Full-scale maps to the configured limit](specs/motor-control/spec.md#requirement-full-scale-maps-to-the-configured-limit) | Host duty-cap tests including the 70% product profile; current is not measured (O1 deferred) (2.1, 5.1). |
+| [Zero command behaviour](specs/motor-control/spec.md#requirement-zero-command-behaviour) | Failing coast-pin reproduction first, neighbor independence; coast distance not claimed (O5) (2.1, 5.2). |
 | [Dead zone handling](specs/motor-control/spec.md#requirement-dead-zone-handling) | Exact zero, deadband-minus/at/plus, both signs and rounding table (2.1). |
-| [Starts and reversals do not reset the controller](specs/motor-control/spec.md#requirement-starts-and-reversals-do-not-reset-the-controller) | Host signed transitions; product reversal/thermal/radio evidence at selected maximum remains O7 (2.1, 4.1, 5.2). |
+| [Starts and reversals do not reset the controller](specs/motor-control/spec.md#requirement-starts-and-reversals-do-not-reset-the-controller) | Host signed transitions; product reversal/thermal/radio run at the 70% cap (2.1, 5.2). |
 | [Calibrated wheel mapping](specs/motor-control/spec.md#requirement-calibrated-wheel-mapping) | Host mapping/inversion tests; compare schematic and confirm all four physical channels (2.1, 5.1, 5.2). |
 | [Configuration validation](specs/motor-control/spec.md#requirement-configuration-validation) | Rejected min/max/deadband/mapping cases and config replacement while disabled (2.2). |
 | [Fault recovery requires explicit enable](specs/motor-control/spec.md#requirement-fault-recovery-requires-explicit-enable) | Host stateful fault/update/enable sequence; stale vector never replayed (2.2). |
