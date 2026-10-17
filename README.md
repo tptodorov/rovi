@@ -56,3 +56,14 @@ Never assume a wiring diagram, schematic, or PCB layout targets bare chips. Ask 
 * **Exploratory hardware bring-up** (`experiments/`) stays lightweight: each milestone is an independent Cargo package with colocated `README.md`/`MILESTONE.md`/`WIRING.md` (see [`experiments/README.md`](experiments/README.md)). Results get tracked, not just planned — after bench testing, the milestone's `MILESTONE.md` gets a `## Results` section (what was observed, pass/fail, date, links to logs/photos), and `experiments/README.md`'s index gets a status marker.
 * **Product development** — the low-level 4-wheel API and anything built on top of it — follows the [product specification standard](docs/SPECIFICATION.md): native `openspec/`, a pinned CLI, proposal/specs/design/tasks, and separate implementation and physical acceptance gates. Exploratory hardware bring-up remains outside that process.
   For a human-friendly view, open the generated [specification reader](openspec/index.html) locally in your browser.
+
+#### Product code
+
+The M6 layout follows its [design](openspec/changes/add-four-wheel-api/design.md#package-boundaries). Host builds and the sim car are development evidence only ([ADR-0002](docs/adr/0002-simulation-never-proves-hardware.md)). The M8 experiment stays the frozen bench reference until the product firmware is accepted.
+
+| Path | What | Build and test |
+| --- | --- | --- |
+| `crates/rovi-core` | Device core (`no_std`): codecs, arbiter, kinematics, graph, device | From the repo root: `cargo test --locked`, `cargo clippy --locked --workspace --all-targets -- -D warnings` |
+| `apps/simcar` | Sim car on laptop sockets, optional ROS 2 node; own lockfile | `cargo build --locked [--features ros]` |
+| `apps/simcar/scenarios` | UDP and ROS scenario harness (Python, Docker) | From the repo root: `python3 apps/simcar/scenarios/udp_scenarios.py`; with `--features ros`: `apps/simcar/scenarios/ros-scenarios.sh` (also `ros-router-gone.sh`, `ros-reconnect.sh`, `ros-refresh.sh`, `ros-stale-session.sh`) |
+| `firmware` | ESP32-S3 firmware; own lockfile, `esp` toolchain | `ROVI_WIFI_PASSWORD=… cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc`; add `--features ros` with `CARGO_TARGET_DIR=target/ros` to keep both builds |

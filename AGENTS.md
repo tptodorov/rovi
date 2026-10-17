@@ -17,6 +17,7 @@ One topic, one home. Read the relevant file below rather than expecting the answ
 ## Project structure
 
 * [`experiments/`](experiments/) — exploratory ESP32-S3/Rust hardware bring-up, one milestone per independent Cargo package.
+* [`crates/`](crates/), [`apps/`](apps/), [`firmware/`](firmware/) — M6 product code: reusable `no_std` crates (root Cargo workspace), the sim car and the ESP32-S3 firmware (own lockfiles). Commands: [README](README.md#product-code).
 * [`openspec/`](openspec/) — product requirements and change proposals; first: [M6 four-wheel API](openspec/changes/add-four-wheel-api/proposal.md).
 * [`docs/`](docs/) — `VISION.md`, `PLAN.md`, `adr/` (decision records), `reference/` (hardware component docs).
 
