@@ -55,7 +55,7 @@ Reported by Todor before the floor tests:
 
 Derived geometry: `wheels_radius = 0.030 m`; `center_projection_sum = (0.115 + 0.140) / 2 = 0.1275 m`.
 
-These values are recorded here; firmware geometry has not yet been updated. Wheel speed, floor speed, drift and stopping distance remain unmeasured. No M5 motor runs have been performed.
+At the time these dimensions were recorded, firmware geometry was still the placeholder. Subsequent stand measurements are recorded below; floor speed, drift and stopping distance remain unmeasured.
 
 #### Top-view inspection, 2026-10-17
 
@@ -78,4 +78,10 @@ At `vx 0.1` for 5 s, Todor counted approximately 4.75 FL wheel rotations: **0.95
 
 At `vx 0.5` for 5 s, Todor counted approximately 6.5 FL rotations: **1.30 rev/s = 78 RPM = 8.17 rad/s**, nominal unloaded rim speed **0.245 m/s**. The same whole-run-average limitations apply; this is a second calibration point, not maximum wheel speed.
 
-At `vx 1.0` for 5 s (a repeated run), Todor counted approximately 8.75 FL rotations: **1.75 rev/s = 105 RPM = 11.00 rad/s**, nominal unloaded rim speed **0.330 m/s**. This command uses about 70% duty with the current placeholder geometry and motor mapping; it is not a 100%-duty measurement. The three points describe one unloaded wheel, not calibrated chassis velocity or wheel-to-wheel variation.
+At `vx 1.0` for 5 s (a repeated run), Todor counted approximately 8.75 FL rotations: **1.75 rev/s = 105 RPM = 11.00 rad/s**, nominal unloaded rim speed **0.330 m/s**. This command used about 70% duty with the placeholder geometry and motor mapping then flashed; it was not a 100%-duty measurement. The three points describe one unloaded wheel, not calibrated chassis velocity or wheel-to-wheel variation.
+
+#### Measured-geometry firmware prepared, 2026-10-17
+
+Firmware source now uses radius 0.030 m and centre projection sum 0.1275 m. The speed-normalization parameter remains 40 rad/s as a placeholder; the 105 RPM observation at 70% duty is not a full-duty measurement. ESP32-S3 release build and clippy passed. **Not flashed or tested on the board yet.**
+
+The geometry change affects duty for the same command: forward `vx 0.1` is about 45%, `vx 0.5` about 65%, and `vx 1.0` about 90% (previously 43%, 55% and 70%). Repeat a gentle stand check after flashing; announce and agree each new motor run. Floor tests start with a short, low-command pulse, not a repeat of the five-second stand runs.

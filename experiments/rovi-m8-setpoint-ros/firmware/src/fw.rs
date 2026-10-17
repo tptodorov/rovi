@@ -84,20 +84,20 @@ async fn until(mut cond: impl FnMut() -> bool) {
         Timer::after_millis(20).await;
     }
 }
-/// Placeholder chassis numbers until M5 measures them.
+/// M5 dimensions measured 2026-10-17; speed normalization still awaits calibration.
 const GEOMETRY: Geometry = Geometry {
-    wheels_radius: 0.05,
-    center_projection_sum: 0.2,
+    wheels_radius: 0.030,
+    center_projection_sum: 0.1275, // (0.115 m wheelbase + 0.140 m track) / 2
     offset_x: 0.0,
     offset_y: 0.0,
     offset_theta: 0.0,
-    max_wheel_speed: 40.0,
+    max_wheel_speed: 40.0, // Placeholder, not the unloaded speed measured at 70% duty.
 };
 
 /// Duty range for the wheels (M4 step 2, 2026-10-16/17): the mounted TT motors need about 35 %
 /// to start with all four connected, so any command outside the 2 % deadband starts at 40 %; a
-/// command of 1.0 is 100 % (5 V, within the TT motors' 3-6 V rating). With the placeholder
-/// geometry `vx` 1.0 m/s is a wheel command of 0.5, so 70 % duty.
+/// normalized wheel command of 1.0 is 100 %. With M5's measured radius and the still
+/// placeholder speed normalization, `vx` 1.0 gives a wheel command of 5/6, so 90 % duty.
 const MOTOR: motor::Config = motor::Config {
     min_duty_pm: 400,
     max_duty_pm: 1000,
