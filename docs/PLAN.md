@@ -2,9 +2,9 @@
 
 Current status, roadmap, and decisions deliberately deferred. For what Rovi is and why, see [`VISION.md`](VISION.md). For how work gets done, see the root [`README.md`](../README.md). This file is living — update it as milestones land, don't append a history; for *why* a specific hard-to-reverse decision was made, see [`adr/`](adr/).
 
-## Current state (2026-10-14)
+## Current state (2026-10-17)
 
-* M8 runs on the bare board (no motors) and passes its gating acceptance: BLE (MTU 247, 45 ms interval, 10 of 10 scenarios), UDP over Wi-Fi (8 of 8), the Wi-Fi AP switching off and on around BLE (10 clean cycles), lease and window timing, and ROS 2 (graph visibility, controller scenario, reconnect). The board found six defects, all fixed ([results](../experiments/rovi-m8-setpoint-ros/MILESTONE.md#results)). Since 2026-10-14 the car reaches the ROS router over TCP (ADR-0012) and ROS 2 arms on its own (ADR-0011). M4 is complete (2026-10-17): four motors on the soldered carrier, every stop trigger verified with all four turning, duty range 40-100 %. M5 (floor driving) is next.
+* M8 runs on the bare board (no motors) and passes its gating acceptance: BLE (MTU 247, 45 ms interval, 10 of 10 scenarios), UDP over Wi-Fi (8 of 8), the Wi-Fi AP switching off and on around BLE (10 clean cycles), lease and window timing, and ROS 2 (graph visibility, controller scenario, reconnect). The board found six defects, all fixed ([results](../experiments/rovi-m8-setpoint-ros/MILESTONE.md#results)). Since 2026-10-14 the car reaches the ROS router over TCP (ADR-0012) and ROS 2 arms on its own (ADR-0011). M4 is complete (2026-10-17): four motors on the soldered carrier, every stop trigger verified with all four turning, duty range 40-100 %. M5 is in progress: measured geometry is flashed and low-command forward/reverse, strafe, rotation, diagonals and automatic lease stopping are demonstrated on the floor. Speed calibration, controlled battery/load variation and stopping bounds remain open ([results](../experiments/rovi-m5-mecanum-motion/MILESTONE.md#results)).
 * Hardware: the parts package arrived on 2026-09-26 ([README](../README.md#hardware)). The ESP32-S3 bench is available, without motor wiring.
 * Product software: the low-level four-wheel API is proposed ([M6](../spec/changes/add-four-wheel-api/proposal.md)), not accepted or implemented; the layered application is not started. Motor limits, speeds and fail-safe timing wait for M4/M5.
 * CI runs the host tests, the sim scenarios and the firmware builds on every PR (`.github/workflows/ci.yml`). Board and ROS-router checks stay manual.
@@ -32,7 +32,7 @@ Current status, roadmap, and decisions deliberately deferred. For what Rovi is a
 
 * **M8 and M3 remainder** (deferred, see M8 above). Then M4 ([`experiments/rovi-m4-four-motor-safety/`](../experiments/rovi-m4-four-motor-safety/)), the first step that needs wiring.
 * **M4** (complete, 2026-10-17) — four motors on the M8 firmware, wheels off the ground, minimal wiring, a software fail-safe ([ADR-0014](adr/0014-m4-minimal-wiring-software-fail-safe.md)) and a soldered carrier ([build guide](../experiments/rovi-m4-four-motor-safety/build/README.md)). Mapping and direction confirmed; start threshold 35 %, so the motor layer runs 40-100 % duty; no reset on reversal; every stop trigger stops all four; 5 min at 70 % stays cool. Open, not gating: motor capacitors, the motor power bank's auto-sleep (needs a battery or always-on supply before the car drives untethered). See [`experiments/rovi-m4-four-motor-safety/`](../experiments/rovi-m4-four-motor-safety/).
-* **M5** (proposed) — characterize mecanum wheel mapping, open-loop behavior, and available feedback (encoders decide open- vs closed-loop) using the M4 setup. See [`experiments/rovi-m5-mecanum-motion/`](../experiments/rovi-m5-mecanum-motion/).
+* **M5** (in progress, 2026-10-17) — low-command floor motion and stops demonstrated using M4's setup; calibration and controlled battery/load variation remain open. Motors have no encoders; adding them is out of scope. See [`experiments/rovi-m5-mecanum-motion/`](../experiments/rovi-m5-mecanum-motion/).
 
 ### Done
 
