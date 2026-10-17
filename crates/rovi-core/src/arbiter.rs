@@ -109,11 +109,16 @@ pub struct Arbiter {
 
 impl Arbiter {
     pub fn new(cfg: Config) -> Self {
+        Self::seeded(cfg, 0)
+    }
+
+    /// Session IDs start after `seed` (random per boot in the apps).
+    pub fn seeded(cfg: Config, seed: u32) -> Self {
         Self {
             cfg,
             state: State::Open,
             owner: None,
-            session: 0,
+            session: seed,
             last_seq: None,
             latest: None,
             lease_until: None,
@@ -157,7 +162,9 @@ impl Arbiter {
         self.state
     }
 
-    /// The current owner's session, incremented on every claim. 0 before the first claim.
+    /// The current owner's session, incremented on every claim and never 0 once claimed. It
+    /// separates a client's stale packets from a newer session; it is not authentication and
+    /// does not stop a deliberate replay (ADR-0008: the AP's WPA2 is the access control).
     pub fn session(&self) -> u32 {
         self.session
     }
@@ -167,7 +174,10 @@ impl Arbiter {
             Some(owner) if owner == who => Ok(Effects::default()),
             Some(_) => Err(Error::Busy),
             None => {
-                self.session += 1;
+                self.session = match self.session.wrapping_add(1) {
+                    0 => 1,
+                    s => s,
+                };
                 self.owner = Some(who);
                 self.state = State::Claimed;
                 self.last_seq = None;
@@ -778,5 +788,24 @@ mod tests {
         assert!(!applies(0, u32::MAX), "behind by one");
         assert!(!applies(7, 7), "equal");
         assert!(applies(u32::MAX - 5, 10), "across the wrap");
+    }
+
+    // New session allocation.
+
+    #[test]
+    fn sessions_start_after_the_boot_seed_and_count_up() {
+        let mut a = Arbiter::seeded(CFG, 41);
+        a.claim(0, PHONE).unwrap();
+        assert_eq!(a.session(), 42);
+        a.release(1, PHONE).unwrap();
+        a.claim(2, LAPTOP).unwrap();
+        assert_eq!(a.session(), 43);
+    }
+
+    #[test]
+    fn a_session_id_is_never_zero() {
+        let mut a = Arbiter::seeded(CFG, u32::MAX);
+        a.claim(0, PHONE).unwrap();
+        assert_eq!(a.session(), 1, "the wrap skips 0");
     }
 }

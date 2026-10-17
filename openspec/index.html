@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>10 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>11 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
 <strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
@@ -1426,7 +1426,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.1 Implement input/profile validation, supported frame handling, boundary timing and initial ROS claim validation. Add failing reproductions for changed behavior, then verify the validation/clock scenarios in the map with deterministic time; retain CDR golden vectors and version-1 byte layouts. <strong>Done 2026-10-17:</strong> frames (empty or <code>base_link</code>) and nanosecond range; no claim from an out-of-limits first ROS sample; every input processes due deadlines first; <code>Device::new</code> validates the profile (with <code>Geometry::CAR</code>) and keeps limits as the advertised f32 values; overflow stays NaN for motor fault handling. Each change had a failing test first; boundary and malformed-corpus tests pin behaviour that already held. Golden CDR vectors and version-1 layouts unchanged; the sim car scenarios (UDP and all five ROS scripts) and both firmware builds pass.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Implement wrapping BLE/UDP and full per-GID ROS sequence domains, session generations and reconnect cleanup. Test rollover, half-range, repeated HELLO, old-session input, multiple same-node publishers, unknown publishers and router disconnect/reconnect; update adapter docs.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.2 Implement wrapping BLE/UDP and full per-GID ROS sequence domains, session generations and reconnect cleanup. Test rollover, half-range, repeated HELLO, old-session input, multiple same-node publishers, unknown publishers and router disconnect/reconnect; update adapter docs. <strong>Done 2026-10-17:</strong> u32 serial order for BLE/UDP; per-GID i64 ROS marks (16, per session, kept across publisher removal, overflow discarded) for cmd_vel and arm; session IDs from a per-boot seed, skipping 0; <code>BleConn</code> tokens with a connection generation; <code>Device::on_ros_disconnect</code> releases a ROS owner and both adapters call it. Behaviour changes had failing tests first (the stale-callback test is compile-red: the old handle-only API could not express it). Sim car UDP and all five ROS scripts, and both firmware builds, pass.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 3.3 Preserve explicit/automatic arming and shared-radio policy. Run product UDP, fake-BLE and ROS scenarios covering latch reasons, claim/reclaim boundaries, owner isolation and echo; map actual test names to every applicable verification row.</li>
 <li>
@@ -1497,7 +1497,7 @@ Review product docs/status fields against M5 evidence; no command-derived measur
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-latest-setpoint-wins">Latest setpoint wins</a></td>
 <td>
-Host ordering tests and duplicate socket input; lease unchanged on stale data (3.2, 3.3).</td>
+Host ordering tests and duplicate socket input; lease unchanged on stale data (3.2, 3.3). Host: <code>latest_wins_and_old_sequences_never_apply</code>, <code>stale_setpoints_do_not_renew_the_lease</code>, <code>same_node_publishers_have_independent_counters</code>.</td>
 </tr>
 <tr>
 <td>
@@ -1593,13 +1593,13 @@ Host CDR cases for empty/base_link/map, string bounds, nanoseconds and stale hea
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-sequence-domains">Sequence domains</a></td>
 <td>
-Host u32 wrap/half-range and full-i64 per-GID tests; same-node multiple-publisher ROS scenario (3.2).</td>
+Host u32 wrap/half-range and full-i64 per-GID tests; same-node multiple-publisher ROS scenario (3.2). Host: <code>a_wrapped_sequence_is_newer</code>, <code>newer_means_up_to_half_the_range_ahead</code>, <code>same_node_publishers_have_independent_counters</code>, <code>ros_sequences_compare_the_full_i64</code>, <code>a_negative_ros_sequence_is_rejected</code>, <code>a_replayed_ros_arm_is_ignored</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-session-isolation-and-ros-identity">Session isolation and ROS identity</a></td>
 <td>
-Old UDP/BLE generation injection and real router reconnect; distinct GID same-node ARM (3.2).</td>
+Old UDP/BLE generation injection and real router reconnect; distinct GID same-node ARM (3.2). Host: <code>wrong_session_and_garbage_are_dropped</code>, <code>a_callback_from_a_closed_connection_cannot_act_for_a_new_one_with_the_same_handle</code>, <code>another_ros_node_is_ignored_while_owned</code>, <code>a_router_disconnect_releases_a_ros_owner</code>, <code>a_router_disconnect_leaves_other_owners_alone</code>. Integration: <code>apps/simcar/scenarios/ros-reconnect.sh</code> (real router restarts).</td>
 </tr>
 <tr>
 <td>
@@ -1641,13 +1641,13 @@ Existing UDP/fake-BLE echo patterns with state/lease/error snapshots and oversiz
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-new-session-allocation">New session allocation</a></td>
 <td>
-Injected boot seed, repeated HELLO, counter wrap/skip-zero and stale-session test (3.2).</td>
+Injected boot seed, repeated HELLO, counter wrap/skip-zero and stale-session test (3.2). Host: <code>sessions_start_after_the_boot_seed_and_count_up</code>, <code>a_session_id_is_never_zero</code>, <code>a_repeated_hello_keeps_the_session_and_its_deadlines</code>.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-bounded-ros-ordering-history">Bounded ROS ordering history</a></td>
 <td>
-Fill/churn graph and ordering tables, remove/reannounce owner GID, reject replay and capacity overflow (3.2).</td>
+Fill/churn graph and ordering tables, remove/reannounce owner GID, reject replay and capacity overflow (3.2). Host: <code>ordering_marks_survive_a_publishers_removal</code>, <code>unrelated_announcements_cannot_reset_ordering</code>, <code>an_owner_publisher_beyond_the_ordering_table_is_discarded</code>, <code>a_new_ros_session_starts_fresh_marks</code>.</td>
 </tr>
 </tbody>
 </table>

@@ -106,6 +106,8 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
             declare_and_serve(dev, unsafe { &*session }, &zid, cmd, arm, tokens, echo).await;
         println!("ros session ended ({:?}), reconnecting", result.err());
         emit(Event::Ros(RosLink::Down));
+        // The router is gone: a ROS owner is released now, not only by its lease.
+        log(dev.borrow_mut().on_ros_disconnect(now()));
         // SAFETY: `declare_and_serve` returned, so every borrow of the session (tokens,
         // subscribers, publisher) is gone. The session points into the resources, so it goes
         // first.

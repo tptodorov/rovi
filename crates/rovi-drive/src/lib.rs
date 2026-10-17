@@ -171,7 +171,7 @@ mod tests {
             let log = Recording::default();
             let mc = MotorControl::new(log.clone(), motor, CAR_CHANNELS).unwrap();
             let mut car = Car {
-                dev: Device::new(Config::DEFAULT, geometry).unwrap(),
+                dev: Device::new(Config::DEFAULT, geometry, 0).unwrap(),
                 drive: Drive::new(mc),
                 log,
                 session: 0,

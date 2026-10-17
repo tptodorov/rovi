@@ -84,6 +84,14 @@ fn control_loop(dev: Shared, t0: Instant) {
     }
 }
 
+/// Session IDs start somewhere new each run, so a client's packets from an earlier run of the
+/// sim car do not match the new session.
+fn session_seed() -> u32 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.subsec_nanos() ^ d.as_secs() as u32)
+}
+
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let num = |i: usize, default: u64| args.get(i).and_then(|s| s.parse().ok()).unwrap_or(default);
@@ -103,7 +111,7 @@ fn main() -> std::io::Result<()> {
         max_wheel_speed: 40.0,
     };
     let dev: Shared = Arc::new(Mutex::new(
-        Device::new(cfg, geometry).expect("the sim profile is valid"),
+        Device::new(cfg, geometry, session_seed()).expect("the sim profile is valid"),
     ));
     let t0 = Instant::now();
     log(Event::Boot { reset: None }, t0);
