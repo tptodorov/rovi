@@ -91,3 +91,5 @@ The geometry change affects duty for the same command: forward `vx 0.1` is about
 At `vx 0.05` for 0.5 s (approximately 42.5% duty), Todor confirmed the car moved. This is the lowest floor command tested, not an exact start threshold. The client reported a clean STOP; travel distance, drift, heading change and physical stopping behavior were not separately quantified or confirmed. See [F2 notes and client output](bench/2026-10-17-f2/notes.md). Loaded speed and repeatability remain unmeasured.
 
 A subsequent identical pulse produced approximately **10 cm forward travel with no obvious drift**, reported by Todor. Displacement divided by command duration is approximately **0.20 m/s**, not steady-state speed: acceleration and coast after STOP were not separated. Repeatability, quantified drift, heading change and stopping distance remain pending. Commanded `vx` is not calibrated to actual chassis velocity.
+
+A second distance observation with the same command was **11 cm**. The two measured runs span 10–11 cm (mean 10.5 cm); a third repeat is pending. Drift and stopping were not separately reported for the second run.
