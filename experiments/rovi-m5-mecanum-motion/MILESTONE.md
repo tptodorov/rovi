@@ -103,3 +103,7 @@ A third identical leftward pulse gave **7 cm at both front and rear**, with no f
 For rightward strafe (`vy -0.05`, 0.5 s), a measured repeat gave **6.5 cm at the front and 7.5 cm at the rear** (rear travelled **1 cm farther right**). Todor observed apparent slip; its cause is unconfirmed. Rightward translation is demonstrated, but repeatability and quantified stopping remain pending. No firmware compensation applied; see [F4 notes](bench/2026-10-17-f4/notes.md).
 
 A second measured rightward run gave **7 cm at the front, 7.5 cm at the rear** (rear travelled **5 mm farther right**). Rear swing recurred in both measured rightward runs, with different magnitude. Further characterization across commands and battery/load conditions remains open; no compensation applied.
+
+#### First floor rotation, 2026-10-17
+
+At `vx 0`, `wz 0.5` for 0.5 s, Todor reported approximately **40° left rotation**. The client reported STOP without an error; centre displacement and physical stopping were not separately reported. Angle divided by command duration is approximately **1.40 rad/s**, including any unseparated acceleration/coast; it is not steady-state turn rate. Commanded `wz` is not calibrated. See [F5 notes and output](bench/2026-10-17-f5/notes.md). Repeatability and clockwise rotation remain pending.
