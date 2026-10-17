@@ -157,6 +157,12 @@ async fn declare_and_serve(
         hash: rmw::STRING.1,
     };
 
+    let capabilities_t = Topic {
+        name: "rovi/capabilities",
+        ty: rmw::STRING.0,
+        hash: rmw::STRING.1,
+    };
+
     let node = rmw::node_token(DOMAIN, zid, NODE).unwrap();
     let _node = session
         .declare_token(zenoh::keyexpr::new(node.as_str())?)
@@ -167,6 +173,12 @@ async fn declare_and_serve(
         (3, Kind::Publisher, &status_t, rmw::QOS_DEFAULT_10),
         (4, Kind::Subscription, &echo_t, rmw::QOS_BEST_EFFORT_1),
         (5, Kind::Publisher, &echo_reply_t, rmw::QOS_BEST_EFFORT_1),
+        (
+            6,
+            Kind::Publisher,
+            &capabilities_t,
+            rmw::QOS_RELIABLE_VOLATILE_1,
+        ),
     ]
     .map(|(id, kind, topic, qos)| {
         rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
@@ -178,6 +190,7 @@ async fn declare_and_serve(
     }
     let status_gid = rmw::gid(eps[2].as_str());
     let echo_gid = rmw::gid(eps[4].as_str());
+    let capabilities_gid = rmw::gid(eps[5].as_str());
 
     let key = |t: &Topic| leak(rmw::topic_key(DOMAIN, t).unwrap().as_str().into());
     let cmd_sub = session
@@ -210,6 +223,10 @@ async fn declare_and_serve(
         .declare_publisher(zenoh::keyexpr::new(key(&status_t))?)
         .finish()
         .await?;
+    let capabilities_pub = session
+        .declare_publisher(zenoh::keyexpr::new(key(&capabilities_t))?)
+        .finish()
+        .await?;
     println!("ros node /{} up, zid {}, router {}", NODE, zid, ROUTER);
     emit(Event::Ros(RosLink::Up));
 
@@ -228,6 +245,38 @@ async fn declare_and_serve(
                 .encode();
                 let _ = echo_pub.put(bytes).attachment(&att).finish().await;
             }
+        }
+    };
+    let capabilities_loop = async {
+        let mut schedule = rovi_core::capabilities::Publication::default();
+        let mut seq = 0i64;
+        let mut buf = [0; rovi_core::capabilities::CDR_MAX];
+        loop {
+            let pending = {
+                let d = dev.borrow();
+                schedule
+                    .due(now(), d.arbiter().session(), d.arbiter().owner().is_some())
+                    .then(|| d.capabilities_snapshot().encode_cdr(&mut buf))
+                    .flatten()
+            };
+            if let Some(n) = pending {
+                seq += 1;
+                let att = Attachment {
+                    seq,
+                    timestamp: 0,
+                    gid: capabilities_gid,
+                }
+                .encode();
+                if let Err(e) = capabilities_pub
+                    .put(&buf[..n])
+                    .attachment(&att)
+                    .finish()
+                    .await
+                {
+                    break Err::<(), _>(e);
+                }
+            }
+            Timer::after_millis(10).await;
         }
     };
     let ended = select(
@@ -293,12 +342,14 @@ async fn declare_and_serve(
                 }
             },
         ),
-        echo_loop,
+        select(echo_loop, capabilities_loop),
     )
     .await;
-    // Only the session loop ends on its own; say why it did.
-    if let Either::First(Either5::First(Err(e))) = ended {
-        return Err(e.into());
+    // Report the session or publication failure before the adapter reconnects.
+    match ended {
+        Either::First(Either5::First(Err(e))) => return Err(e.into()),
+        Either::Second(Either::Second(Err(e))) => return Err(e.into()),
+        _ => {}
     }
     Ok(())
 }

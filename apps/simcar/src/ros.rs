@@ -1,5 +1,5 @@
 //! The ROS 2 sim adapter: node `/rovi` over zenoh-nostd and `rmw_zenohd`, feeding the shared
-//! device. Subscribes `/cmd_vel` (TwistStamped) and `/rovi/arm` (Bool), publishes `/rovi/status`.
+//! device. Subscribes `/cmd_vel` and `/rovi/arm`; publishes status and volatile capabilities.
 
 use crate::{log, log_effects, ms, Shared};
 use embassy_futures::select::{select, select5, Either, Either5};
@@ -195,7 +195,12 @@ async fn serve(
         (3, Kind::Publisher, &status_t, rmw::QOS_DEFAULT_10),
         (4, Kind::Subscription, &echo_t, rmw::QOS_BEST_EFFORT_1),
         (5, Kind::Publisher, &echo_reply_t, rmw::QOS_BEST_EFFORT_1),
-        (6, Kind::Publisher, &capabilities_t, ":1:,1:,:,:,,"),
+        (
+            6,
+            Kind::Publisher,
+            &capabilities_t,
+            rmw::QOS_RELIABLE_VOLATILE_1,
+        ),
     ]
     .map(|(id, kind, topic, qos)| {
         rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
@@ -274,32 +279,37 @@ async fn serve(
             }
         }
     };
-    // O9 probe: startup publication, then a delayed live control using the same publisher.
     let capabilities_loop = async {
+        let mut schedule = rovi_core::capabilities::Publication::default();
+        let mut seq = 0i64;
         let mut buf = [0; rovi_core::capabilities::CDR_MAX];
-        let n = dev
-            .lock()
-            .unwrap()
-            .capabilities_snapshot()
-            .encode_cdr(&mut buf)
-            .unwrap();
-        for seq in 1..=2 {
-            let att = Attachment {
-                seq,
-                timestamp: 0,
-                gid: capabilities_gid,
+        loop {
+            let pending = {
+                let d = dev.lock().unwrap();
+                schedule
+                    .due(ms(t0), d.arbiter().session(), d.arbiter().owner().is_some())
+                    .then(|| d.capabilities_snapshot().encode_cdr(&mut buf))
+                    .flatten()
+            };
+            if let Some(n) = pending {
+                seq += 1;
+                let att = Attachment {
+                    seq,
+                    timestamp: 0,
+                    gid: capabilities_gid,
+                }
+                .encode();
+                if let Err(e) = capabilities_pub
+                    .put(&buf[..n])
+                    .attachment(&att)
+                    .finish()
+                    .await
+                {
+                    break Err::<(), _>(e);
+                }
             }
-            .encode();
-            capabilities_pub
-                .put(&buf[..n])
-                .attachment(&att)
-                .finish()
-                .await
-                .unwrap();
-            println!("capabilities history probe: seq={seq} at_ms={}", ms(t0));
-            embassy_time::Timer::after_secs(12).await;
+            embassy_time::Timer::after_millis(10).await;
         }
-        core::future::pending::<()>().await;
     };
     let ended = select(
         select5(
@@ -373,9 +383,11 @@ async fn serve(
         select(echo_loop, capabilities_loop),
     )
     .await;
-    // Only the session loop ends on its own; say why it did.
-    if let Either::First(Either5::First(Err(e))) = ended {
-        return Err(e.into());
+    // Report the session or publication failure before the adapter reconnects.
+    match ended {
+        Either::First(Either5::First(Err(e))) => return Err(e.into()),
+        Either::Second(Either::Second(Err(e))) => return Err(e.into()),
+        _ => {}
     }
     Ok(())
 }

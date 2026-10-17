@@ -73,6 +73,8 @@ pub const STRING: (&str, &str) = (
 pub const QOS_BEST_EFFORT_1: &str = "2::,1:,:,:,,";
 pub const QOS_BEST_EFFORT_5: &str = "2::,5:,:,:,,";
 pub const QOS_DEFAULT_10: &str = "::,10:,:,:,,";
+/// Reliable, volatile, keep-last depth 1 (Jazzy default durability/reliability).
+pub const QOS_RELIABLE_VOLATILE_1: &str = "::,1:,:,:,,";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Endpoint {
@@ -318,5 +320,33 @@ mod tests {
         assert!(publ
             .as_str()
             .contains("/MP/%/%/rovi/%rovi%echo_reply/std_msgs::msg::dds_::Int64_/"));
+    }
+
+    #[test]
+    fn capabilities_qos_matches_jazzy_reliable_volatile_depth_one() {
+        let topic = Topic {
+            name: "rovi/capabilities",
+            ty: STRING.0,
+            hash: STRING.1,
+        };
+        let token = endpoint_token(
+            0,
+            ZID,
+            6,
+            Endpoint::Publisher,
+            "rovi",
+            &topic,
+            QOS_RELIABLE_VOLATILE_1,
+        )
+        .unwrap();
+        assert!(token
+            .as_str()
+            .contains("/MP/%/%/rovi/%rovi%capabilities/std_msgs::msg::dds_::String_/"));
+        // Same QoS suffix as a real Jazzy reliable/volatile depth-1 publisher.
+        assert!(token.as_str().ends_with("/::,1:,:,:,,"));
+        let key = topic_key(0, &topic).unwrap();
+        assert!(key
+            .as_str()
+            .starts_with("0/rovi/capabilities/std_msgs::msg::dds_::String_/"));
     }
 }

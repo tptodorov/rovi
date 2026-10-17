@@ -54,7 +54,7 @@ Use shared typed capabilities/status snapshots; adapters serialize the same valu
 
 ROS uses bounded CDR strings and the exact key/units contract in the spec. Publish status on snapshot changes and once per second; `session=0` denotes no owner. No measured velocity field is added.
 
-First try reliable/transient-local/depth-1 capabilities and verify a late subscriber against Jazzy. If the fork cannot serve history, select reliable/volatile/depth-1 with a one-second publish period and publish on claim, release and reconnect. Document compatible subscriber QoS. This is a predetermined fallback, not permission to advertise retained history that is unavailable. O9 is closed by that laptop result. Transport disconnection can delay delivery; publication schedules are not guarantees during packet loss or an unavailable router.
+O9 closed on 2026-10-17: the pinned ordinary publisher did not serve retained history to a late Jazzy transient-local subscriber; the same subscriber received its later live sample ([evidence](../../../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md)). Use the approved reliable/volatile/depth-1 fallback. `capabilities::Publication` publishes every 900 ms (headroom under one second) and on observed session/owner changes; each new router connection starts a fresh schedule. Both adapters poll it every 10 ms and serialize `Device::capabilities_snapshot()` through the same bounded CDR encoder. Controllers subscribe with volatile durability. Transport disconnection can delay delivery; publication schedules are not guarantees during packet loss or an unavailable router.
 
 ### Compatibility changes to verify
 

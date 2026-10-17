@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>12 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>13 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
 <strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
@@ -1342,7 +1342,7 @@ Use shared typed capabilities/status snapshots; adapters serialize the same valu
 <p>
 ROS uses bounded CDR strings and the exact key/units contract in the spec. Publish status on snapshot changes and once per second; <code>session=0</code> denotes no owner. No measured velocity field is added.</p>
 <p>
-First try reliable/transient-local/depth-1 capabilities and verify a late subscriber against Jazzy. If the fork cannot serve history, select reliable/volatile/depth-1 with a one-second publish period and publish on claim, release and reconnect. Document compatible subscriber QoS. This is a predetermined fallback, not permission to advertise retained history that is unavailable. O9 is closed by that laptop result. Transport disconnection can delay delivery; publication schedules are not guarantees during packet loss or an unavailable router.</p>
+O9 closed on 2026-10-17: the pinned ordinary publisher did not serve retained history to a late Jazzy transient-local subscriber; the same subscriber received its later live sample (<a href="../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md">evidence</a>). Use the approved reliable/volatile/depth-1 fallback. <code>capabilities::Publication</code> publishes every 900 ms (headroom under one second) and on observed session/owner changes; each new router connection starts a fresh schedule. Both adapters poll it every 10 ms and serialize <code>Device::capabilities_snapshot()</code> through the same bounded CDR encoder. Controllers subscribe with volatile durability. Transport disconnection can delay delivery; publication schedules are not guarantees during packet loss or an unavailable router.</p>
 <h3 id="openspec--changes--add-four-wheel-api--design--compatibility-changes-to-verify">Compatibility changes to verify</h3><p>
 Compared with M8, intentionally correct per-wheel coast, validate configuration, latch internal motor faults, support u32 rollover and full ROS per-publisher ordering, reject unsupported frames, and process deadlines before commands. Preserve ROS auto-arm only for claim/lease-expiry and explicit ARM after STOP/out-of-limits. Add the already-agreed ROS capabilities/status content and consistent owner error persistence. These are contract improvements, not claims that extraction is behavior-identical. Client golden vectors retain version 1 layouts; existing client tools remain the bench interface.</p>
 <h2 id="openspec--changes--add-four-wheel-api--design--risks--trade-offs">Risks / Trade-offs</h2><ul>
@@ -1430,7 +1430,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.3 Preserve explicit/automatic arming and shared-radio policy. Run product UDP, fake-BLE and ROS scenarios covering latch reasons, claim/reclaim boundaries, owner isolation and echo; map actual test names to every applicable verification row. <strong>Done 2026-10-17:</strong> four failing reproductions exposed STOP/out-of-limits after lease expiry allowing ROS auto-arm, repeated STOP reusing an earlier setpoint, and reclaim releasing a resumed streaming owner. The shared arbiter now preserves the explicit-arm latch and live ownership without extending reclaim on repeated stops. 181 workspace tests, 12 UDP scenarios, 23 Python tests, all five ROS scripts and both ESP32 builds pass; test names are mapped. Physical delivery remains task 5.2, including the empty BLE Echo adapter gap recorded there.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.4 Implement canonical capabilities and ROS publication. Verify field/units/round-trip golden tests and a late Jazzy subscriber. Close O9 with evidence of working transient-local history or the specified one-second volatile fallback; document chosen QoS and reconnect behavior.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.4 Implement canonical capabilities and ROS publication. Verify field/units/round-trip golden tests and a late Jazzy subscriber. Close O9 with evidence of working transient-local history or the specified one-second volatile fallback; document chosen QoS and reconnect behavior. <strong>Done 2026-10-17:</strong> shared typed <code>Capabilities</code> preserves the 27-byte BLE/UDP layout and emits the nine ROS keys with exact canonical values. Four encoder and three publication-schedule tests failed against stubs first; 191 workspace tests pass. O9 selected reliable/volatile/depth-1 (900 ms plus claim/release/reconnect), with <a href="../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md">Jazzy evidence</a>, a CI scenario and subscriber instructions in the README. All six product ROS scripts, UDP/Python checks and both firmware builds pass; no flash or board run.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 3.5 Implement shared owner-error persistence and status delivery for BLE/UDP/ROS. Test immediate BLE reads, UDP transition/reply frames, ROS change/periodic publication, none values, release and non-owner isolation; update client/runbook documentation without changing numeric wire codes.</li>
 <li>
@@ -1545,19 +1545,19 @@ Host initial state plus actual reset/power-loss observations on product firmware
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-capabilities">Capabilities</a></td>
 <td>
-Golden BLE/UDP/ROS comparison and exact advertised-limit acceptance (3.4).</td>
+Golden BLE/UDP/ROS comparison and exact advertised-limit acceptance (3.4). Host: <code>binary_capabilities_keep_the_version_one_golden_bytes</code>, <code>capabilities_are_the_same_before_claim_and_on_every_transport</code>, <code>a_limit_read_from_ros_capabilities_is_accepted_without_rounding_up</code>. Integration: <code>apps/simcar/scenarios/ros-capabilities.sh</code> / <code>ros_capabilities.py</code> compare all nine ROS values with UDP HELLO_ACK exactly.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-ros-2-capabilities-topic">ROS 2 capabilities topic</a></td>
 <td>
-Real Jazzy late subscriber and no-claim checks; retained-history path if supported (3.4/O9).</td>
+Real Jazzy late subscriber and no-claim checks; retained-history path if supported (3.4/O9). Integration: <code>ros-capabilities.sh</code> / <code>ros_capabilities.py</code> verify a late Jazzy subscriber, the selected reliable/volatile/depth-1 QoS, and no claim/arming from reading. O9: <a href="../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md">history probe and fallback evidence</a>; retained history was unavailable with the pinned ordinary publisher.</td>
 </tr>
 <tr>
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-ros-2-capabilities-republish-fallback">ROS 2 capabilities republish fallback</a></td>
 <td>
-Real Jazzy volatile subscriber timing plus claim/release/reconnect; record selected mode (3.4/O9).</td>
+Real Jazzy volatile subscriber timing plus claim/release/reconnect; record selected mode (3.4/O9). Host: <code>capabilities_publish_on_connect_and_before_each_second_elapses</code>, <code>claim_release_and_new_sessions_publish_without_waiting_for_the_period</code>, <code>router_reconnect_starts_a_fresh_publication_schedule</code>, <code>capabilities_qos_matches_jazzy_reliable_volatile_depth_one</code>. Integration: <code>ros-capabilities.sh</code> before/after router restart; late receipt 0.413/0.551 s and claim/release publication in 0.010 s. Selected reliable/volatile/depth-1 mode with 900 ms period; physical radio delivery remains task 5.2.</td>
 </tr>
 <tr>
 <td>
@@ -1611,7 +1611,7 @@ Coordinator fault injection under continuing ROS stream; no drive until fresh se
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--car-control-api--spec--requirement-capabilities-encoding">Capabilities encoding</a></td>
 <td>
-Exact key/unit golden tests and f32 round-trip values across three encodings (3.4).</td>
+Exact key/unit golden tests and f32 round-trip values across three encodings (3.4). Host: <code>ros_capabilities_have_exactly_the_nine_keys_and_units</code>, <code>ros_floats_round_trip_even_when_a_short_decimal_would_exceed_the_limit</code>, <code>capabilities_cdr_rejects_small_buffers_without_partial_output</code>, <code>binary_capabilities_keep_the_version_one_golden_bytes</code>. All finite f32 extremes fit the bounded CDR buffer; decimal parsing as either f32 or f64 retains the exact advertised value.</td>
 </tr>
 <tr>
 <td>
@@ -1866,14 +1866,14 @@ D1 A→FL, D1 B→RL, D2 A→FR, D2 B→RR; directions corrected at connectors, 
 <td>
 O9</td>
 <td>
-<strong>Open, laptop test (task 3.4)</strong></td>
+<strong>Closed</strong> 2026-10-17</td>
 <td>
-Can zenoh-nostd serve transient-local late joiners for <code>/rovi/capabilities</code>? If not, use reliable/volatile depth 1, republished every second and on claim/release/reconnect, with compatible subscriber QoS. Blocks only choosing the ROS publication mode.</td>
+The pinned ordinary publisher did not serve history to a late Jazzy transient-local subscriber (no sample within 3 s; its later live sample arrived). Selected the specified reliable/volatile/depth-1 fallback: every 900 ms (headroom under one second), on claim/release and reconnect. Late subscribers received in 0.413/0.551 s before/after router restart; <a href="../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md">probe and fallback evidence</a>.</td>
 </tr>
 </tbody>
 </table>
 <p>
-Only O9 remains open. Deferred items are outside this change: it does not claim measured current, a numeric disable bound, coast distance, maximum speeds or operation above 70%. Equipment-gated items return as a new change when the equipment is available. Retain the experiment firmware for comparison; product acceptance is a separate checklist.</p>
+No unresolved product decisions remain. Deferred items are outside this change: it does not claim measured current, a numeric disable bound, coast distance, maximum speeds or operation above 70%. Equipment-gated items return as a new change when the equipment is available. Retain the experiment firmware for comparison; product acceptance is a separate checklist.</p>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--first-implementation-scope">First implementation scope</h2><ul>
 <li>
 Reuse M8's core, motor mapping and tests in a shared Cargo workspace; isolate motor control from the arbiter and transports.</li>
@@ -1895,7 +1895,7 @@ Code: none now. Implementation (see <a href="#openspec--changes--add-four-wheel-
 Evidence: host tests and the sim car are development evidence only (<a href="../docs/adr/0002-simulation-never-proves-hardware.md">ADR-0002</a>). Acceptance needs the M4/M5 bench setup.</li>
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--proposal--review-status">Review status</h2><p>
-The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and <a href="#openspec--changes--add-four-wheel-api--verification">verification map</a> accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not accept the unimplemented product or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 has a specified laptop test and fallback.</p>
+The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and <a href="#openspec--changes--add-four-wheel-api--verification">verification map</a> accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not accept the unimplemented product or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 closed with the specified volatile fallback and recorded Jazzy evidence.</p>
 </section>
 <footer>Generated from OpenSpec Markdown. Make changes in the source, then run <code>npm run spec:build</code>. This reader does not approve a proposal or authorize hardware tests.</footer></main><script>const requirements = [...document.querySelectorAll('.requirement')];
 const search = document.querySelector('#search');

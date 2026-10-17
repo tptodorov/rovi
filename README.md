@@ -67,5 +67,22 @@ The M6 layout follows its [design](openspec/changes/add-four-wheel-api/design.md
 | `crates/rovi-motor-control` | Motor control (`no_std`, no dependencies): wheel commands to TB6612 pins, standby, faults | As above, or `cargo test -p rovi-motor-control` |
 | `crates/rovi-drive` | Coordinator (`no_std`): device state to motor control, motor faults to a device stop | As above, or `cargo test -p rovi-drive` |
 | `apps/simcar` | Sim car on laptop sockets, optional ROS 2 node; own lockfile | `cargo build --locked [--features ros]` |
-| `apps/simcar/scenarios` | UDP and ROS scenario harness (Python, Docker) | From the repo root: `python3 apps/simcar/scenarios/udp_scenarios.py`; with `--features ros`: `apps/simcar/scenarios/ros-scenarios.sh` (also `ros-router-gone.sh`, `ros-reconnect.sh`, `ros-refresh.sh`, `ros-stale-session.sh`) |
+| `apps/simcar/scenarios` | UDP and ROS scenario harness (Python, Docker) | From the repo root: `python3 apps/simcar/scenarios/udp_scenarios.py`; with `--features ros`: `apps/simcar/scenarios/ros-scenarios.sh` (also `ros-router-gone.sh`, `ros-reconnect.sh`, `ros-refresh.sh`, `ros-stale-session.sh`, `ros-capabilities.sh`) |
 | `firmware` | ESP32-S3 firmware; own lockfile, `esp` toolchain | `ROVI_WIFI_PASSWORD=… cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc`; add `--features ros` with `CARGO_TARGET_DIR=target/ros` to keep both builds |
+
+##### ROS capabilities
+
+The product publishes `/rovi/capabilities` (`std_msgs/String`) before any claim, with the
+[nine keys and units](openspec/changes/add-four-wheel-api/specs/car-control-api/spec.md#requirement-capabilities-encoding).
+Use **reliable, volatile, keep-last depth 1**; retained history is unavailable with the pinned
+client ([O9 evidence](apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md)).
+Capabilities repeat every 900 ms and on claim, release and router reconnect. Reading them does not claim the car.
+
+```sh
+ros2 topic echo /rovi/capabilities std_msgs/msg/String --once --full-length \
+  --qos-reliability reliable --qos-durability volatile --qos-history keep_last --qos-depth 1
+```
+
+Parse the space-separated `key=value` tokens as numbers; preserve their precision when using
+limits. Scientific notation represents the exact canonical f32 values shared with BLE/UDP.
+Check the product sim car with `apps/simcar/scenarios/ros-capabilities.sh` after a ROS-enabled build.
