@@ -243,6 +243,12 @@ impl Arbiter {
             self.latest = Some(sp);
             self.lease_until = Some(now + self.cfg.lease_ms);
             self.fresh_needed = false;
+            if matches!(
+                self.state,
+                State::Stopped(StopReason::Stop | StopReason::OutOfLimits)
+            ) {
+                self.reclaim_until = None;
+            }
             Effects::default()
         }
     }
@@ -303,11 +309,11 @@ impl Arbiter {
         self.lease_until.is_some_and(|t| now < t)
     }
 
-    /// Latches a safety stop and keeps the owner. No effect if already stopped.
+    /// Latches a safety stop and keeps the owner. A new STOP always needs a later setpoint;
+    /// changing the reason while stopped must not extend the reclaim window.
     fn stop_with(&mut self, now: u64, reason: StopReason) -> Effects {
-        if matches!(self.state, State::Stopped(_)) {
-            return Effects::default();
-        }
+        let already_stopped = matches!(self.state, State::Stopped(_));
+        let changed = self.state != State::Stopped(reason);
         self.state = State::Stopped(reason);
         self.latest = None;
         match reason {
@@ -318,12 +324,14 @@ impl Arbiter {
             }
             // The owner is still there: the window starts only if its lease lapses.
             StopReason::Stop | StopReason::OutOfLimits => {
-                self.reclaim_until = None;
+                if !already_stopped {
+                    self.reclaim_until = None;
+                }
                 self.fresh_needed = true;
             }
         }
         Effects {
-            stop: Some(reason),
+            stop: changed.then_some(reason),
             ..Effects::default()
         }
     }
@@ -807,5 +815,61 @@ mod tests {
         let mut a = Arbiter::seeded(CFG, u32::MAX);
         a.claim(0, PHONE).unwrap();
         assert_eq!(a.session(), 1, "the wrap skips 0");
+    }
+
+    #[test]
+    fn a_repeated_stop_needs_a_setpoint_after_the_latest_stop() {
+        let mut a = armed();
+        a.stop(10, PHONE).unwrap();
+        a.setpoint(11, PHONE, 2, sp(0.2)).unwrap();
+        a.stop(12, PHONE).unwrap();
+        assert_eq!(a.arm(13, PHONE), Err(Error::NotReady));
+        a.setpoint(14, PHONE, 3, sp(0.2)).unwrap();
+        a.arm(15, PHONE).unwrap();
+        assert_eq!(a.drive(15), Some(sp(0.2)));
+    }
+
+    #[test]
+    fn a_latched_owner_resuming_setpoints_cancels_the_reclaim_deadline() {
+        for reason in [StopReason::Stop, StopReason::OutOfLimits] {
+            let mut a = armed();
+            let session = a.session();
+            if reason == StopReason::Stop {
+                a.stop(10, PHONE).unwrap();
+            } else {
+                a.setpoint(10, PHONE, 2, sp(9.0)).unwrap();
+            }
+            a.tick(1_000); // A quiet owner enters reclaim until t=6,000.
+            for (seq, now) in (3..).zip((1_500..=6_500).step_by(500)) {
+                a.setpoint(now, PHONE, seq, sp(0.2)).unwrap();
+                assert!(
+                    !a.tick(now).released,
+                    "streaming owner retained after {reason:?}"
+                );
+                assert_eq!(a.state(), State::Stopped(reason));
+                assert_eq!(a.drive(now), None, "only explicit ARM clears this latch");
+            }
+            assert_eq!(a.session(), session);
+            a.tick(7_500); // Quiet again: a new reclaim window begins.
+            assert!(!a.tick(12_499).released);
+            assert!(a.tick(12_500).released);
+        }
+    }
+
+    #[test]
+    fn changing_stop_reasons_does_not_extend_the_reclaim_window() {
+        for reason in [StopReason::Stop, StopReason::OutOfLimits] {
+            let mut a = armed();
+            a.tick(1_000); // Reclaim ends at t=6,000.
+            if reason == StopReason::Stop {
+                a.stop(5_999, PHONE).unwrap();
+                a.stop(5_999, PHONE).unwrap();
+            } else {
+                a.setpoint(5_999, PHONE, 2, sp(9.0)).unwrap();
+                a.setpoint(5_999, PHONE, 3, sp(9.0)).unwrap();
+            }
+            assert_eq!(a.state(), State::Stopped(reason));
+            assert!(a.tick(6_000).released);
+        }
     }
 }

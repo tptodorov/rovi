@@ -30,8 +30,18 @@ check grep -q "ev=released" <<<"$stock"
 check grep -q "ev=claimed source=Ros" /tmp/rovi-sim.log
 check grep -q "wheels_pm=500,500,500,500" /tmp/rovi-sim.log
 check grep -q "ev=stop reason=Stop" /tmp/rovi-sim.log
+check grep -q "ev=stop reason=OutOfLimits" /tmp/rovi-sim.log
 check grep -q "state=armed" /tmp/rovi-status.log
 check grep -q "state=stopped" /tmp/rovi-status.log
+check python3 - /tmp/rovi-status.log <<'PY'
+import sys
+
+with open(sys.argv[1]) as log:
+    status = [(float(t), state) for t, state in (line.split(maxsplit=1) for line in log)]
+assert any(7.3 <= t < 8.9 and "state=stopped" in s for t, s in status), status
+assert not any(7.3 <= t < 8.9 and "state=armed" in s for t, s in status), status
+assert any(9.1 <= t < 10.5 and "state=armed" in s for t, s in status), status
+PY
 if grep -q "wheels_pm=-" /tmp/rovi-sim.log; then echo "FAIL: the intruder node drove the car"; fail=1; fi
 # After the STOP the car stays stopped while the stream goes on, and drives again only after the arm.
 after=$(sed -n '/ev=stop reason=Stop/,$p' /tmp/rovi-sim.log)
