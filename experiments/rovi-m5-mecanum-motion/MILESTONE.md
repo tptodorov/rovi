@@ -96,4 +96,4 @@ Three distance observations with the same command were **10, 11 and 10 cm**, mea
 
 #### First floor strafe, 2026-10-17
 
-At `vx 0`, `vy 0.05` for 0.5 s, Todor reported **6.5 cm leftward travel** with **"1-2mm drift in the back"**. Drift frame/heading interpretation remains to be clarified. The BLE client reported STOP without an error; physical stopping was not separately confirmed. See [F4 notes and output](bench/2026-10-17-f4/notes.md). This is one lateral run; repeatability and rightward motion remain untested.
+At `vx 0`, `vy 0.05` for 0.5 s, Todor reported **6.5 cm leftward travel**, with the **rear moving 1–2 mm farther left than the front**: a small heading change, not rearward translation. The angle was not measured. The BLE client reported STOP without an error; physical stopping was not separately confirmed. See [F4 notes and output](bench/2026-10-17-f4/notes.md). This is one lateral run; repeatability and rightward motion remain untested.
