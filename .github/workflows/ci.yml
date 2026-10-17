@@ -40,6 +40,8 @@ jobs:
           workspaces: |
             experiments/rovi-m8-setpoint-ros
             experiments/rovi-m8-setpoint-ros/sim/simcar
+            .
+            apps/simcar
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -60,10 +62,26 @@ jobs:
       - name: M8 UDP scenarios against the sim car
         working-directory: experiments/rovi-m8-setpoint-ros
         run: python3 sim/udp_scenarios.py
+      - name: Product crates (rovi-core, rovi-motor-control, rovi-drive)
+        run: |
+          cargo fmt --all --check
+          (cd apps/simcar && cargo fmt --check)
+          (cd firmware && RUSTUP_TOOLCHAIN=stable cargo fmt --check)  # the directory pins the esp toolchain
+          cargo test --locked --workspace
+          cargo clippy --locked --workspace --all-targets -- -D warnings
+      - name: Product sim car (with and without ROS)
+        working-directory: apps/simcar
+        run: |
+          cargo clippy --locked --features ros -- -D warnings
+          cargo build --locked --features ros
+          cargo build --locked
+      - name: Product UDP scenarios against the sim car
+        run: python3 apps/simcar/scenarios/udp_scenarios.py
       - name: Python unit tests
         env:
           MPLBACKEND: Agg
         run: |
+          (cd apps/simcar/scenarios && python3 -m unittest test_wire test_carlog test_latency)
           (cd experiments/rovi-m8-setpoint-ros/sim && python3 -m unittest test_wire test_carlog test_latency test_plot_car test_compare_track test_ble_client)
           (cd experiments/rovi-m3-wifi-queue && python3 -m unittest test_client)
       - name: M4 carrier matches the schematic; build-guide images are up to date
@@ -79,7 +97,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: experiments/rovi-m8-setpoint-ros/sim/simcar
+          workspaces: |
+            experiments/rovi-m8-setpoint-ros/sim/simcar
+            apps/simcar
       - name: Sim car with ROS
         working-directory: experiments/rovi-m8-setpoint-ros/sim/simcar
         run: cargo build --locked --features ros
@@ -89,6 +109,15 @@ jobs:
       - name: Router frozen and resumed (TCP rejoins)
         working-directory: experiments/rovi-m8-setpoint-ros
         run: sim/ros-router-gone.sh 10000 tcp
+      - name: Product sim car with ROS
+        working-directory: apps/simcar
+        run: cargo build --locked --features ros
+      - name: Product ROS scenarios
+        run: apps/simcar/scenarios/ros-scenarios.sh
+      - name: Product capabilities/status (late subscriber, shared errors, release, reconnect)
+        run: apps/simcar/scenarios/ros-capabilities.sh
+      - name: Product router frozen and resumed (TCP rejoins)
+        run: apps/simcar/scenarios/ros-router-gone.sh 10000 tcp
 
   firmware:
     name: firmware (ESP32-S3)
@@ -108,6 +137,7 @@ jobs:
         with:
           workspaces: |
             experiments/rovi-m8-setpoint-ros/firmware
+            firmware
       - name: M8 firmware
         working-directory: experiments/rovi-m8-setpoint-ros/firmware
         run: |
@@ -115,6 +145,18 @@ jobs:
           cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
       - name: M8 firmware with ROS
         working-directory: experiments/rovi-m8-setpoint-ros/firmware
+        env:
+          CARGO_TARGET_DIR: target/ros
+        run: |
+          cargo clippy --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
+          cargo build --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+      - name: Product firmware
+        working-directory: firmware
+        run: |
+          cargo clippy --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
+          cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+      - name: Product firmware with ROS
+        working-directory: firmware
         env:
           CARGO_TARGET_DIR: target/ros
         run: |

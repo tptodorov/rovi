@@ -1,0 +1,40 @@
+ev=boot ver=0.1.0 at_ms=0
+simcar listening on udp/17794
+ros node /rovi up, zid e8b0f149830d9a3860893d70771f3b66, router tcp/127.0.0.1:17447
+ev=ros link=up at_ms=3
+ev=claimed source=Udp at_ms=5433
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=5435
+ev=released at_ms=5442
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=5445
+ev=claimed source=Udp at_ms=8166
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=8170
+ev=stop reason=Stop at_ms=9092
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=9097
+ev=released at_ms=10026
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=10033
+ev=claimed source=Udp at_ms=10037
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=10043
+ev=stop reason=LeaseExpired at_ms=11051
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=11051
+ev=released at_ms=11060
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=11061
+ros session ended (Some(LinkTxFailed)), reconnecting
+ev=ros link=down at_ms=21287
+ros node /rovi up, zid e8b0f149830d9a3860893d70771f3b66, router tcp/127.0.0.1:17447
+ev=ros link=up at_ms=23290
+ev=claimed source=Udp at_ms=26008
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=26014
+ev=released at_ms=26017
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=26024
+ev=claimed source=Udp at_ms=28744
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=28745
+ev=stop reason=Stop at_ms=29672
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=29674
+ev=released at_ms=30608
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=30611
+ev=claimed source=Udp at_ms=30618
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=30621
+ev=stop reason=LeaseExpired at_ms=31629
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=31629
+ev=released at_ms=31635
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=31639

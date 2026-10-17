@@ -30,11 +30,12 @@ use esp_hal::{
 use esp_hal_smartled::{buffer_size, color_order, RmtSmartLeds};
 use esp_println::println;
 use esp_radio::wifi::{self, ap::AccessPointConfig, AuthenticationMethodConfig, WifiController};
-use rovi_core::arbiter::{Config, Effects, Error, Source, State};
+use rovi_core::arbiter::{Config, Effects, Source, State};
 use rovi_core::device::{self, Device};
 use rovi_core::events::{self, Event, Fault};
 use rovi_core::kinematics::Geometry;
-use rovi_core::motor::{self, Channel};
+use rovi_drive::Drive;
+use rovi_motor_control::{Config as MotorConfig, Driver, MotorControl, Pins, CAR_CHANNELS};
 use smart_leds::{SmartLedsWrite, RGB8};
 use trouble_host::prelude::*;
 
@@ -84,46 +85,7 @@ async fn until(mut cond: impl FnMut() -> bool) {
         Timer::after_millis(20).await;
     }
 }
-/// M5 dimensions measured 2026-10-17; speed normalization still awaits calibration.
-const GEOMETRY: Geometry = Geometry {
-    wheels_radius: 0.030,
-    center_projection_sum: 0.1275, // (0.115 m wheelbase + 0.140 m track) / 2
-    offset_x: 0.0,
-    offset_y: 0.0,
-    offset_theta: 0.0,
-    max_wheel_speed: 40.0, // Placeholder, not the unloaded speed measured at 70% duty.
-};
 
-/// Duty range for the wheels (M4 step 2, 2026-10-16/17): the mounted TT motors need about 35 %
-/// to start with all four connected, so any command outside the 2 % deadband starts at 40 %; a
-/// normalized wheel command of 1.0 is 100 %. With M5's measured radius and the still
-/// placeholder speed normalization, `vx` 1.0 gives a wheel command of 5/6, so 90 % duty.
-const MOTOR: motor::Config = motor::Config {
-    min_duty_pm: 400,
-    max_duty_pm: 1000,
-    deadband: 0.02,
-};
-/// Bridge order: driver 1 A, driver 1 B, driver 2 A, driver 2 B (M4 WIRING). Driver 1 takes the
-/// left wheels, driver 2 the right. Inversion is a placeholder until M4 step 2 records which
-/// motors turn backwards.
-const CHANNELS: [Channel; 4] = [
-    Channel {
-        wheel: 0, // FL
-        invert: false,
-    },
-    Channel {
-        wheel: 3, // RL
-        invert: false,
-    },
-    Channel {
-        wheel: 1, // FR
-        invert: false,
-    },
-    Channel {
-        wheel: 2, // RR
-        invert: false,
-    },
-];
 /// MCPWM period in counts, so the compare value is the duty in permille (20 kHz, as M1).
 const PWM_PERIOD: u16 = 999;
 /// The RTC watchdog resets the chip if the control tick stops feeding it (ADR-0014).
@@ -177,6 +139,35 @@ fn peer_id(e: IpEndpoint) -> u128 {
     }
 }
 
+/// The motor pins for motor control: each driver's STBY, each bridge's IN1/IN2, and the four PWM
+/// compare values behind one closure (the MCPWM pins have distinct types). The period is
+/// [`PWM_PERIOD`] counts, so a compare value of 1000 never matches and holds PWM high (coast).
+struct MotorPins<P> {
+    stby: [Output<'static>; 2],
+    dirs: [(Output<'static>, Output<'static>); 4],
+    pwm: P,
+}
+
+impl<P: FnMut(usize, u16)> Driver for MotorPins<P> {
+    type Error = core::convert::Infallible;
+
+    fn set_stby(&mut self, driver: usize, high: bool) -> Result<(), Self::Error> {
+        if let Some(pin) = self.stby.get_mut(driver) {
+            pin.set_level(Level::from(high));
+        }
+        Ok(())
+    }
+
+    fn set_bridge(&mut self, bridge: usize, pins: Pins) -> Result<(), Self::Error> {
+        (self.pwm)(bridge, pins.pwm_pm);
+        if let Some((in1, in2)) = self.dirs.get_mut(bridge) {
+            in1.set_level(Level::from(pins.in1));
+            in2.set_level(Level::from(pins.in2));
+        }
+        Ok(())
+    }
+}
+
 /// Queues the events of `fx` for the log (`logger.rs`, same lines as the sim car's).
 fn log(fx: Effects) {
     events::effects(fx, logger::emit);
@@ -212,8 +203,8 @@ async fn main(_spawner: Spawner) -> ! {
     // ribbon cable per driver (driver 1: left header L4-L10, GPIO4-7 and 15-17; driver 2: left header
     // L14-L20, GPIO46 and 9-14). Each driver has its own STBY; both switch together.
     let low = |pin: AnyPin<'static>| Output::new(pin, Level::Low, OutputConfig::default());
-    let mut stby = [low(p.GPIO7.into()), low(p.GPIO11.into())]; // driver 1, driver 2
-    let mut dirs = [
+    let stby = [low(p.GPIO7.into()), low(p.GPIO11.into())]; // driver 1, driver 2
+    let dirs = [
         (low(p.GPIO6.into()), low(p.GPIO5.into())), // driver 1 A: AIN1, AIN2
         (low(p.GPIO15.into()), low(p.GPIO16.into())), // driver 1 B: BIN1, BIN2
         (low(p.GPIO10.into()), low(p.GPIO9.into())), // driver 2 A: AIN1, AIN2
@@ -244,6 +235,20 @@ async fn main(_spawner: Spawner) -> ! {
             .timer_clock_with_frequency(PWM_PERIOD, PwmWorkingMode::Increase, Rate::from_khz(20))
             .unwrap(),
     );
+    // Only the coordinator touches the motor pins, through motor control: the product profile
+    // (40-70 % duty, M6 O1) and the car's bridge mapping (O8).
+    let pwm = move |bridge: usize, pm: u16| match bridge {
+        0 => pwm_1a.set_timestamp(pm),
+        1 => pwm_1b.set_timestamp(pm),
+        2 => pwm_2a.set_timestamp(pm),
+        3 => pwm_2b.set_timestamp(pm),
+        _ => {}
+    };
+    let pins = MotorPins { stby, dirs, pwm };
+    let Ok(motor) = MotorControl::new(pins, MotorConfig::PRODUCT, CAR_CHANNELS) else {
+        unreachable!("motor pin writes cannot fail");
+    };
+    let mut drive = Drive::new(motor);
     esp_alloc::heap_allocator!(#[ram(reclaimed)] size: 64 * 1024);
     esp_alloc::heap_allocator!(size: 64 * 1024);
     let timers = TimerGroup::new(p.TIMG0);
@@ -301,7 +306,14 @@ async fn main(_spawner: Spawner) -> ! {
     }))
     .unwrap();
 
-    let dev = RefCell::new(Device::new(Config::DEFAULT, GEOMETRY));
+    // The profile is checked on the host (`Geometry::CAR` with `Config::DEFAULT`); an invalid one
+    // halts here with both drivers still in standby, before anything can claim the car.
+    // A random session seed per boot keeps a client's packets from before a reboot out of the
+    // new sessions (not authentication).
+    let Ok(device) = Device::new(Config::DEFAULT, Geometry::CAR, Rng::new().random()) else {
+        panic!("invalid device profile");
+    };
+    let dev = RefCell::new(device);
     println!(
         "M8 board-only AP=Rovi M8 udp=192.168.4.1:{} WPA2 channel=1 lease_ms={}",
         UDP_PORT,
@@ -317,17 +329,33 @@ async fn main(_spawner: Spawner) -> ! {
         let mut sock = UdpSocket::new(net, &mut rx_meta, &mut rx_buf, &mut tx_meta, &mut tx_buf);
         sock.bind(UDP_PORT).unwrap();
         let (mut buf, mut out) = ([0u8; 512], [0u8; 128]);
+        let mut owner_endpoint = None;
         loop {
-            let Ok((n, meta)) = sock.recv_from(&mut buf).await else {
-                continue;
-            };
-            let r = dev
-                .borrow_mut()
-                .on_udp(now(), peer_id(meta.endpoint), &buf[..n], &mut out);
-            if r.len > 0 {
-                let _ = sock.send_to(&out[..r.len], meta).await;
+            if let Either::First(Ok((n, meta))) =
+                select(sock.recv_from(&mut buf), Timer::after_millis(10)).await
+            {
+                let r = dev
+                    .borrow_mut()
+                    .on_udp(now(), peer_id(meta.endpoint), &buf[..n], &mut out);
+                if dev
+                    .borrow()
+                    .arbiter()
+                    .owner()
+                    .is_some_and(|o| o.source == Source::Udp && o.id == peer_id(meta.endpoint))
+                {
+                    owner_endpoint = Some(meta.endpoint);
+                }
+                if r.len > 0 {
+                    let _ = sock.send_to(&out[..r.len], meta).await;
+                }
+                log(r.effects);
             }
-            log(r.effects);
+            let pending = dev.borrow_mut().udp_status_notification(&mut out);
+            if let Some((peer, n)) = pending {
+                if let Some(to) = owner_endpoint.filter(|a| peer_id(*a) == peer) {
+                    let _ = sock.send_to(&out[..n], to).await;
+                }
+            }
         }
     };
     // BLE: connecting is the claim. While another source owns the car, do not advertise (the
@@ -373,14 +401,17 @@ async fn main(_spawner: Spawner) -> ! {
                 continue;
             };
             let id = conn.raw().handle().raw();
-            let claim = dev.borrow_mut().on_ble_connect(now(), id);
-            match claim {
-                Ok(fx) => log(fx),
+            // The token, not the reusable handle, identifies this connection to the device.
+            let ble = match dev.borrow_mut().on_ble_connect(now(), id) {
+                Ok((ble, fx)) => {
+                    log(fx);
+                    ble
+                }
                 Err(_) => {
                     conn.raw().disconnect();
                     continue;
                 }
-            }
+            };
             logger::emit(Event::Ble {
                 id,
                 mtu: Some(conn.raw().att_mtu()),
@@ -397,12 +428,20 @@ async fn main(_spawner: Spawner) -> ! {
             loop {
                 match select3(
                     conn.next(),
-                    until(|| !dev.borrow().ble_owns(id)),
+                    until(|| !dev.borrow().ble_owns(ble)),
                     tick.next(),
                 )
                 .await
                 {
                     Either3::First(GattConnectionEvent::Disconnected { .. }) => break,
+                    Either3::First(GattConnectionEvent::Gatt {
+                        event: GattEvent::Read(r),
+                    }) => {
+                        let _ = conn.set(&server.rovi.status, &dev.borrow().ble_status());
+                        if let Ok(reply) = r.accept() {
+                            reply.send().await;
+                        }
+                    }
                     Either3::First(GattConnectionEvent::Gatt {
                         event: GattEvent::Write(w),
                     }) => {
@@ -417,8 +456,9 @@ async fn main(_spawner: Spawner) -> ! {
                                     0
                                 }
                             });
-                            let fx = dev.borrow_mut().on_ble_setpoint(now(), id, &data[..n]);
+                            let fx = dev.borrow_mut().on_ble_setpoint(now(), ble, &data[..n]);
                             log(fx);
+                            let _ = conn.set(&server.rovi.status, &dev.borrow().ble_status());
                             if let Ok(reply) = w.accept() {
                                 reply.send().await;
                             }
@@ -439,11 +479,11 @@ async fn main(_spawner: Spawner) -> ! {
                                 let _ = server.rovi.echo.notify_raw(&conn, &data[..n], false).await;
                             }
                         } else if handle == server.rovi.control.handle {
-                            let cmd =
-                                w.with_data(|off, b| (off == 0 && b.len() == 1).then(|| b[0]));
-                            let res = cmd
-                                .ok_or(Error::Invalid)
-                                .and_then(|c| dev.borrow_mut().on_ble_control(now(), id, c));
+                            let cmd = w.with_data(
+                                |off, b| if off == 0 && b.len() == 1 { b[0] } else { 0 },
+                            );
+                            let res = dev.borrow_mut().on_ble_control(now(), ble, cmd);
+                            let _ = conn.set(&server.rovi.status, &dev.borrow().ble_status());
                             match res {
                                 Ok(fx) => {
                                     log(fx);
@@ -459,6 +499,11 @@ async fn main(_spawner: Spawner) -> ! {
                             }
                         }
                     }
+                    Either3::First(GattConnectionEvent::Gatt { event }) => {
+                        // Other ATT reads also use the current value before their default reply.
+                        let _ = conn.set(&server.rovi.status, &dev.borrow().ble_status());
+                        drop(event);
+                    }
                     Either3::First(_) => {}
                     Either3::Second(()) => {
                         conn.raw().disconnect();
@@ -471,15 +516,16 @@ async fn main(_spawner: Spawner) -> ! {
                             mtu_seen = mtu;
                             logger::emit(Event::Mtu { id, mtu });
                         }
-                        let status = dev.borrow().ble_status();
-                        if status != last_status {
-                            last_status = status;
-                            let _ = server.rovi.status.notify(&conn, &status, true).await;
-                        }
                     }
                 }
+                let status = dev.borrow().ble_status();
+                let _ = conn.set(&server.rovi.status, &status);
+                if status != last_status {
+                    last_status = status;
+                    let _ = server.rovi.status.notify(&conn, &status, true).await;
+                }
             }
-            let fx = dev.borrow_mut().on_ble_disconnect(now(), id);
+            let fx = dev.borrow_mut().on_ble_disconnect(now(), ble);
             log(fx);
             logger::emit(Event::Ble { id, mtu: None });
         }
@@ -497,29 +543,16 @@ async fn main(_spawner: Spawner) -> ! {
         loop {
             Timer::after_millis(10).await;
             let at = now();
-            let (fx, state, wheels) = {
+            // The device's timers, then the motor pins (rovi-drive): a stop reaches STBY in the
+            // tick that processes it, and a motor fault raises an out-of-limits stop.
+            let (tick, state, wheels) = {
                 let mut d = dev.borrow_mut();
-                let fx = d.tick(at);
-                (fx, d.arbiter().state(), d.wheels(at))
+                let tick = drive.tick(&mut d, at);
+                (tick, d.arbiter().state(), d.wheels(at))
             };
-            log(fx);
-            // Only this loop touches the motor pins: STBY drops before the bridges change and
-            // rises after them.
-            let out = motor::output(&MOTOR, &CHANNELS, state, wheels);
-            if !out.standby_high {
-                stby.iter_mut().for_each(|p| p.set_low());
-            }
-            let b = out.bridges;
-            pwm_1a.set_timestamp(b[0].duty_pm);
-            pwm_1b.set_timestamp(b[1].duty_pm);
-            pwm_2a.set_timestamp(b[2].duty_pm);
-            pwm_2b.set_timestamp(b[3].duty_pm);
-            for ((in1, in2), bridge) in dirs.iter_mut().zip(b) {
-                in1.set_level(Level::from(bridge.in1));
-                in2.set_level(Level::from(bridge.in2));
-            }
-            if out.standby_high {
-                stby.iter_mut().for_each(|p| p.set_high());
+            log(tick.effects);
+            if let Some(f) = tick.fault {
+                logger::emit(Event::Fault(f));
             }
             rtc.rwdt.feed();
             if (state, wheels) != last {

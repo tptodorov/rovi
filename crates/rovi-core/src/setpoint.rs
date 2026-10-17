@@ -23,6 +23,10 @@ pub enum DecodeError {
     Truncated,
     BadEncapsulation,
     BadFrameId,
+    /// A valid `frame_id` other than empty or `base_link`: the car does not transform frames.
+    UnsupportedFrame,
+    /// `nanosec` is not in `0..=999_999_999`.
+    BadStamp,
     /// `linear.z`, `angular.x` or `angular.y` is not zero.
     OutOfPlane,
     NotFinite,
@@ -47,6 +51,15 @@ impl Setpoint {
         let slen = u32::from_le_bytes(body[8..12].try_into().unwrap()) as usize;
         if slen == 0 || slen > MAX_FRAME_ID + 1 || body.len() < 12 + slen || body[11 + slen] != 0 {
             return Err(DecodeError::BadFrameId);
+        }
+        // Empty means `base_link`; the car does not transform frames, so any other is refused.
+        let frame =
+            core::str::from_utf8(&body[12..11 + slen]).map_err(|_| DecodeError::BadFrameId)?;
+        if !(frame.is_empty() || frame == "base_link") {
+            return Err(DecodeError::UnsupportedFrame);
+        }
+        if nanosec > 999_999_999 {
+            return Err(DecodeError::BadStamp);
         }
         let twist = (12 + slen).next_multiple_of(8);
         if body.len() < twist + 48 {
@@ -88,7 +101,7 @@ impl Setpoint {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     // Captured from ROS 2 Jazzy (rmw_zenoh_cpp 0.2.10) `ros2 topic pub`. Padding bytes are not
@@ -212,5 +225,82 @@ mod tests {
             wz: 0.0,
         };
         assert_eq!(sp.encode(&mut [0u8; MIN_LEN - 1]), None);
+    }
+
+    /// A TwistStamped with `frame_id` = `frame` (no NUL) and `vx`; other components zero.
+    pub(crate) fn with_frame(frame: &[u8], nanosec: u32, vx: f64) -> std::vec::Vec<u8> {
+        let mut b = std::vec::Vec::from(ENCAPSULATION);
+        b.extend_from_slice(&7i32.to_le_bytes());
+        b.extend_from_slice(&nanosec.to_le_bytes());
+        b.extend_from_slice(&(frame.len() as u32 + 1).to_le_bytes());
+        b.extend_from_slice(frame);
+        b.push(0);
+        while (b.len() - 4) % 8 != 0 {
+            b.push(0);
+        }
+        for v in [vx, 0.0, 0.0, 0.0, 0.0, 0.0] {
+            b.extend_from_slice(&v.to_le_bytes());
+        }
+        b
+    }
+
+    #[test]
+    fn empty_and_base_link_frames_are_accepted() {
+        for frame in [&b""[..], b"base_link"] {
+            assert_eq!(
+                Setpoint::decode(&with_frame(frame, 0, 0.5)).map(|s| s.vx),
+                Ok(0.5)
+            );
+        }
+    }
+
+    #[test]
+    fn other_frames_are_rejected() {
+        for frame in [&b"map"[..], b"odom", b"base_link2", b"Base_link"] {
+            assert_eq!(
+                Setpoint::decode(&with_frame(frame, 0, 0.5)),
+                Err(DecodeError::UnsupportedFrame),
+                "{}",
+                core::str::from_utf8(frame).unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn a_frame_id_that_is_not_utf8_is_malformed() {
+        assert_eq!(
+            Setpoint::decode(&with_frame(b"base\xff", 0, 0.5)),
+            Err(DecodeError::BadFrameId)
+        );
+    }
+
+    #[test]
+    fn a_64_byte_frame_id_is_in_bounds_and_65_is_not() {
+        let at_limit = [b'x'; MAX_FRAME_ID];
+        assert_eq!(
+            Setpoint::decode(&with_frame(&at_limit, 0, 0.5)),
+            Err(DecodeError::UnsupportedFrame),
+            "well formed, just not a supported frame"
+        );
+        let over = [b'x'; MAX_FRAME_ID + 1];
+        assert_eq!(
+            Setpoint::decode(&with_frame(&over, 0, 0.5)),
+            Err(DecodeError::BadFrameId)
+        );
+    }
+
+    #[test]
+    fn nanoseconds_must_be_below_one_second() {
+        assert!(Setpoint::decode(&with_frame(b"", 999_999_999, 0.5)).is_ok());
+        assert_eq!(
+            Setpoint::decode(&with_frame(b"", 1_000_000_000, 0.5)),
+            Err(DecodeError::BadStamp)
+        );
+    }
+
+    #[test]
+    fn an_old_or_zero_stamp_is_accepted() {
+        // The stamp is not a freshness clock: receive time governs the lease.
+        assert!(Setpoint::decode(&with_frame(b"", 0, 0.5)).is_ok());
     }
 }

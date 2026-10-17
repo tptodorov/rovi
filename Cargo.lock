@@ -17,6 +17,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rovi-drive"
+version = "0.1.0"
+dependencies = [
+ "rovi-core",
+ "rovi-motor-control",
+]
+
+[[package]]
 name = "rovi-motor-control"
 version = "0.1.0"
 

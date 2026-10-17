@@ -39,7 +39,7 @@ class Client:
         q = self.seq if seq is None else seq
         self.s.sendto(b"RV\x01" + bytes([kind]) + struct.pack("<II", s, q) + payload, (HOST, PORT))
 
-    def recv(self):
+    def recv(self, expected_seq=None):
         car, deadline = (socket.gethostbyname(HOST), PORT), time.monotonic() + 0.15
         while True:  # only the car's replies count; a reused ephemeral port can catch strays (e.g. a late DNS reply)
             self.s.settimeout(max(deadline - time.monotonic(), 1e-3))
@@ -47,21 +47,25 @@ class Client:
                 d, frm = self.s.recvfrom(1500)
             except socket.timeout:
                 return None
-            if frm == car:
-                break
-        assert d[:3] == b"RV\x01", d
-        return d[3], struct.unpack("<II", d[4:12])[0], d[12:]
+            if frm != car:
+                continue
+            assert d[:3] == b"RV\x01", d
+            session, seq = struct.unpack("<II", d[4:12])
+            if expected_seq is None or seq == expected_seq:
+                return d[3], session, d[12:]
+            if time.monotonic() >= deadline:
+                return None
 
     def hello(self):
         self.send(HELLO)
-        r = self.recv()
+        r = self.recv(expected_seq=self.seq)
         if r and r[0] == ACK:
             self.session = r[1]
         return r
 
     def status(self, kind):
         self.send(kind)
-        r = self.recv()
+        r = self.recv(expected_seq=self.seq)
         assert r and r[0] == STATUS, r
         return tuple(r[2])  # (state, reason, error)
 
@@ -138,12 +142,57 @@ class Scenarios(unittest.TestCase):
         self.drive(self.a)
         self.assertEqual(self.a.status(ARM), (2, 0, 0), "same owner re-arms inside the reclaim window")
 
+    def test_lease_stop_is_pushed_to_the_owner_without_a_request(self):
+        self.a.hello(); self.drive(self.a); self.a.status(ARM)
+        end = time.monotonic() + LEASE / 1000 + 0.5
+        reply = None
+        while reply is None and time.monotonic() < end:
+            reply = self.a.recv()
+        self.assertEqual(reply, (STATUS, self.a.session, bytes([3, 2, 0])))
+        self.assertIsNone(self.b.recv(), "only the owner gets the transition")
+
+    def test_control_reply_is_correlated_after_a_queued_stop_notification(self):
+        self.a.hello(); self.drive(self.a); self.a.status(ARM)
+        time.sleep(LEASE / 1000 + 0.1)
+        self.assertEqual(self.a.status(ARM), (3, 2, 3), "refused ARM, not the earlier transition")
+
     def test_owner_released_after_reclaim_window_and_session_changes(self):
         _, s1, _ = self.a.hello(); self.drive(self.a); self.a.status(ARM)
         time.sleep((LEASE + RECLAIM) / 1000 + 0.2)
         self.assertEqual(self.b.hello()[:2], (ACK, s1 + 1))
         self.a.send(SETPOINT, cdr(0.5), session=s1)  # old session is never valid again
-        self.assertIsNone(self.a.recv())
+        self.assertIsNone(self.a.recv(expected_seq=self.a.seq))
+
+    def test_repeated_stop_needs_a_later_setpoint(self):
+        self.a.hello(); self.drive(self.a); self.a.status(ARM)
+        self.assertEqual(self.a.status(STOP), (3, 1, 0))
+        self.drive(self.a)
+        self.assertEqual(self.a.status(STOP), (3, 1, 0))
+        self.assertEqual(self.a.status(ARM), (3, 1, 3), "setpoint must follow the latest STOP")
+        self.drive(self.a)
+        self.assertEqual(self.a.status(ARM), (2, 0, 0))
+
+    def test_stale_oversized_setpoints_do_not_stop_or_renew(self):
+        self.a.hello(); self.drive(self.a)
+        accepted = self.a.seq
+        self.assertEqual(self.a.status(ARM), (2, 0, 0))
+        end = time.monotonic() + LEASE / 1000 + 0.15
+        while time.monotonic() < end:
+            for seq in (accepted, accepted - 1):
+                self.a.send(SETPOINT, cdr(9.0), seq=seq)
+            time.sleep(0.03)
+        self.saw(ev("stop", reason="LeaseExpired"))
+
+    def test_resuming_a_stopped_stream_retains_ownership(self):
+        self.a.hello(); self.drive(self.a); self.a.status(ARM)
+        self.assertEqual(self.a.status(STOP), (3, 1, 0))
+        time.sleep(LEASE / 1000 + 0.1)  # enter reclaim before resuming the stream
+        end = time.monotonic() + RECLAIM / 1000 + 0.2
+        while time.monotonic() < end:
+            self.drive(self.a)
+            time.sleep(0.02)
+        self.assertEqual(self.b.hello()[0], BUSY, "a live stopped owner keeps the car")
+        self.assertEqual(self.a.status(ARM), (2, 0, 0), "same session can explicitly resume")
 
     def test_claim_window_expires_if_owner_stays_silent(self):
         self.a.hello()

@@ -103,21 +103,54 @@ pub struct Arbiter {
     reclaim_until: Option<u64>,
     /// After a STOP or an out-of-limits setpoint, arming needs a setpoint sent after it.
     fresh_needed: bool,
+    /// Transitions into `Armed`, wrapping.
+    arms: u32,
 }
 
 impl Arbiter {
     pub fn new(cfg: Config) -> Self {
+        Self::seeded(cfg, 0)
+    }
+
+    /// Session IDs start after `seed` (random per boot in the apps).
+    pub fn seeded(cfg: Config, seed: u32) -> Self {
         Self {
             cfg,
             state: State::Open,
             owner: None,
-            session: 0,
+            session: seed,
             last_seq: None,
             latest: None,
             lease_until: None,
             deadline: 0,
             reclaim_until: None,
             fresh_needed: false,
+            arms: 0,
+        }
+    }
+
+    /// How many times the device has been armed (wrapping). A repeated ARM while armed does not
+    /// count, so a change means a new arming even if a stop came and went between two reads.
+    pub fn arm_count(&self) -> u32 {
+        self.arms
+    }
+
+    /// A fault below the device (motor control): latches an out-of-limits stop while owned, so
+    /// resuming needs a fresh setpoint and an explicit arm, and ROS does not arm it on its own.
+    pub fn fault_stop(&mut self, now: u64) -> Effects {
+        match self.state {
+            State::Open | State::Stopped(StopReason::OutOfLimits) => Effects::default(),
+            // Already stopped for another reason: keep its lease and reclaim timing, but latch
+            // the fault so no stream can arm it again.
+            State::Stopped(_) => {
+                self.state = State::Stopped(StopReason::OutOfLimits);
+                self.fresh_needed = true;
+                Effects {
+                    stop: Some(StopReason::OutOfLimits),
+                    ..Effects::default()
+                }
+            }
+            State::Claimed | State::Armed => self.stop_with(now, StopReason::OutOfLimits),
         }
     }
 
@@ -129,7 +162,9 @@ impl Arbiter {
         self.state
     }
 
-    /// The current owner's session, incremented on every claim. 0 before the first claim.
+    /// The current owner's session, incremented on every claim and never 0 once claimed. It
+    /// separates a client's stale packets from a newer session; it is not authentication and
+    /// does not stop a deliberate replay (ADR-0008: the AP's WPA2 is the access control).
     pub fn session(&self) -> u32 {
         self.session
     }
@@ -139,7 +174,10 @@ impl Arbiter {
             Some(owner) if owner == who => Ok(Effects::default()),
             Some(_) => Err(Error::Busy),
             None => {
-                self.session += 1;
+                self.session = match self.session.wrapping_add(1) {
+                    0 => 1,
+                    s => s,
+                };
                 self.owner = Some(who);
                 self.state = State::Claimed;
                 self.last_seq = None;
@@ -162,10 +200,15 @@ impl Arbiter {
             return Err(Error::NotReady);
         }
         self.reclaim_until = None;
+        if self.state != State::Armed {
+            self.arms = self.arms.wrapping_add(1);
+        }
         self.state = State::Armed;
         Ok(())
     }
 
+    /// A BLE/UDP setpoint with the session's u32 sequence: applied only if `seq` is newer than
+    /// the last one in serial order (ahead by 1 to 2^31 - 1, so it survives the wrap).
     pub fn setpoint(
         &mut self,
         now: u64,
@@ -174,22 +217,40 @@ impl Arbiter {
         sp: Setpoint,
     ) -> Result<(Applied, Effects), Error> {
         self.check_owner(who)?;
-        if self.last_seq.is_some_and(|last| seq <= last) {
+        if self.last_seq.is_some_and(|last| !newer(seq, last)) {
             return Ok((Applied::Stale, Effects::default()));
         }
         self.last_seq = Some(seq);
-        let within = sp.vx.abs() <= self.cfg.max_vx
-            && sp.vy.abs() <= self.cfg.max_vy
-            && sp.wz.abs() <= self.cfg.max_wz;
-        let fx = if !within {
+        Ok((Applied::Applied, self.apply(now, sp)))
+    }
+
+    /// A setpoint the caller has already ordered (ROS: per publisher, `Device`). Samples from
+    /// different publishers are taken in the order they arrive.
+    pub fn setpoint_ordered(
+        &mut self,
+        now: u64,
+        who: Claimant,
+        sp: Setpoint,
+    ) -> Result<Effects, Error> {
+        self.check_owner(who)?;
+        Ok(self.apply(now, sp))
+    }
+
+    fn apply(&mut self, now: u64, sp: Setpoint) -> Effects {
+        if !self.within_limits(&sp) {
             self.stop_with(now, StopReason::OutOfLimits)
         } else {
             self.latest = Some(sp);
             self.lease_until = Some(now + self.cfg.lease_ms);
             self.fresh_needed = false;
+            if matches!(
+                self.state,
+                State::Stopped(StopReason::Stop | StopReason::OutOfLimits)
+            ) {
+                self.reclaim_until = None;
+            }
             Effects::default()
-        };
-        Ok((Applied::Applied, fx))
+        }
     }
 
     pub fn stop(&mut self, now: u64, who: Claimant) -> Result<Effects, Error> {
@@ -229,6 +290,13 @@ impl Arbiter {
             .flatten()
     }
 
+    /// Is every component within its capability limit?
+    pub fn within_limits(&self, sp: &Setpoint) -> bool {
+        sp.vx.abs() <= self.cfg.max_vx
+            && sp.vy.abs() <= self.cfg.max_vy
+            && sp.wz.abs() <= self.cfg.max_wz
+    }
+
     pub fn check_owner(&self, who: Claimant) -> Result<(), Error> {
         if self.owner == Some(who) {
             Ok(())
@@ -241,11 +309,11 @@ impl Arbiter {
         self.lease_until.is_some_and(|t| now < t)
     }
 
-    /// Latches a safety stop and keeps the owner. No effect if already stopped.
+    /// Latches a safety stop and keeps the owner. A new STOP always needs a later setpoint;
+    /// changing the reason while stopped must not extend the reclaim window.
     fn stop_with(&mut self, now: u64, reason: StopReason) -> Effects {
-        if matches!(self.state, State::Stopped(_)) {
-            return Effects::default();
-        }
+        let already_stopped = matches!(self.state, State::Stopped(_));
+        let changed = self.state != State::Stopped(reason);
         self.state = State::Stopped(reason);
         self.latest = None;
         match reason {
@@ -256,12 +324,14 @@ impl Arbiter {
             }
             // The owner is still there: the window starts only if its lease lapses.
             StopReason::Stop | StopReason::OutOfLimits => {
-                self.reclaim_until = None;
+                if !already_stopped {
+                    self.reclaim_until = None;
+                }
                 self.fresh_needed = true;
             }
         }
         Effects {
-            stop: Some(reason),
+            stop: changed.then_some(reason),
             ..Effects::default()
         }
     }
@@ -307,6 +377,12 @@ impl Arbiter {
         self.reclaim_until = None;
         self.fresh_needed = false;
     }
+}
+
+/// Serial number order for u32: `seq` is newer than `last` if it is ahead by 1 to 2^31 - 1.
+/// Equal and exactly half the range away are not newer.
+fn newer(seq: u32, last: u32) -> bool {
+    (1..1 << 31).contains(&seq.wrapping_sub(last))
 }
 
 #[cfg(test)]
@@ -592,5 +668,208 @@ mod tests {
         a.setpoint(12, PHONE, 2, sp(0.2)).unwrap();
         a.arm(12, PHONE).unwrap();
         assert_eq!(a.drive(12), Some(sp(0.2)));
+    }
+
+    #[test]
+    fn arm_count_counts_each_arming_once() {
+        let mut a = armed();
+        assert_eq!(a.arm_count(), 1);
+        a.arm(1, PHONE).unwrap();
+        assert_eq!(
+            a.arm_count(),
+            1,
+            "a repeated ARM while armed is not a new arming"
+        );
+        a.stop(2, PHONE).unwrap();
+        a.setpoint(3, PHONE, 2, sp(0.5)).unwrap();
+        a.arm(3, PHONE).unwrap();
+        assert_eq!(a.arm_count(), 2, "stop and re-arm is a new arming");
+    }
+
+    #[test]
+    fn a_fault_stop_latches_out_of_limits_until_a_fresh_setpoint_and_arm() {
+        let mut a = armed();
+        assert_eq!(a.fault_stop(10).stop, Some(StopReason::OutOfLimits));
+        assert_eq!(a.state(), State::Stopped(StopReason::OutOfLimits));
+        assert_eq!(a.drive(10), None);
+        assert_eq!(
+            a.arm(20, PHONE),
+            Err(Error::NotReady),
+            "needs a fresh setpoint"
+        );
+        a.setpoint(30, PHONE, 2, sp(0.5)).unwrap();
+        assert_eq!(a.arm(30, PHONE), Ok(()));
+        assert_eq!(a.fault_stop(40).stop, Some(StopReason::OutOfLimits));
+        assert_eq!(a.fault_stop(50), Effects::default(), "already latched");
+    }
+
+    #[test]
+    fn a_fault_stop_overrides_an_earlier_stop_reason() {
+        let mut a = armed();
+        assert_eq!(a.tick(1_000).stop, Some(StopReason::LeaseExpired));
+        assert_eq!(a.fault_stop(1_010).stop, Some(StopReason::OutOfLimits));
+        assert_eq!(a.state(), State::Stopped(StopReason::OutOfLimits));
+    }
+
+    #[test]
+    fn a_fault_stop_without_an_owner_does_nothing() {
+        let mut a = Arbiter::new(CFG);
+        assert_eq!(a.fault_stop(0), Effects::default());
+        assert_eq!(a.state(), State::Open);
+    }
+
+    // Deadline boundaries: the deadline itself counts as passed (`now >= deadline`), and a tick
+    // after it changes nothing more. With the 10 ms control tick that is within lease + 10 ms.
+
+    #[test]
+    fn claim_window_boundary() {
+        let mut a = Arbiter::new(CFG);
+        a.claim(0, PHONE).unwrap();
+        assert!(!a.tick(9_999).released, "deadline - 1");
+        assert!(a.tick(10_000).released, "deadline");
+        assert_eq!(a.tick(10_001), Effects::default(), "deadline + 1");
+        assert_eq!(a.state(), State::Open);
+    }
+
+    #[test]
+    fn lease_boundary() {
+        let mut a = armed(); // setpoint at 0, lease 1000 ms
+        assert_eq!(a.tick(999).stop, None, "deadline - 1");
+        assert_eq!(a.drive(999).map(|s| s.vx), Some(0.5));
+        assert_eq!(
+            a.tick(1_000).stop,
+            Some(StopReason::LeaseExpired),
+            "deadline"
+        );
+        assert_eq!(a.drive(1_000), None);
+        assert_eq!(a.tick(1_001), Effects::default(), "deadline + 1");
+    }
+
+    #[test]
+    fn reclaim_window_boundary_after_a_lease_expiry() {
+        let mut a = armed();
+        a.tick(1_000); // the window starts at once: until 6000
+        assert!(!a.tick(5_999).released, "deadline - 1");
+        assert!(a.tick(6_000).released, "deadline");
+        assert_eq!(a.tick(6_001), Effects::default(), "deadline + 1");
+    }
+
+    #[test]
+    fn reclaim_window_boundary_after_a_quiet_owners_stop() {
+        let mut a = armed();
+        a.stop(10, PHONE).unwrap(); // the owner is quiet; its lease lapses at 1000
+        assert!(!a.tick(999).released);
+        a.tick(1_000); // the window starts when the lease lapses: until 6000
+        assert!(!a.tick(5_999).released, "deadline - 1");
+        assert!(a.tick(6_000).released, "deadline");
+        assert_eq!(a.tick(6_001), Effects::default(), "deadline + 1");
+    }
+
+    // Sequence domains: BLE/UDP use u32 serial ordering (RFC 1982 style).
+
+    /// Is `seq` applied after `last`? The arbiter is armed, so an applied setpoint drives.
+    fn applies(last: u32, seq: u32) -> bool {
+        let mut a = Arbiter::new(CFG);
+        a.claim(0, PHONE).unwrap();
+        a.setpoint(0, PHONE, last, sp(0.1)).unwrap();
+        a.setpoint(1, PHONE, seq, sp(0.2)).unwrap().0 == Applied::Applied
+    }
+
+    #[test]
+    fn a_wrapped_sequence_is_newer() {
+        assert!(applies(u32::MAX, 0), "0 follows 4294967295");
+        let mut a = Arbiter::new(CFG);
+        a.claim(0, PHONE).unwrap();
+        a.setpoint(0, PHONE, u32::MAX, sp(0.1)).unwrap();
+        a.setpoint(1, PHONE, 0, sp(0.2)).unwrap();
+        assert_eq!(
+            a.setpoint(2, PHONE, u32::MAX, sp(0.3)).unwrap().0,
+            Applied::Stale
+        );
+    }
+
+    #[test]
+    fn newer_means_up_to_half_the_range_ahead() {
+        assert!(applies(0, 1));
+        assert!(applies(0, (1 << 31) - 1), "half range - 1 is newer");
+        assert!(!applies(0, 1 << 31), "exactly half range is dropped");
+        assert!(!applies(0, u32::MAX), "behind by one");
+        assert!(!applies(7, 7), "equal");
+        assert!(applies(u32::MAX - 5, 10), "across the wrap");
+    }
+
+    // New session allocation.
+
+    #[test]
+    fn sessions_start_after_the_boot_seed_and_count_up() {
+        let mut a = Arbiter::seeded(CFG, 41);
+        a.claim(0, PHONE).unwrap();
+        assert_eq!(a.session(), 42);
+        a.release(1, PHONE).unwrap();
+        a.claim(2, LAPTOP).unwrap();
+        assert_eq!(a.session(), 43);
+    }
+
+    #[test]
+    fn a_session_id_is_never_zero() {
+        let mut a = Arbiter::seeded(CFG, u32::MAX);
+        a.claim(0, PHONE).unwrap();
+        assert_eq!(a.session(), 1, "the wrap skips 0");
+    }
+
+    #[test]
+    fn a_repeated_stop_needs_a_setpoint_after_the_latest_stop() {
+        let mut a = armed();
+        a.stop(10, PHONE).unwrap();
+        a.setpoint(11, PHONE, 2, sp(0.2)).unwrap();
+        a.stop(12, PHONE).unwrap();
+        assert_eq!(a.arm(13, PHONE), Err(Error::NotReady));
+        a.setpoint(14, PHONE, 3, sp(0.2)).unwrap();
+        a.arm(15, PHONE).unwrap();
+        assert_eq!(a.drive(15), Some(sp(0.2)));
+    }
+
+    #[test]
+    fn a_latched_owner_resuming_setpoints_cancels_the_reclaim_deadline() {
+        for reason in [StopReason::Stop, StopReason::OutOfLimits] {
+            let mut a = armed();
+            let session = a.session();
+            if reason == StopReason::Stop {
+                a.stop(10, PHONE).unwrap();
+            } else {
+                a.setpoint(10, PHONE, 2, sp(9.0)).unwrap();
+            }
+            a.tick(1_000); // A quiet owner enters reclaim until t=6,000.
+            for (seq, now) in (3..).zip((1_500..=6_500).step_by(500)) {
+                a.setpoint(now, PHONE, seq, sp(0.2)).unwrap();
+                assert!(
+                    !a.tick(now).released,
+                    "streaming owner retained after {reason:?}"
+                );
+                assert_eq!(a.state(), State::Stopped(reason));
+                assert_eq!(a.drive(now), None, "only explicit ARM clears this latch");
+            }
+            assert_eq!(a.session(), session);
+            a.tick(7_500); // Quiet again: a new reclaim window begins.
+            assert!(!a.tick(12_499).released);
+            assert!(a.tick(12_500).released);
+        }
+    }
+
+    #[test]
+    fn changing_stop_reasons_does_not_extend_the_reclaim_window() {
+        for reason in [StopReason::Stop, StopReason::OutOfLimits] {
+            let mut a = armed();
+            a.tick(1_000); // Reclaim ends at t=6,000.
+            if reason == StopReason::Stop {
+                a.stop(5_999, PHONE).unwrap();
+                a.stop(5_999, PHONE).unwrap();
+            } else {
+                a.setpoint(5_999, PHONE, 2, sp(9.0)).unwrap();
+                a.setpoint(5_999, PHONE, 3, sp(9.0)).unwrap();
+            }
+            assert_eq!(a.state(), State::Stopped(reason));
+            assert!(a.tick(6_000).released);
+        }
     }
 }

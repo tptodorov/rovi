@@ -1,0 +1,4 @@
+== connection 1: vx 0.1, 3 s, STOP, disconnect
+sent 60 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, error=None), Status(state='Stopped', reason='Stop', error=None)]
+== connection 2: vx 0.1, 3 s, STOP
+sent 60 setpoints; statuses: [Status(state='Claimed', reason=None, error=None), Status(state='Armed', reason=None, error=None), Status(state='Stopped', reason='Stop', error=None)]

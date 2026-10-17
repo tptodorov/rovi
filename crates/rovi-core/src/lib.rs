@@ -4,11 +4,12 @@
 extern crate std;
 
 pub mod arbiter;
+pub mod capabilities;
 pub mod device;
 pub mod events;
 pub mod graph;
 pub mod kinematics;
-pub mod motor;
 pub mod rmw;
 pub mod setpoint;
+pub mod status;
 pub mod udp;

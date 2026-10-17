@@ -16,6 +16,7 @@ See [proposal](proposal.md) for scope and evidence. M8 has a host-tested `no_std
 Cargo.toml                      workspace: reusable no_std crates only
 crates/rovi-core/                codecs, arbiter, geometry, graph, device
 crates/rovi-motor-control/       configuration, mapping, enable/fault state
+crates/rovi-drive/               coordinator: device state → motor control, fault → device stop
 apps/simcar/                    separate workspace/lockfile; host adapters
 firmware/                      separate workspace/lockfile; ESP32 adapters
 experiments/                   retained standalone bench reference
@@ -25,7 +26,9 @@ Exclude `apps/simcar`, `firmware` and the existing experimental packages from th
 
 Copy the working core and tests into the product crates, preserving source history through the extraction commit. Experiments stay independently buildable and frozen as evidence; subsequent product fixes live in the product crates. This bounded duplication preserves rollback and avoids silently changing the firmware used to obtain old results. After product acceptance, archive the experiments as references rather than maintaining two active implementations.
 
-`rovi-core` returns normalized wheel demands and state effects. It does not import the motor driver or HAL. `rovi-motor-control` has no dependency on the arbiter, kinematics or transports. The application coordinator connects them. A small output boundary exposes standby and bridge updates to the ESP implementation or a recording test double; no generic robotics framework is needed. Both crates build without `std`; application tests exercise their integration.
+`rovi-core` returns normalized wheel demands and state effects. It does not import the motor driver or HAL. `rovi-motor-control` has no dependency on the arbiter, kinematics or transports. The coordinator, `rovi-drive` (2026-10-17), connects them; it depends on both, so the integration and fault-injection tests run on the laptop, which a coordinator inside the ESP32-only firmware would not allow. A small output boundary (`rovi_motor_control::Driver`: STBY per driver, pins per bridge) exposes standby and bridge updates to the ESP implementation or a recording test double; no generic robotics framework is needed. All three crates build without `std`.
+
+`Drive::tick(&mut Device, now)` runs every control tick: the device's timers first, then the motors. A change of the arbiter's `arm_count` is the only enable operation, so a STOP and re-ARM between two ticks still drops STBY first; while armed it updates the bridges, otherwise it puts both drivers in standby. It returns the device `Effects` and the tick's motor fault as an `events::Fault` (`ev=error src=motor_*`); `Drive::motor().fault()` gives the typed detail.
 
 ### Configuration and fault boundary
 
@@ -49,9 +52,9 @@ BLE disconnect and UDP BYE release their owning session. A detected ROS router d
 
 Use shared typed capabilities/status snapshots; adapters serialize the same values. Preserve existing BLE/UDP frame layouts and numeric status codes. Implement persistent last-control-error state for every transport, not only BLE. BLE refreshes its readable value synchronously with changes; UDP sends its existing STATUS frame on owner control replies and stop transitions. Release leaves the externally readable state open; owner-lost is also recorded as a stop event, not a persistent stopped state with no owner.
 
-ROS uses bounded CDR strings and the exact key/units contract in the spec. Publish status on snapshot changes and once per second; `session=0` denotes no owner. No measured velocity field is added.
+ROS uses bounded CDR strings and the exact key/units contract in the spec. Both ROS adapters compare the shared `Status` snapshot every 10 ms and publish observed changes plus a 900 ms heartbeat; reconnect resets the publication schedule. `session=0` denotes no owner. BLE refreshes the GATT value before reads and after control/setpoint writes, then notifies changes. UDP adapters poll for pending owner stop notifications even without incoming datagrams; unsolicited STATUS uses sequence 0, direct replies echo the request sequence. No measured velocity field is added.
 
-First try reliable/transient-local/depth-1 capabilities and verify a late subscriber against Jazzy. If the fork cannot serve history, select reliable/volatile/depth-1 with a one-second publish period and publish on claim, release and reconnect. Document compatible subscriber QoS. This is a predetermined fallback, not permission to advertise retained history that is unavailable. O9 is closed by that laptop result. Transport disconnection can delay delivery; publication schedules are not guarantees during packet loss or an unavailable router.
+O9 closed on 2026-10-17: the pinned ordinary publisher did not serve retained history to a late Jazzy transient-local subscriber; the same subscriber received its later live sample ([evidence](../../../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md)). Use the approved reliable/volatile/depth-1 fallback. `capabilities::Publication` publishes every 900 ms (headroom under one second) and on observed session/owner changes; each new router connection starts a fresh schedule. Both adapters poll it every 10 ms and serialize `Device::capabilities_snapshot()` through the same bounded CDR encoder. Controllers subscribe with volatile durability. Transport disconnection can delay delivery; publication schedules are not guarantees during packet loss or an unavailable router.
 
 ### Compatibility changes to verify
 

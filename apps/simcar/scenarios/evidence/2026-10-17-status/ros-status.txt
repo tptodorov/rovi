@@ -1,0 +1,27 @@
+ 0.0 state=open reason=none error=none session=0
+ 0.0 state=open reason=none error=none session=0
+ 0.0 state=armed reason=none error=none session=2141122893
+ 0.9 state=armed reason=none error=none session=2141122893
+ 1.8 state=armed reason=none error=none session=2141122893
+ 2.7 state=armed reason=none error=none session=2141122893
+ 3.0 state=stopped reason=stop error=none session=2141122893
+ 3.2 state=stopped reason=stop error=not-ready session=2141122893
+ 4.1 state=stopped reason=stop error=not-ready session=2141122893
+ 4.5 state=armed reason=none error=none session=2141122893
+ 5.4 state=armed reason=none error=none session=2141122893
+ 6.3 state=armed reason=none error=none session=2141122893
+ 6.5 state=stopped reason=lease-expired error=none session=2141122893
+ 7.0 state=stopped reason=out-of-limits error=none session=2141122893
+ 8.0 state=stopped reason=out-of-limits error=none session=2141122893
+ 8.9 state=stopped reason=out-of-limits error=none session=2141122893
+ 9.0 state=armed reason=none error=none session=2141122893
+ 9.9 state=armed reason=none error=none session=2141122893
+10.8 state=armed reason=none error=none session=2141122893
+11.0 state=stopped reason=lease-expired error=none session=2141122893
+11.9 state=stopped reason=lease-expired error=none session=2141122893
+12.8 state=stopped reason=lease-expired error=none session=2141122893
+13.7 state=stopped reason=lease-expired error=none session=2141122893
+14.6 state=stopped reason=lease-expired error=none session=2141122893
+15.5 state=stopped reason=lease-expired error=none session=2141122893
+16.0 state=open reason=none error=none session=0
+16.9 state=open reason=none error=none session=0

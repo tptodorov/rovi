@@ -30,8 +30,32 @@ check grep -q "ev=released" <<<"$stock"
 check grep -q "ev=claimed source=Ros" /tmp/rovi-sim.log
 check grep -q "wheels_pm=500,500,500,500" /tmp/rovi-sim.log
 check grep -q "ev=stop reason=Stop" /tmp/rovi-sim.log
+check grep -q "ev=stop reason=OutOfLimits" /tmp/rovi-sim.log
 check grep -q "state=armed" /tmp/rovi-status.log
 check grep -q "state=stopped" /tmp/rovi-status.log
+check python3 - /tmp/rovi-status.log <<'PY'
+import sys
+
+with open(sys.argv[1]) as log:
+    status = [(float(t), state) for t, state in (line.split(maxsplit=1) for line in log)]
+assert any(7.3 <= t < 8.9 and "state=stopped" in s for t, s in status), status
+assert not any(7.3 <= t < 8.9 and "state=armed" in s for t, s in status), status
+assert any(9.1 <= t < 10.5 and "state=armed" in s for t, s in status), status
+parsed = []
+for t, text in status:
+    tokens = text.split()
+    fields = dict(token.split('=', 1) for token in tokens)
+    assert len(tokens) == 4 and fields.keys() == {'state', 'reason', 'error', 'session'}, text
+    if fields['state'] == 'open':
+        assert fields == dict(state='open', reason='none', error='none', session='0'), fields
+    parsed.append((t, fields))
+assert any(3.2 <= t < 4.4 and f['error'] == 'not-ready' for t, f in parsed), parsed
+assert all(f['error'] == 'not-ready' for t, f in parsed if 3.2 <= t < 4.4), parsed
+assert any(4.4 <= t < 5.6 and f['error'] == 'none' for t, f in parsed), parsed
+assert any(6.3 <= t < 7 and f['reason'] == 'lease-expired' for t, f in parsed), parsed
+assert any(7.3 <= t < 8.9 and f['reason'] == 'out-of-limits' for t, f in parsed), parsed
+assert any(t >= 15.8 and f['state'] == 'open' for t, f in parsed), parsed
+PY
 if grep -q "wheels_pm=-" /tmp/rovi-sim.log; then echo "FAIL: the intruder node drove the car"; fail=1; fi
 # After the STOP the car stays stopped while the stream goes on, and drives again only after the arm.
 after=$(sed -n '/ev=stop reason=Stop/,$p' /tmp/rovi-sim.log)

@@ -1,0 +1,20 @@
+Run 1: gentle forward for 3 seconds, then STOP and disconnect
+Traceback (most recent call last):
+  File "/home/todor/tptodorov/rovi/experiments/rovi-m8-setpoint-ros/sim/ble_client.py", line 183, in <module>
+    raise SystemExit(asyncio.run(main(p.parse_args())))
+                     ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/j8a8h4zmwxlcqisjfz0ci6gznp2n0rz6-python3-3.13.15-env/lib/python3.13/asyncio/runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/nix/store/j8a8h4zmwxlcqisjfz0ci6gznp2n0rz6-python3-3.13.15-env/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/nix/store/j8a8h4zmwxlcqisjfz0ci6gznp2n0rz6-python3-3.13.15-env/lib/python3.13/asyncio/base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/todor/tptodorov/rovi/experiments/rovi-m8-setpoint-ros/sim/ble_client.py", line 155, in main
+    car = await connect(args.addr)
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/todor/tptodorov/rovi/experiments/rovi-m8-setpoint-ros/sim/ble_client.py", line 150, in connect
+    raise BleakError(f"car not found ({addr or NAME!r}); is it advertising, or owned by someone else?")
+bleak.exc.BleakError: car not found ('Rovi M8'); is it advertising, or owned by someone else?

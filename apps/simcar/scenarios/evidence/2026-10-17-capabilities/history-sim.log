@@ -1,0 +1,6 @@
+ev=boot ver=0.1.0 at_ms=0
+simcar listening on udp/17794
+ros node /rovi up, zid 896a79f91c33c2b05d2fec9f96f93777, router tcp/172.17.0.2:7447
+ev=ros link=up at_ms=1
+capabilities history probe: seq=1 at_ms=1
+capabilities history probe: seq=2 at_ms=12001

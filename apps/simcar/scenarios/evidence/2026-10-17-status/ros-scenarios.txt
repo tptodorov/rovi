@@ -1,0 +1,57 @@
+--- stock tool: ros2 topic pub on /cmd_vel only
+ 0.0 state=open reason=none error=none session=0
+ 0.0 state=open reason=none error=none session=0
+ 0.0 state=armed reason=none error=none session=2141122893
+ 0.9 state=armed reason=none error=none session=2141122893
+ 1.8 state=armed reason=none error=none session=2141122893
+ 2.7 state=armed reason=none error=none session=2141122893
+ 3.0 state=stopped reason=stop error=none session=2141122893
+ 3.2 state=stopped reason=stop error=not-ready session=2141122893
+ 4.1 state=stopped reason=stop error=not-ready session=2141122893
+ 4.5 state=armed reason=none error=none session=2141122893
+ 5.4 state=armed reason=none error=none session=2141122893
+ 6.3 state=armed reason=none error=none session=2141122893
+ 6.5 state=stopped reason=lease-expired error=none session=2141122893
+ 7.0 state=stopped reason=out-of-limits error=none session=2141122893
+ 8.0 state=stopped reason=out-of-limits error=none session=2141122893
+ 8.9 state=stopped reason=out-of-limits error=none session=2141122893
+ 9.0 state=armed reason=none error=none session=2141122893
+ 9.9 state=armed reason=none error=none session=2141122893
+10.8 state=armed reason=none error=none session=2141122893
+11.0 state=stopped reason=lease-expired error=none session=2141122893
+11.9 state=stopped reason=lease-expired error=none session=2141122893
+12.8 state=stopped reason=lease-expired error=none session=2141122893
+13.7 state=stopped reason=lease-expired error=none session=2141122893
+14.6 state=stopped reason=lease-expired error=none session=2141122893
+15.5 state=stopped reason=lease-expired error=none session=2141122893
+16.0 state=open reason=none error=none session=0
+16.9 state=open reason=none error=none session=0
+--- ROS round trip (100 probes)
+ros sent=100 count=100 loss_pct=0.0 median_ms=1.555 p95_ms=2.357 max_ms=2.588
+--- sim car log
+ev=boot ver=0.1.0 at_ms=0
+simcar listening on udp/17778
+ros node /rovi up, zid b3bda362910cb90bc298b3c6115e1b9, router tcp/172.17.0.2:7447
+ev=ros link=up at_ms=2
+ev=ros link=refresh at_ms=3531
+ev=claimed source=Ros at_ms=3581
+ev=state state=Armed wheels_pm=300,300,300,300 at_ms=3589
+ev=stop reason=LeaseExpired at_ms=7436
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=7436
+ev=released at_ms=12438
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=12438
+ev=claimed source=Ros at_ms=16408
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=16413
+ev=stop reason=Stop at_ms=19443
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=19450
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=20933
+ev=stop reason=LeaseExpired at_ms=22888
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=22888
+ev=stop reason=OutOfLimits at_ms=23453
+ev=state state=Stopped reason=OutOfLimits wheels_pm=0,0,0,0 at_ms=23463
+ev=state state=Armed wheels_pm=500,500,500,500 at_ms=25428
+ev=stop reason=LeaseExpired at_ms=27385
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=27385
+ev=released at_ms=32388
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=32388
+ros scenarios: ok

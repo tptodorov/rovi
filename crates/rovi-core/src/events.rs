@@ -20,6 +20,12 @@ pub enum Link {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fault {
     WifiAp,
+    /// Motor control got a NaN or infinite wheel command.
+    MotorNonFinite,
+    /// The motor configuration is invalid.
+    MotorConfig,
+    /// A motor pin write failed.
+    MotorDriver,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -63,15 +69,17 @@ pub struct Record {
 }
 
 /// Calls `emit` once per event in `fx`.
+/// Order: stop, release, claim. One call never claims and stops; when a passed deadline
+/// releases the car and the same input claims it again, the release happens first.
 pub fn effects(fx: Effects, mut emit: impl FnMut(Event)) {
-    if let Some(s) = fx.claimed {
-        emit(Event::Claimed(s));
-    }
     if let Some(r) = fx.stop {
         emit(Event::Stop(r));
     }
     if fx.released {
         emit(Event::Released);
+    }
+    if let Some(s) = fx.claimed {
+        emit(Event::Claimed(s));
     }
 }
 
@@ -140,6 +148,9 @@ impl fmt::Display for Record {
                 }
             )?,
             Event::Fault(Fault::WifiAp) => f.write_str("ev=error src=wifi_ap")?,
+            Event::Fault(Fault::MotorNonFinite) => f.write_str("ev=error src=motor_nonfinite")?,
+            Event::Fault(Fault::MotorConfig) => f.write_str("ev=error src=motor_config")?,
+            Event::Fault(Fault::MotorDriver) => f.write_str("ev=error src=motor_driver")?,
             Event::Dropped(n) => write!(f, "ev=dropped n={n}")?,
         }
         write!(f, " at_ms={}", self.at_ms)
@@ -248,6 +259,18 @@ mod tests {
             (Event::Ros(Link::Retry), "ev=ros link=retry at_ms=42"),
             (Event::Ros(Link::Refresh), "ev=ros link=refresh at_ms=42"),
             (Event::Fault(Fault::WifiAp), "ev=error src=wifi_ap at_ms=42"),
+            (
+                Event::Fault(Fault::MotorNonFinite),
+                "ev=error src=motor_nonfinite at_ms=42",
+            ),
+            (
+                Event::Fault(Fault::MotorConfig),
+                "ev=error src=motor_config at_ms=42",
+            ),
+            (
+                Event::Fault(Fault::MotorDriver),
+                "ev=error src=motor_driver at_ms=42",
+            ),
             (Event::Dropped(3), "ev=dropped n=3 at_ms=42"),
         ];
         for (ev, want) in cases {
@@ -286,12 +309,13 @@ mod tests {
         };
         let mut evs = Vec::new();
         effects(fx, |e| evs.push(e));
+        // The old session's stop and release come before the new claim (deadline ordering).
         assert_eq!(
             evs,
             [
-                Event::Claimed(Source::Ble),
                 Event::Stop(StopReason::OwnerLost),
-                Event::Released
+                Event::Released,
+                Event::Claimed(Source::Ble)
             ]
         );
     }

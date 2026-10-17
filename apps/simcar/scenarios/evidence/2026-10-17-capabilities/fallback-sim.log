@@ -1,0 +1,16 @@
+ev=boot ver=0.1.0 at_ms=0
+simcar listening on udp/17794
+ros node /rovi up, zid 10a0c4367958db5d17f43216751f08ed, router tcp/127.0.0.1:17447
+ev=ros link=up at_ms=1
+ev=claimed source=Udp at_ms=4534
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=4542
+ev=released at_ms=4544
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=4552
+ros session ended (Some(LinkTxFailed)), reconnecting
+ev=ros link=down at_ms=14614
+ros node /rovi up, zid 10a0c4367958db5d17f43216751f08ed, router tcp/127.0.0.1:17447
+ev=ros link=up at_ms=16616
+ev=claimed source=Udp at_ms=19322
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=19324
+ev=released at_ms=19332
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=19334

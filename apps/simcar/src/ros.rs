@@ -1,5 +1,5 @@
 //! The ROS 2 sim adapter: node `/rovi` over zenoh-nostd and `rmw_zenohd`, feeding the shared
-//! device. Subscribes `/cmd_vel` (TwistStamped) and `/rovi/arm` (Bool), publishes `/rovi/status`.
+//! device. Subscribes `/cmd_vel` and `/rovi/arm`; publishes status and volatile capabilities.
 
 use crate::{log, log_effects, ms, Shared};
 use embassy_futures::select::{select, select5, Either, Either5};
@@ -125,6 +125,8 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
         };
         println!("ros session ended ({:?}), reconnecting", result.err());
         log(Event::Ros(Link::Down), t0);
+        // The router is gone: a ROS owner is released now, not only by its lease.
+        log_effects(dev.lock().unwrap().on_ros_disconnect(ms(t0)), t0);
         // SAFETY: `serve` returned, so every borrow of the session (tokens, subscribers,
         // publisher) is gone. The session points into the resources, so it goes first.
         drop(unsafe { Box::from_raw(session) });
@@ -176,6 +178,12 @@ async fn serve(
         hash: rmw::STRING.1,
     };
 
+    let capabilities_t = Topic {
+        name: "rovi/capabilities",
+        ty: rmw::STRING.0,
+        hash: rmw::STRING.1,
+    };
+
     // Liveliness: the node, then each endpoint, so the car shows up in the ROS graph.
     let node = rmw::node_token(DOMAIN, zid, NODE).unwrap();
     let _node = session
@@ -187,6 +195,12 @@ async fn serve(
         (3, Kind::Publisher, &status_t, rmw::QOS_DEFAULT_10),
         (4, Kind::Subscription, &echo_t, rmw::QOS_BEST_EFFORT_1),
         (5, Kind::Publisher, &echo_reply_t, rmw::QOS_BEST_EFFORT_1),
+        (
+            6,
+            Kind::Publisher,
+            &capabilities_t,
+            rmw::QOS_RELIABLE_VOLATILE_1,
+        ),
     ]
     .map(|(id, kind, topic, qos)| {
         rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
@@ -201,6 +215,7 @@ async fn serve(
     }
     let status_gid = rmw::gid(tokens[2].as_str());
     let echo_gid = rmw::gid(tokens[4].as_str());
+    let capabilities_gid = rmw::gid(tokens[5].as_str());
 
     let key = |t: &Topic| leak(rmw::topic_key(DOMAIN, t).unwrap().as_str().into());
     let cmd_sub = session
@@ -233,6 +248,10 @@ async fn serve(
         .declare_publisher(zenoh::keyexpr::new(key(&status_t))?)
         .finish()
         .await?;
+    let capabilities_pub = session
+        .declare_publisher(zenoh::keyexpr::new(key(&capabilities_t))?)
+        .finish()
+        .await?;
     println!("ros node /{NODE} up, zid {zid}, router {router}");
     log(Event::Ros(Link::Up), t0);
 
@@ -258,6 +277,38 @@ async fn serve(
                 .encode();
                 let _ = echo_pub.put(bytes).attachment(&att).finish().await;
             }
+        }
+    };
+    let capabilities_loop = async {
+        let mut schedule = rovi_core::capabilities::Publication::default();
+        let mut seq = 0i64;
+        let mut buf = [0; rovi_core::capabilities::CDR_MAX];
+        loop {
+            let pending = {
+                let d = dev.lock().unwrap();
+                schedule
+                    .due(ms(t0), d.arbiter().session(), d.arbiter().owner().is_some())
+                    .then(|| d.capabilities_snapshot().encode_cdr(&mut buf))
+                    .flatten()
+            };
+            if let Some(n) = pending {
+                seq += 1;
+                let att = Attachment {
+                    seq,
+                    timestamp: 0,
+                    gid: capabilities_gid,
+                }
+                .encode();
+                if let Err(e) = capabilities_pub
+                    .put(&buf[..n])
+                    .attachment(&att)
+                    .finish()
+                    .await
+                {
+                    break Err::<(), _>(e);
+                }
+            }
+            embassy_time::Timer::after_millis(10).await;
         }
     };
     let ended = select(
@@ -314,27 +365,34 @@ async fn serve(
             },
             async {
                 let mut seq = 0i64;
+                let mut schedule = rovi_core::status::Publication::default();
+                let mut buf = [0u8; rovi_core::status::CDR_MAX];
                 loop {
-                    let mut buf = [0u8; 80];
-                    let n = d3.lock().unwrap().status_cdr(&mut buf);
-                    seq += 1;
-                    let att = Attachment {
-                        seq,
-                        timestamp: 0,
-                        gid: status_gid,
+                    let snapshot = d3.lock().unwrap().status_snapshot();
+                    if schedule.due(ms(t0), snapshot) {
+                        if let Some(n) = snapshot.encode_cdr(&mut buf) {
+                            seq += 1;
+                            let att = Attachment {
+                                seq,
+                                timestamp: 0,
+                                gid: status_gid,
+                            }
+                            .encode();
+                            let _ = status_pub.put(&buf[..n]).attachment(&att).finish().await;
+                        }
                     }
-                    .encode();
-                    let _ = status_pub.put(&buf[..n]).attachment(&att).finish().await;
-                    embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
+                    embassy_time::Timer::after_millis(10).await;
                 }
             },
         ),
-        echo_loop,
+        select(echo_loop, capabilities_loop),
     )
     .await;
-    // Only the session loop ends on its own; say why it did.
-    if let Either::First(Either5::First(Err(e))) = ended {
-        return Err(e.into());
+    // Report the session or publication failure before the adapter reconnects.
+    match ended {
+        Either::First(Either5::First(Err(e))) => return Err(e.into()),
+        Either::Second(Either::Second(Err(e))) => return Err(e.into()),
+        _ => {}
     }
     Ok(())
 }

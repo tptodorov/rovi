@@ -46,18 +46,41 @@ fn peer_id(a: SocketAddr) -> u128 {
 
 fn udp_loop(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
     let sock = UdpSocket::bind(("0.0.0.0", port))?;
+    sock.set_read_timeout(Some(Duration::from_millis(10)))?;
     println!("simcar listening on udp/{port}");
     let (mut buf, mut out) = ([0u8; 1500], [0u8; 128]);
+    let mut owner_addr = None;
     loop {
-        let (n, from) = sock.recv_from(&mut buf)?;
-        let r = dev
-            .lock()
-            .unwrap()
-            .on_udp(ms(t0), peer_id(from), &buf[..n], &mut out);
-        if r.len > 0 {
-            sock.send_to(&out[..r.len], from)?;
+        match sock.recv_from(&mut buf) {
+            Ok((n, from)) => {
+                let r = {
+                    let mut d = dev.lock().unwrap();
+                    let r = d.on_udp(ms(t0), peer_id(from), &buf[..n], &mut out);
+                    if d.arbiter().owner().is_some_and(|o| {
+                        o.source == rovi_core::arbiter::Source::Udp && o.id == peer_id(from)
+                    }) {
+                        owner_addr = Some(from);
+                    }
+                    r
+                };
+                if r.len > 0 {
+                    sock.send_to(&out[..r.len], from)?;
+                }
+                log_effects(r.effects, t0);
+            }
+            Err(e)
+                if matches!(
+                    e.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) => {}
+            Err(e) => return Err(e),
         }
-        log_effects(r.effects, t0);
+        let pending = dev.lock().unwrap().udp_status_notification(&mut out);
+        if let Some((peer, n)) = pending {
+            if let Some(to) = owner_addr.filter(|a| peer_id(*a) == peer) {
+                sock.send_to(&out[..n], to)?;
+            }
+        }
     }
 }
 
@@ -84,6 +107,14 @@ fn control_loop(dev: Shared, t0: Instant) {
     }
 }
 
+/// Session IDs start somewhere new each run, so a client's packets from an earlier run of the
+/// sim car do not match the new session.
+fn session_seed() -> u32 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.subsec_nanos() ^ d.as_secs() as u32)
+}
+
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let num = |i: usize, default: u64| args.get(i).and_then(|s| s.parse().ok()).unwrap_or(default);
@@ -102,7 +133,9 @@ fn main() -> std::io::Result<()> {
         offset_theta: 0.0,
         max_wheel_speed: 40.0,
     };
-    let dev: Shared = Arc::new(Mutex::new(Device::new(cfg, geometry)));
+    let dev: Shared = Arc::new(Mutex::new(
+        Device::new(cfg, geometry, session_seed()).expect("the sim profile is valid"),
+    ));
     let t0 = Instant::now();
     log(Event::Boot { reset: None }, t0);
 
