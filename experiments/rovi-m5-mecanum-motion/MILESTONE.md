@@ -41,4 +41,20 @@ Real hardware only; reuse the verified M4 setup and stay within its recorded ele
 
 ### Results
 
-Add date, firmware revision, test surface, battery/load conditions, measurements, and pass/fail observations after bench testing.
+#### Car measurements, 2026-10-17
+
+Reported by Todor before the floor tests:
+
+| Measurement | Value |
+| --- | --- |
+| Wheel outer diameter | 60 mm |
+| Wheelbase (front to rear axle centres) | 115 mm |
+| Track (left to right wheel centres) | 140 mm |
+| Footprint, length × width | 255 × 170 mm |
+| Mass with both power banks | 500 g |
+
+Derived geometry: `wheels_radius = 0.030 m`; `center_projection_sum = (0.115 + 0.140) / 2 = 0.1275 m`.
+
+These values are recorded here; firmware geometry has not yet been updated. Wheel speed, floor speed, drift and stopping distance remain unmeasured. The roller photo mentioned in chat was not available in the handoff, so the roller orientation is not yet verified. No M5 motor runs have been performed.
+
+Record firmware revision, floor surface, battery state, observations and evidence for each subsequent run.

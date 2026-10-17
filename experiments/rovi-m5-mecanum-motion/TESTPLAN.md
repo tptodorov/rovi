@@ -31,7 +31,7 @@ The car drives **untethered**, controlled over BLE from the laptop (`sim/ble_cli
 | 7 | Wheel speed at full duty, wheels in the air | tape flag on a wheel, 5 s of video, count turns | `max_wheel_speed`: makes speed commands real m/s |
 | 8 | Power bank charge (LED bars), start and end of a session | look | explains speed drop (F8) |
 
-Items 1-3 and 7 replace the placeholder geometry in the firmware, so `vx` 0.3 then means 0.3 m/s.
+Items 1-5 are recorded in [the milestone results](MILESTONE.md#results). The derived radius is 0.030 m and the centre projection sum is 0.1275 m; applying them to firmware is pending. Item 7 and the floor runs are still needed for speed calibration. With open-loop motors and minimum-duty compensation, geometry alone does not make commanded m/s match actual speed.
 * **Stopping the car:** Ctrl-C the client or walk out of range: the 1 s lease stops it. Unplugging the motor bank stops it at once. Start every run with the car pointing along the tape.
 
 ## Tests
@@ -51,7 +51,7 @@ Every movement in F3-F7 is open loop: the car has no encoders (M4), so speed fol
 
 ## What comes out
 
-* **Real speeds:** m/s and rad/s per command. These replace the placeholder geometry in the firmware (`wheels_radius`, `max_wheel_speed`), so `vx` 1.0 means a real 1.0 m/s or the car's top speed, whichever is lower.
+* **Measured speeds:** m/s and rad/s per command under the recorded conditions. Use these to calibrate `wheels_radius`, `max_wheel_speed` and the duty mapping; without feedback, actual speed will still vary with load, slip and supply voltage.
 * **Open-loop decision (Q11):** with no encoders, is open-loop drift acceptable for teleoperation? This sets the M6 API's speed semantics.
 * **Stopping distance** at top speed for STOP and for a lease expiry (O4/O5 on the floor).
 * **The power decision:** how long the banks last driving, and whether the motor bank's sleep is acceptable or a battery pack is needed.
