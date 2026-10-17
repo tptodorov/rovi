@@ -24,6 +24,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run spec:check
+      - run: npm run spec:reader:check
       - run: npm run openspec -- validate --archived --strict --no-interactive
 
   host:

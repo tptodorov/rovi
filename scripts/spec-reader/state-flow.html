@@ -1,0 +1,11 @@
+<section id="state-flow" class="reading"><span class="eyebrow">M6 reading aid · follow links for exact rules</span><h2>From a claim to motion</h2>
+<div class="flow" aria-label="Typical BLE and UDP state progression">
+<a href="REQUIREMENT:boot-state"><b>Open</b><span>No owner.<br>Drivers disabled.</span></a><span class="arrow" aria-hidden="true">→</span>
+<a href="REQUIREMENT:claim-window"><b>Claimed</b><span>Owner selected.<br>Not yet armed.</span></a><span class="arrow" aria-hidden="true">→</span>
+<a href="REQUIREMENT:explicit-arming"><b>Armed</b><span>Valid setpoint + ARM.<br>Motion enabled.</span></a><span class="arrow" aria-hidden="true">→</span>
+<a href="REQUIREMENT:safety-stop"><b>Stopped</b><span>Safety stop.<br>Drivers disabled.</span></a></div>
+<ul class="flow-notes">
+<li><b>ROS shortcut:</b> a known node’s first valid setpoint claims and auto-arms. A fresh valid stream may also auto-arm after lease expiry.</li>
+<li><b>Recover after STOP or a fault:</b> every transport needs a fresh valid setpoint, then explicit ARM. A stream alone does not clear the latch. <a href="REQUIREMENT:motor-validation-fault-integration">Internal fault rules →</a></li>
+<li><b>Keep or release ownership:</b> STOP keeps the owner while valid streaming continues. A lapsed lease starts the reclaim window; its expiry releases to Open. A claim with no valid setpoint also times out. Disconnect / BYE releases immediately when detected. <a href="REQUIREMENT:reclaim-window">Window rules →</a></li>
+</ul><p class="muted">This diagram summarizes selected transitions; linked requirements define validation, deadlines and exceptions.</p></section>

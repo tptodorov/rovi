@@ -7,9 +7,12 @@
   },
   "scripts": {
     "openspec": "openspec",
-    "spec:check": "openspec validate --all --strict --no-interactive"
+    "spec:check": "openspec validate --all --strict --no-interactive",
+    "spec:build": "node scripts/spec-reader/build.mjs",
+    "spec:reader:check": "node --test scripts/spec-reader/build.test.mjs && node scripts/spec-reader/build.mjs --check"
   },
   "devDependencies": {
-    "@fission-ai/openspec": "1.14.1"
+    "@fission-ai/openspec": "1.14.1",
+    "markdown-it": "15.0.3"
   }
 }
