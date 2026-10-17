@@ -69,3 +69,7 @@ Source: Todor's `IMG_0522.HEIC`, supplied from `experiments/rovi-m4-four-motor-s
 * Wiring continuity, wheel clearance through a full turn and secure mounting cannot be established from this view.
 
 Record firmware revision, floor surface, battery state, observations and evidence for each subsequent run.
+
+#### F1 mounted-wheel direction checks, 2026-10-17
+
+With the car on a stand, Todor confirmed forward, strafe-left and rotate-left wheel directions, including all four starting and stopping. See [run notes and BLE client output](bench/2026-10-17-f1/notes.md). One initial strafe run produced no movement; its cause remains unconfirmed. Wheel-speed measurement and all floor tests remain pending; these stand tests do not establish actual chassis motion.
