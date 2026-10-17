@@ -40,19 +40,21 @@ Host: deterministic tests/recording driver. Integration: real sockets or Jazzy o
 
 ## motor-control
 
+Host test names are `rovi-motor-control` unit tests (`cargo test -p rovi-motor-control`).
+
 | Requirement | Completion check |
 | --- | --- |
-| [Four independent wheel commands](specs/motor-control/spec.md#requirement-four-independent-wheel-commands) | Recording driver verifies one wheel at a time; physical direction on each wheel (2.1, 5.2). |
+| [Four independent wheel commands](specs/motor-control/spec.md#requirement-four-independent-wheel-commands) | Recording driver verifies one wheel at a time; physical direction on each wheel (2.1, 5.2). Host: `each_wheel_is_driven_on_its_own`, `sign_sets_direction_and_inversion_flips_it`. |
 | [Independent of transport and kinematics](specs/motor-control/spec.md#requirement-independent-of-transport-and-kinematics) | Standalone no_std crate build/test and dependency inspection (2.2). |
-| [Invalid wheel commands stop the wheels](specs/motor-control/spec.md#requirement-invalid-wheel-commands-stop-the-wheels) | Clamp both signs; inject NaN and both infinities at each wheel, inspect all outputs (2.2). |
-| [Standby until explicitly enabled](specs/motor-control/spec.md#requirement-standby-until-explicitly-enabled) | Recording driver checks boot/disable; physical reset and power-loss STBY verification (2.1, 5.2). |
+| [Invalid wheel commands stop the wheels](specs/motor-control/spec.md#requirement-invalid-wheel-commands-stop-the-wheels) | Clamp both signs; inject NaN and both infinities at each wheel, inspect all outputs (2.2). Host: `the_product_profile_caps_drive_duty_at_70_percent`, `nan_while_driving_puts_both_drivers_in_standby`. |
+| [Standby until explicitly enabled](specs/motor-control/spec.md#requirement-standby-until-explicitly-enabled) | Recording driver checks boot/disable; physical reset and power-loss STBY verification (2.1, 5.2). Host: `new_starts_in_standby`, `updates_need_an_explicit_enable`. |
 | [Standby on safety stop](specs/motor-control/spec.md#requirement-standby-on-safety-stop) | Recording driver checks same-tick disable before any bridge update; physical: every wheel stops on each trigger. Numeric pin bound deferred (O4, needs a logic analyzer) (2.1, 2.3, 5.2). |
-| [Full-scale maps to the configured limit](specs/motor-control/spec.md#requirement-full-scale-maps-to-the-configured-limit) | Host duty-cap tests including the 70% product profile; current is not measured (O1 deferred) (2.1, 5.1). |
-| [Zero command behaviour](specs/motor-control/spec.md#requirement-zero-command-behaviour) | Failing coast-pin reproduction first, neighbor independence; coast distance not claimed (O5) (2.1, 5.2). |
-| [Dead zone handling](specs/motor-control/spec.md#requirement-dead-zone-handling) | Exact zero, deadband-minus/at/plus, both signs and rounding table (2.1). |
-| [Starts and reversals do not reset the controller](specs/motor-control/spec.md#requirement-starts-and-reversals-do-not-reset-the-controller) | Host signed transitions; product reversal/thermal/radio run at the 70% cap (2.1, 5.2). |
-| [Calibrated wheel mapping](specs/motor-control/spec.md#requirement-calibrated-wheel-mapping) | Host mapping/inversion tests; compare schematic and confirm all four physical channels (2.1, 5.1, 5.2). |
+| [Full-scale maps to the configured limit](specs/motor-control/spec.md#requirement-full-scale-maps-to-the-configured-limit) | Host duty-cap tests including the 70% product profile; current is not measured (O1 deferred) (2.1, 5.1). Host: `the_product_profile_caps_drive_duty_at_70_percent`. |
+| [Zero command behaviour](specs/motor-control/spec.md#requirement-zero-command-behaviour) | Failing coast-pin reproduction first, neighbor independence; coast distance not claimed (O5) (2.1, 5.2). Host: `zero_requests_coast_with_both_direction_pins_low_and_pwm_high`, `coast_keeps_pwm_high_under_a_70_percent_drive_cap`. |
+| [Dead zone handling](specs/motor-control/spec.md#requirement-dead-zone-handling) | Exact zero, deadband-minus/at/plus, both signs and rounding table (2.1). Host: `deadband_and_duty_follow_the_rule`. |
+| [Starts and reversals do not reset the controller](specs/motor-control/spec.md#requirement-starts-and-reversals-do-not-reset-the-controller) | Host signed transitions; product reversal/thermal/radio run at the 70% cap (2.1, 5.2). Host: `full_reversal_is_direct_with_the_drivers_kept_enabled`. |
+| [Calibrated wheel mapping](specs/motor-control/spec.md#requirement-calibrated-wheel-mapping) | Host mapping/inversion tests; compare schematic and confirm all four physical channels (2.1, 5.1, 5.2). Host: `the_car_mapping_puts_each_wheel_on_its_bridge`, `sign_sets_direction_and_inversion_flips_it`. |
 | [Configuration validation](specs/motor-control/spec.md#requirement-configuration-validation) | Rejected min/max/deadband/mapping cases and config replacement while disabled (2.2). |
 | [Fault recovery requires explicit enable](specs/motor-control/spec.md#requirement-fault-recovery-requires-explicit-enable) | Host stateful fault/update/enable sequence; stale vector never replayed (2.2). |
-| [Complete vector validation before output](specs/motor-control/spec.md#requirement-complete-vector-validation-before-output) | Recording driver verifies no partial writes and standby/prepare/enable ordering (2.1, 2.2). |
-| [Coast is independent of the drive duty cap](specs/motor-control/spec.md#requirement-coast-is-independent-of-the-drive-duty-cap) | 70%-cap neighbor test checks PWM-high coast with both direction pins low (2.1). |
+| [Complete vector validation before output](specs/motor-control/spec.md#requirement-complete-vector-validation-before-output) | Recording driver verifies no partial writes and standby/prepare/enable ordering (2.1, 2.2). Host: `a_non_finite_fourth_wheel_cannot_drive_the_first_three`, `enable_prepares_every_bridge_before_asserting_stby`, `standby_deasserts_both_stby_outputs_first`, `driver_failures_reach_the_caller`. |
+| [Coast is independent of the drive duty cap](specs/motor-control/spec.md#requirement-coast-is-independent-of-the-drive-duty-cap) | 70%-cap neighbor test checks PWM-high coast with both direction pins low (2.1). Host: `coast_keeps_pwm_high_under_a_70_percent_drive_cap`. |

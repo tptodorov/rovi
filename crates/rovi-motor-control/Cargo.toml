@@ -1,0 +1,9 @@
+[package]
+name = "rovi-motor-control"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "Rovi motor control: four independent wheel commands to two TB6612FNG drivers (no_std)"
+
+[dependencies]
