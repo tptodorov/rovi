@@ -82,6 +82,6 @@ At `vx 1.0` for 5 s (a repeated run), Todor counted approximately 8.75 FL rotati
 
 #### Measured-geometry firmware prepared, 2026-10-17
 
-Firmware source now uses radius 0.030 m and centre projection sum 0.1275 m. The speed-normalization parameter remains 40 rad/s as a placeholder; the 105 RPM observation at 70% duty is not a full-duty measurement. ESP32-S3 release build and clippy passed. **Flashed successfully; boot and BLE capabilities verified on the board, with no motor commands sent** ([evidence](bench/2026-10-17-geometry/notes.md)). Motor verification with this geometry remains pending.
+Firmware source now uses radius 0.030 m and centre projection sum 0.1275 m. The speed-normalization parameter remains 40 rad/s as a placeholder; the 105 RPM observation at 70% duty is not a full-duty measurement. ESP32-S3 release build and clippy passed. **Flashed successfully; boot and BLE capabilities verified on the board** ([evidence](bench/2026-10-17-geometry/notes.md)). A separately authorized gentle forward run (`vx 0.1`, 5 s, approximately 45% duty) passed on the stand: Todor confirmed all four wheels started, turned forward and stopped cleanly. Floor tests remain pending.
 
 The geometry change affects duty for the same command: forward `vx 0.1` is about 45%, `vx 0.5` about 65%, and `vx 1.0` about 90% (previously 43%, 55% and 70%). Repeat a gentle stand check after flashing; announce and agree each new motor run. Floor tests start with a short, low-command pulse, not a repeat of the five-second stand runs.
