@@ -13,3 +13,7 @@ Forward command: `drive --vx 0.20 --seconds 0.5`, approximately 50% duty, with a
 Three reported distances: **13.5, 14, 14 cm**, mean **13.8 cm**, spread **0.5 cm**. This is repeatability at one command under the current conditions, not across battery/load states. Drift, heading and physical stopping have not been separately reported for these trials.
 
 Distances are whole-pulse travel, including acceleration and any coast. Do not interpret the numeric command as calibrated m/s or infer steady-state speed from travel divided by stream duration. Save trial observations locally, then commit the completed group.
+
+## Scope decision after the three trials
+
+Todor reported **"no performance changes noticed"** and asked to use the previous m/s and rad/s measurements. Accept the existing whole-pulse estimates as approximate open-loop references ([table](../../CALIBRATION.md)); stop the extended sweep. The proposed `vx 0.40` / 60%-duty run was not performed. No new firmware gains or calibration constants were applied. No controlled payload/charge comparison or velocity-accuracy guarantee is claimed.

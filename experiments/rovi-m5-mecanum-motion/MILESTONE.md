@@ -2,7 +2,7 @@
 
 ## M5: mecanum motion and feedback characterization
 
-**Status:** in progress (2026-10-17): mounted-wheel checks and low-command floor movement/stop tests recorded; calibration and battery/load variation remain open. Bench procedure: [TESTPLAN.md](TESTPLAN.md).
+**Status:** basic open-loop characterization recorded (2026-10-17); Todor accepts existing approximate motion references and reports no performance change noticed. Extended measurement sweep stopped. Accuracy bounds and controlled battery/load variation remain unverified; original acceptance items below retain that distinction. Bench procedure: [TESTPLAN.md](TESTPLAN.md).
 **Setup:** M4's car and carrier with the wheels mounted, untethered: ESP32 and motors on their own power banks, controlled over BLE from the laptop. Measured with tape and phone video (no car log off the cable).
 
 ### Goal
@@ -36,14 +36,14 @@ Real hardware only; reuse the verified M4 setup and stay within its recorded ele
 - [x] Motor, driver, wheel, and direction mapping is documented. *(M4 step 2; roller orientation checked in F1.)*
 - [x] Four basic mecanum movement combinations and stop are demonstrated at safe speed. *(2026-10-17: forward/reverse, lateral, rotation and diagonal on the floor; clean physical stop explicitly confirmed in reverse. See results below.)*
 - [ ] Repeatability and calibration variation are recorded across battery/load conditions.
-- [ ] Encoder availability is confirmed; the open-loop versus closed-loop API decision has evidence and limitations. *(No encoders: confirmed in M4. The open-loop evidence comes from F3-F8.)*
+- [x] Encoder availability is confirmed; the open-loop versus closed-loop API decision has evidence and limitations. *(No encoders; Todor accepts existing approximate open-loop references, 2026-10-17. Q11/O3 resolved as duty control; precise velocity tracking is not claimed.)*
 - [ ] The API/spec can state units, bounds, stop behavior, update timing, and calibration needs without hidden assumptions.
 
 ### Results
 
 #### Session summary, 2026-10-17
 
-Low-command floor motion is demonstrated; M5 remains in progress. All floor pulses below used the measured geometry and lasted 0.5 s unless noted. Command values remain uncalibrated.
+Low-command floor motion is demonstrated. Todor chose to use the existing approximate m/s and rad/s estimates rather than continue a measurement sweep; see [accepted reference table](CALIBRATION.md). All floor pulses below used the measured geometry and lasted 0.5 s unless noted. Command-to-actual-velocity tracking remains uncalibrated.
 
 | Check | Reported result |
 | --- | --- |
@@ -56,7 +56,7 @@ Low-command floor motion is demonstrated; M5 remains in progress. All floor puls
 | 0.3 s forward stream, explicit STOP | 6.5 cm total travel |
 | Same stream, then silence until lease expires | 22.5 cm total travel; physical automatic stop confirmed |
 
-**Still open:** calibration across command/duty levels and wheels, full-duty wheel speed, controlled battery/load variation, a usable speed/units contract for M6, and physical stop timing/coast distance. The 16 cm difference between STOP and lease runs is additional whole-run travel, not a mechanical braking distance. No maximum-speed stopping bound was established. Original videos were not supplied for independent analysis; detailed entries below distinguish reported observations from client status.
+**Unverified limits, not additional queued tests:** precise calibration across commands and wheels, full-duty wheel speed, controlled battery/load variation, and physical stop timing/coast distance. Existing approximate references can inform M6; its product speed/accuracy contract still needs review. The 16 cm difference between STOP and lease runs is additional whole-run travel, not a mechanical braking distance. No maximum-speed stopping bound was established. Original videos were not supplied for independent analysis; detailed entries below distinguish reported observations from client status.
 
 #### Car measurements, 2026-10-17
 
@@ -154,3 +154,5 @@ Repeating `vx 0.05` for 0.5 s gave **10 cm**, within the earlier 10, 11, 10 cm b
 #### Command-response calibration on parquet, 2026-10-17
 
 Surface confirmed by Todor: **parquet**. With unchanged measured-geometry firmware, three forward pulses at `vx 0.20` for 0.5 s (approximately 50% duty), each ending in explicit STOP, gave **13.5, 14, 14 cm**, mean **13.8 cm**, spread **0.5 cm**. All clients reported `Stop` without error; drift, heading and physical stopping were not separately described. Bank charge and current load were not recorded for this phase. These are whole-pulse distances, not steady-state speed or a calibrated m/s contract. See [calibration notes](bench/2026-10-17-calibration/notes.md). The next setting, `vx 0.40` (approximately 60% duty), remains untested.
+
+Todor then reported **no performance changes noticed** and chose to use existing approximate m/s and rad/s estimates. The extended sweep is stopped, including the unrun 60%-duty setting. Use the [motion reference table](CALIBRATION.md) for current open-loop planning; no firmware gains were changed and the unverified acceptance items were not retroactively passed.

@@ -14,7 +14,7 @@
 
 ## Design decisions
 
-* **The motor control boundary is normalised wheel commands, not SI wheel speeds.** M5 decides open- vs closed-loop (Q11). A normalised command survives both: 1.0 means the configured maximum, whether that is a duty or a wheel speed. The device layer still converts setpoints to SI wheel speeds first, as `mecanum_drive_controller` does ([ADR-0006](../../../docs/adr/0006-twiststamped-cdr-setpoint.md)).
+* **The motor control boundary is normalised wheel commands, not SI wheel speeds.** M5 confirmed no encoders; the current car uses open-loop duty control (Q11/O3, 2026-10-17). A normalised command survives both: 1.0 means the configured maximum, whether that is a duty or a wheel speed. The device layer still converts setpoints to SI wheel speeds first, as `mecanum_drive_controller` does ([ADR-0006](../../../docs/adr/0006-twiststamped-cdr-setpoint.md)).
 * **Controllers cannot send wheel commands directly.** The device control API accepts setpoints only. Exposing four wheel velocities stays deferred, as ADR-0006 records; motor control is a firmware-internal boundary.
 * **ROS 2 controllers read capabilities from a latched topic.** A ROS 2 controller claims with its first setpoint, so it needs the limits before it claims. The car publishes `/rovi/capabilities` (`std_msgs/String`, `key=value`, transient local), readable without a claim; O9 decides whether zenoh-nostd can serve it as latched. Rejected: a custom message type (every controller must build a Rovi interface package) and ROS 2 parameters (they need services, which the car does not serve).
 * **Safety is enforced twice.** The device layer raises safety stops ([ADR-0004](../../../docs/adr/0004-single-owner-latest-setpoint.md)); motor control independently holds standby until it is explicitly enabled and on any invalid wheel command.
@@ -29,13 +29,14 @@ Each **OPEN** requirement names its question here. O1–O8 are hardware numbers;
 | --- | --- | --- |
 | O1 | Per-channel and combined motor current limits, and the maximum duty that wheel command 1.0 may map to | M4 |
 | O2 | Maximum wheel speed (`max_wheel_speed`) and the resulting `max_vx`, `max_vy`, `max_wz` | M5 |
-| O3 | Open-loop (duty) or closed-loop (wheel speed) control; are encoders present (PLAN Q11) | M5 |
 | O4 | Bound from safety stop to every driver in standby, under four-motor load | M4 |
 | O5 | Zero wheel command: short brake or coast, and stopping distance at maximum speed | M4, M5 |
 | O6 | Dead zone: the smallest wheel command that turns each wheel, and whether to compensate for it | M5 |
 | O7 | Whether starts and reversals need a slew limit to keep the logic rail above brownout | M4 |
 | O8 | Driver channel to wheel mapping and per-wheel direction | M5 |
 | O9 | Can zenoh-nostd serve `rmw_zenoh`'s transient-local late joiners for `/rovi/capabilities`, or must the car republish it | M6 implementation (laptop, then board) |
+
+**Resolved O3 (M5, 2026-10-17):** open-loop duty control; motors have no encoders and adding sensors is out of scope. Todor accepts [existing approximate motion references](../../../experiments/rovi-m5-mecanum-motion/CALIBRATION.md); these do not guarantee accurate velocity tracking or settle O2's full-duty maximum.
 
 ## Impact
 

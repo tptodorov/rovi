@@ -67,7 +67,7 @@ When the device raises a safety stop, motor control SHALL set every wheel comman
 
 ### Requirement: Full-scale maps to a measured limit
 
-Wheel command 1.0 SHALL map to a configured maximum that keeps each motor, driver channel and the supply within the limits M4 records, with all four wheels at 1.0 at once. **OPEN (O1, M4):** the current limits and the maximum duty. **OPEN (O3, M5):** whether the maximum is a duty (open-loop) or a wheel speed (closed-loop).
+Wheel command 1.0 SHALL map to a configured maximum that keeps each motor, driver channel and the supply within the limits M4 records, with all four wheels at 1.0 at once. **OPEN (O1, M4):** the current limits and the maximum duty. **Resolved (O3, M5, 2026-10-17):** the current car SHALL use open-loop duty control; the configured maximum is a PWM duty. Encoder feedback SHALL NOT be required for this hardware. Approximate motion references do not imply measured wheel-velocity tracking.
 
 #### Scenario: All wheels at full scale stay in limits
 

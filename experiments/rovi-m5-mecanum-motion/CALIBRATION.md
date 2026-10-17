@@ -1,49 +1,33 @@
-# M5 next session: low-command response and variation
+# M5 empirical motion references
 
-Use the same firmware as the 2026-10-17 measured-geometry floor session: wheel radius 0.030 m, centre projection sum 0.1275 m, speed normalization still 40 rad/s, motor duty 40–100% above the deadband. No firmware change or flash is needed for this phase.
+On 2026-10-17 Todor reported **no performance changes noticed** and chose to use the existing m/s and rad/s estimates. Stop the extended command sweep; the proposed 60%-duty runs were not performed. These references are sufficient for the current open-loop bring-up scope. No encoder work or further motor run is authorized by this record.
 
-Surface: **parquet**, confirmed by Todor. Preserve this surface and note any seams or uneven patches under the wheels. Charge LED counts for both banks are not yet supplied. Record them before new runs where available; coarse LED bars are context, not a voltage measurement. Do not assign this surface or a charge state retroactively to earlier runs without confirmation.
+## Accepted approximate references
 
-## First: command response without changing firmware
+Values below divide reported floor displacement/angle by the 0.5 s command duration. They include acceleration and any coast after STOP, so they are **whole-pulse estimates, not steady-state speed measurements or guaranteed velocity tracking**. The numeric command and observed result are deliberately shown separately.
 
-Every motor run is separately announced and waits for Todor's "go". Use the 1 × 1 m area, a marked front edge at START, clear space ahead and wake the motor bank. Return to the same start position between runs. A 5 s lead-in allows filming and positioning; connection setup adds variable delay, so watch the car rather than relying on a wall-clock countdown.
+| Command | Observed travel / angle | Approximate motion reference |
+| --- | --- | --- |
+| Forward `vx 0.05` | 10, 11, 10 cm; end repeat 10 cm | 0.21 m/s from the initial three-run mean |
+| Forward `vx 0.20` | 13.5, 14, 14 cm | 0.28 m/s |
+| Reverse `vx -0.05` | 10 cm | 0.20 m/s backward |
+| Strafe `vy ±0.05` | Reported front/rear travel spans 5.5–7.5 cm | 0.11–0.15 m/s at the observed reference points; some heading change |
+| Rotate left `wz 0.5` | 40° twice | 1.4 rad/s left |
+| Rotate right `wz -0.5` | 40–45° | 1.4–1.6 rad/s right |
+| Diagonal `vx 0.05`, `vy ±0.05` | 4.5 cm forward and 4.5 cm sideways, each direction | 0.09 m/s per axis; magnitude about 0.13 m/s |
 
-| Forward command | Approximate wheel duty | Stream duration | Repeats | State |
-| --- | --- | --- | --- | --- |
-| `vx 0.05` | 42.5% | 0.5 s | 3 + session-end repeat | Earlier total travel 10, 11, 10 cm; end repeat 10 cm |
-| `vx 0.20` | 50% | 0.5 s | 3 | 13.5, 14, 14 cm; mean 13.8 cm, spread 0.5 cm ([evidence](bench/2026-10-17-calibration/notes.md)) |
-| `vx 0.40` | 60% | 0.5 s | First run, then up to 2 repeats after observation | Next setting; announce and wait for go |
+Geometry is measured and flashed: wheel radius 0.030 m, wheelbase 0.115 m, track 0.140 m, centre projection sum 0.1275 m. The motors have no encoders; closed-loop sensing remains out of scope. The current motor duty mapping and the placeholder 40 rad/s normalization are unchanged. These observations do not justify replacing that parameter with 105 RPM: that unloaded wheel count was at 70% duty under the older geometry, not a full-duty measurement.
 
-Each run ends with explicit STOP. Measure forward displacement, lateral displacement of the same front/rear reference points, heading change where visible, and whether the car stops cleanly. The first run at a new setting determines whether the duration and available space remain appropriate; cancel later runs if the car approaches the boundary or motion is abnormal. Do not combine this phase with lease-expiry tests or increase duty and duration together.
+## Consistency and stopping
 
-These are **whole-pulse response measurements**, including acceleration and any coast. They are useful for comparing settings and repeatability, not sufficient to label a command as accurate m/s. For steady speed, use original-time video with floor marks and measure position over a visible interval while motion is steady. Slow-motion playback duration is not capture duration. If 1 × 1 m does not give a steady interval, leave steady-speed calibration open rather than fitting a misleading scale factor.
+* Todor noticed no performance change. Forward baseline 10, 11, 10 cm and session-end repeat 10 cm support qualitative session consistency. No controlled battery-charge or payload comparison was performed; none is claimed.
+* The 50%-duty forward group spans only 0.5 cm (13.5, 14, 14 cm). Parquet was confirmed for this group. Charge indicators and current load were not separately recorded.
+* A 0.3 s stream at `vx 0.05` gave 6.5 cm total travel with explicit STOP and 22.5 cm with lease expiry. The extra 16 cm is a difference between whole-run distances, not an isolated mechanical stopping distance. Physical automatic stopping was confirmed.
 
-## Then: controlled variation
+## Use and limits
 
-Repeat the baseline and one characterized setting after a documented change in bank charge, keeping the same floor, firmware, geometry, start position and load. Record both banks' indicators and any supply-voltage measurement already available. Separate elapsed-session variation from a confirmed battery effect; regulated USB output may stay similar at different indicated charge levels.
+Use the table as empirical references for manual teleoperation and M6 requirements discussions. Keep the standard Twist command fields in m/s and rad/s as requested references; do not claim that current firmware makes the car track them accurately. No interpolation, new gains, limits or compensation have been implemented from these estimates.
 
-For a load comparison, first agree and record a securely mounted payload and total mass. Do not add an unspecified load during a drive. Keep the motor commands and all other conditions the same. A single session-end baseline of 10 cm does not settle battery/load variation.
+Detailed evidence: [forward baseline](bench/2026-10-17-f2/notes.md), [50%-duty trials](bench/2026-10-17-calibration/notes.md), [reverse](bench/2026-10-17-f3/notes.md), [strafe](bench/2026-10-17-f4/notes.md), [rotation](bench/2026-10-17-f5/notes.md), [diagonals](bench/2026-10-17-f6/notes.md), [stops](bench/2026-10-17-f7/notes.md), [session-end repeat](bench/2026-10-17-f8/notes.md).
 
-## Recording template
-
-| Field | Value |
-| --- | --- |
-| Date, firmware source revision | |
-| Surface and start position | parquet; |
-| ESP32 bank / motor bank indicators | unknown / unknown |
-| Total mass and secured payload | prior reported mass 500 g; current load to confirm |
-| Command, stream duration, end condition | |
-| Front/rear forward and lateral displacement | |
-| Heading change, physical stop, slip observation | |
-| Client output and original video path / capture frame rate | |
-
-Store per-run observations and client output under `bench/<date>-calibration/`. Keep unreported fields unknown. Do not push a commit after every observation: save each result locally, then commit a coherent group of runs so CI has time to complete.
-
-## Decisions after measurement
-
-* Keep open-loop control within the current no-encoder scope. Do not infer that precise low-speed tracking is possible from successful short pulses.
-* The 40% minimum means very small nonzero commands can already move the car appreciably. Establish a minimum usable speed or describe commands as uncalibrated references until a measured motor/velocity mapping exists.
-* Do not use the earlier 105 RPM at 70% duty as full-duty `max_wheel_speed`, or set it as the new normalization value without reviewing the resulting duties. Those wheel counts used the earlier geometry.
-* Full-duty behavior, per-wheel variation, actual stop timing/coast distance and a worst-case stopping bound remain separate work. The 6.5 vs 22.5 cm STOP/lease comparison is total-travel evidence at one low command.
-
-M5 closes only when its remaining acceptance items are supported by evidence or explicitly deferred by Todor; these measurements do not by themselves accept M6 or change its speed contract.
+Full-duty performance, minimum steady usable speed, accuracy bounds, controlled battery/load effects and worst-case stopping distance remain unverified. Resume measurement only for a concrete requirement that needs one of those answers, with each motor test announced and started on Todor's go. No 60%-duty test is queued.

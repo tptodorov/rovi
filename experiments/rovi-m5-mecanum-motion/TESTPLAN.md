@@ -36,7 +36,7 @@ Items 1-5 are recorded in [the milestone results](MILESTONE.md#results). Firmwar
 
 ## Tests
 
-The first low-command floor session is recorded in [MILESTONE.md](MILESTONE.md#results). Continue with [CALIBRATION.md](CALIBRATION.md): measured command response on parquet, then documented battery/load comparisons. Do not repeat the higher command values in this original matrix automatically; geometry changes duty, and command values are not calibrated speeds.
+The first low-command floor session is recorded in [MILESTONE.md](MILESTONE.md#results). Use [CALIBRATION.md](CALIBRATION.md) for the existing approximate motion references. Todor accepted those estimates and reported no performance change noticed; the extended measurement sweep is stopped. Do not repeat the higher command values in this original matrix automatically; geometry changes duty, and command values are not calibrated speeds.
 
 | # | Test | Command | Measure | Pass / output |
 | --- | --- | --- | --- | --- |
