@@ -19,7 +19,7 @@ The car's device control API SHALL accept a setpoint as a `geometry_msgs/TwistSt
 
 ### Requirement: Mecanum kinematics
 
-The car SHALL convert a setpoint to four wheel commands with `mecanum_drive_controller`'s inverse kinematics (Jazzy) and parameter names, divide each wheel speed by `max_wheel_speed`, and clamp to −1.0..=1.0. **OPEN (O2, M5):** `max_wheel_speed` and the setpoint limits.
+The car SHALL use `mecanum_drive_controller` inverse kinematics and parameter names, divide wheel-speed references by configured `max_wheel_speed`, and clamp to −1.0..=1.0. The current geometry SHALL use radius 0.030 m and centre projection sum 0.1275 m, with zero frame offset. **OPEN (O2):** qualified profile normalization and input limits; the experiment's 40 rad/s and 1/1/3 limits are not measured physical maxima.
 
 #### Scenario: Same result as mecanum_drive_controller
 
@@ -32,6 +32,17 @@ The car SHALL convert a setpoint to four wheel commands with `mecanum_drive_cont
 - **GIVEN** the same setpoint
 - **WHEN** it is sent by an armed owner over BLE, UDP and ROS 2 in turn
 - **THEN** the wheel commands are identical
+
+### Requirement: Open-loop motion references
+
+Twist fields SHALL retain their standard m/s and rad/s meaning as requested motion references. Product documentation SHALL describe current open-loop tracking as approximate and link the M5 observations. The car SHALL NOT present command-derived speed as measured velocity or promise velocity accuracy without supporting evidence.
+
+#### Scenario: An estimate is not measured feedback
+
+- **GIVEN** the current motors have no encoders and only short-pulse observations are available
+- **WHEN** the product describes speed or publishes status
+- **THEN** observed motion estimates are identified as approximate
+- **AND** commanded velocity is not presented as measured feedback
 
 ### Requirement: Latest setpoint wins
 
@@ -79,7 +90,7 @@ If the owner sends no valid setpoint within the claim window, ownership SHALL be
 
 ### Requirement: Explicit arming
 
-A new owner SHALL start disarmed. Over BLE and UDP, only the owner's explicit arm command SHALL arm the car, and only while the lease is valid. Over ROS 2, a valid setpoint from the owner SHALL arm the car when it is claimed or stopped by a lease expiry ([ADR-0011](../../../../docs/adr/0011-ros-auto-arm.md)). After a stop or an out-of-limits setpoint, on every source, only the owner's explicit arm SHALL arm the car, and it SHALL also need a valid setpoint sent after that safety stop. While disarmed, setpoints SHALL renew the lease and every wheel command SHALL be zero.
+New owners SHALL start disarmed. BLE/UDP SHALL require the owner's explicit arm and a valid lease. ROS SHALL auto-arm on an owner's valid setpoint only after a claim or lease expiry ([ADR-0011](../../../../../docs/adr/0011-ros-auto-arm.md)). After STOP or out-of-limits, all sources SHALL require a fresh setpoint followed by explicit arm. Disarmed setpoints SHALL renew the lease while wheel commands remain zero.
 
 #### Scenario: Setpoints alone do not move the car
 

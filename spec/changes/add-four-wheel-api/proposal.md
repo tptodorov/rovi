@@ -1,10 +1,10 @@
 # M6: low-level four-wheel API
 
-**Status:** proposed 2026-10-10. Requirements marked **OPEN** wait for bench evidence; nothing here is implemented beyond M8's board-only core. Terms are as defined in [`GLOSSARY.md`](../../../GLOSSARY.md).
+**Status:** proposed 2026-10-10; refreshed 2026-10-17 with M4/M5 evidence, ready for requirements review. The product workspace is not implemented. Existing experiment code is the starting point; unverified limits below remain explicit. Terms are as defined in [`GLOSSARY.md`](../../../GLOSSARY.md).
 
 ## Why
 
-[VISION](../../../docs/VISION.md) layer 2 needs a product API that drives the car's four wheels independently, stays independent of transport and mecanum math, and fails safe. M8 ([README](../../../experiments/rovi-m8-setpoint-ros/README.md)) proved the control model on the laptop: `TwistStamped` setpoints, one owner, explicit arming, lease, claim and reclaim windows, safety stop. M8 stops at the `WheelOutput` boundary with no motors. This change turns that model into product requirements and adds the motor control layer below it, so implementation can start once M4 and M5 supply the hardware numbers.
+[VISION](../../../docs/VISION.md) layer 2 needs a product API that drives the car's four wheels independently, stays independent of transport and mecanum math, and fails safe. M8 ([README](../../../experiments/rovi-m8-setpoint-ros/README.md)) proved the transport and ownership model on the board. M4 added four physical motor outputs and verified stops, reversals and a thermal run; M5 demonstrated floor movement and recorded approximate motion references. This change turns that experimental behavior into a reusable product API, separating motor control from the device state machine. It reuses the working code and evidence rather than starting another firmware experiment.
 
 ## What changes
 
@@ -21,25 +21,34 @@
 
 No new ADR: none of these is hard to reverse before implementation starts.
 
-## Open questions
+## Evidence and remaining decisions
 
-Each **OPEN** requirement names its question here. O1–O8 are hardware numbers; O9 is a software question. No numbers are invented; M8's defaults (`max_wheel_speed` 40 rad/s, `max_vx`/`max_vy` 1 m/s, `max_wz` 3 rad/s) are placeholders, not requirements.
+Use [M4 results](../../../experiments/rovi-m4-four-motor-safety/MILESTONE.md#results), [M5 results](../../../experiments/rovi-m5-mecanum-motion/MILESTONE.md#results) and the [accepted motion references](../../../experiments/rovi-m5-mecanum-motion/CALIBRATION.md). Todor stopped the extended measurement sweep; no new motor tests are queued by this proposal. Approximate references are not guaranteed velocity tracking.
 
-| ID | Question | Settled by |
-| --- | --- | --- |
-| O1 | Per-channel and combined motor current limits, and the maximum duty that wheel command 1.0 may map to | M4 |
-| O2 | Maximum wheel speed (`max_wheel_speed`) and the resulting `max_vx`, `max_vy`, `max_wz` | M5 |
-| O4 | Bound from safety stop to every driver in standby, under four-motor load | M4 |
-| O5 | Zero wheel command: short brake or coast, and stopping distance at maximum speed | M4, M5 |
-| O6 | Dead zone: the smallest wheel command that turns each wheel, and whether to compensate for it | M5 |
-| O7 | Whether starts and reversals need a slew limit to keep the logic rail above brownout | M4 |
-| O8 | Driver channel to wheel mapping and per-wheel direction | M5 |
-| O9 | Can zenoh-nostd serve `rmw_zenoh`'s transient-local late joiners for `/rovi/capabilities`, or must the car republish it | M6 implementation (laptop, then board) |
+| ID | Current answer / remaining limit |
+| --- | --- |
+| O1 | Existing mapping is 40–100% PWM, 20 kHz; running current reported as 150 mA per motor. Four-motor reversal and thermal evidence covers 70% duty, not continuous full-scale 100% operation. Start/stall current and a qualified electrical maximum remain unknown. Implement configurable duty limits; do not describe them as measured current protection. |
+| O2 | Geometry is radius 0.030 m, wheelbase 0.115 m, track 0.140 m, centre projection sum 0.1275 m. Use existing approximate motion references. Experiment normalization 40 rad/s and input limits 1/1/3 are operational placeholders, not measured maximum speeds. Profile values must stay explicit; no single gain fitted from short pulses is justified. |
+| O3 | Resolved: open-loop duty control; no encoders, added sensing out of scope. |
+| O4 | Physical stopping is observed; a numeric pin-level disable bound is not measured. Keep driver-disable validation separate from lease detection and mechanical stopping. Implement immediate standby when the motor layer receives disable; no invented physical timing claim. |
+| O5 | Select coast for an individual zero wheel and standby for every safety stop. Encode the TB6612 documented coast pin state explicitly; the experimental all-low zero pins must not be assumed to prove coast. Whole-run STOP/lease travel is 6.5/22.5 cm at one low command; maximum-speed coast distance remains unknown. |
+| O6 | Resolved rule: exact zero and magnitudes below 0.02 do not drive; other commands map linearly from 40% toward configured maximum duty. About 35% starting duty observed on the stand. No precise per-wheel minimum steady speed or floor threshold is claimed. |
+| O7 | Direct reversals at ±70% did not reset the ESP32 or drop BLE; retain direct transitions within the qualified operating envelope, with no speculative ramping. Behavior beyond that evidence remains to be qualified before claiming full-scale reversal. |
+| O8 | Resolved: D1 A→FL, D1 B→RL, D2 A→FR, D2 B→RR. Directions corrected at connectors, all software inversions false. Each driver has its own STBY, both disabled on a safety stop. |
+| O9 | Software question: can zenoh-nostd serve transient-local late joiners for `/rovi/capabilities`? Test on the laptop; use the specified periodic-republish fallback if needed. |
 
-**Resolved O3 (M5, 2026-10-17):** open-loop duty control; motors have no encoders and adding sensors is out of scope. Todor accepts [existing approximate motion references](../../../experiments/rovi-m5-mecanum-motion/CALIBRATION.md); these do not guarantee accurate velocity tracking or settle O2's full-duty maximum.
+The remaining electrical/physical bounds do not prevent implementing and host-testing configurable modules. They do prevent claiming qualified maxima, exact velocity tracking or completed product hardware acceptance. Retain the experiment firmware for comparison; product acceptance is a separate checklist.
+
+## First implementation scope
+
+* Reuse M8's core, motor mapping and tests in a shared Cargo workspace; isolate motor control from the arbiter and transports.
+* Add conformance tests for the specified deadband/duty rule, independent wheels, faults, standby and documented zero-output mode.
+* Keep BLE, UDP, optional ROS, ownership and arming behavior. Implement the agreed ROS capabilities and extended status topics.
+* No new encoder, camera, phone-app, station-mode or hardware-monitor work in this change.
+* Do not flash or start a motor test as part of extraction or host validation. Each board run is announced separately and waits for Todor's go.
 
 ## Impact
 
 * New: `spec/changes/add-four-wheel-api/`. First use of `spec/` ([ADR-0001](../../../docs/adr/0001-openspec-for-product-development.md)).
-* Code: none now. Implementation (see [tasks](tasks.md)) reuses M8's core and adds a motor control module; it starts the shared Cargo workspace PLAN defers until this point.
+* Code: none now. Implementation (see [tasks](tasks.md)) extracts M8's existing core and motor output behavior into product modules; it starts the shared Cargo workspace PLAN defers until this point.
 * Evidence: host tests and the sim car are development evidence only ([ADR-0002](../../../docs/adr/0002-simulation-never-proves-hardware.md)). Acceptance needs the M4/M5 bench setup.
