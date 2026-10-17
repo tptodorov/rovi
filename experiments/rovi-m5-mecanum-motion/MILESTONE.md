@@ -125,3 +125,5 @@ At `vx 0.05`, `vy -0.05` for 0.5 s, Todor reported the same component distances:
 #### Automatic lease stop on the floor, 2026-10-17
 
 At `vx 0.05`, streamed for 0.3 s then stayed connected but silent for 2 s. The client observed **Stopped (`LeaseExpired`)**, and Todor confirmed forward motion followed by **a physical stop without further setpoints**. Travel distance was unknown. Total travel, distance after the last setpoint, coast distance and exact physical stop timing remain unmeasured. See [F7 notes and output](bench/2026-10-17-f7/notes.md). This is low-command functional evidence, not a high-speed stopping-distance result.
+
+A repeat with a marked starting front edge produced **22.5 cm total forward travel** and again reported `LeaseExpired`. This includes motion during the 0.3 s stream, lease wait and any coast; it is not distance after the last setpoint or motor disable. Exact physical stop timing and coast distance remain unmeasured. A matching explicit-STOP comparison remains pending.
