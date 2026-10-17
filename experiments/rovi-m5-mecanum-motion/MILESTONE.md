@@ -75,3 +75,5 @@ Record firmware revision, floor surface, battery state, observations and evidenc
 With the car on a stand, Todor confirmed forward, strafe-left and rotate-left wheel directions, including all four starting and stopping. See [run notes and BLE client output](bench/2026-10-17-f1/notes.md). One initial strafe run produced no movement; its cause remains unconfirmed. These stand tests do not establish actual chassis motion.
 
 At `vx 0.1` for 5 s, Todor counted approximately 4.75 FL wheel rotations: **0.95 rev/s = 57 RPM = 5.97 rad/s**. With a 60 mm wheel diameter, nominal rim speed is approximately **0.179 m/s**, unloaded. This whole-run average is not floor speed; acceleration, stopping, slip and load are not resolved. Full-duty wheel-speed measurement and all floor tests remain pending.
+
+At `vx 0.5` for 5 s, Todor counted approximately 6.5 FL rotations: **1.30 rev/s = 78 RPM = 8.17 rad/s**, nominal unloaded rim speed **0.245 m/s**. The same whole-run-average limitations apply; this is a second calibration point, not maximum wheel speed.
