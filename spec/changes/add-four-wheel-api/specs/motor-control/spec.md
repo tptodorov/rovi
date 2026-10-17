@@ -2,13 +2,13 @@
 
 ### Requirement: Four independent wheel commands
 
-Motor control SHALL accept one set of four wheel commands per control tick, in the order FL, FR, RR, RL. Each wheel command SHALL be a signed value in −1.0..=1.0, where the sign is the direction that moves the car forward when positive, and the magnitude is the fraction of the configured maximum. Motor control SHALL apply each wheel command to its own wheel only, with no kinematic mixing.
+Motor control SHALL accept four signed wheel commands in −1.0..=1.0, ordered FL, FR, RR, RL. Positive means forward for that wheel. Magnitude SHALL be converted by the documented deadband/duty rule, not assumed proportional to physical speed. Each command SHALL affect its own wheel only, with no kinematic mixing.
 
 #### Scenario: Each wheel is driven on its own
 
 - **GIVEN** motor control is enabled
 - **WHEN** it receives wheel commands (0.5, 0, 0, 0)
-- **THEN** only the FL wheel is driven, forward, at half the configured maximum
+- **THEN** only FL is driven forward at the duty produced by the deadband/duty rule
 - **AND** FR, RR and RL receive a zero wheel command
 
 #### Scenario: Sign sets direction
@@ -67,7 +67,7 @@ When the device raises a safety stop, motor control SHALL set every wheel comman
 
 ### Requirement: Full-scale maps to a measured limit
 
-Wheel command 1.0 SHALL map to a configured maximum that keeps each motor, driver channel and the supply within the limits M4 records, with all four wheels at 1.0 at once. **OPEN (O1, M4):** the current limits and the maximum duty. **Resolved (O3, M5, 2026-10-17):** the current car SHALL use open-loop duty control; the configured maximum is a PWM duty. Encoder feedback SHALL NOT be required for this hardware. Approximate motion references do not imply measured wheel-velocity tracking.
+Wheel command 1.0 SHALL map to the configured maximum PWM duty. The car SHALL use open-loop duty control without encoder feedback. The configured duty cap SHALL be enforced independently for each wheel. **OPEN (O1):** the electrically qualified maximum; 70% reversal/thermal evidence does not validate 100% operation. Duty limiting SHALL NOT be advertised as measured current protection.
 
 #### Scenario: All wheels at full scale stay in limits
 
@@ -78,37 +78,45 @@ Wheel command 1.0 SHALL map to a configured maximum that keeps each motor, drive
 
 ### Requirement: Zero command behaviour
 
-A zero wheel command SHALL stop that wheel using one documented method. **OPEN (O5, M4/M5):** short brake or coast.
+A zero wheel command SHALL request coast for that wheel without disabling a driven neighbour on the same driver. On the TB6612, this SHALL use IN1=IN2=low and PWM=high while STBY is high. A safety stop SHALL instead deassert both drivers' STBY inputs. **OPEN (O5):** physical coast distance, not the selected mode. Source: Toshiba [H-SW table, page 4](../../../../../docs/reference/tb6612fng/datasheet.pdf).
 
 #### Scenario: Zero stops a turning wheel
 
 - **GIVEN** a wheel driven at 0.5
 - **WHEN** it receives a zero wheel command
-- **THEN** it is stopped by the documented method
+- **THEN** its outputs are high impedance and it is allowed to coast
+
+#### Scenario: A zero wheel does not disable its neighbour
+
+- **GIVEN** FL and RL share driver 1 and motor control is enabled
+- **WHEN** FL receives zero and RL receives 0.5
+- **THEN** FL requests coast with both direction pins low and PWM high
+- **AND** RL retains its requested duty and driver 1 remains enabled
 
 ### Requirement: Dead zone handling
 
-Motor control SHALL document the smallest wheel command that turns each wheel. **OPEN (O6, M5):** the value, and whether commands below it are raised to it or left as is.
+Exact zero or a magnitude below the configured deadband SHALL request coast. Otherwise duty SHALL be `min + abs(command) * (max - min)`, rounded to permille after input clamping. The initial deadband SHALL be 0.02 and minimum duty 40%; maximum duty SHALL be configured. A precision minimum physical speed SHALL NOT be inferred from this rule. The stand starting observation was about 35%, not a universal per-wheel threshold.
 
 #### Scenario: Small command behaviour is predictable
 
-- **GIVEN** the O6 dead zone is known
-- **WHEN** a wheel receives a non-zero wheel command below it
-- **THEN** the wheel behaves as the documented dead-zone rule states
+- **GIVEN** deadband 0.02, minimum duty 40% and maximum duty 100%
+- **WHEN** the wheel receives 0, 0.01, 0.02, 0.5 and 1.0 in turn
+- **THEN** the requested modes/duties are coast, coast, 41.2%, 70% and 100%
+- **AND** negative commands use the same duty magnitude with reversed direction
 
 ### Requirement: Starts and reversals do not reset the controller
 
-Motor control SHALL change wheel commands in a way that does not reset the ESP32-S3 or drop a control link. **OPEN (O7, M4):** whether a slew limit is needed, and its rate.
+Motor control SHALL support direct signed changes within the qualified operating envelope. M4 observed reversals at ±70% without reset or BLE loss; no slew limit is required by that evidence. The product SHALL NOT claim the same result above the qualified duty without validation. **OPEN (O7):** qualification at the selected product maximum.
 
 #### Scenario: Full reversal on all wheels
 
-- **GIVEN** all four wheels at 1.0
+- **GIVEN** a configured maximum within the qualified operating envelope and all four wheels at 1.0
 - **WHEN** all four are commanded to −1.0 in one control tick
 - **THEN** the ESP32-S3 does not reset and the owner's session survives
 
 ### Requirement: Calibrated wheel mapping
 
-Motor control SHALL map each wheel position (FL, FR, RR, RL) to its driver channel and direction through configuration, not code. **OPEN (O8, M5):** the mapping for the car.
+Motor control SHALL configure each wheel's driver channel and inversion. The current car mapping SHALL be D1 A→FL, D1 B→RL, D2 A→FR, D2 B→RR, with all inversions false because directions were corrected at connectors. Both separate STBY outputs SHALL follow motor enable/disable together.
 
 #### Scenario: Positive command moves each wheel forward
 

@@ -10,8 +10,8 @@ Laptop tasks are development evidence only ([ADR-0002](../../../docs/adr/0002-si
 
 ## 2. Motor control (laptop, test-first)
 
-- [ ] 2.1 Motor control module with a host test double: four wheel commands, enable, standby, no dependency on the device layer.
-- [ ] 2.2 Tests: per-wheel independence, clamping, non-finite command → standby and fault, standby until enabled.
+- [ ] 2.1 Extract the existing motor behavior into a module with a host driver test double: four wheel commands, enable, standby, no dependency on the device layer.
+- [ ] 2.2 Tests: per-wheel independence, clamping, non-finite command → standby and fault, standby until enabled, deadband/minimum-duty mapping, and TB6612 documented per-wheel coast pins (including a driven neighbour). Start the coast correction with a failing test; the experiment's all-low zero pins are not the documented coast row.
 - [ ] 2.3 Connect M8's `WheelOutput` to motor control; the sim car logs the commands it would drive.
 
 ## 3. Car control API conformance (laptop)
@@ -22,8 +22,8 @@ Laptop tasks are development evidence only ([ADR-0002](../../../docs/adr/0002-si
 
 ## 4. Settle OPEN requirements (bench)
 
-- [ ] 4.1 M4 settles O1, O4, O5 (brake), O7. Write the measured values into the spec.
-- [ ] 4.2 M5 settles O2, O3, O5 (stopping distance), O6, O8. Write the measured values into the spec.
+- [ ] 4.1 Resolve qualified product limits for O1/O4/O7, distinguishing 70%-duty bench evidence from configured 100% and logical timing from measured pin timing. Do not invent current or stopping bounds.
+- [ ] 4.2 Review O2 profile values and O5 stopping qualification using the accepted approximate references. No additional measurement sweep is queued; any missing bound remains explicit. O3/O6/O8 rules are already recorded.
 - [x] 4.3 Close PLAN Q11 from O3: open-loop duty control selected (2026-10-17); no encoders, added sensors out of scope, existing approximate motion references accepted. No closed-loop ADR needed.
 
 ## 5. Implement and accept (bench)
