@@ -111,3 +111,7 @@ At `vx 0`, `wz 0.5` for 0.5 s, Todor reported approximately **40° left rotation
 After two further identical leftward pulses, the first without a reported observation, Todor reported **40° left again with no noticeable centre shift** on the latest. Thus two reported angles agree at approximately 40°; measurement precision and battery/load effects remain uncharacterized. Clockwise rotation and quantified stopping remain pending.
 
 At `wz -0.5` for 0.5 s, Todor reported **"ok, 40-45deg"**: approximately **40–45° right**, no problem reported, centre displacement not separately quantified. This is close to the 40° leftward observations at the opposite command, but is one rightward run. Rightward repeatability, calibrated turn rate and quantified stopping remain pending.
+
+#### Reverse floor motion, 2026-10-17
+
+Three pulses at `vx -0.05` for 0.5 s were sent; the first two were repeated without reported measurements. On the third, Todor confirmed **10 cm backward, straight, clean stop**. Reverse motion and a clean physical stop are demonstrated at this command; stopping distance and reverse repeatability are not quantified. The distance is close to the forward baseline (10, 11, 10 cm). See [F3 notes and output](bench/2026-10-17-f3/notes.md).
