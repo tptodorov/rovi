@@ -13,6 +13,19 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  openspec:
+    name: OpenSpec validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run spec:check
+      - run: npm run openspec -- validate --archived --strict --no-interactive
+
   host:
     name: host tests (cores, sim car, Python)
     runs-on: ubuntu-latest

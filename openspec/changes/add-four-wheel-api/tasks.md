@@ -30,4 +30,8 @@ Laptop tasks are development evidence only ([ADR-0002](../../../docs/adr/0002-si
 
 - [ ] 5.1 TB6612FNG motor control on four channels with the M4 limits.
 - [ ] 5.2 Run every scenario on the car, on all four physical channels, with BLE, UDP and ROS 2 controllers.
-- [ ] 5.3 Record results; move the specs from this change into `spec/specs/`.
+- [ ] 5.3 Record results and verify that each scenario has evidence and every blocking open item is resolved.
+
+## Workflow follow-up
+
+* After acceptance, run the archive and validation commands in [the specification standard](../../../docs/SPECIFICATION.md). Review the generated baseline specs and repair relative links in both baseline and archived documents.

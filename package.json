@@ -1,0 +1,15 @@
+{
+  "name": "rovi-spec-tooling",
+  "private": true,
+  "description": "OpenSpec tooling only; Rovi firmware is Rust.",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "openspec": "openspec",
+    "spec:check": "openspec validate --all --strict --no-interactive"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "1.14.1"
+  }
+}

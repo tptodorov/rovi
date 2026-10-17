@@ -1,3 +1,7 @@
+## Purpose
+
+Controls four motor channels independently with explicit enable, standby, duty mapping and fault behavior, without depending on device kinematics or transports.
+
 ## ADDED Requirements
 
 ### Requirement: Four independent wheel commands

@@ -1,0 +1,3 @@
+# Use the native OpenSpec layout and a pinned workflow
+
+Supersedes [ADR-0001](0001-openspec-for-product-development.md)'s directory and tooling convention; its product-versus-experiment scope is retained. Product specifications use the native `openspec/` root and the `spec-driven` workflow, with the OpenSpec CLI pinned in `package.json` and its dependency lockfile. The previous `spec/` layout required temporary copies for validation and hid workflow and archive gaps; native discovery lets humans, agents and CI use the same commands without a compatibility alias. [The specification standard](../SPECIFICATION.md) defines readiness, acceptance and archive checks; updating the tool version is an explicit reviewed change, not an implicit global-tool upgrade.

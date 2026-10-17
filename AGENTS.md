@@ -7,6 +7,7 @@ One topic, one home. Read the relevant file below rather than expecting the answ
 * **What Rovi is, why it's layered this way**: [`docs/VISION.md`](docs/VISION.md)
 * **Current status, roadmap, deferred/non-goal decisions**: [`docs/PLAN.md`](docs/PLAN.md)
 * **How development work happens** (contribution method, hardware-validation policy, hardware design assumptions, the two process tracks, spec structure): root [`README.md`](README.md#how-we-work)
+* **Before creating, reviewing, implementing or archiving product specs:** read [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md) for the pinned OpenSpec workflow, validation commands and acceptance gates.
 * **Decision records** — terse, one per hard-to-reverse/non-obvious/real-trade-off decision (see the `domain-modeling` skill's ADR format; most decisions don't qualify, skip recording those): [`docs/adr/`](docs/adr/), sequentially numbered, never rewritten (a reversed decision gets a new ADR marked "supersedes ADR-NNNN"). Skills that default to writing design docs elsewhere (e.g. `brainstorming`'s `docs/plans/`) write decision records here instead, in this repo.
 * **Logging standard** (event lines, catalog, cost, how to add an event): [`docs/LOGGING.md`](docs/LOGGING.md)
 * **Feedback loops** (how an agent sees its work run: tests, sim, car log, bench script, camera; ranked, with status): [`docs/FEEDBACK-LOOPS.md`](docs/FEEDBACK-LOOPS.md)
@@ -16,7 +17,7 @@ One topic, one home. Read the relevant file below rather than expecting the answ
 ## Project structure
 
 * [`experiments/`](experiments/) — exploratory ESP32-S3/Rust hardware bring-up, one milestone per independent Cargo package.
-* [`spec/`](spec/) — OpenSpec change proposals for product work (`spec/changes/{change-id}/`); first: [M6 four-wheel API](spec/changes/add-four-wheel-api/proposal.md).
+* [`openspec/`](openspec/) — product requirements and change proposals; first: [M6 four-wheel API](openspec/changes/add-four-wheel-api/proposal.md).
 * [`docs/`](docs/) — `VISION.md`, `PLAN.md`, `adr/` (decision records), `reference/` (hardware component docs).
 
 ## Agent skills

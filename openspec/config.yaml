@@ -1,0 +1,7 @@
+schema: spec-driven
+
+context: |
+  Rovi's product-specification standard is docs/SPECIFICATION.md. Read it before
+  creating, reviewing, implementing or archiving a change. Terms are defined in
+  GLOSSARY.md; architecture decisions live in docs/adr/. Experiments use their
+  separate milestone process. Host tests never establish hardware acceptance.

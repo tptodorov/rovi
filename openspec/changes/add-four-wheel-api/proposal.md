@@ -6,11 +6,22 @@
 
 [VISION](../../../docs/VISION.md) layer 2 needs a product API that drives the car's four wheels independently, stays independent of transport and mecanum math, and fails safe. M8 ([README](../../../experiments/rovi-m8-setpoint-ros/README.md)) proved the transport and ownership model on the board. M4 added four physical motor outputs and verified stops, reversals and a thermal run; M5 demonstrated floor movement and recorded approximate motion references. This change turns that experimental behavior into a reusable product API, separating motor control from the device state machine. It reuses the working code and evidence rather than starting another firmware experiment.
 
-## What changes
+## What Changes
 
 * **`motor-control` (new):** the reusable layer that takes four wheel commands (FL, FR, RR, RL, normalised −1..1) and drives the motor drivers. It knows nothing of setpoints, kinematics or transports. It owns driver standby, the boot-safe state and the limits M4 measures.
 * **`car-control-api` (new):** the car's device control API, carried over from M8 unchanged in behaviour: setpoint, ownership, arming, lease, windows, safety stop, capabilities and status, identical on BLE, UDP and ROS 2.
 * **No firmware changes** in this proposal. Byte layouts stay as M8 defines them ([README](../../../experiments/rovi-m8-setpoint-ros/README.md#transports)); this spec states behaviour, not wire formats.
+
+## Capabilities
+
+### New Capabilities
+
+* `motor-control`: independent wheel commands, driver standby, duty limits and fault handling.
+* `car-control-api`: setpoint processing, ownership, arming, lease, capabilities and status.
+
+### Modified Capabilities
+
+None; this is the first product specification change.
 
 ## Design decisions
 
@@ -49,6 +60,10 @@ The remaining electrical/physical bounds do not prevent implementing and host-te
 
 ## Impact
 
-* New: `spec/changes/add-four-wheel-api/`. First use of `spec/` ([ADR-0001](../../../docs/adr/0001-openspec-for-product-development.md)).
+* Planning: `openspec/changes/add-four-wheel-api/`, following the [product specification standard](../../../docs/SPECIFICATION.md) and [ADR-0015](../../../docs/adr/0015-native-openspec-workflow.md).
 * Code: none now. Implementation (see [tasks](tasks.md)) extracts M8's existing core and motor output behavior into product modules; it starts the shared Cargo workspace PLAN defers until this point.
 * Evidence: host tests and the sim car are development evidence only ([ADR-0002](../../../docs/adr/0002-simulation-never-proves-hardware.md)). Acceptance needs the M4/M5 bench setup.
+
+## Review status
+
+Draft, not ready for implementation under the specification standard. The 2026-10-17 review found unresolved ROS auto-arm versus safety-latch rules, motor fault/configuration recovery, saturation scenario behavior, shared-radio wording, and missing transport edge-case contracts. Resolve these and supply `design.md` before marking proposal acceptance/task 1.1 complete. Passing strict format validation alone does not resolve this review.
