@@ -23,7 +23,7 @@ Motor control SHALL accept four signed wheel commands in −1.0..=1.0, ordered F
 
 ### Requirement: Independent of transport and kinematics
 
-Motor control SHALL expose only wheel commands, enable and standby. It SHALL NOT depend on setpoints, mecanum kinematics, the source or the session.
+Motor control SHALL expose configuration, wheel commands, enable/standby and typed validation faults. It SHALL NOT depend on setpoints, mecanum kinematics, the source or the session.
 
 #### Scenario: Built without the device layer
 
@@ -69,7 +69,7 @@ When the device raises a safety stop, motor control SHALL set every wheel comman
 - **WHEN** a watchdog timeout raises a safety stop
 - **THEN** every driver's STBY input is inactive within the O4 bound
 
-### Requirement: Full-scale maps to a measured limit
+### Requirement: Full-scale maps to the configured limit
 
 Wheel command 1.0 SHALL map to the configured maximum PWM duty. The car SHALL use open-loop duty control without encoder feedback. The configured duty cap SHALL be enforced independently for each wheel. **OPEN (O1):** the electrically qualified maximum; 70% reversal/thermal evidence does not validate 100% operation. Duty limiting SHALL NOT be advertised as measured current protection.
 
@@ -84,7 +84,7 @@ Wheel command 1.0 SHALL map to the configured maximum PWM duty. The car SHALL us
 
 A zero wheel command SHALL request coast for that wheel without disabling a driven neighbour on the same driver. On the TB6612, this SHALL use IN1=IN2=low and PWM=high while STBY is high. A safety stop SHALL instead deassert both drivers' STBY inputs. **OPEN (O5):** physical coast distance, not the selected mode. Source: Toshiba [H-SW table, page 4](../../../../../docs/reference/tb6612fng/datasheet.pdf).
 
-#### Scenario: Zero stops a turning wheel
+#### Scenario: Zero coasts a turning wheel
 
 - **GIVEN** a wheel driven at 0.5
 - **WHEN** it receives a zero wheel command
@@ -127,3 +127,56 @@ Motor control SHALL configure each wheel's driver channel and inversion. The cur
 - **GIVEN** the car restrained with wheels clear
 - **WHEN** each wheel in turn receives 0.3 alone
 - **THEN** the wheel at that position turns, in the direction that moves the car forward
+
+### Requirement: Configuration validation
+
+Before enabling, motor control SHALL validate finite deadband in [0,1), integer duty limits 0 ≤ min ≤ max ≤ 1000 permille, and a one-to-one mapping of four wheels to four bridge channels. Invalid configuration SHALL report a configuration fault and keep both drivers disabled. Configuration SHALL be immutable while enabled; replacing it SHALL disable and clear stored commands before validation.
+
+#### Scenario: Invalid duty or mapping cannot enable
+
+- **GIVEN** minimum duty 800 and maximum 700, or two wheels assigned to the same channel
+- **WHEN** configuration is installed and enable requested
+- **THEN** configuration is rejected and both STBY signals stay low
+
+#### Scenario: Invalid floating-point configuration cannot drive
+
+- **GIVEN** deadband NaN, infinity, negative or at least 1
+- **WHEN** configuration is installed
+- **THEN** a configuration fault is reported before any driver enable
+
+### Requirement: Fault recovery requires explicit enable
+
+A non-finite wheel vector SHALL invalidate stored commands and latch motor control disabled. Subsequent wheel updates SHALL NOT clear the latch. Explicit enable with a valid configuration and a complete finite wheel vector SHALL be required to recover; enabling SHALL NOT replay a previously stored vector. Standby SHALL always work, including in a fault state.
+
+#### Scenario: Valid updates do not clear a fault
+
+- **GIVEN** a NaN command caused both drivers to enter standby
+- **WHEN** several finite wheel updates arrive without explicit enable
+- **THEN** both drivers remain disabled
+- **AND** a later explicit enable with a new finite vector clears the command fault and applies only that vector
+
+### Requirement: Complete vector validation before output
+
+Motor control SHALL validate the entire vector before applying any channel, so a bad fourth value cannot partially drive the first three. Standby SHALL deassert both STBY outputs before preparing any new direction/PWM state. On enable, valid bridge states SHALL be prepared while disabled before STBY is asserted. Driver faults SHALL be reported to the caller, not silently converted to successful commands.
+
+#### Scenario: Fourth invalid wheel cannot cause partial motion
+
+- **GIVEN** drivers are disabled and a recording host driver
+- **WHEN** enable receives (0.5, 0.5, 0.5, infinity)
+- **THEN** no enable-high or drive update is issued for any bridge
+
+#### Scenario: Safe enable ordering
+
+- **GIVEN** disabled motor control with a valid configuration
+- **WHEN** it is explicitly enabled with a finite vector
+- **THEN** both drivers remain disabled until all four bridge states are prepared
+
+### Requirement: Coast is independent of the drive duty cap
+
+The configured maximum SHALL limit driven PWM duty, not the PWM-high signal required by the documented coast mode. A coast request SHALL keep both direction inputs low while PWM is high; it SHALL NOT become forward drive or brake merely because the configured drive cap is below 100%.
+
+#### Scenario: Coast with a reduced maximum
+
+- **GIVEN** maximum drive duty 70%, FL at zero and RL at 1.0
+- **WHEN** their shared driver is enabled
+- **THEN** FL has both direction pins low and PWM high, while RL is driven at 70%

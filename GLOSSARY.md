@@ -58,7 +58,7 @@ The single controller allowed to command the device at a given time. The first c
 A controller's request to become the owner: connecting over BLE, a UDP hello, or the first valid ROS setpoint. A claim is refused while another owner exists.
 
 **Claim window**:
-The period after a claim in which the new owner must send its first setpoint or arm. If it doesn't, ownership is released.
+The period after a claim in which the new owner must send its first valid setpoint. If it does not, ownership is released. An arm request without a valid setpoint does not satisfy the window.
 
 **Armed**:
 The state in which the owner's setpoints move the device. A new owner starts disarmed, and every safety stop disarms. Over BLE and UDP only the owner's explicit arm command arms the device. Over ROS 2 the owner's setpoint arms it after a claim or a lease expiry; a STOP or out-of-limits stop needs the owner's explicit arm ([ADR-0011](docs/adr/0011-ros-auto-arm.md)).
