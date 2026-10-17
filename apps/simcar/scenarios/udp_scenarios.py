@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""Runs the M8 UDP scenarios on real sockets, against a fresh sim car per test or an already running car.
+
+    (cd apps/simcar && cargo build) && python3 apps/simcar/scenarios/udp_scenarios.py            # development evidence only
+
+    ROVI_TARGET=192.168.4.1:7777 python3 apps/simcar/scenarios/udp_scenarios.py                 # the board: join its AP first
+    ROVI_LEASE_MS, ROVI_CLAIM_MS, ROVI_RECLAIM_MS    the car's windows (board default: Config::DEFAULT)
+    ROVI_CARLOG=<file>    the car's `ev=` log (sim stdout is appended; for a board, its serial capture).
+                          Without it a board run has client-side checks only.
+"""
+import os, socket, struct, subprocess, sys, tempfile, time, unittest, pathlib
+
+import carlog, latency
+from carlog import ev
+from wire import cdr
+
+HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY, ECHO = 1, 2, 3, 4, 5, 6, 7, 8, 9
+TARGET = os.environ.get("ROVI_TARGET")
+HOST, PORT = (TARGET.rsplit(":", 1)[0], int(TARGET.rsplit(":", 1)[1])) if TARGET else ("127.0.0.1", 17777)
+# ms; the sim car gets short windows so the tests are quick
+LEASE, CLAIM, RECLAIM = (int(os.environ.get(k, d)) for k, d in zip(
+    ("ROVI_LEASE_MS", "ROVI_CLAIM_MS", "ROVI_RECLAIM_MS"), (1000, 10000, 5000) if TARGET else (400, 1500, 800)))
+BIN = pathlib.Path(__file__).resolve().parent.parent / "target/debug/simcar"
+
+
+def signs(wheels):
+    return tuple((w > 0) - (w < 0) for w in wheels)
+
+
+class Client:
+    def __init__(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.s.bind(("", 0))
+        self.session, self.seq = 0, 0
+
+    def send(self, kind, payload=b"", session=None, seq=None):
+        self.seq += 1
+        s = self.session if session is None else session
+        q = self.seq if seq is None else seq
+        self.s.sendto(b"RV\x01" + bytes([kind]) + struct.pack("<II", s, q) + payload, (HOST, PORT))
+
+    def recv(self):
+        car, deadline = (socket.gethostbyname(HOST), PORT), time.monotonic() + 0.15
+        while True:  # only the car's replies count; a reused ephemeral port can catch strays (e.g. a late DNS reply)
+            self.s.settimeout(max(deadline - time.monotonic(), 1e-3))
+            try:
+                d, frm = self.s.recvfrom(1500)
+            except socket.timeout:
+                return None
+            if frm == car:
+                break
+        assert d[:3] == b"RV\x01", d
+        return d[3], struct.unpack("<II", d[4:12])[0], d[12:]
+
+    def hello(self):
+        self.send(HELLO)
+        r = self.recv()
+        if r and r[0] == ACK:
+            self.session = r[1]
+        return r
+
+    def status(self, kind):
+        self.send(kind)
+        r = self.recv()
+        assert r and r[0] == STATUS, r
+        return tuple(r[2])  # (state, reason, error)
+
+
+class Scenarios(unittest.TestCase):
+    def setUp(self):
+        self.a, self.b = Client(), Client()
+        self.p = None
+        if TARGET:  # a running car keeps its owner until the windows run out, so wait for it to be free
+            self.wait_free()
+            self.logpath = os.environ.get("ROVI_CARLOG")
+        else:  # a fresh sim car per test, so scenarios don't depend on each other's timeouts
+            log = os.environ.get("ROVI_CARLOG")
+            self.log = open(log, "ab") if log else tempfile.NamedTemporaryFile()
+            self.logpath = self.log.name
+            self.off = os.path.getsize(self.logpath)
+            self.p = subprocess.Popen([BIN, str(PORT), str(LEASE), str(CLAIM), str(RECLAIM)], stdout=self.log)
+            time.sleep(0.2)
+        self.off = os.path.getsize(self.logpath) if self.logpath else 0
+
+    def tearDown(self):
+        for c in (self.a, self.b):
+            c.send(BYE)  # frees a running car for the next test
+            c.s.close()
+        if self.p:
+            time.sleep(0.1)  # let the car log the release before it is stopped
+            self.p.terminate()
+            self.p.wait()
+            self.log.close()
+
+    def wait_free(self):
+        probe = Client()
+        for _ in range((CLAIM + RECLAIM + LEASE) // 100 + 20):
+            r = probe.hello()
+            if r and r[0] == ACK:
+                probe.send(BYE)
+                time.sleep(0.1)
+                probe.s.close()
+                return
+            time.sleep(0.1)
+        self.fail("the car never became free")
+
+    def saw(self, pred):
+        """The car's own log shows an event matching pred (within 1 s). Skipped when there is no car log."""
+        if not self.logpath:
+            return
+        found, seen = carlog.wait(self.logpath, self.off, pred)
+        if not found:
+            self.fail(f"car log lacks the event; last seen: {seen[-4:]}")
+
+    def drive(self, c, n=1, vx=0.5):
+        for _ in range(n):
+            c.send(SETPOINT, cdr(vx))
+            time.sleep(0.02)
+
+    def test_claim_busy_arm_stream_stop(self):
+        kind, session, caps = self.a.hello()
+        self.assertEqual((kind, len(caps)), (ACK, 27))
+        self.assertEqual(self.b.hello()[0], BUSY)
+        self.assertEqual(self.a.status(ARM), (1, 0, 3), "arm needs a fresh setpoint")
+        self.drive(self.a)
+        self.assertEqual(self.a.status(ARM), (2, 0, 0))
+        self.drive(self.a, 5)
+        self.assertEqual(self.a.status(STOP), (3, 1, 0))
+        self.saw(ev("claimed", source="Udp"))
+        self.saw(ev("state", state="Armed"))
+        self.saw(ev("stop", reason="Stop"))
+
+    def test_lease_expiry_then_reclaim_without_reconnect(self):
+        self.a.hello(); self.drive(self.a); self.assertEqual(self.a.status(ARM), (2, 0, 0))
+        time.sleep(LEASE / 1000 + 0.1)
+        self.assertEqual(self.a.status(STOP)[0], 3)  # already stopped by the lease
+        self.saw(ev("stop", reason="LeaseExpired"))
+        self.drive(self.a)
+        self.assertEqual(self.a.status(ARM), (2, 0, 0), "same owner re-arms inside the reclaim window")
+
+    def test_owner_released_after_reclaim_window_and_session_changes(self):
+        _, s1, _ = self.a.hello(); self.drive(self.a); self.a.status(ARM)
+        time.sleep((LEASE + RECLAIM) / 1000 + 0.2)
+        self.assertEqual(self.b.hello()[:2], (ACK, s1 + 1))
+        self.a.send(SETPOINT, cdr(0.5), session=s1)  # old session is never valid again
+        self.assertIsNone(self.a.recv())
+
+    def test_claim_window_expires_if_owner_stays_silent(self):
+        self.a.hello()
+        time.sleep(CLAIM / 1000 + 0.2)
+        self.assertEqual(self.b.hello()[0], ACK)
+
+    def test_stray_datagram_from_another_source_is_ignored(self):
+        # CI once handed a client's reused ephemeral port a late DNS reply; only the car's replies count
+        stray = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        stray.sendto(b'"\xc2\x81\x80 not a rovi frame', ("127.0.0.1", self.a.s.getsockname()[1]))
+        stray.close()
+        self.assertEqual(self.a.hello()[0], ACK)
+
+    def test_bye_reopens(self):
+        self.a.hello(); self.a.send(BYE); time.sleep(0.1)
+        self.assertEqual(self.b.hello()[0], ACK)
+        self.saw(ev("released"))
+
+    def test_non_owner_input_is_ignored(self):
+        self.a.hello(); self.drive(self.a); self.a.status(ARM)
+        self.b.session = self.a.session
+        self.b.send(STOP)
+        self.assertIsNone(self.b.recv())
+        self.assertEqual(self.a.status(ARM), (2, 0, 0), "owner still armed")
+
+    def test_echo_from_any_peer_leaves_the_owner_alone(self):
+        self.b.send(ECHO, b"open", session=0, seq=9)
+        self.assertEqual(self.b.recv(), (ECHO, 0, b"open"), "echo while open")
+        self.assertEqual(self.a.hello()[0], ACK, "the echo was not a claim")
+        self.drive(self.a); self.assertEqual(self.a.status(ARM), (2, 0, 0))
+        probe = bytes(range(32))
+        self.b.send(ECHO, probe, session=0)
+        self.assertEqual(self.b.recv(), (ECHO, 0, probe), "non-owner echo, 32 bytes back unchanged")
+        self.b.send(ECHO, probe + b"!", session=0)
+        self.assertIsNone(self.b.recv(), "oversize echo dropped")
+        self.assertEqual(self.a.status(ARM), (2, 0, 0), "owner still armed")
+        rtts = latency.udp(HOST, PORT, n=20, hz=100, wait=0.3)
+        self.assertGreaterEqual(len(rtts), 18 if TARGET else 20)
+
+    def test_setpoints_reach_the_wheels_with_mecanum_signs(self):
+        self.a.hello(); self.drive(self.a); self.assertEqual(self.a.status(ARM), (2, 0, 0))
+        for (vx, vy, wz), want in [((0.5, 0, 0), (1, 1, 1, 1)), ((0, 0.5, 0), (-1, 1, -1, 1)), ((0, 0, 1), (-1, 1, 1, -1))]:
+            for _ in range(10):
+                self.a.send(SETPOINT, cdr(vx, vy, wz))
+                time.sleep(0.02)
+            self.saw(lambda e: e.get("ev") == "state" and e["state"] == "Armed" and signs(e["wheels_pm"]) == want)
+
+
+if __name__ == "__main__":
+    unittest.main(argv=[sys.argv[0], "-v"])

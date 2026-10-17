@@ -1,0 +1,7 @@
+# Product crates (M6). Only reusable no_std crates are members; the sim car and the firmware are
+# separate workspaces with their own lockfiles (their ROS and ESP dependencies do not resolve
+# together), and experiments stay standalone bench references.
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+exclude = ["apps", "firmware", "experiments"]

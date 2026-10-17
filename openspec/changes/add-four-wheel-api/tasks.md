@@ -6,7 +6,7 @@ Host tests establish software behavior only. Physical acceptance uses [ADR-0002]
 
 - [x] 1.1 Accepted: Todor merged [#48](https://github.com/tptodorov/rovi/pull/48) on 2026-10-17, which explicitly proposed acceptance of the laptop implementation tasks. The scope excludes flashing and motor runs; each board run is announced and waits for Todor's go.
 - [x] 1.2 ROS capabilities selected as product work (2026-10-11); exact keys, QoS and fallback are now specified.
-- [ ] 1.3 Extract the M8 core/tests into the reusable Cargo workspace and create separate product simulator/firmware manifests as designed. Verify all carried-over core tests, simulator scenarios and both ESP32 feature builds before behavior changes; preserve experiment builds and document new commands.
+- [x] 1.3 Extract the M8 core/tests into the reusable Cargo workspace and create separate product simulator/firmware manifests as designed. Verify all carried-over core tests, simulator scenarios and both ESP32 feature builds before behavior changes; preserve experiment builds and document new commands. **Done 2026-10-17** from M8 at `831975c`: `crates/rovi-core` (root workspace), `apps/simcar` and `firmware` (own lockfiles, only renamed entries changed). Same results as the experiment: 96 core tests, 23 Python unit and 9 UDP scenario tests, all five ROS scripts, both ESP32 builds clippy-clean with text within 84 B. Experiment builds unchanged; commands in the [README](../../../README.md#product-code).
 
 ## 2. Independent motor control (laptop, test-first)
 
