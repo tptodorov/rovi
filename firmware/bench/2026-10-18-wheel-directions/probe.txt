@@ -1,0 +1,20 @@
+Wheel directions: first move in 5 s
+1/6 forward: 3 s
+  serial wheels_pm FL,FR,RR,RL = [83, 83, 83, 83]
+  zero: wheels still
+2/6 backward: 3 s
+  serial wheels_pm FL,FR,RR,RL = [-83, -83, -83, -83]
+  zero: wheels still
+3/6 strafe left: 3 s
+  serial wheels_pm FL,FR,RR,RL = [-83, 83, -83, 83]
+  zero: wheels still
+4/6 strafe right: 3 s
+  serial wheels_pm FL,FR,RR,RL = [83, -83, 83, -83]
+  zero: wheels still
+5/6 rotate left (CCW from above): 3 s
+  serial wheels_pm FL,FR,RR,RL = [-85, 85, 85, -85]
+  zero: wheels still
+6/6 rotate right (CW from above): 3 s
+  serial wheels_pm FL,FR,RR,RL = [85, -85, -85, 85]
+  zero: wheels still
+Wheel directions: serial signs passed; released; wheel observation required

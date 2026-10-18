@@ -1,0 +1,21 @@
+
+=== ROS STOP: starts in 5 s ===
+Gentle forward vx=0.1 for 3 s
+Fresh commands for 1.5 s without ARM: wheels must stay still
+Explicit ARM: gentle recovery for 3 s, then STOP
+ROS STOP: protocol/serial checks passed; wheel observation required
+
+=== ROS LEASE: starts in 5 s ===
+Gentle forward vx=0.1 for 3 s
+Stream silent: wheels must stop after about 1 s
+Silent pause for 1.5 s: wheels must stay still
+Resume commands: ROS auto-recovery for 3 s, then STOP
+ROS LEASE: protocol/serial checks passed; wheel observation required
+
+=== ROS LIMITS: starts in 5 s ===
+Gentle forward vx=0.1 for 3 s
+Send vx=2.0 (limit 1.0): wheels must stop
+Fresh commands for 1.5 s without ARM: wheels must stay still
+Explicit ARM: gentle recovery for 3 s, then STOP
+ROS LIMITS: protocol/serial checks passed; wheel observation required
+ROS stop checks: passed; released

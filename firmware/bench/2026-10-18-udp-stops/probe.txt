@@ -1,0 +1,53 @@
+
+=== UDP STOP: starts in 5 s ===
+Other UDP endpoint gets BUSY; its STOP is ignored
+Status reply: (1, 0, 3)
+Status reply: (2, 0, 0)
+Gentle forward vx=0.1 for 3 s
+Status reply: (3, 1, 0)
+Serial stop reason=Stop
+Status reply: (3, 1, 3)
+Fresh gentle stream: wheels must stay stopped
+Explicit ARM: gentle forward for 3 s, then STOP
+Status reply: (2, 0, 0)
+Status reply: (3, 1, 0)
+UDP STOP: protocol checks passed; wheel observation required
+
+=== UDP LEASE: starts in 5 s ===
+Status reply: (1, 0, 3)
+Status reply: (2, 0, 0)
+Gentle forward vx=0.1 for 3 s
+Laptop silent: wheels must stop after about 1 s
+Unsolicited owner Status: [3, 2, 0]
+Serial stop reason=LeaseExpired
+Status reply: (3, 2, 3)
+Fresh gentle stream: wheels must stay stopped
+Explicit ARM: gentle forward for 3 s, then STOP
+Status reply: (2, 0, 0)
+Status reply: (3, 1, 0)
+UDP LEASE: protocol checks passed; wheel observation required
+
+=== UDP BYE: starts in 5 s ===
+Status reply: (1, 0, 3)
+Status reply: (2, 0, 0)
+Gentle forward vx=0.1 for 3 s
+BYE while driving: wheels must stop
+Serial stop reason=OwnerLost
+Status reply: (1, 0, 3)
+New session; ARM without a setpoint refused
+UDP BYE: protocol checks passed; wheel observation required
+
+=== UDP LIMITS: starts in 5 s ===
+Status reply: (1, 0, 3)
+Status reply: (2, 0, 0)
+Gentle forward vx=0.1 for 3 s
+Send vx=2.0 (limit 1.0): wheels must stop
+Unsolicited owner Status: [3, 4, 0]
+Serial stop reason=OutOfLimits
+Status reply: (3, 4, 3)
+Fresh gentle stream: wheels must stay stopped
+Explicit ARM: gentle forward for 3 s, then STOP
+Status reply: (2, 0, 0)
+Status reply: (3, 1, 0)
+UDP LIMITS: protocol checks passed; wheel observation required
+UDP stop checks: passed; released
