@@ -134,6 +134,13 @@ jobs:
           trap 'kill "$car" 2>/dev/null || true; wait "$car" 2>/dev/null || true; rm -f "$log"' EXIT
           ROVI_TARGET=127.0.0.1:17796 ROVI_CARLOG="$log" ROVI_ROUTER_PORT=17449 \
             bash firmware/bench/ros_readonly.sh
+      - name: Product ROS motor board probe (loopback only)
+        run: |
+          log=$(mktemp)
+          ROVI_ZENOH_ROUTER=tcp/127.0.0.1:17450 apps/simcar/target/debug/simcar 17797 >"$log" 2>&1 &
+          car=$!
+          trap 'kill "$car" 2>/dev/null || true; wait "$car" 2>/dev/null || true; rm -f "$log"' EXIT
+          ROVI_CARLOG="$log" ROVI_ROUTER_PORT=17450 bash firmware/bench/ros_stops.sh
 
   firmware:
     name: firmware (ESP32-S3)

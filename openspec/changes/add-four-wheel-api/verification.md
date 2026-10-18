@@ -96,6 +96,13 @@ Status 0.766/0.783 s, largest observed period 0.908 s, claim/release updates
 0.011–0.031 s. The serial link rejoined in 2.083 s and never armed. Actual ESP32
 capabilities/Status delivery passed; ROS motor behavior remains untested.
 
+The [ROS motor batch](../../../firmware/bench/ROS-STOPS.md) prepares STOP, lease
+expiry and out-of-limits checks using one node's cmd_vel/arm publishers. Each
+stop/recovery requires fresh serial and canonical Status evidence. STOP/limits
+must inhibit fresh streaming until explicit ARM; ROS lease recovery auto-arms on
+resumed input as specified. The identical runner is exercised on loopback in CI;
+physical results require a separate announced go and wheel observations.
+
 ## Physical acceptance still pending
 
 Earlier product runs are development evidence: [coordinator](../../../firmware/bench/2026-10-17-coordinator/notes.md),
