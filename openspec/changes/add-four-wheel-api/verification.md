@@ -101,7 +101,7 @@ expiry and out-of-limits checks using one node's cmd_vel/arm publishers. Each
 stop/recovery requires fresh serial and canonical Status evidence. STOP/limits
 must inhibit fresh streaming until explicit ARM; ROS lease recovery auto-arms on
 resumed input as specified. The identical runner is exercised on loopback in CI;
-the subsequent [authorized board batch](../../../firmware/bench/2026-10-18-ros-stops/notes.md) passed every protocol/serial assertion. Todor confirmed all four wheel stops, pauses and explicit/automatic recoveries at `vx=0.1` (“Yes, all as expected”). ROS owner/router loss while driving remains pending.
+the subsequent [authorized board batch](../../../firmware/bench/2026-10-18-ros-stops/notes.md) passed every protocol/serial assertion. Todor confirmed all four wheel stops, pauses and explicit/automatic recoveries at `vx=0.1` (“Yes, all as expected”). ROS owner/router loss while driving is prepared in [`ros_router_loss.sh`](../../../firmware/bench/ros_router_loss.sh) (killed router: OwnerLost without lease stop; frozen router: lease stop, release and link-down), passing on loopback/CI; the board run remains pending.
 
 ## Physical acceptance still pending
 
