@@ -69,7 +69,7 @@ Host test names are `rovi-motor-control` unit tests (`cargo test -p rovi-motor-c
 | --- | --- |
 | OpenSpec | Strict active/baseline/archive validation; generated reader coverage, links and freshness. |
 | Host | All three crates: format, 208 unit tests and clippy. Sim car: format, clippy/build with and without ROS; 14 real UDP socket scenarios. Product Python: 23 codec/log/latency tests; seven bench-harness tests (five BLE safeguards, two UDP probe checks against the simulator). These do not prove board outputs. |
-| ROS | All six scripts: `ros-scenarios.sh`, `ros-router-gone.sh`, `ros-reconnect.sh`, `ros-refresh.sh`, `ros-stale-session.sh`, `ros-capabilities.sh` (includes capabilities and status observers). Scripts run sequentially because three use the same host router port/container name. |
+| ROS | All six scripts: `ros-scenarios.sh`, `ros-router-gone.sh`, `ros-reconnect.sh`, `ros-refresh.sh`, `ros-stale-session.sh`, `ros-capabilities.sh` (includes capabilities and status observers). Scripts run sequentially because three use the same host router port/container name. CI also runs `firmware/bench/ros_readonly.sh` against loopback ports 17449/17796, checking its board orchestration before/after router restart without arming. |
 | Firmware | Product and experiment: clippy/build for ESP32-S3, with and without ROS. Product `no_std` crates are linked into both firmware variants. Motor crate dependency inspection shows no dependencies. |
 
 The merged software through task 3.5 passed [all four main checks](https://github.com/tptodorov/rovi/actions/runs/39061923183).
@@ -85,6 +85,13 @@ drops BYE and requires the probe to reject missing serial release. That regressi
 failed first before adding the release assertion. These simulator checks alone do not count as physical acceptance. The subsequent
 [authorized board batch](../../../firmware/bench/2026-10-18-udp-stops/notes.md) passed
 protocol assertions and Todor confirmed all four wheel stops, pauses and recovery.
+
+The prepared [ROS read-only board batch](../../../firmware/bench/ROS-READONLY.md)
+reuses `ros_capabilities.py` and `ros_status.py` before/after a router restart.
+Loopback results: capabilities late receipt 0.551/0.620 s, Status 0.755/0.751 s,
+maximum observed period 0.909 s, ownership changes about 0.010 s; no arming.
+The ROS firmware build/clippy passed, but it has not been flashed for this batch.
+These results do not establish actual ESP32 ROS delivery or motor behavior.
 
 ## Physical acceptance still pending
 

@@ -126,6 +126,14 @@ jobs:
         run: apps/simcar/scenarios/ros-refresh.sh
       - name: Product stale UDP router session recovery
         run: apps/simcar/scenarios/ros-stale-session.sh
+      - name: Product read-only board probe (loopback)
+        run: |
+          log=$(mktemp)
+          ROVI_ZENOH_ROUTER=tcp/127.0.0.1:17449 apps/simcar/target/debug/simcar 17796 >"$log" 2>&1 &
+          car=$!
+          trap 'kill "$car" 2>/dev/null || true; wait "$car" 2>/dev/null || true; rm -f "$log"' EXIT
+          ROVI_TARGET=127.0.0.1:17796 ROVI_CARLOG="$log" ROVI_ROUTER_PORT=17449 \
+            bash firmware/bench/ros_readonly.sh
 
   firmware:
     name: firmware (ESP32-S3)
