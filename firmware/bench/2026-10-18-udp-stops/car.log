@@ -1,0 +1,74 @@
+[2026-10-18T15:17:55Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-18T15:17:55Z INFO ] Connecting...
+[2026-10-18T15:17:55Z INFO ] Using flash stub
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x14d0
+load:0x403c8700,len:0xdcc
+load:0x403cb700,len:0x2f54
+entry 0x403c8900
+I (29) boot: ESP-IDF v6.1-beta1-497-g14f663f003e 2nd stage bootloader
+I (30) boot: Multicore bootloader
+I (30) boot: chip revision: v0.2
+I (30) boot: efuse block revision: v1.4
+I (34) boot.esp32s3: Boot SPI Speed : 40MHz
+I (38) boot.esp32s3: SPI Mode       : DIO
+I (42) boot.esp32s3: SPI Flash Size : 16MB
+I (45) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (52) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (72) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (78) boot: End of partition table
+I (82) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=16ae4h ( 92900) map
+I (112) esp_image: segment 1: paddr=00026b0c vaddr=3fc97958 size=04ac8h ( 19144) load
+I (118) esp_image: segment 2: paddr=0002b5dc vaddr=40378000 size=04a3ch ( 19004) load
+I (124) esp_image: segment 3: paddr=00030020 vaddr=42020020 size=7cba0h (510880) map
+I (253) esp_image: segment 4: paddr=000acbc8 vaddr=4037ca3c size=0af1ch ( 44828) load
+I (274) boot: Loaded app from partition at offset 0x10000
+I (274) boot: Disabling RNG early entropy source...
+M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 WPA2 channel=1 lease_ms=1000
+ev=boot ver=0.1.0 reset=ChipPowerOn at_ms=932
+ev=claimed source=Udp at_ms=16236
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=16245
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=16407
+ev=stop reason=Stop at_ms=19415
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=19415
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=20983
+ev=stop reason=Stop at_ms=23993
+ev=released at_ms=24000
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=24000
+ev=claimed source=Udp at_ms=29050
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=29057
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=29068
+ev=stop reason=LeaseExpired at_ms=33033
+ev=state state=Stopped reason=LeaseExpired wheels_pm=0,0,0,0 at_ms=33033
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=34600
+ev=stop reason=Stop at_ms=37614
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=37616
+ev=released at_ms=37618
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=37627
+ev=claimed source=Udp at_ms=42669
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=42674
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=42685
+ev=stop reason=OwnerLost at_ms=45692
+ev=released at_ms=45692
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=45692
+ev=claimed source=Udp at_ms=45743
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=45743
+ev=stop reason=Stop at_ms=45753
+ev=released at_ms=45753
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=45754
+ev=claimed source=Udp at_ms=50804
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=50811
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=50822
+ev=stop reason=OutOfLimits at_ms=53825
+ev=state state=Stopped reason=OutOfLimits wheels_pm=0,0,0,0 at_ms=53828
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=55395
+ev=stop reason=Stop at_ms=58406
+ev=released at_ms=58410
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=58411
