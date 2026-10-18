@@ -33,3 +33,9 @@ physical wheel-stop/reconnect check needs a separately authorized repeat.
 This does not measure STBY/PWM pin levels, numeric disable latency or the lease
 receive-to-detection bound. It does not close the remaining UDP/ROS, powered reset /
 power-loss, mapping/coast or reversal/thermal checks. Task 5.2 remains unchecked.
+
+## Authorized repeat
+
+The [repeat](../2026-10-18-ble-owner-loss-repeat/notes.md) also passed OwnerLost,
+release/zero outputs and disarmed reconnect. Wheel observation is recorded with
+that repeat; this first run remains physically unobserved.
