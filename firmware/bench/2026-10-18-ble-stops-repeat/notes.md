@@ -62,3 +62,9 @@ management-disconnect / disarmed-reconnect run (about 15 seconds).
 Other acceptance work remains: individual wheel directions, coast/STBY pin levels,
 powered reset and power loss, radio exclusion, UDP/ROS stop delivery, reversals/heat,
 and the lease detection timing measurement.
+
+## Targeted management follow-up
+
+The [authorized targeted-disconnect run](../2026-10-18-ble-owner-loss/notes.md)
+passed its board assertions: OwnerLost, release, zero outputs and disarmed reconnect,
+with no lease-expiry event. Physical wheel confirmation is recorded with that run.

@@ -1,0 +1,11 @@
+
+=== DISCONNECT: starts in 5 s ===
+Status: Status(state='Claimed', reason=None, error=None)
+Status: Status(state='Armed', reason=None, error=None)
+Gentle forward vx=0.1 for 3 s
+Disconnect while driving: wheels must stop
+Serial confirms stop reason=OwnerLost
+Status: Status(state='Claimed', reason=None, error=None)
+Reconnected disarmed, without a setpoint
+DISCONNECT: software checks passed; wheel observation still required
+BLE stop checks: passed; disconnected
