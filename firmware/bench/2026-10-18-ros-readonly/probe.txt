@@ -1,0 +1,7 @@
+ROS read-only probes: initial
+{"late_seconds": 0.574, "max_period_seconds": 0.901, "claim_seconds": 0.02, "release_seconds": 0.015, "capabilities": {"version": 1, "wheels_radius": 0.029999999329447746, "center_projection_sum": 0.1274999976158142, "max_vx": 1.0, "max_vy": 1.0, "max_wz": 3.0, "lease_ms": 1000, "claim_ms": 10000, "reclaim_ms": 5000}}
+{"status_late_seconds": 0.766, "max_period_seconds": 0.908, "claim_seconds": 0.011, "release_seconds": 0.023, "shared_errors_and_release": "passed"}
+ROS read-only probes: reconnected
+{"late_seconds": 0.667, "max_period_seconds": 0.907, "claim_seconds": 0.019, "release_seconds": 0.013, "capabilities": {"version": 1, "wheels_radius": 0.029999999329447746, "center_projection_sum": 0.1274999976158142, "max_vx": 1.0, "max_vy": 1.0, "max_wz": 3.0, "lease_ms": 1000, "claim_ms": 10000, "reclaim_ms": 5000}}
+{"status_late_seconds": 0.783, "max_period_seconds": 0.907, "claim_seconds": 0.031, "release_seconds": 0.023, "shared_errors_and_release": "passed"}
+ROS read-only probes: passed before/after router restart; never armed

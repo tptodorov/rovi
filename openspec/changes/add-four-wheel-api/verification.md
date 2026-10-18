@@ -90,8 +90,11 @@ The prepared [ROS read-only board batch](../../../firmware/bench/ROS-READONLY.md
 reuses `ros_capabilities.py` and `ros_status.py` before/after a router restart.
 Loopback results: capabilities late receipt 0.551/0.620 s, Status 0.755/0.751 s,
 maximum observed period 0.909 s, ownership changes about 0.010 s; no arming.
-The ROS firmware build/clippy passed, but it has not been flashed for this batch.
-These results do not establish actual ESP32 ROS delivery or motor behavior.
+The subsequent [authorized ROS board batch](../../../firmware/bench/2026-10-18-ros-readonly/notes.md)
+passed both probes before/after router restart: capabilities late receipt 0.574/0.667 s,
+Status 0.766/0.783 s, largest observed period 0.908 s, claim/release updates
+0.011–0.031 s. The serial link rejoined in 2.083 s and never armed. Actual ESP32
+capabilities/Status delivery passed; ROS motor behavior remains untested.
 
 ## Physical acceptance still pending
 
@@ -107,7 +110,7 @@ Each physical motor run is announced separately and waits for Todor's go.
 | Boot/reset/power loss | With motor power present, no unintended wheel movement on startup/reset or ESP32 power loss/recovery; record what was observed rather than infer pin levels from logs. | 5.2 |
 | Stops and recovery | All four wheels stop on STOP, lease expiry, BLE disconnect, UDP BYE, ROS owner/router loss and out-of-limits. Verify retained/released owner and fresh-input/explicit-ARM recovery rules; check lease detection within lease + 50 ms using client/serial timing. | 5.2 [BLE physical subset passed](../../../firmware/bench/2026-10-18-ble-stops-repeat/notes.md): STOP/lease/out-of-limits plus pauses/recovery confirmed by Todor; [BLE owner-loss physical repeat passed](../../../firmware/bench/2026-10-18-ble-owner-loss-repeat/notes.md), all four stopped and disarmed reconnect confirmed by Todor; [UDP four-stop physical batch passed](../../../firmware/bench/2026-10-18-udp-stops/notes.md), including fresh-stream inhibition and explicit recovery; ROS and lease+50 ms detection measurement pending |
 | Coast and neighbour | Documented zero-wheel pin levels (PWM high, directions low), free rotation and a driven neighbour remaining enabled. A hand-spin alone does not prove pin levels. Coast distance is not claimed. | 5.2 |
-| Radio and delivery | Actual BLE/AP exclusion and recovery; shared Wi-Fi owner isolation; immediate BLE Status reads and changed notifications; UDP stop notifications; ROS capabilities/status and router recovery. [BLE Status/Echo subset passed](../../../firmware/bench/2026-10-18-ble-status-echo/notes.md) on `7c2e2df`, including empty/4/32-byte Echo, immediate reads and changed Status notifications. [UDP board delivery](../../../firmware/bench/2026-10-18-udp-stops/notes.md) passed unsolicited stop Status and second-endpoint exclusion; AP exclusion and ROS delivery remain pending. | 5.2 |
+| Radio and delivery | Actual BLE/AP exclusion and recovery; shared Wi-Fi owner isolation; immediate BLE Status reads and changed notifications; UDP stop notifications; ROS capabilities/status and router recovery. [BLE Status/Echo subset passed](../../../firmware/bench/2026-10-18-ble-status-echo/notes.md) on `7c2e2df`, including empty/4/32-byte Echo, immediate reads and changed Status notifications. [UDP board delivery](../../../firmware/bench/2026-10-18-udp-stops/notes.md) passed unsolicited stop Status and second-endpoint exclusion; [ROS read-only board delivery](../../../firmware/bench/2026-10-18-ros-readonly/notes.md) passed capabilities/Status before and after router restart; AP exclusion and ROS motion/owner-loss checks remain pending. | 5.2 |
 | Reversal and heat | Product motor module at the 70% cap: direct full reversals on all four, owner/radio survives with no reset; supervised thermal run. Use a motor-module bench harness for full-scale vectors; do not raise API limits to force full duty. | 5.2 |
 | Acceptance | Reconcile these results with every requirement; record acceptance and update instructions before archive. | 5.3 |
 
