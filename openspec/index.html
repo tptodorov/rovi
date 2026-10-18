@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>15 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>43</b> requirements</div><div><b>78</b> scenarios</div><div><b>16 / 18</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>M6: low-level four-wheel API</h2>
       <div class="notice"><p>
 <strong>Status:</strong> proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product crates, sim car and firmware are implemented; laptop conformance and CI are tracked in tasks 1–3. Existing experiments remain the comparison/rollback reference; unverified physical limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
@@ -1448,7 +1448,7 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 </ul>
 <h2 id="openspec--changes--add-four-wheel-api--tasks--5-product-hardware-acceptance">5. Product hardware acceptance</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Bind the product motor driver to all four TB6612 channels and the 70% product profile. Cross-build both firmware variants and check pin mapping against the carrier schematic before proposing a flash.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 5.1 Bind the product motor driver to all four TB6612 channels and the 70% product profile. Cross-build both firmware variants and check pin mapping against the carrier schematic before proposing a flash. <strong>Done 2026-10-18:</strong> <a href="../firmware/MOTOR-MAPPING.md">motor binding check</a> compares firmware arrays/PWM dispatch with KiCad XML connectivity: all 14 GPIOs and four motor routes match. Schematic export: 26 nets, zero differences from intended nets; carrier trace: 25 nets, 34 wires, zero problems. The existing binding already installs the 0.02 / 40–70% profile, all inversions false, and boot readiness before transports. Both locked ESP32-S3 variants build and pass clippy; all 35 motor/coordinator tests pass. No firmware edit or flash; actual signals/directions remain 5.2.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 5.2 After separately announced/authorized board runs, record physical scenario results for outputs, stop triggers, radio operation and selected-profile reversal/thermal behavior across BLE/UDP/ROS. Use the verification map to distinguish software-only scenarios from physical claims. Known adapter follow-up: the current BLE Echo write path suppresses empty notifications (<code>n &gt; 0</code> in <code>firmware/src/fw.rs</code>); correct and bench-test that delivery before acceptance. Task 3.3 tests the shared echo policy, not ESP32 GATT delivery.</li>
 <li>
@@ -1723,7 +1723,7 @@ Host signed transitions; product reversal/thermal/radio run at the 70% cap (2.1,
 <td>
 <a href="#openspec--changes--add-four-wheel-api--specs--motor-control--spec--requirement-calibrated-wheel-mapping">Calibrated wheel mapping</a></td>
 <td>
-Host mapping/inversion tests; compare schematic and confirm all four physical channels (2.1, 5.1, 5.2). Host: <code>the_car_mapping_puts_each_wheel_on_its_bridge</code>, <code>sign_sets_direction_and_inversion_flips_it</code>.</td>
+Host mapping/inversion tests; compare schematic and confirm all four physical channels (2.1, 5.1, 5.2). Host: <code>the_car_mapping_puts_each_wheel_on_its_bridge</code>, <code>sign_sets_direction_and_inversion_flips_it</code>. Source/net check: <a href="../firmware/MOTOR-MAPPING.md">product binding</a>, 14 control GPIOs/four routes match; individual physical wheel checks remain 5.2.</td>
 </tr>
 <tr>
 <td>
@@ -1819,7 +1819,7 @@ Mapping and profile</td>
 <td>
 Compare all four direction/PWM channels and both STBY outputs with the carrier schematic; confirm 0.02 deadband, 40–70% drive range and no inversions. Then verify each physical wheel/direction.</td>
 <td>
-5.1 review; 5.2 bench</td>
+5.1 <a href="../firmware/MOTOR-MAPPING.md">source/net check complete</a>; 5.2 physical check pending</td>
 </tr>
 <tr>
 <td>

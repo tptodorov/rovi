@@ -70,6 +70,9 @@ The M6 layout follows its [design](openspec/changes/add-four-wheel-api/design.md
 | `apps/simcar/scenarios` | UDP and ROS scenario harness (Python, Docker) | From the repo root: `python3 apps/simcar/scenarios/udp_scenarios.py`; with `--features ros`: `apps/simcar/scenarios/ros-scenarios.sh` (also `ros-router-gone.sh`, `ros-reconnect.sh`, `ros-refresh.sh`, `ros-stale-session.sh`, `ros-capabilities.sh`) |
 | `firmware` | ESP32-S3 firmware; own lockfile, `esp` toolchain | `ROVI_WIFI_PASSWORD=… cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc`; add `--features ros` with `CARGO_TARGET_DIR=target/ros` to keep both builds |
 
+The product GPIO/profile binding and its schematic comparison are recorded in the
+[motor mapping check](firmware/MOTOR-MAPPING.md). Physical acceptance remains separate.
+
 ##### ROS capabilities
 
 The product publishes `/rovi/capabilities` (`std_msgs/String`) before any claim, with the
