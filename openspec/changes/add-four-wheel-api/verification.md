@@ -68,7 +68,7 @@ Host test names are `rovi-motor-control` unit tests (`cargo test -p rovi-motor-c
 | Job | Product checks |
 | --- | --- |
 | OpenSpec | Strict active/baseline/archive validation; generated reader coverage, links and freshness. |
-| Host | All three crates: format, 208 unit tests and clippy. Sim car: format, clippy/build with and without ROS; 14 real UDP socket scenarios. Product Python: 23 codec/log/latency tests. |
+| Host | All three crates: format, 208 unit tests and clippy. Sim car: format, clippy/build with and without ROS; 14 real UDP socket scenarios. Product Python: 23 codec/log/latency tests; seven bench-harness tests (five BLE safeguards, two UDP probe checks against the simulator). These do not prove board outputs. |
 | ROS | All six scripts: `ros-scenarios.sh`, `ros-router-gone.sh`, `ros-reconnect.sh`, `ros-refresh.sh`, `ros-stale-session.sh`, `ros-capabilities.sh` (includes capabilities and status observers). Scripts run sequentially because three use the same host router port/container name. |
 | Firmware | Product and experiment: clippy/build for ESP32-S3, with and without ROS. Product `no_std` crates are linked into both firmware variants. Motor crate dependency inspection shows no dependencies. |
 
@@ -77,6 +77,13 @@ The audit added the three previously local-only ROS scripts and sim clippy witho
 It also reproduced and fixed invalid motor configuration reporting a successful ARM before
 the coordinator tick: ARM now reports not-ready on every source, including before the first tick.
 No test-count or existence check alone proves scenario coverage; the rows describe the assertions reviewed.
+
+The prepared [UDP board probe](../../../firmware/bench/udp_stop_checks.py) reuses the
+product socket client. `test_udp_probe_against_product_simulator` runs all four
+stop/recovery scenarios on loopback; `test_lost_cleanup_bye_cannot_report_released`
+drops BYE and requires the probe to reject missing serial release. That regression
+failed first before adding the release assertion. This preparation does not count
+as physical UDP acceptance.
 
 ## Physical acceptance still pending
 
