@@ -1,4 +1,4 @@
-"""Only probe cleanup/profile guards; these tests do not establish board behavior."""
+"""Probe safeguards and disconnect checks; mocks do not establish board behavior."""
 import unittest
 from pathlib import Path
 import tempfile
@@ -54,6 +54,7 @@ class Cleanup(unittest.IsolatedAsyncioTestCase):
 
     async def disconnect_case(self, reason):
         car, again = self.car(), self.car()
+        car.peer.address = "FE:E4:05:1A:9F:FF"
         car.stream.side_effect = None
         with tempfile.TemporaryDirectory() as directory:
             log = Path(directory) / "car.log"
@@ -66,11 +67,25 @@ class Cleanup(unittest.IsolatedAsyncioTestCase):
 
             car.close.side_effect = stop_event
             car.peer.disconnect = AsyncMock(side_effect=stop_event)
+
+            async def management_disconnect(*args, **kwargs):
+                await stop_event()
+                return SimpleNamespace(returncode=0, communicate=AsyncMock(return_value=(b"disconnected", b"")))
+
             with patch.object(
                 probe.ble_client, "connect", AsyncMock(side_effect=[car, again])
-            ), patch.object(probe.asyncio, "sleep", AsyncMock()):
+            ), patch.object(probe.asyncio, "sleep", AsyncMock()), patch.object(
+                probe.asyncio, "create_subprocess_exec", AsyncMock(side_effect=management_disconnect)
+            ) as command:
                 await probe.scenario("DISCONNECT", log)
-            car.peer.disconnect.assert_awaited_once()
+            command.assert_awaited_once_with(
+                "sudo", "-n", "btmgmt", "--timeout", "3", "--index", "0",
+                "disconnect", "--type", "2", car.peer.address,
+                stdin=probe.asyncio.subprocess.DEVNULL,
+                stdout=probe.asyncio.subprocess.PIPE,
+                stderr=probe.asyncio.subprocess.PIPE,
+            )
+            car.peer.disconnect.assert_not_awaited()
             again.arm.assert_not_awaited()
             again.close.assert_awaited_once()
 

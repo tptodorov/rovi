@@ -1,0 +1,53 @@
+
+=== STOP: starts in 5 s ===
+Status: Status(state='Claimed', reason=None, error=None)
+Status: Status(state='Armed', reason=None, error=None)
+Gentle forward vx=0.1 for 3 s
+Status: Status(state='Stopped', reason='Stop', error=None)
+Status: Status(state='Stopped', reason='Stop', error='NotReady')
+Fresh gentle stream for 1.5 s: wheels must stay stopped
+Status: Status(state='Stopped', reason='Stop', error='NotReady')
+Explicit ARM: gentle forward for 3 s, then STOP
+Status: Status(state='Armed', reason=None, error=None)
+Status: Status(state='Stopped', reason='Stop', error=None)
+STOP: software checks passed; wheel observation still required
+
+=== LEASE: starts in 5 s ===
+Status: Status(state='Claimed', reason=None, error=None)
+Status: Status(state='Armed', reason=None, error=None)
+Gentle forward vx=0.1 for 3 s
+Laptop silent: wheels must stop after about 1 s
+Lease notification after stream: 1098 ms
+Status: Status(state='Stopped', reason='LeaseExpired', error=None)
+Status: Status(state='Stopped', reason='LeaseExpired', error='NotReady')
+Fresh gentle stream for 1.5 s: wheels must stay stopped
+Status: Status(state='Stopped', reason='LeaseExpired', error='NotReady')
+Explicit ARM: gentle forward for 3 s, then STOP
+Status: Status(state='Armed', reason=None, error=None)
+Status: Status(state='Stopped', reason='Stop', error=None)
+LEASE: software checks passed; wheel observation still required
+
+=== DISCONNECT: starts in 5 s ===
+Status: Status(state='Claimed', reason=None, error=None)
+Status: Status(state='Armed', reason=None, error=None)
+Gentle forward vx=0.1 for 3 s
+Disconnect while driving: wheels must stop
+Traceback (most recent call last):
+  File "/home/todor/tptodorov/rovi/firmware/bench/ble_stop_checks.py", line 128, in <module>
+    asyncio.run(check((args.mode,) if args.mode else modes, args.carlog))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/j8a8h4zmwxlcqisjfz0ci6gznp2n0rz6-python3-3.13.15-env/lib/python3.13/asyncio/runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/nix/store/j8a8h4zmwxlcqisjfz0ci6gznp2n0rz6-python3-3.13.15-env/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/nix/store/j8a8h4zmwxlcqisjfz0ci6gznp2n0rz6-python3-3.13.15-env/lib/python3.13/asyncio/base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/todor/tptodorov/rovi/firmware/bench/ble_stop_checks.py", line 116, in check
+    await scenario(mode, carlog_path)
+  File "/home/todor/tptodorov/rovi/firmware/bench/ble_stop_checks.py", line 86, in scenario
+    assert found and stop["reason"] == "OwnerLost", f"expected OwnerLost, got {stop}"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: expected OwnerLost, got {'ev': 'stop', 'reason': 'LeaseExpired', 'at_ms': 58204}

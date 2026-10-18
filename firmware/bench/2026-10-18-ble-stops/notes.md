@@ -52,3 +52,10 @@ nix-shell --run 'python3 firmware/bench/ble_stop_checks.py DISCONNECT --carlog <
 The full hardware acceptance matrix remains open: this batch does not cover
 individual wheel mapping, pin levels, powered reset/power loss, actual radio
 exclusion, UDP/ROS stop delivery, reversals or heat. Task 5.2 remains unchecked.
+
+## Follow-up repeat
+
+The [full repeat](../2026-10-18-ble-stops-repeat/notes.md) reproduced STOP, lease and
+out-of-limits, but direct Bleak disconnect still allowed lease expiry first. The
+host's BlueZ two-second disconnect timer is now identified. The current probe uses
+a targeted controller management command; that version has not run on the board.

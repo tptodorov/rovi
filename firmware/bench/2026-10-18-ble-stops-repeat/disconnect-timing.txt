@@ -1,0 +1,20 @@
+Rovi-only btmon excerpt from LIMITS cleanup, after motors were stopped.
+The final CCCD response is at 18.802474 s; MGMT/HCI disconnect starts at
+20.612548/20.612579 s and completes at 20.646274 s.
+
+> ACL Data RX: Handle 2050 flags 0x02 dlen 5             #1180 [hci0] 18.712478
+      ATT: Write Response (0x13) len 0
+> ACL Data RX: Handle 2050 flags 0x02 dlen 5             #1183 [hci0] 18.802474
+      ATT: Write Response (0x13) len 0
+bluetoothd[1829]: @ MGMT Command:... (0x0014) plen 7  {0x0001} [hci0] 20.612548
+        LE Address: FE:E4:05:1A:9F:FF (Static)
+< HCI Command: Disconnect (0x01|0x0006) plen 3           #1265 [hci0] 20.612579
+        Handle: 2050 Address: FE:E4:05:1A:9F:FF (Static)
+        Reason: Remote User Terminated Connection (0x13)
+> HCI Event: Disconnect Complete (0x05) plen 4           #1268 [hci0] 20.646274
+        Status: Success (0x00)
+        Handle: 2050 Address: FE:E4:05:1A:9F:FF (Static)
+        Reason: Connection Terminated By Local Host (0x16)
+@ MGMT Event: Device Disconnected (0x000c) plen 8     {0x0001} [hci0] 20.646292
+        LE Address: FE:E4:05:1A:9F:FF (Static)
+        Reason: Connection terminated by local host (0x02)

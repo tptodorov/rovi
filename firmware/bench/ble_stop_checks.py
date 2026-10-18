@@ -5,6 +5,7 @@ Run only after an announced test and Todor's go, wheels clear, motor bank awake:
     nix-shell --run 'python3 firmware/bench/ble_stop_checks.py --carlog <live-car.log>'
 
 Select just one announced scenario by adding STOP, LEASE, DISCONNECT or LIMITS.
+DISCONNECT needs passwordless sudo for btmgmt on hci0 and Rovi's LE-random address.
 
 Uses the frozen M8 transport client; assertions below check the product contract.
 Status/log evidence needs separate physical confirmation that all four wheels stop.
@@ -77,8 +78,16 @@ async def scenario(mode, carlog_path=None):
         elif mode == "DISCONNECT":
             print("Disconnect while driving: wheels must stop", flush=True)
             offset = carlog_path.stat().st_size
-            # Unsubscribing first can take longer than the lease and mask owner loss.
-            await car.peer.disconnect()
+            # BlueZ Device.Disconnect waits 2 s; target the controller directly.
+            command = await asyncio.create_subprocess_exec(
+                "sudo", "-n", "btmgmt", "--timeout", "3", "--index", "0",
+                "disconnect", "--type", "2", car.peer.address,
+                stdin=asyncio.subprocess.DEVNULL,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            output, error = await command.communicate()
+            assert command.returncode == 0, (output.decode(), error.decode())
             found, events = await asyncio.to_thread(
                 carlog.wait, carlog_path, offset, carlog.ev("stop")
             )
