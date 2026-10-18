@@ -7,10 +7,16 @@ Probe source `7840078`. The serial monitor reset the existing firmware before ca
 
 | Scenario | Serial/client result | Physical result |
 | --- | --- | --- |
-| STOP | Armed 17,150 ms; STOP 20,295 ms. ARM without fresh input refused; fresh stream remained stopped with NotReady; explicit ARM 22,231 ms, STOP 25,380 ms. | Pending Todor's confirmation |
-| Lease | Armed 34,929 ms; LeaseExpired 39,029 ms. Notification received 1,098 ms after client stream return. ARM refused until fresh input; stream alone stayed stopped; explicit ARM 41,047 ms, STOP 44,190 ms. | Pending Todor's confirmation |
+| STOP | Armed 17,150 ms; STOP 20,295 ms. ARM without fresh input refused; fresh stream remained stopped with NotReady; explicit ARM 22,231 ms, STOP 25,380 ms. | Passed: Todor confirmed all four wheels behaved as expected |
+| Lease | Armed 34,929 ms; LeaseExpired 39,029 ms. Notification received 1,098 ms after client stream return. ARM refused until fresh input; stream alone stayed stopped; explicit ARM 41,047 ms, STOP 44,190 ms. | Passed: Todor confirmed all four wheels behaved as expected |
 | Disconnect | Armed 54,094 ms; **LeaseExpired 58,204 ms**, release/link-down 59,670 ms. The corrected probe rejected this trigger and halted before LIMITS. | Owner-loss stop not exercised |
-| Out-of-limits | Completed separately within the already-announced batch: armed 102,294 ms; `vx=2.0` raised OutOfLimits 105,436 ms. Fresh stream alone stayed stopped; explicit ARM 107,375 ms, STOP 110,520 ms. | Pending Todor's confirmation |
+| Out-of-limits | Completed separately within the already-announced batch: armed 102,294 ms; `vx=2.0` raised OutOfLimits 105,436 ms. Fresh stream alone stayed stopped; explicit ARM 107,375 ms, STOP 110,520 ms. | Passed: Todor confirmed all four wheels behaved as expected |
+
+On 2026-10-18, Todor answered “Yes, all as expected” to whether all four wheels
+stopped for STOP, lease expiry and out-of-limits, stayed still during the fresh-command
+pauses, and restarted only during the announced recovery runs. These three BLE
+physical scenarios pass at the tested gentle setting. Disconnect owner loss remains
+unexercised; the confirmation does not close the full task 5.2 acceptance matrix.
 
 [probe.txt](probe.txt) contains STOP/lease and the failed owner-loss assertion;
 [probe-limits.txt](probe-limits.txt) contains the remaining announced LIMITS check.
