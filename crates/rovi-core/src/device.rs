@@ -23,6 +23,16 @@ pub fn echo(data: &[u8]) -> Option<&[u8]> {
     (data.len() <= ECHO_MAX).then_some(data)
 }
 
+/// Prepare an Echo notification: `Some(0)` is an accepted empty reply; `None` means discard.
+pub fn ble_echo(offset: usize, data: &[u8], out: &mut [u8]) -> Option<usize> {
+    if offset != 0 {
+        return None;
+    }
+    let payload = echo(data)?;
+    out.get_mut(..payload.len())?.copy_from_slice(payload);
+    Some(payload.len())
+}
+
 /// A reply to send back to the datagram's sender (`len` 0 means none) and the effects for the
 /// shell to act on.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -59,6 +69,8 @@ pub struct Device {
     graph: Graph<16>,
     /// The owner's last refused ARM/STOP, retained until its next successful control command.
     owner_error: Option<Error>,
+    /// Coordinator readiness, installed before transports start (the sim has no motor driver).
+    motor_ready: bool,
     /// Deadline effects an input processed but could not return (a refused BLE write); the
     /// next [`tick`](Self::tick) returns them.
     pending: Effects,
@@ -185,11 +197,26 @@ impl Device {
             arbiter: Arbiter::seeded(cfg, session_seed),
             graph: Graph::new(),
             owner_error: None,
+            motor_ready: true,
             pending: Effects::default(),
             marks: Marks::new(session_seed),
             ble_generation: 0,
             last_udp_status: None,
         })
+    }
+
+    /// Bind motor readiness before starting transports; invalid motor configuration inhibits ARM.
+    /// The simulator uses the default ready state without a physical driver dependency.
+    pub fn set_motor_ready(&mut self, ready: bool) {
+        self.motor_ready = ready;
+    }
+
+    fn arm(&mut self, now: u64, who: Claimant) -> Result<(), Error> {
+        self.arbiter.check_owner(who)?;
+        if !self.motor_ready {
+            return Err(Error::NotReady);
+        }
+        self.arbiter.arm(now, who)
     }
 
     fn expire(&mut self, now: u64) -> Effects {
@@ -202,7 +229,7 @@ impl Device {
 
     fn control(&mut self, now: u64, who: Claimant, arm: Option<bool>) -> Result<Effects, Error> {
         let result = match arm {
-            Some(true) => self.arbiter.arm(now, who).map(|()| Effects::default()),
+            Some(true) => self.arm(now, who).map(|()| Effects::default()),
             Some(false) => self.arbiter.stop(now, who),
             None => self.arbiter.check_owner(who).and(Err(Error::Invalid)),
         };
@@ -487,7 +514,7 @@ impl Device {
                 State::Claimed | State::Stopped(StopReason::LeaseExpired)
             );
             if e.stop.is_none() && auto_arm {
-                let _ = self.arbiter.arm(now, who);
+                let _ = self.arm(now, who);
             }
         }
         fx
@@ -2291,5 +2318,29 @@ mod tests {
             &out[8..n - 1],
             b"state=open reason=none error=none session=0"
         );
+    }
+
+    #[test]
+    fn ble_echo_accepts_an_empty_notification() {
+        assert_eq!(ble_echo(0, &[], &mut []), Some(0));
+    }
+
+    #[test]
+    fn ble_echo_copies_short_and_maximum_notifications() {
+        let mut out = [0xaa; ECHO_MAX];
+        assert_eq!(ble_echo(0, b"abc", &mut out), Some(3));
+        assert_eq!(&out[..3], b"abc");
+        assert!(out[3..].iter().all(|b| *b == 0xaa));
+        assert_eq!(ble_echo(0, &[0x55; ECHO_MAX], &mut out), Some(ECHO_MAX));
+        assert_eq!(out, [0x55; ECHO_MAX]);
+    }
+
+    #[test]
+    fn ble_echo_rejects_bad_offset_oversize_and_short_buffer_without_writes() {
+        let mut out = [0xaa; ECHO_MAX];
+        assert_eq!(ble_echo(1, b"abc", &mut out), None);
+        assert_eq!(ble_echo(0, &[1; ECHO_MAX + 1], &mut out), None);
+        assert_eq!(ble_echo(0, b"abc", &mut out[..2]), None);
+        assert_eq!(out, [0xaa; ECHO_MAX]);
     }
 }

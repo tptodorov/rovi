@@ -1,0 +1,17 @@
+Rovi-only excerpt from btmon; empty Echo request and notification:
+
+      ATT: Write Request (0x12) len 2
+        Handle: 0x0012 Type: Vendor specific (01009c7e-d86b-b08d-194d-b24515007ad4)
+          Data[0]:
+> HCI Event: Number of Completed Packets (0x13) plen 5    #149 [hci0] 10.006824
+        Num handles: 1
+        Handle: 2050 Address: FE:E4:05:1A:9F:FF (Static)
+        Count: 1
+        #148: len 7 (1 Kb/s)
+        Latency: 42 msec (28-44 msec ~42 msec)
+> ACL Data RX: Handle 2050 flags 0x02 dlen 5              #150 [hci0] 10.053458
+      ATT: Write Response (0x13) len 0
+> ACL Data RX: Handle 2050 flags 0x02 dlen 7              #151 [hci0] 10.053461
+      ATT: Handle Value Notification (0x1b) len 2
+        Handle: 0x0012 Type: Vendor specific (01009c7e-d86b-b08d-194d-b24515007ad4)
+          Data[0]:

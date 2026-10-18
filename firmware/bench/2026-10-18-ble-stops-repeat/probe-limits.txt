@@ -1,0 +1,15 @@
+
+=== LIMITS: starts in 5 s ===
+Status: Status(state='Claimed', reason=None, error=None)
+Status: Status(state='Armed', reason=None, error=None)
+Gentle forward vx=0.1 for 3 s
+Send vx=2.0 (limit is 1.0): wheels must stop
+Status: Status(state='Stopped', reason='OutOfLimits', error=None)
+Status: Status(state='Stopped', reason='OutOfLimits', error='NotReady')
+Fresh gentle stream for 1.5 s: wheels must stay stopped
+Status: Status(state='Stopped', reason='OutOfLimits', error='NotReady')
+Explicit ARM: gentle forward for 3 s, then STOP
+Status: Status(state='Armed', reason=None, error=None)
+Status: Status(state='Stopped', reason='Stop', error=None)
+LIMITS: software checks passed; wheel observation still required
+BLE stop checks: passed; disconnected

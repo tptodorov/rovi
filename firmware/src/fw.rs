@@ -248,7 +248,6 @@ async fn main(_spawner: Spawner) -> ! {
     let Ok(motor) = MotorControl::new(pins, MotorConfig::PRODUCT, CAR_CHANNELS) else {
         unreachable!("motor pin writes cannot fail");
     };
-    let mut drive = Drive::new(motor);
     esp_alloc::heap_allocator!(#[ram(reclaimed)] size: 64 * 1024);
     esp_alloc::heap_allocator!(size: 64 * 1024);
     let timers = TimerGroup::new(p.TIMG0);
@@ -310,9 +309,13 @@ async fn main(_spawner: Spawner) -> ! {
     // halts here with both drivers still in standby, before anything can claim the car.
     // A random session seed per boot keeps a client's packets from before a reboot out of the
     // new sessions (not authentication).
-    let Ok(device) = Device::new(Config::DEFAULT, Geometry::CAR, Rng::new().random()) else {
+    let Ok(mut device) = Device::new(Config::DEFAULT, Geometry::CAR, Rng::new().random()) else {
         panic!("invalid device profile");
     };
+    if matches!(motor.fault(), Some(rovi_motor_control::Fault::Config(_))) {
+        logger::emit(Event::Fault(Fault::MotorConfig));
+    }
+    let mut drive = Drive::new(motor, &mut device);
     let dev = RefCell::new(device);
     println!(
         "M8 board-only AP=Rovi M8 udp=192.168.4.1:{} WPA2 channel=1 lease_ms={}",
@@ -464,18 +467,12 @@ async fn main(_spawner: Spawner) -> ! {
                             }
                         } else if handle == server.rovi.echo.handle {
                             let mut data = [0u8; device::ECHO_MAX];
-                            let n = w.with_data(|off, b| {
-                                if off == 0 && device::echo(b).is_some() {
-                                    data[..b.len()].copy_from_slice(b);
-                                    b.len()
-                                } else {
-                                    0
-                                }
-                            });
+                            let reply_len =
+                                w.with_data(|off, b| device::ble_echo(off, b, &mut data));
                             if let Ok(reply) = w.accept() {
                                 reply.send().await;
                             }
-                            if n > 0 {
+                            if let Some(n) = reply_len {
                                 let _ = server.rovi.echo.notify_raw(&conn, &data[..n], false).await;
                             }
                         } else if handle == server.rovi.control.handle {

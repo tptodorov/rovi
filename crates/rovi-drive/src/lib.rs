@@ -39,7 +39,9 @@ pub struct Drive<D> {
 }
 
 impl<D: Driver> Drive<D> {
-    pub fn new(motor: MotorControl<D>) -> Self {
+    /// Bind before any transport input, so bad configuration refuses even the first ARM.
+    pub fn new(motor: MotorControl<D>, dev: &mut Device) -> Self {
+        dev.set_motor_ready(!matches!(motor.fault(), Some(MotorFault::Config(_))));
         Self {
             motor,
             armed_for: None,
@@ -170,9 +172,11 @@ mod tests {
         fn new(geometry: Geometry, motor: MotorConfig) -> Self {
             let log = Recording::default();
             let mc = MotorControl::new(log.clone(), motor, CAR_CHANNELS).unwrap();
+            let mut dev = Device::new(Config::DEFAULT, geometry, 0).unwrap();
+            let drive = Drive::new(mc, &mut dev);
             let mut car = Car {
-                dev: Device::new(Config::DEFAULT, geometry, 0).unwrap(),
-                drive: Drive::new(mc),
+                dev,
+                drive,
                 log,
                 session: 0,
                 seq: 0,
@@ -374,19 +378,75 @@ mod tests {
             ..MotorConfig::PRODUCT
         };
         let mut car = Car::new(CAR, bad);
-        car.arm_udp(0);
-        assert_eq!(car.tick(10).fault, Some(Fault::MotorConfig));
+        car.udp(0, Kind::Hello, &[]);
+        car.setpoint(0, 0.5);
+        car.udp(0, Kind::Arm, &[]);
         assert_eq!(
-            car.dev.arbiter().state(),
-            State::Stopped(StopReason::OutOfLimits)
+            car.dev.status(),
+            [1, 0, 3],
+            "ARM must refuse before the first tick"
         );
-        car.setpoint(20, 0.5);
-        car.udp(20, Kind::Arm, &[]);
+        for i in 1..10 {
+            car.setpoint(i * 10, 0.5);
+            car.udp(i * 10, Kind::Arm, &[]);
+            car.tick(i * 10 + 1);
+            assert_eq!(car.dev.status(), [1, 0, 3]);
+        }
+        assert!(!car.stby_high() && car.bridge_writes() == 0);
+        car.udp(101, Kind::Bye, &[]);
+        car.udp(102, Kind::Hello, &[]);
+        car.setpoint(102, 0.5);
+        car.udp(102, Kind::Arm, &[]);
         assert_eq!(
-            car.tick(30).fault,
-            Some(Fault::MotorConfig),
-            "an ARM cannot fix a bad build"
+            car.dev.status(),
+            [1, 0, 3],
+            "a new session cannot fix configuration"
         );
+    }
+
+    #[test]
+    fn an_invalid_motor_configuration_refuses_ble_arm_before_any_tick() {
+        let bad = MotorConfig {
+            deadband: f32::NAN,
+            ..MotorConfig::PRODUCT
+        };
+        let mut car = Car::new(CAR, bad);
+        let c = car.dev.on_ble_connect(0, 1).unwrap().0;
+        let mut sp = [0; 72];
+        sp[..4].copy_from_slice(&1u32.to_le_bytes());
+        sp[4..].copy_from_slice(&cdr(0.5));
+        car.dev.on_ble_setpoint(1, c, &sp);
+        assert_eq!(
+            car.dev.on_ble_control(2, c, 1),
+            Err(rovi_core::arbiter::Error::NotReady)
+        );
+        assert_eq!(car.dev.ble_status(), [1, 0, 3]);
+        car.tick(10);
+        assert!(!car.stby_high() && car.bridge_writes() == 0);
+    }
+
+    #[test]
+    fn an_invalid_motor_configuration_blocks_ros_auto_and_explicit_arm() {
+        let bad = MotorConfig {
+            max_duty_pm: 1_001,
+            ..MotorConfig::PRODUCT
+        };
+        let mut car = Car::new(CAR, bad);
+        let (cmd, arm) = (publisher(&mut car.dev, 1), publisher(&mut car.dev, 2));
+        car.dev.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
+        assert_eq!(
+            car.dev.status(),
+            [1, 0, 0],
+            "no automatic arm before the tick"
+        );
+        car.dev.on_ros_arm(1, &arm, &[0, 1, 0, 0, 1]);
+        assert_eq!(car.dev.status(), [1, 0, 3]);
+        for i in 2..10 {
+            car.dev
+                .on_ros_cmd_vel(i * 10, &at(&cmd, i as i64), &cdr(0.5));
+            car.tick(i * 10 + 1);
+            assert_eq!(car.dev.status(), [1, 0, 3]);
+        }
         assert!(!car.stby_high() && car.bridge_writes() == 0);
     }
 

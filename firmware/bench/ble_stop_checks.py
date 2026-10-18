@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""Board acceptance subset: BLE stops and explicit recovery, with visible motion.
+
+Run only after an announced test and Todor's go, wheels clear, motor bank awake:
+    nix-shell --run 'python3 firmware/bench/ble_stop_checks.py --carlog <live-car.log>'
+
+Select just one announced scenario by adding STOP, LEASE, DISCONNECT or LIMITS.
+DISCONNECT needs passwordless sudo for btmgmt on hci0 and Rovi's LE-random address.
+
+Uses the frozen M8 transport client; assertions below check the product contract.
+Status/log evidence needs separate physical confirmation that all four wheels stop.
+"""
+import argparse
+import asyncio
+from pathlib import Path
+import sys
+import time
+
+sys.path.insert(
+    0, str(Path(__file__).resolve().parents[2] / "experiments/rovi-m8-setpoint-ros/sim")
+)
+import ble_client
+import carlog
+
+
+async def expect(car, state, reason=None, error=None):
+    status = await car.status()
+    assert status == (state, reason, error), status
+    print(f"Status: {status}", flush=True)
+
+
+async def recover(car, reason):
+    assert not await car.arm(), "recovery must refuse ARM before a fresh setpoint"
+    await expect(car, "Stopped", reason, "NotReady")
+    print("Fresh gentle stream for 1.5 s: wheels must stay stopped", flush=True)
+    await car.stream(0.1, seconds=1.5)
+    await expect(car, "Stopped", reason, "NotReady")
+    print("Explicit ARM: gentle forward for 3 s, then STOP", flush=True)
+    assert await car.arm()
+    await expect(car, "Armed")
+    await car.stream(0.1, seconds=3)
+    assert await car.stop()
+    await expect(car, "Stopped", "Stop")
+
+
+async def scenario(mode, carlog_path=None):
+    if mode == "DISCONNECT":
+        assert carlog_path and carlog_path.is_file(), "disconnect check needs a live car log"
+    print(f"\n=== {mode}: starts in 5 s ===", flush=True)
+    await asyncio.sleep(5)
+    car = await ble_client.connect()
+    try:
+        assert car.mtu >= ble_client.MIN_MTU
+        # Keep the announced speeds/timings tied to the profile being accepted.
+        assert car.capabilities.max_vx == 1.0 and car.capabilities.lease_ms == 1000
+        await expect(car, "Claimed")
+        await car.send(0.1)
+        assert await car.arm()
+        await expect(car, "Armed")
+        print("Gentle forward vx=0.1 for 3 s", flush=True)
+        await car.stream(0.1, seconds=3)
+
+        if mode == "STOP":
+            assert await car.stop()
+            await expect(car, "Stopped", "Stop")
+            await recover(car, "Stop")
+        elif mode == "LEASE":
+            print("Laptop silent: wheels must stop after about 1 s", flush=True)
+            start = time.monotonic()
+            stopped = await car.wait_status(
+                lambda status: status.state == "Stopped", timeout=1.5
+            )
+            assert stopped == ("Stopped", "LeaseExpired", None), stopped
+            print(f"Lease notification after stream: {(time.monotonic()-start)*1000:.0f} ms", flush=True)
+            # Delivery timing here does not establish the lease+50 ms detection bound.
+            await expect(car, "Stopped", "LeaseExpired")
+            await recover(car, "LeaseExpired")
+        elif mode == "DISCONNECT":
+            print("Disconnect while driving: wheels must stop", flush=True)
+            offset = carlog_path.stat().st_size
+            # BlueZ Device.Disconnect waits 2 s; target the controller directly.
+            command = await asyncio.create_subprocess_exec(
+                "sudo", "-n", "btmgmt", "--timeout", "3", "--index", "0",
+                "disconnect", "--type", "2", car.peer.address,
+                stdin=asyncio.subprocess.DEVNULL,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            output, error = await command.communicate()
+            assert command.returncode == 0, (output.decode(), error.decode())
+            found, events = await asyncio.to_thread(
+                carlog.wait, carlog_path, offset, carlog.ev("stop")
+            )
+            stop = next((event for event in events if event.get("ev") == "stop"), None)
+            assert found and stop["reason"] == "OwnerLost", f"expected OwnerLost, got {stop}"
+            print("Serial confirms stop reason=OwnerLost", flush=True)
+            await asyncio.sleep(1)
+            car = await ble_client.connect()
+            await expect(car, "Claimed")
+            print("Reconnected disarmed, without a setpoint", flush=True)
+        elif mode == "LIMITS":
+            print("Send vx=2.0 (limit is 1.0): wheels must stop", flush=True)
+            await car.send(2.0)
+            stopped = await car.wait_status(
+                lambda status: status.reason == "OutOfLimits", timeout=1
+            )
+            assert stopped == ("Stopped", "OutOfLimits", None), stopped
+            await expect(car, "Stopped", "OutOfLimits")
+            await recover(car, "OutOfLimits")
+        else:
+            raise AssertionError(mode)
+    finally:
+        try:
+            if car.peer.is_connected:
+                async with asyncio.timeout(3):
+                    if not await car.stop():
+                        raise RuntimeError("cleanup STOP refused")
+        finally:
+            await car.close()
+    print(f"{mode}: software checks passed; wheel observation still required", flush=True)
+
+
+async def check(modes, carlog_path):
+    for mode in modes:
+        await scenario(mode, carlog_path)
+    print("BLE stop checks: passed; disconnected", flush=True)
+
+
+if __name__ == "__main__":
+    modes = ("STOP", "LEASE", "DISCONNECT", "LIMITS")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("mode", choices=modes, nargs="?")
+    parser.add_argument("--carlog", type=Path, required=True)
+    args = parser.parse_args()
+    if not args.carlog.is_file():
+        parser.error("--carlog must name the live serial capture")
+    asyncio.run(check((args.mode,) if args.mode else modes, args.carlog))
