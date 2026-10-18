@@ -2,11 +2,14 @@
 """Board acceptance subset: BLE stops and explicit recovery, with visible motion.
 
 Run only after an announced test and Todor's go, wheels clear, motor bank awake:
-    nix-shell --run 'python3 firmware/bench/ble_stop_checks.py'
+    nix-shell --run 'python3 firmware/bench/ble_stop_checks.py --carlog <live-car.log>'
+
+Select just one announced scenario by adding STOP, LEASE, DISCONNECT or LIMITS.
 
 Uses the frozen M8 transport client; assertions below check the product contract.
 Status/log evidence needs separate physical confirmation that all four wheels stop.
 """
+import argparse
 import asyncio
 from pathlib import Path
 import sys
@@ -16,6 +19,7 @@ sys.path.insert(
     0, str(Path(__file__).resolve().parents[2] / "experiments/rovi-m8-setpoint-ros/sim")
 )
 import ble_client
+import carlog
 
 
 async def expect(car, state, reason=None, error=None):
@@ -38,7 +42,9 @@ async def recover(car, reason):
     await expect(car, "Stopped", "Stop")
 
 
-async def scenario(mode):
+async def scenario(mode, carlog_path=None):
+    if mode == "DISCONNECT":
+        assert carlog_path and carlog_path.is_file(), "disconnect check needs a live car log"
     print(f"\n=== {mode}: starts in 5 s ===", flush=True)
     await asyncio.sleep(5)
     car = await ble_client.connect()
@@ -70,7 +76,15 @@ async def scenario(mode):
             await recover(car, "LeaseExpired")
         elif mode == "DISCONNECT":
             print("Disconnect while driving: wheels must stop", flush=True)
-            await car.close()
+            offset = carlog_path.stat().st_size
+            # Unsubscribing first can take longer than the lease and mask owner loss.
+            await car.peer.disconnect()
+            found, events = await asyncio.to_thread(
+                carlog.wait, carlog_path, offset, carlog.ev("stop")
+            )
+            stop = next((event for event in events if event.get("ev") == "stop"), None)
+            assert found and stop["reason"] == "OwnerLost", f"expected OwnerLost, got {stop}"
+            print("Serial confirms stop reason=OwnerLost", flush=True)
             await asyncio.sleep(1)
             car = await ble_client.connect()
             await expect(car, "Claimed")
@@ -97,11 +111,18 @@ async def scenario(mode):
     print(f"{mode}: software checks passed; wheel observation still required", flush=True)
 
 
-async def check():
-    for mode in ("STOP", "LEASE", "DISCONNECT", "LIMITS"):
-        await scenario(mode)
+async def check(modes, carlog_path):
+    for mode in modes:
+        await scenario(mode, carlog_path)
     print("BLE stop checks: passed; disconnected", flush=True)
 
 
 if __name__ == "__main__":
-    asyncio.run(check())
+    modes = ("STOP", "LEASE", "DISCONNECT", "LIMITS")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("mode", choices=modes, nargs="?")
+    parser.add_argument("--carlog", type=Path, required=True)
+    args = parser.parse_args()
+    if not args.carlog.is_file():
+        parser.error("--carlog must name the live serial capture")
+    asyncio.run(check((args.mode,) if args.mode else modes, args.carlog))

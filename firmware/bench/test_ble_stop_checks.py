@@ -1,5 +1,7 @@
 """Only probe cleanup/profile guards; these tests do not establish board behavior."""
 import unittest
+from pathlib import Path
+import tempfile
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -49,6 +51,35 @@ class Cleanup(unittest.IsolatedAsyncioTestCase):
         car.send.assert_not_awaited()
         car.arm.assert_not_awaited()
         car.close.assert_awaited_once()
+
+    async def disconnect_case(self, reason):
+        car, again = self.car(), self.car()
+        car.stream.side_effect = None
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "car.log"
+            log.write_text("ev=stop reason=OwnerLost at_ms=1\n")
+
+            async def stop_event():
+                with log.open("a") as output:
+                    output.write(f"ev=stop reason={reason} at_ms=4100\n")
+                car.peer.is_connected = False
+
+            car.close.side_effect = stop_event
+            car.peer.disconnect = AsyncMock(side_effect=stop_event)
+            with patch.object(
+                probe.ble_client, "connect", AsyncMock(side_effect=[car, again])
+            ), patch.object(probe.asyncio, "sleep", AsyncMock()):
+                await probe.scenario("DISCONNECT", log)
+            car.peer.disconnect.assert_awaited_once()
+            again.arm.assert_not_awaited()
+            again.close.assert_awaited_once()
+
+    async def test_lease_stop_during_disconnect_cannot_pass_as_owner_loss(self):
+        with self.assertRaisesRegex(AssertionError, "OwnerLost"):
+            await self.disconnect_case("LeaseExpired")
+
+    async def test_owner_loss_allows_disarmed_reconnect(self):
+        await self.disconnect_case("OwnerLost")
 
 
 if __name__ == "__main__":
