@@ -467,18 +467,12 @@ async fn main(_spawner: Spawner) -> ! {
                             }
                         } else if handle == server.rovi.echo.handle {
                             let mut data = [0u8; device::ECHO_MAX];
-                            let n = w.with_data(|off, b| {
-                                if off == 0 && device::echo(b).is_some() {
-                                    data[..b.len()].copy_from_slice(b);
-                                    b.len()
-                                } else {
-                                    0
-                                }
-                            });
+                            let reply_len =
+                                w.with_data(|off, b| device::ble_echo(off, b, &mut data));
                             if let Ok(reply) = w.accept() {
                                 reply.send().await;
                             }
-                            if n > 0 {
+                            if let Some(n) = reply_len {
                                 let _ = server.rovi.echo.notify_raw(&conn, &data[..n], false).await;
                             }
                         } else if handle == server.rovi.control.handle {

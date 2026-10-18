@@ -71,6 +71,6 @@ Build commands are in the [product README](../README.md#product-code).
 
 Task 5.2 remains: individual wheels/directions, actual coast pin levels and neighbour behavior,
 boot/reset/power loss, all stop triggers, radio/status delivery, and the selected-profile
-reversal/thermal runs. The known empty BLE Echo suppression still needs its software fix and
-board delivery check. Earlier product BLE runs are development evidence on older firmware.
+reversal/thermal runs. The empty BLE Echo software fix is prepared; the
+[Status/Echo probe](bench/ble_status_echo.py) still needs board delivery evidence. Earlier product BLE runs are development evidence on older firmware.
 Every physical motor run is separately announced and waits for Todor's go.

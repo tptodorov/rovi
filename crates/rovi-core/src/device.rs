@@ -23,6 +23,16 @@ pub fn echo(data: &[u8]) -> Option<&[u8]> {
     (data.len() <= ECHO_MAX).then_some(data)
 }
 
+/// Prepare an Echo notification: `Some(0)` is an accepted empty reply; `None` means discard.
+pub fn ble_echo(offset: usize, data: &[u8], out: &mut [u8]) -> Option<usize> {
+    if offset != 0 {
+        return None;
+    }
+    let payload = echo(data)?;
+    out.get_mut(..payload.len())?.copy_from_slice(payload);
+    Some(payload.len())
+}
+
 /// A reply to send back to the datagram's sender (`len` 0 means none) and the effects for the
 /// shell to act on.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -2308,5 +2318,29 @@ mod tests {
             &out[8..n - 1],
             b"state=open reason=none error=none session=0"
         );
+    }
+
+    #[test]
+    fn ble_echo_accepts_an_empty_notification() {
+        assert_eq!(ble_echo(0, &[], &mut []), Some(0));
+    }
+
+    #[test]
+    fn ble_echo_copies_short_and_maximum_notifications() {
+        let mut out = [0xaa; ECHO_MAX];
+        assert_eq!(ble_echo(0, b"abc", &mut out), Some(3));
+        assert_eq!(&out[..3], b"abc");
+        assert!(out[3..].iter().all(|b| *b == 0xaa));
+        assert_eq!(ble_echo(0, &[0x55; ECHO_MAX], &mut out), Some(ECHO_MAX));
+        assert_eq!(out, [0x55; ECHO_MAX]);
+    }
+
+    #[test]
+    fn ble_echo_rejects_bad_offset_oversize_and_short_buffer_without_writes() {
+        let mut out = [0xaa; ECHO_MAX];
+        assert_eq!(ble_echo(1, b"abc", &mut out), None);
+        assert_eq!(ble_echo(0, &[1; ECHO_MAX + 1], &mut out), None);
+        assert_eq!(ble_echo(0, b"abc", &mut out[..2]), None);
+        assert_eq!(out, [0xaa; ECHO_MAX]);
     }
 }
