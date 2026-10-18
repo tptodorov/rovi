@@ -15,7 +15,7 @@ firmware before capture.
 | Disarmed output | Open with all four wheel commands zero at 21,163 ms; no LeaseExpired event |
 | Reconnect | Claim at 25,950 ms; immediate Status claimed/clear, no setpoint or successful ARM sent |
 | Cleanup | STOP while disarmed; release at 29,440 ms, final Open/zero at 29,447 ms |
-| Physical wheel observation | Pending Todor's confirmation that all four turned forward, stopped on disconnect and stayed still after reconnect |
+| Physical wheel observation | Not observed: Todor answered “I couldn’t observe the run”; physical stop/reconnect confirmation requires a repeat |
 
 [probe.txt](probe.txt) contains the passing client assertion and disarmed reconnect.
 [car.log](car.log) records the actual OwnerLost stop, unlike the two earlier attempts
@@ -27,7 +27,8 @@ The probe used `sudo -n btmgmt --timeout 3 --index 0 disconnect --type 2
 <connected-peer-address>`, targeting only Rovi's LE-random connection on hci0.
 This bypassed the BlueZ service's two-second D-Bus disconnect timer. No adapter
 power toggle was issued. The software assertion passed on the
-board; physical acceptance of this wheel-stop scenario awaits the observation above.
+board. Todor could not observe this run, so it remains log-only evidence and the
+physical wheel-stop/reconnect check needs a separately authorized repeat.
 
 This does not measure STBY/PWM pin levels, numeric disable latency or the lease
 receive-to-detection bound. It does not close the remaining UDP/ROS, powered reset /
