@@ -32,7 +32,12 @@ async def check():
         assert client.mtu_size >= 35, "32-byte Echo needs ATT MTU >= 35"
         statuses, echoes = asyncio.Queue(), asyncio.Queue()
         await client.start_notify(STATUS, lambda _, data: statuses.put_nowait(bytes(data)))
-        await client.start_notify(ECHO, lambda _, data: echoes.put_nowait(bytes(data)))
+        # BlueZ AcquireNotify treats an empty packet as EOF; D-Bus preserves it.
+        await client.start_notify(
+            ECHO,
+            lambda _, data: echoes.put_nowait(bytes(data)),
+            bluez={"use_start_notify": True},
+        )
 
         async def expect_status(expected):
             assert bytes(await client.read_gatt_char(STATUS)) == expected

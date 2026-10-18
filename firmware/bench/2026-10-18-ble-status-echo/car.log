@@ -1,0 +1,104 @@
+[2026-10-18T14:05:18Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-18T14:05:18Z INFO ] Connecting...
+[2026-10-18T14:05:18Z INFO ] Using flash stub
+Chip type:         esp32s3 (revision v0.2)
+Crystal frequency: 40 MHz
+Flash size:        16MB
+Features:          WiFi, BLE, Embedded Flash
+MAC address:       14:c1:9f:cd:71:78
+App/part. size:    686,864/16,384,000 bytes, 4.19%
+[2026-10-18T14:06:00Z INFO ] Flashing has completed!
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x14d0
+load:0x403c8700,len:0xdcc
+load:0x403cb700,len:0x2f54
+entry 0x403c8900
+I (29) boot: ESP-IDF v6.1-beta1-497-g14f663f003e 2nd stage bootloader
+I (30) boot: Multicore bootloader
+I (30) boot: chip revision: v0.2
+I (30) boot: efuse block revision: v1.4
+I (34) boot.esp32s3: Boot SPI Speed : 40MHz
+I (38) boot.esp32s3: SPI Mode       : DIO
+I (42) boot.esp32s3: SPI Flash Size : 16MB
+I (45) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (52) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (72) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (78) boot: End of partition table
+I (82) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=16ae4h ( 92900) map
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x14d0
+load:0x403c8700,len:0xdcc
+load:0x403cb700,len:0x2f54
+entry 0x403c8900
+I (29) boot: ESP-IDF v6.1-beta1-497-g14f663f003e 2nd stage bootloader
+I (30) boot: Multicore bootloader
+I (30) boot: chip revision: v0.2
+I (30) boot: efuse block revision: v1.4
+I (34) boot.esp32s3: Boot SPI Speed : 40MHz
+I (38) boot.esp32s3: SPI Mode       : DIO
+I (42) boot.esp32s3: SPI Flash Size : 16MB
+I (45) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (52) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (72) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (78) boot: End of partition table
+I (82) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=16ae4h ( 92900) map
+I (112) esp_image: segment 1: paddr=00026b0c vaddr=3fc97958 size=04ac8h ( 19144) load
+I (118) esp_image: segment 2: paddr=0002b5dc vaddr=40378000 size=04a3ch ( 19004) load
+I (124) esp_image: segment 3: paddr=00030020 vaddr=42020020 size=7cba0h (510880) map
+I (253) esp_image: segment 4: paddr=000acbc8 vaddr=4037ca3c size=0af1ch ( 44828) load
+I (274) boot: Loaded app from partition at offset 0x10000
+I (274) boot: Disabling RNG early entropy source...
+M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 WPA2 channel=1 lease_ms=1000
+ev=boot ver=0.1.0 reset=ChipPowerOn at_ms=932
+ev=claimed source=Ble at_ms=9656
+ev=ble link=up id=1 mtu=23 at_ms=9656
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=9659
+ev=wifi ap=off at_ms=9672
+ev=mtu id=1 mtu=247 at_ms=9856
+ev=released at_ms=14763
+ev=ble link=down id=1 at_ms=14763
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=14770
+ev=wifi ap=on at_ms=14789
+ev=claimed source=Ble at_ms=36258
+ev=ble link=up id=1 mtu=23 at_ms=36258
+ev=wifi ap=off at_ms=36264
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=36268
+ev=mtu id=1 mtu=247 at_ms=36458
+ev=released at_ms=40773
+ev=ble link=down id=1 at_ms=40773
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=40781
+ev=wifi ap=on at_ms=40800
+ev=claimed source=Ble at_ms=49003
+ev=ble link=up id=1 mtu=23 at_ms=49003
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=49007
+ev=wifi ap=off at_ms=49018
+ev=mtu id=1 mtu=247 at_ms=49103
+ev=released at_ms=52743
+ev=ble link=down id=1 at_ms=52743
+ev=wifi ap=on at_ms=52755
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=52757
+ev=claimed source=Ble at_ms=82594
+ev=ble link=up id=1 mtu=23 at_ms=82594
+ev=wifi ap=off at_ms=82601
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=82603
+ev=mtu id=1 mtu=247 at_ms=82794
+ev=stop reason=Stop at_ms=84153
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=84161
+ev=released at_ms=86764
+ev=ble link=down id=1 at_ms=86764
+ev=wifi ap=on at_ms=86778
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=86780
