@@ -1,0 +1,20 @@
+Router up; car linked
+
+=== KILLED: router killed while driving ===
+Gentle forward vx=0.1 starts in 5 s
+Kill router: wheels must stop at once
+KILLED: OwnerLost + release; wheel observation required
+Router up; car linked
+data: state=open reason=none error=none session=0
+New router: car open, not claimed or armed
+
+=== FROZEN: router frozen while driving ===
+Gentle forward vx=0.1 starts in 5 s
+Freeze router: wheels must stop after about 1 s (lease)
+Lease stop; waiting for the car to drop the frozen router (up to 35 s)
+FROZEN: lease stop + release; wheel observation required
+Router up; car linked
+data: state=open reason=none error=none session=0
+New router: car open, not claimed or armed
+
+ROS router-loss checks: passed; released
