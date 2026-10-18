@@ -1,4 +1,4 @@
-# 2026-10-18: physical wheel directions
+# 2026-10-18: physical wheel directions — physically confirmed
 
 Todor authorized the announced six-move batch with “go”. Rover on stand, wheels
 clear, USB connected, motor bank awake. No flash: installed ROS product firmware
@@ -11,12 +11,16 @@ release at 50,825/50,830 ms, final Open/zero. No errors, drops or panics.
 
 | Move | Serial `wheels_pm` FL,FR,RR,RL | Physical result |
 | --- | --- | --- |
-| forward | 83,83,83,83 | Pending Todor's confirmation |
-| backward | -83,-83,-83,-83 | Pending Todor's confirmation |
-| strafe left | -83,83,-83,83 | Pending Todor's confirmation |
-| strafe right | 83,-83,83,-83 | Pending Todor's confirmation |
-| rotate left (CCW) | -85,85,85,-85 | Pending Todor's confirmation |
-| rotate right (CW) | 85,-85,-85,85 | Pending Todor's confirmation |
+| forward | 83,83,83,83 | Passed |
+| backward | -83,-83,-83,-83 | Passed |
+| strafe left | -83,83,-83,83 | Passed |
+| strafe right | 83,-83,83,-83 | Passed |
+| rotate left (CCW) | -85,85,85,-85 | Passed |
+| rotate right (CW) | 85,-85,-85,85 | Passed |
 
 Every pause logged `0,0,0,0` while armed. Prior Wi-Fi restored, Ethernet internet
 route unchanged, capture stopped.
+
+On 2026-10-18 Todor confirmed every wheel turned as expected in all six moves
+(“all moved correctly”). Each wheel's position and both directions match the
+firmware mapping with no software inversions, at the tested gentle setting.
