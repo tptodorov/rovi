@@ -48,5 +48,7 @@ The full runner passed against the product ROS simulator on loopback ports
 17453/17800 and runs identically in CI. Eight serial-evidence unit tests reject
 invalid or stale/misordered evidence and pin the 50/51 ms boundary. These are
 development checks. A local simulator fault injection also verified that a
-51 ms value is rejected and failure cleanup releases ownership. No ROS board
-timing result is claimed until the announced hardware batch runs.
+51 ms value is rejected and failure cleanup releases ownership. The subsequent [authorized board batch](2026-10-19-ros-device-lease-timing/notes.md)
+passed all five trials with device lateness 4/9/2/5/4 ms and matching ROS
+Status. Todor confirmed all four wheels stayed still through reset, trials
+and cleanup. These results apply to the recorded instrumented firmware build.

@@ -1,0 +1,7 @@
+Trial 1/5: lease_late_ms=4 limit_late_ms=50 host_upper_bound_ms=1015.278 zero_publish_attempts=1; zero wheels
+Trial 2/5: lease_late_ms=9 limit_late_ms=50 host_upper_bound_ms=1023.038 zero_publish_attempts=1; zero wheels
+Trial 3/5: lease_late_ms=2 limit_late_ms=50 host_upper_bound_ms=1021.835 zero_publish_attempts=1; zero wheels
+Trial 4/5: lease_late_ms=5 limit_late_ms=50 host_upper_bound_ms=1019.408 zero_publish_attempts=1; zero wheels
+Trial 5/5: lease_late_ms=4 limit_late_ms=50 host_upper_bound_ms=1022.557 zero_publish_attempts=1; zero wheels
+ROS device lease timing: passed; max_lease_late_ms=9; released
+rc=0
