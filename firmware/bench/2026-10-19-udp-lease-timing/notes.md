@@ -30,7 +30,7 @@ five lease stops, five releases, final state Open. Every wheel command was
 zero; no errors, dropped events or panics. Capture stopped, previous Wi-Fi
 restored and Ethernet internet routing unchanged. No firewall change.
 
-**Physical observation:** pending Todor's confirmation that all four wheels
-stayed still throughout. UDP lease-detection timing passed on the board;
+**Physical observation:** Todor confirmed on 2026-10-19: “Yes, all four stayed
+still”. UDP lease-detection timing and the zero-wheel observation passed on the board;
 BLE/ROS timing remains pending. This does not measure STBY propagation or
 physical wheel stopping time.
