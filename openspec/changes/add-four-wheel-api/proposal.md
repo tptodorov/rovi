@@ -48,6 +48,8 @@ Use [M4 results](../../../experiments/rovi-m4-four-motor-safety/MILESTONE.md#res
 | O8 | **Closed** | D1 A→FL, D1 B→RL, D2 A→FR, D2 B→RR; directions corrected at connectors, all software inversions false, reconfirmed after the motor rework. Each driver has its own STBY, both disabled on a safety stop. |
 | O9 | **Closed** 2026-10-17 | The pinned ordinary publisher did not serve history to a late Jazzy transient-local subscriber (no sample within 3 s; its later live sample arrived). Selected the specified reliable/volatile/depth-1 fallback: every 900 ms (headroom under one second), on claim/release and reconnect. Late subscribers received in 0.413/0.551 s before/after router restart; [probe and fallback evidence](../../../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md). |
 
+On 2026-10-19 Todor closed task 5.2 with the remaining equipment-dependent checks skipped because suitable measurement tools are unavailable. Coast/STBY pin levels, electrical duty/deadband measurements and the coast/driven-neighbour check remain physically unverified; they return in a later change with suitable tools. Completed board results are retained in the [verification map](verification.md#task-52-disposition); task 5.3 acceptance remains pending. Specified motor behavior is unchanged.
+
 No unresolved product decisions remain. Deferred items are outside this change: it does not claim measured current, a numeric disable bound, coast distance, maximum speeds or operation above 70%. Equipment-gated items return as a new change when the equipment is available. Retain the experiment firmware for comparison; product acceptance is a separate checklist.
 
 ## First implementation scope

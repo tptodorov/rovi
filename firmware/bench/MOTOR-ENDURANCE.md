@@ -12,8 +12,9 @@ the probe launched. Normal ROS firmware and prior Wi-Fi were restored; Todor
 confirmed all wheels stayed still through both flashes/boots and cleanup.
 The controller allows a ten-minute unarmed announcement window. The repeat
 establishes five-minute motor/radio endurance and a qualitative supervised
-heating result on the stand. Coast/STBY pin-level measurements remain open
-in task 5.2.
+heating result on the stand. The remaining task 5.2 measurements were subsequently
+[skipped by Todor](../../openspec/changes/add-four-wheel-api/verification.md#task-52-disposition)
+because suitable tools are unavailable; they remain physically unverified.
 
 Use the same opt-in `ros,motor-bench` image and 70% product profile as the
 [physically confirmed reversal repeat](2026-10-19-motor-reversals-repeat/notes.md).
@@ -77,7 +78,8 @@ Use the result label **visual stand endurance**, with any qualitative heating
 observations attributed to the observer. No warming was reported in the
 confirmed repeat; no numeric temperature bounds, thermal-shutdown margin,
 current safety or loaded operation were measured. This procedure does not
-change the product requirement or close task 5.2.
+change the product requirement. Task 5.2 was subsequently closed with explicit
+measurement deferrals; this endurance result does not validate those checks.
 
 The accelerated real-socket test verifies a continuous forward hold with only
 one full-scale state event and the elapsed hold interval despite delayed
