@@ -1,18 +1,19 @@
 # Five-minute motor endurance at the 70% cap
 
-**Repeat serial/session checks passed; physical confirmation pending.** The
+**Repeat physically confirmed; qualitative heating check passed.** The
 [authorized repeat](2026-10-19-motor-endurance-repeat/notes.md) completed a
 300,093 ms full-forward-to-zero interval, retained one UDP session and
-restored normal ROS firmware and prior Wi-Fi. Todor reported the run was fine
-and no warming in the driver boards; this is a qualitative report, with
-motor warmth still awaiting clarification. The [first authorized attempt](2026-10-19-motor-endurance/notes.md)
+restored normal ROS firmware and prior Wi-Fi. Todor confirmed continuous
+motion of all four wheels, the final stop and still wheels through both
+flashes/boots. He reported no warming in either driver boards or motors;
+this is a qualitative observation without numeric temperature measurements. The [first authorized attempt](2026-10-19-motor-endurance/notes.md)
 flashed the bench image but aborted at the unarmed announcement gate before
 the probe launched. Normal ROS firmware and prior Wi-Fi were restored; Todor
 confirmed all wheels stayed still through both flashes/boots and cleanup.
-The next attempt allows a ten-minute unarmed announcement window. Todor has
-visual observation only. This batch can establish five-minute motor/radio endurance on the stand;
-it cannot establish temperature or the M4 “at most warm” result. Thermal
-acceptance and coast/STBY measurements remain open in task 5.2.
+The controller allows a ten-minute unarmed announcement window. The repeat
+establishes five-minute motor/radio endurance and a qualitative supervised
+heating result on the stand. Coast/STBY pin-level measurements remain open
+in task 5.2.
 
 Use the same opt-in `ros,motor-bench` image and 70% product profile as the
 [physically confirmed reversal repeat](2026-10-19-motor-reversals-repeat/notes.md).
@@ -72,9 +73,10 @@ software checks plus continuous physical forward motion for the full hold,
 the final stop, and still wheels during flashes/boots. A motor-power dropout
 can leave the ESP32 and its command log healthy; physical observation matters.
 
-Use the result label **visual stand endurance**. Do not infer driver/motor
-temperature, absence of overheating, thermal-shutdown margin, current safety
-or loaded operation. Thermal acceptance remains open. This procedure does not
+Use the result label **visual stand endurance**, with any qualitative heating
+observations attributed to the observer. No warming was reported in the
+confirmed repeat; no numeric temperature bounds, thermal-shutdown margin,
+current safety or loaded operation were measured. This procedure does not
 change the product requirement or close task 5.2.
 
 The accelerated real-socket test verifies a continuous forward hold with only

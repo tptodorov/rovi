@@ -1,4 +1,4 @@
-# 2026-10-19: five-minute stand endurance — serial checks passed
+# 2026-10-19: five-minute stand endurance — physically confirmed
 
 Todor separately authorized this repeat with “go”: two flashes, five minutes
 forward at the configured 70% cap, STOP/release and normal-image restoration.
@@ -43,14 +43,17 @@ wheel speed, electrical duty, current or temperature.
 
 ## Physical and heating observations
 
+Todor confirmed all four wheels turned continuously for the full five
+minutes, stopped at the end, and stayed still through both flashes and boots.
+
 Todor reported: “test run was fine, no temperature increase in the drivers
-at all.” This is retained as a qualitative user observation; no numeric
+at all.” Asked whether this also covered the motors, he confirmed: “Motors
+also showed no warming”. These are qualitative observations; no numeric
 temperature measurement or instrument was available.
 
-**Pending explicit confirmation:** continuous motion of all four wheels,
-final stop and still wheels through both flashes/boots. Whether the warming
-observation also covers the motors is pending. Do not infer motor temperature
-or mark thermal acceptance from the serial result or driver-only report.
+The supervised stand endurance and qualitative heating check passed for this
+five-minute run at the configured 70% cap. This does not establish measured
+temperature bounds, thermal margin or behavior under load.
 
 ## Cleanup and limits
 
@@ -65,5 +68,5 @@ No product fault, panic or dropped event occurred in either capture.
 Ethernet internet route. No router or firewall rule was used. Both captures
 are stopped; normal instrumented ROS firmware is installed. Raw
 [result.json](result.json) was written before physical confirmation and is
-retained unchanged. Coast/STBY measurements and thermal acceptance remain
-open; no loaded/stall, current, temperature-bound or thermal-margin claim.
+retained unchanged. Coast/STBY pin-level measurements remain open in task
+5.2; no loaded/stall, current, temperature-bound or thermal-margin claim.
