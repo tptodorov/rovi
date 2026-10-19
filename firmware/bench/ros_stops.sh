@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Motor batch: announced go, stand/wheels clear, motor bank awake, ROS firmware,
-# Rovi Wi-Fi joined and live serial capture. Six gentle 3 s drives.
+# Announced ROS board probes: stand/wheels clear, motor bank awake, ROS firmware,
+# Rovi Wi-Fi joined and live serial capture. Default probe: six gentle 3 s drives;
+# alternate probes use their own announced procedure.
 # ROVI_CARLOG=<live-car.log> bash firmware/bench/ros_stops.sh [probe.py]
 # The probe defaults to ros_stop_checks.py; ROVI_TARGET is passed through for UDP probes.
 set -euo pipefail

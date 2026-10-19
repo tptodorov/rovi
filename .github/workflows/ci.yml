@@ -156,6 +156,14 @@ jobs:
           trap 'kill "$car" 2>/dev/null || true; wait "$car" 2>/dev/null || true; rm -f "$log"' EXIT
           ROVI_TARGET=127.0.0.1:17799 ROVI_CARLOG="$log" ROVI_ROUTER_PORT=17452 \
             bash firmware/bench/ros_stops.sh ros_udp_sharing.py
+      - name: Product ROS lease timing board probe (loopback only)
+        run: |
+          log=$(mktemp)
+          ROVI_ZENOH_ROUTER=tcp/127.0.0.1:17453 apps/simcar/target/debug/simcar 17800 >"$log" 2>&1 &
+          car=$!
+          trap 'kill "$car" 2>/dev/null || true; wait "$car" 2>/dev/null || true; rm -f "$log"' EXIT
+          ROVI_CARLOG="$log" ROVI_ROUTER_PORT=17453 \
+            bash firmware/bench/ros_stops.sh ros_lease_timing.py
 
   firmware:
     name: firmware (ESP32-S3)
