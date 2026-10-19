@@ -14,6 +14,15 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class Reversals(unittest.TestCase):
+    def test_endurance_help_is_available_without_claiming(self):
+        result = subprocess.run(
+            [sys.executable, "firmware/bench/motor_reversals.py", "--help"], cwd=ROOT,
+            env={**os.environ, "ROVI_TARGET": ""}, capture_output=True, text=True, timeout=3,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("--endurance", result.stdout)
+        self.assertIn("no thermal qualification", result.stdout)
+
     def replay_zero_hold(self, late_claimed=False):
         sys.path.insert(0, str(ROOT / "firmware/bench"))
         import motor_reversals as probe
@@ -41,7 +50,7 @@ class Reversals(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "Claimed"):
             self.replay_zero_hold(late_claimed=True)
 
-    def run_probe(self, bench=True, extra=""):
+    def run_probe(self, bench=True, extra="", endurance=False):
         binary = ROOT / "apps/simcar/target" / ("motor-bench/debug/simcar" if bench else "debug/simcar")
         self.assertTrue(binary.is_file(), "build normal and motor-bench simcars first")
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
@@ -61,7 +70,8 @@ sys.path.insert(0, "firmware/bench")
 import motor_reversals as probe
 probe.LEAD_SECONDS = 0
 probe.HOLD_SECONDS = 0.15
-''' + extra + '\nprobe.check(Path(sys.argv[1]))\n'
+probe.ENDURANCE_SECONDS = 0.4
+''' + extra + f'\nprobe.check(Path(sys.argv[1]), endurance={endurance})\n'
                     result = subprocess.run(
                         [sys.executable, "-c", code, str(path)], cwd=ROOT,
                         env={**os.environ, "ROVI_TARGET": f"127.0.0.1:{port}"},
@@ -103,6 +113,51 @@ probe.udp.Client.send = drop_first_bye
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("bench image marker absent", result.stderr)
         self.assertNotIn("ev=claimed", log)
+
+    def test_endurance_holds_forward_without_needing_new_state_events(self):
+        result, log = self.run_probe(endurance=True, extra='''
+send = probe.udp.Client.send
+first_marker = True
+def delay_first_marker(self, kind, payload=b"", *args, **kwargs):
+    global first_marker
+    if first_marker and kind == probe.udp.SETPOINT and payload == probe.cdr(0.1):
+        first_marker = False
+        probe.time.sleep(0.15)
+    return send(self, kind, payload, *args, **kwargs)
+probe.udp.Client.send = delay_first_marker
+''')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("thermal acceptance pending", result.stdout)
+        sys.path.insert(0, str(ROOT / "apps/simcar/scenarios"))
+        import carlog
+        events = [e for e in map(carlog.parse, log.splitlines()) if e]
+        driven = [e for e in events if any(e.get("wheels_pm", [0] * 4))]
+        self.assertEqual(len(driven), 1, driven)
+        self.assertEqual(driven[0]["wheels_pm"], [1000] * 4)
+        zero = next(e for e in events if e["ev"] == "state" and e["at_ms"] > driven[0]["at_ms"])
+        self.assertEqual(zero["wheels_pm"], [0] * 4)
+        self.assertGreaterEqual(zero["at_ms"] - driven[0]["at_ms"], 400)
+        self.assertEqual(log.count("ev=claimed"), 1)
+        self.assertEqual(log.count("ev=boot"), 1)
+        self.assertIn("ev=released", log)
+
+    def test_endurance_aborts_on_a_mid_hold_stop_and_releases(self):
+        result, log = self.run_probe(endurance=True, extra='''
+send = probe.udp.Client.send
+full_samples = 0
+def stop_during_hold(self, kind, payload=b"", *args, **kwargs):
+    global full_samples
+    if kind == probe.udp.SETPOINT and payload == probe.cdr(0.1):
+        full_samples += 1
+        if full_samples == 3:
+            send(self, probe.udp.STOP)
+    return send(self, kind, payload, *args, **kwargs)
+probe.udp.Client.send = stop_during_hold
+''')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("'ev': 'stop'", result.stderr)
+        self.assertIn("ev=released", log)
+        self.assertNotIn("Five-minute endurance: serial/session checks passed", result.stdout)
 
 
 if __name__ == "__main__":

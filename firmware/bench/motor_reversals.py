@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Ten direct all-wheel reversals at the 70% product cap; bench image ONLY.
+"""Full-duty motor bench: ten reversals, or --endurance for five minutes forward.
 
 Run only after the separately announced flash/motor batch and Todor's go.
 Stand, wheels clear, motor bank awake. This is full duty, NOT the gentle probe.
 ROVI_TARGET=192.168.4.1:7777 python3 firmware/bench/motor_reversals.py --carlog <fresh-live-log>
+Endurance measures running/session stability only; no temperature is measured.
 """
 import argparse
 from pathlib import Path
@@ -17,6 +18,7 @@ from wire import Capabilities, cdr
 
 BANNER = "BENCH ONLY motor-reversal max_drive_pm=700 markers_pm=83,-83"
 LEAD_SECONDS, HOLD_SECONDS, REVERSALS = 5, 1, 10
+ENDURANCE_SECONDS = 300
 FORWARD_PM = 1000
 
 
@@ -26,12 +28,17 @@ def status(client, command, want):
     assert reply == (udp.STATUS, client.session, bytes(want)), reply
 
 
-def stage(client, path, vx, expected, offset=None):
+def stage(client, path, vx, expected, offset=None, *, seconds=None):
     initial = offset is not None
     offset = path.stat().st_size if offset is None else offset
     start = time.monotonic()
+    duration = HOLD_SECONDS if seconds is None else seconds
+    assert duration > 0, "hold duration must be positive"
+    # A timed endurance hold starts after fresh full-scale evidence, not delivery setup.
+    hold_start = start if seconds is None else None
+    next_report = 30
     found = False
-    while time.monotonic() - start < HOLD_SECONDS:
+    while hold_start is None or time.monotonic() - hold_start < duration:
         client.send(udp.SETPOINT, cdr(vx))
         # HELLO is idempotent and cannot ARM. It verifies the owner/radio survived.
         session = client.session
@@ -52,6 +59,11 @@ def stage(client, path, vx, expected, offset=None):
                 assert event.get("wheels_pm") == expected, ("wrong motor demand", event, expected)
                 found = True
         assert found or time.monotonic() - start < 0.75, "missing fresh motor demand"
+        if found and hold_start is None:
+            hold_start = time.monotonic()
+        if seconds is not None and hold_start is not None and time.monotonic() - hold_start >= next_report:
+            print(f"Hold: {next_report}/{duration} s; serial/session checks passing; temperature unmeasured", flush=True)
+            next_report += 30
         time.sleep(0.05)
     assert found, ("missing fresh motor demand", expected)
 
@@ -71,7 +83,7 @@ def cleanup(client, path):
         client.s.close()
 
 
-def check(path):
+def check(path, *, endurance=False):
     assert udp.TARGET, "set ROVI_TARGET explicitly"
     text = carlog.read(path)
     assert BANNER in text, "bench image marker absent; refusing to claim or arm"
@@ -91,10 +103,14 @@ def check(path):
         client.send(udp.SETPOINT, cdr())
         status(client, udp.ARM, (2, 0, 0))
         stage(client, path, 0, [0] * 4, offset)
-        for index in range(REVERSALS + 1):
-            direction = 1 if index % 2 == 0 else -1
-            print(f"Hold {index + 1}/11: {'forward' if direction > 0 else 'reverse'} at 70%", flush=True)
-            stage(client, path, direction * 0.1, [direction * FORWARD_PM] * 4)
+        if endurance:
+            print("Five minutes forward at 70%; continuously supervise; temperature unmeasured", flush=True)
+            stage(client, path, 0.1, [FORWARD_PM] * 4, seconds=ENDURANCE_SECONDS)
+        else:
+            for index in range(REVERSALS + 1):
+                direction = 1 if index % 2 == 0 else -1
+                print(f"Hold {index + 1}/11: {'forward' if direction > 0 else 'reverse'} at 70%", flush=True)
+                stage(client, path, direction * 0.1, [direction * FORWARD_PM] * 4)
         print("Zero/coast, then STOP and release", flush=True)
         stage(client, path, 0, [0] * 4)
         status(client, udp.STOP, (3, 1, 0))
@@ -103,10 +119,16 @@ def check(path):
             cleanup(client, path)
         else:
             client.s.close()
-    print("Ten direct reversals: serial/session checks passed; physical observation required", flush=True)
+    if endurance:
+        print("Five-minute endurance: serial/session checks passed; physical observation required; thermal acceptance pending", flush=True)
+    else:
+        print("Ten direct reversals: serial/session checks passed; physical observation required", flush=True)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--carlog", type=Path, required=True)
-    check(parser.parse_args().carlog)
+    parser.add_argument("--endurance", action="store_true",
+                        help="five minutes forward at 70%%; no thermal qualification")
+    args = parser.parse_args()
+    check(args.carlog, endurance=args.endurance)

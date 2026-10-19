@@ -9,6 +9,10 @@ and fixed before the repeat. Coast/STBY measurements need a meter/probe
 (currently unavailable); thermal qualification remains a separate supervised
 batch, so task 5.2 stays open.
 
+The same image also supports a separately authorized [five-minute visual
+endurance batch](MOTOR-ENDURANCE.md) with `--endurance`. It has no temperature
+measurement and cannot close thermal acceptance.
+
 The ordinary car API cannot request all four wheel commands at ±1.0 together
 within its existing limits. The opt-in `motor-bench` image instead supplies
 fixed vectors to the **same product motor module and safety coordinator**:
