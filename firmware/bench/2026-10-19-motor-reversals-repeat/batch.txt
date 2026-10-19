@@ -1,0 +1,12 @@
+flashing-reversal-bench {}
+capturing-car.log {'pid': 1453242}
+ready-for-motion-announcement {}
+probe-running {'pid': 1453546}
+Bench serial audit: eleven alternating full-scale holds; one session; released/Open; no errors/panics/drops/reset.
+probe-passed-restoring-normal {}
+capture stopped 1453242 -2
+flashing-ros {}
+capturing-normal-restored.log {'pid': 1454652}
+Normal ROS image restored: clean boot, no bench banner, no claim/arming for 5 s.
+capture stopped 1454652 -2
+finished {'errors': []}

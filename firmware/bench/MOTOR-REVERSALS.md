@@ -1,12 +1,13 @@
 # Product motor-module reversal batch
 
-**Reversal acceptance pending.** The [first authorized board attempt](2026-10-19-motor-reversals/notes.md)
-aborted during the initial zero-speed hold because the host checker misread a
-repeated log prefix. No full-duty command was sent; normal ROS firmware was
-restored and Todor confirmed all wheels stayed still. The checker now has a
-failing-then-passing replay regression. This is the remaining task 5.2
-full-scale reversal check. Coast/STBY measurements need a meter/probe (currently
-unavailable); thermal qualification remains a separate supervised batch.
+**Physical reversal check passed.** The [separately authorized repeat](2026-10-19-motor-reversals-repeat/notes.md)
+completed ten direct all-wheel reversals at the configured 70% cap. Todor
+confirmed directions, the final stop and no twitch through both flashes/boots.
+Normal ROS firmware and prior Wi-Fi were restored. The [first attempt](2026-10-19-motor-reversals/notes.md)
+remains an abort at zero caused by a host log-prefix checker bug, reproduced
+and fixed before the repeat. Coast/STBY measurements need a meter/probe
+(currently unavailable); thermal qualification remains a separate supervised
+batch, so task 5.2 stays open.
 
 The ordinary car API cannot request all four wheel commands at ±1.0 together
 within its existing limits. The opt-in `motor-bench` image instead supplies

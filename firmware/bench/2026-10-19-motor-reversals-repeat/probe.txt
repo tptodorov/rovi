@@ -1,0 +1,16 @@
+Full-duty bench: first motion in about 6 s
+Hold 1/11: forward at 70%
+Hold 2/11: reverse at 70%
+Hold 3/11: forward at 70%
+Hold 4/11: reverse at 70%
+Hold 5/11: forward at 70%
+Hold 6/11: reverse at 70%
+Hold 7/11: forward at 70%
+Hold 8/11: reverse at 70%
+Hold 9/11: forward at 70%
+Hold 10/11: reverse at 70%
+Hold 11/11: forward at 70%
+Zero/coast, then STOP and release
+STOP/BYE: serial release observed
+Ten direct reversals: serial/session checks passed; physical observation required
+rc=0
