@@ -11,7 +11,7 @@ ev=<name> [key=value ...] at_ms=<n>
 ```text
 ev=claimed source=Udp at_ms=5193
 ev=state state=Armed wheels_pm=250,250,250,250 at_ms=6736
-ev=stop reason=LeaseExpired at_ms=7210
+ev=stop reason=LeaseExpired lease_late_ms=7 at_ms=7210
 ```
 
 * One event per line. Parsers use only lines with `ev=`; any other line (banners, panic output, diagnostic detail such as the reason a ROS session ended) is ignored.
@@ -26,7 +26,7 @@ ev=stop reason=LeaseExpired at_ms=7210
 | `boot` | `ver`, `reset` (board only: the chip's reset cause, e.g. `ChipPowerOn`, `SysRtcWdt`, `SysBrownOut`) | Once at startup. Starts a new log segment. |
 | `claimed` | `source` = `Ble`, `Udp`, `Ros` | A controller took ownership |
 | `released` | - | Ownership was released |
-| `stop` | `reason` = `Stop`, `LeaseExpired`, `OwnerLost`, `OutOfLimits` | A safety stop |
+| `stop` | `reason` = `Stop`, `LeaseExpired`, `OwnerLost`, `OutOfLimits`; `lease_late_ms` on instrumented lease stops | A safety stop |
 | `state` | `state` = `Open`, `Claimed`, `Armed`, `Stopped`; `reason` (Stopped only); `wheels_pm` = FL,FR,RR,RL | The state or a wheel command changed |
 | `ble` | `link` = `up`, `down`; `id`; `mtu` (up only) | BLE connected or disconnected |
 | `mtu` | `id`; `mtu` | The central's ATT MTU exchange completed (once per connection). The `mtu` in `ble link=up` is the value at connect, before the exchange (23 by default) |
@@ -35,7 +35,20 @@ ev=stop reason=LeaseExpired at_ms=7210
 | `error` | `src` | A fault. `sim/carlog.py` flags it. `src`: `wifi_ap` (the AP switch failed); `motor_nonfinite`, `motor_config`, `motor_driver` (motor control refused a NaN/infinite wheel command, has an invalid configuration, or a pin write failed; the car raises an out-of-limits stop). |
 | `dropped` | `n` | `n` events were lost because the ring was full. Flagged too. |
 
-The catalog is `src/events.rs` (`Event` and its `Display`); `sim/carlog.py` has the same list, and `sim/test_carlog.py` fails if the two differ.
+The catalog is [`crates/rovi-core/src/events.rs`](../crates/rovi-core/src/events.rs)
+(`Event` and its `Display`); [`carlog.py`](../apps/simcar/scenarios/carlog.py)
+has the same list, and [`test_carlog.py`](../apps/simcar/scenarios/test_carlog.py)
+fails if the two differ.
+
+`lease_late_ms` is detection time minus the actual lease deadline, captured in
+the arbiter before that deadline is cleared. The deadline belongs to the last
+accepted owner setpoint; stale/rejected input cannot move it. This integer
+duration uses the device clock and survives queued/deferred effect delivery.
+It is independent of `at_ms`, serial delivery and laptop observation time.
+A value at most 50 establishes the lease-detection bound for that stop; it
+does not measure driver-pin propagation or wheel stopping time. Older logs
+lack this field and cannot provide this measurement. Other stop reasons omit
+it, including a motor fault that replaces a lease stop.
 
 ## Cost
 
@@ -46,6 +59,6 @@ The catalog is `src/events.rs` (`Event` and its `Display`); `sim/carlog.py` has 
 
 ## Adding an event or a property
 
-1. Add the variant or field to `Event` in `src/events.rs`, and the matching `write!` in its `Display`. Extend the test table in the same file.
-2. For a new event name, add it to `CATALOG` in `sim/carlog.py` and to the table above.
+1. Add the variant or field to `Event` in `crates/rovi-core/src/events.rs`, and the matching `write!` in its `Display`. Extend the test table in the same file.
+2. For a new event name, add it to `CATALOG` in `apps/simcar/scenarios/carlog.py` and to the table above.
 3. Emit it: `logger::emit(...)` in the firmware, `log(..., t0)` in the sim car.

@@ -182,6 +182,11 @@ fn merge(a: Effects, b: Effects) -> Effects {
         claimed: b.claimed.or(a.claimed),
         released: a.released || b.released,
         stop: a.stop.or(b.stop),
+        lease_late_ms: if a.stop.is_some() {
+            a.lease_late_ms
+        } else {
+            b.lease_late_ms
+        },
     }
 }
 
@@ -665,6 +670,31 @@ mod tests {
 
     fn dev() -> Device {
         Device::new(Config::DEFAULT, GEOMETRY, 0).unwrap()
+    }
+
+    #[test]
+    fn input_expiry_keeps_its_lateness_when_the_same_input_renews_the_lease() {
+        let mut d = dev();
+        let conn = d.on_ble_connect(0, 1).unwrap().0;
+        d.on_ble_setpoint(10, conn, &ble_sp(1, 0.0));
+        d.on_ble_control(11, conn, 1).unwrap();
+        let fx = d.on_ble_setpoint(1_061, conn, &ble_sp(2, 0.0));
+        assert_eq!(fx.stop, Some(StopReason::LeaseExpired));
+        assert_eq!(fx.lease_late_ms, Some(51));
+        assert_eq!(d.tick(1_062).lease_late_ms, None);
+    }
+
+    #[test]
+    fn refused_control_preserves_detection_time_until_pending_effects_are_drained() {
+        let mut d = dev();
+        let conn = d.on_ble_connect(0, 1).unwrap().0;
+        d.on_ble_setpoint(10, conn, &ble_sp(1, 0.0));
+        d.on_ble_control(11, conn, 1).unwrap();
+        assert!(d.on_ble_control(1_060, conn, 1).is_err());
+        let fx = d.tick(1_200);
+        assert_eq!(fx.stop, Some(StopReason::LeaseExpired));
+        assert_eq!(fx.lease_late_ms, Some(50));
+        assert_eq!(d.tick(1_201).lease_late_ms, None);
     }
 
     fn frame(kind: Kind, session: u32, seq: u32, payload: &[u8]) -> ([u8; 96], usize) {

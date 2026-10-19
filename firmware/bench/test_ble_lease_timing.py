@@ -1,5 +1,7 @@
 """BLE probe safeguards with a fake client/clock; no board timing claim."""
 from pathlib import Path
+from contextlib import redirect_stdout
+from io import StringIO
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -11,7 +13,7 @@ import ble_lease_timing as probe
 class LeaseTiming(unittest.IsolatedAsyncioTestCase):
     async def run_probe(self, upper_ms=1010, reason="LeaseExpired", nonzero=False,
                         notify=True, release=True, stop_fails=False, mtu=247,
-                        fresh_stop=True):
+                        fresh_stop=True, late_ms=10):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "car.log"
             # This old event must not make a new trial pass.
@@ -30,7 +32,8 @@ class LeaseTiming(unittest.IsolatedAsyncioTestCase):
                 with path.open("a") as output:
                     output.write(f"ev=state state=Armed wheels_pm={wheels} at_ms=100\n")
                     if fresh_stop:
-                        output.write(f"ev=stop reason={reason} at_ms=1100\n")
+                        timing = f" lease_late_ms={late_ms}" if late_ms is not None else ""
+                        output.write(f"ev=stop reason={reason}{timing} at_ms=1100\n")
                 if notify:
                     car.statuses.append(("Stopped", "LeaseExpired", None))
                 return True
@@ -67,9 +70,28 @@ class LeaseTiming(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.car.arm.await_count, 5)
         self.assertEqual(self.car.wait_status.await_count, 5)
 
-    async def test_late_capture_fails_and_disconnects(self):
-        with self.assertRaisesRegex(AssertionError, "exceeds lease\\+50"):
-            await self.run_probe(upper_ms=1051)
+    async def test_host_delay_does_not_mask_prompt_device_detection(self):
+        output = StringIO()
+        with redirect_stdout(output):
+            await self.run_probe(upper_ms=1100, late_ms=0)
+        self.assertIn("host_upper_bound_ms=1100.000", output.getvalue())
+        self.assertIn("lease_late_ms=0", output.getvalue())
+
+    async def test_late_device_detection_fails_and_disconnects(self):
+        with self.assertRaisesRegex(AssertionError, "device lease lateness"):
+            await self.run_probe(late_ms=51)
+
+    async def test_exact_50_ms_detection_boundary_passes(self):
+        await self.run_probe(late_ms=50)
+
+    async def test_old_firmware_without_timing_evidence_cannot_pass(self):
+        with self.assertRaisesRegex(AssertionError, "lease_late_ms"):
+            await self.run_probe(late_ms=None)
+
+    async def test_negative_or_malformed_timing_cannot_pass(self):
+        for value in (-1, "invalid"):
+            with self.subTest(value=value), self.assertRaisesRegex(AssertionError, "lease_late_ms"):
+                await self.run_probe(late_ms=value)
 
     async def test_wrong_stop_cannot_pass(self):
         with self.assertRaises(AssertionError):

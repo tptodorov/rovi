@@ -74,6 +74,9 @@ pub struct Effects {
     pub released: bool,
     /// A safety stop happened: wheels to zero, drivers to standby.
     pub stop: Option<StopReason>,
+    /// Only for a lease stop: detection time minus the accepted setpoint's lease deadline.
+    /// Captured before clearing the deadline; independent of log/transport delivery time.
+    pub lease_late_ms: Option<u64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -267,6 +270,7 @@ impl Arbiter {
             claimed: None,
             released: true,
             stop,
+            lease_late_ms: None,
         })
     }
 
@@ -314,6 +318,10 @@ impl Arbiter {
     fn stop_with(&mut self, now: u64, reason: StopReason) -> Effects {
         let already_stopped = matches!(self.state, State::Stopped(_));
         let changed = self.state != State::Stopped(reason);
+        let lease_late_ms = match (reason, self.lease_until) {
+            (StopReason::LeaseExpired, Some(due)) if changed => Some(now.saturating_sub(due)),
+            _ => None,
+        };
         self.state = State::Stopped(reason);
         self.latest = None;
         match reason {
@@ -332,6 +340,7 @@ impl Arbiter {
         }
         Effects {
             stop: changed.then_some(reason),
+            lease_late_ms,
             ..Effects::default()
         }
     }
@@ -416,6 +425,31 @@ mod tests {
         a.setpoint(0, PHONE, 1, sp(0.5)).unwrap();
         a.arm(0, PHONE).unwrap();
         a
+    }
+
+    #[test]
+    fn lease_stop_records_lateness_from_the_last_accepted_setpoint() {
+        for late in [0, 49, 50, 51, 1_000] {
+            let mut a = armed();
+            a.setpoint(100, PHONE, 2, sp(0.0)).unwrap();
+            // A stale sequence must not move the deadline used for diagnostics.
+            a.setpoint(200, PHONE, 2, sp(0.0)).unwrap();
+            assert_eq!(a.tick(1_099).lease_late_ms, None);
+            let fx = a.tick(1_100 + late);
+            assert_eq!(fx.stop, Some(StopReason::LeaseExpired));
+            assert_eq!(fx.lease_late_ms, Some(late));
+            assert_eq!(a.tick(1_101 + late).lease_late_ms, None);
+        }
+    }
+
+    #[test]
+    fn other_stop_reasons_have_no_lease_lateness() {
+        let mut a = armed();
+        assert_eq!(a.stop(10, PHONE).unwrap().lease_late_ms, None);
+        let mut a = armed();
+        assert_eq!(a.release(10, PHONE).unwrap().lease_late_ms, None);
+        let mut a = armed();
+        assert_eq!(a.fault_stop(10).lease_late_ms, None);
     }
 
     #[test]
@@ -589,7 +623,8 @@ mod tests {
             Effects {
                 claimed: None,
                 released: true,
-                stop: Some(StopReason::OwnerLost)
+                stop: Some(StopReason::OwnerLost),
+                lease_late_ms: None,
             }
         );
         assert_eq!(a.state(), State::Open);

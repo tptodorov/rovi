@@ -73,6 +73,7 @@ impl<D: Driver> Drive<D> {
             let _ = self.motor.standby();
             if let Some(reason) = dev.on_motor_fault(now).stop {
                 effects.stop = Some(reason);
+                effects.lease_late_ms = None;
             }
         }
         Tick { effects, fault }
@@ -133,6 +134,7 @@ mod tests {
     struct Log {
         ops: Vec<Op>,
         fail_bridge: bool,
+        fail_stby: bool,
     }
 
     /// Records every pin write into a log the test shares; `fail_bridge` makes bridge writes fail.
@@ -142,6 +144,9 @@ mod tests {
     impl Driver for Recording {
         type Error = ();
         fn set_stby(&mut self, driver: usize, high: bool) -> Result<(), ()> {
+            if self.0.borrow().fail_stby {
+                return Err(());
+            }
             self.0.borrow_mut().ops.push(Op::Stby(driver, high));
             Ok(())
         }
@@ -342,6 +347,18 @@ mod tests {
         car.take_ops();
         car.tick(20);
         assert_eq!(car.ops(), STANDBY);
+    }
+
+    #[test]
+    fn a_standby_failure_overriding_a_lease_stop_does_not_report_lease_lateness() {
+        let mut car = Car::new(CAR, MotorConfig::PRODUCT);
+        car.arm_udp(0);
+        car.tick(10);
+        car.log.0.borrow_mut().fail_stby = true;
+        let tick = car.tick(1_051);
+        assert_eq!(tick.fault, Some(Fault::MotorDriver));
+        assert_eq!(tick.effects.stop, Some(StopReason::OutOfLimits));
+        assert_eq!(tick.effects.lease_late_ms, None);
     }
 
     #[test]

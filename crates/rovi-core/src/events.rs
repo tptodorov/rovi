@@ -36,7 +36,11 @@ pub enum Event {
     },
     Claimed(Source),
     Released,
-    Stop(StopReason),
+    Stop {
+        reason: StopReason,
+        /// Detection lateness captured by the arbiter, only on a lease stop.
+        lease_late_ms: Option<u64>,
+    },
     /// Wheel commands (FL, FR, RR, RL) in permille of full scale.
     State {
         state: State,
@@ -73,7 +77,10 @@ pub struct Record {
 /// releases the car and the same input claims it again, the release happens first.
 pub fn effects(fx: Effects, mut emit: impl FnMut(Event)) {
     if let Some(r) = fx.stop {
-        emit(Event::Stop(r));
+        emit(Event::Stop {
+            reason: r,
+            lease_late_ms: fx.lease_late_ms,
+        });
     }
     if fx.released {
         emit(Event::Released);
@@ -116,7 +123,15 @@ impl fmt::Display for Record {
             }
             Event::Claimed(s) => write!(f, "ev=claimed source={}", source(s))?,
             Event::Released => f.write_str("ev=released")?,
-            Event::Stop(r) => write!(f, "ev=stop reason={}", reason(r))?,
+            Event::Stop {
+                reason: r,
+                lease_late_ms,
+            } => {
+                write!(f, "ev=stop reason={}", reason(r))?;
+                if let Some(late) = lease_late_ms {
+                    write!(f, " lease_late_ms={late}")?;
+                }
+            }
             Event::State {
                 state,
                 wheels_pm: w,
@@ -210,6 +225,46 @@ mod tests {
     }
 
     #[test]
+    fn lease_lateness_survives_effects_and_delayed_log_formatting() {
+        let mut a = crate::arbiter::Arbiter::new(crate::arbiter::Config::DEFAULT);
+        let who = crate::arbiter::Claimant {
+            source: Source::Ble,
+            id: 1,
+        };
+        a.claim(0, who).unwrap();
+        a.setpoint(
+            10,
+            who,
+            1,
+            crate::setpoint::Setpoint {
+                sec: 0,
+                nanosec: 0,
+                vx: 0.0,
+                vy: 0.0,
+                wz: 0.0,
+            },
+        )
+        .unwrap();
+        a.arm(11, who).unwrap();
+        let fx = a.tick(1_061);
+        let mut lines = Vec::new();
+        effects(fx, |ev| lines.push(Record { at_ms: 9_999, ev }.to_string()));
+        assert_eq!(
+            lines,
+            ["ev=stop reason=LeaseExpired lease_late_ms=51 at_ms=9999"]
+        );
+        let longest = Record {
+            at_ms: u32::MAX,
+            ev: Event::Stop {
+                reason: StopReason::LeaseExpired,
+                lease_late_ms: Some(u64::MAX),
+            },
+        }
+        .to_string();
+        assert!(longest.len() < MAX_LINE, "{longest}");
+    }
+
+    #[test]
     fn every_event_has_one_stable_line() {
         let state = |state, w| Event::State {
             state,
@@ -229,7 +284,10 @@ mod tests {
             ),
             (Event::Released, "ev=released at_ms=42"),
             (
-                Event::Stop(StopReason::LeaseExpired),
+                Event::Stop {
+                    reason: StopReason::LeaseExpired,
+                    lease_late_ms: None,
+                },
                 "ev=stop reason=LeaseExpired at_ms=42",
             ),
             (
@@ -306,6 +364,7 @@ mod tests {
             claimed: Some(Source::Ble),
             released: true,
             stop: Some(StopReason::OwnerLost),
+            lease_late_ms: None,
         };
         let mut evs = Vec::new();
         effects(fx, |e| evs.push(e));
@@ -313,7 +372,10 @@ mod tests {
         assert_eq!(
             evs,
             [
-                Event::Stop(StopReason::OwnerLost),
+                Event::Stop {
+                    reason: StopReason::OwnerLost,
+                    lease_late_ms: None,
+                },
                 Event::Released,
                 Event::Claimed(Source::Ble)
             ]
@@ -336,7 +398,10 @@ mod tests {
             "{}",
             Record {
                 at_ms: 7,
-                ev: Event::Stop(StopReason::LeaseExpired)
+                ev: Event::Stop {
+                    reason: StopReason::LeaseExpired,
+                    lease_late_ms: Some(0),
+                }
             }
         );
         assert!(r.is_err());

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """BLE lease timing at zero wheels; board runs require a separately announced go.
 
+Requires instrumented firmware that logs lease_late_ms on lease stops.
 Start serial capture, then:
     nix-shell --run 'python3 firmware/bench/ble_lease_timing.py --carlog <live-car.log>'
 """
@@ -16,7 +17,7 @@ async def trial(car, path):
     lease_ms = car.capabilities.lease_ms
     offset, notify_offset = path.stat().st_size, len(car.statuses)
     # The sole setpoint must be accepted for ARM to succeed. Both clock reads
-    # are on the laptop; BLE/capture/polling delays enlarge the measured bound.
+    # are on the laptop; BLE/capture/polling delays enlarge this diagnostic.
     started = time.monotonic_ns()
     await car.send(0.0)
     assert await car.arm(), "zero setpoint did not arm"
@@ -33,15 +34,15 @@ async def trial(car, path):
             assert stops[0].get("reason") == "LeaseExpired", stops
             assert any(carlog.ev("state", state="Armed")(e) for e in events), events
             upper_ms = (observed - started) / 1_000_000
-            assert upper_ms <= lease_ms + 50, (
-                f"observed upper bound {upper_ms:.3f} ms exceeds lease+50 "
-                f"({lease_ms + 50} ms); includes BLE/serial/host delay"
-            )
+            late_ms = stops[0].get("lease_late_ms")
+            assert isinstance(late_ms, int) and late_ms >= 0, \
+                "missing/invalid lease_late_ms; flash the instrumented firmware first"
+            assert late_ms <= 50, f"device lease lateness {late_ms} ms exceeds 50 ms"
             status = await car.wait_status(lambda s: s.reason == "LeaseExpired", timeout=0.5)
             expected = ("Stopped", "LeaseExpired", None)
             assert status == expected and expected in car.statuses[notify_offset:], \
                 "missing fresh BLE lease-expired Status notification"
-            return upper_ms
+            return upper_ms, late_ms
         assert observed < deadline, "missing fresh serial lease stop"
         await asyncio.sleep(0.002)
 
@@ -56,10 +57,11 @@ async def check(path, trials=5):
         assert await car.status() == ("Claimed", None, None)
         results = []
         for n in range(trials):
-            upper_ms = await trial(car, path)
-            results.append(upper_ms)
-            print(f"Trial {n + 1}/{trials}: upper_bound_ms={upper_ms:.3f} "
-                  f"lease_ms=1000 limit_ms=1050; zero wheels", flush=True)
+            upper_ms, late_ms = await trial(car, path)
+            results.append((upper_ms, late_ms))
+            print(f"Trial {n + 1}/{trials}: host_upper_bound_ms={upper_ms:.3f} "
+                  f"lease_late_ms={late_ms} limit_late_ms=50 lease_ms=1000; zero wheels",
+                  flush=True)
     finally:
         cleanup_offset = path.stat().st_size
         try:
@@ -75,8 +77,8 @@ async def check(path, trials=5):
                     carlog.wait, path, cleanup_offset, carlog.ev("released"), timeout=3
                 )
                 assert found, "cleanup release was not observed in serial"
-    print(f"BLE lease timing: passed; max_upper_bound_ms={max(results):.3f}; released",
-          flush=True)
+    print(f"BLE device lease timing: passed; max_lease_late_ms={max(r[1] for r in results)} "
+          f"max_host_upper_bound_ms={max(r[0] for r in results):.3f}; released", flush=True)
 
 
 if __name__ == "__main__":
