@@ -1,0 +1,13 @@
+prior Wi-Fi UUID: 855b50c6-388f-428e-99f6-d6d07db30aa8
+route before:
+1.1.1.1 via 192.168.1.1 dev enp0s20f0u2u3 src 192.168.1.148 uid 1000 
+    cache 
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/99)
+192.168.4.1 dev wlp1s0f0 src 192.168.4.2 uid 1000 
+    cache 
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/101)
+restored Wi-Fi UUID: 855b50c6-388f-428e-99f6-d6d07db30aa8
+route after:
+1.1.1.1 via 192.168.1.1 dev enp0s20f0u2u3 src 192.168.1.148 uid 1000 
+    cache 
+No router or firewall changes were needed.

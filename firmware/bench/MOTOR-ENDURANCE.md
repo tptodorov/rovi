@@ -1,6 +1,11 @@
 # Five-minute motor endurance at the 70% cap
 
-**Endurance still untested.** The [first authorized attempt](2026-10-19-motor-endurance/notes.md)
+**Repeat serial/session checks passed; physical confirmation pending.** The
+[authorized repeat](2026-10-19-motor-endurance-repeat/notes.md) completed a
+300,093 ms full-forward-to-zero interval, retained one UDP session and
+restored normal ROS firmware and prior Wi-Fi. Todor reported the run was fine
+and no warming in the driver boards; this is a qualitative report, with
+motor warmth still awaiting clarification. The [first authorized attempt](2026-10-19-motor-endurance/notes.md)
 flashed the bench image but aborted at the unarmed announcement gate before
 the probe launched. Normal ROS firmware and prior Wi-Fi were restored; Todor
 confirmed all wheels stayed still through both flashes/boots and cleanup.
