@@ -1,0 +1,14 @@
+flashing-reversal-bench {}
+capturing-car.log {'pid': 1481897}
+ready-for-motion-announcement {}
+Traceback (most recent call last):
+  File "/tmp/rovi-run-motor-endurance.py", line 124, in <module>
+    assert time.monotonic() < deadline, 'motion announcement gate timed out; restoring normal image'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: motion announcement gate timed out; restoring normal image
+capture stopped 1481897 -2
+flashing-ros {}
+capturing-normal-restored.log {'pid': 1484389}
+Normal ROS image restored: clean boot, no bench banner, no claim/arming for 5 s.
+capture stopped 1484389 -2
+finished {'errors': ["AssertionError('motion announcement gate timed out; restoring normal image')"]}

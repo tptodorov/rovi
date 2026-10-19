@@ -1,7 +1,11 @@
 # Five-minute motor endurance at the 70% cap
 
-**Prepared only; no board run or flash yet.** Todor has visual observation
-only. This batch can establish five-minute motor/radio endurance on the stand;
+**Endurance still untested.** The [first authorized attempt](2026-10-19-motor-endurance/notes.md)
+flashed the bench image but aborted at the unarmed announcement gate before
+the probe launched. Normal ROS firmware and prior Wi-Fi were restored; Todor
+confirmed all wheels stayed still through both flashes/boots and cleanup.
+The next attempt allows a ten-minute unarmed announcement window. Todor has
+visual observation only. This batch can establish five-minute motor/radio endurance on the stand;
 it cannot establish temperature or the M4 “at most warm” result. Thermal
 acceptance and coast/STBY measurements remain open in task 5.2.
 
@@ -23,7 +27,9 @@ and can remove motor power to abort. No stall or loaded test is authorized.
    reversal evidence. Flash the bench image, start a fresh serial capture,
    check its explicit bench banner/clean boot and join Rovi's AP. No router or
    firewall rule is needed.
-2. Announce motion, then run:
+2. Keep the board unclaimed/unarmed while waiting for the assistant to announce
+   motion (controller window up to ten minutes). Expiry aborts and restores
+   normal firmware; it never starts a drive. After the announcement, run:
 
    ```sh
    ROVI_TARGET=192.168.4.1:7777 python3 firmware/bench/motor_reversals.py \

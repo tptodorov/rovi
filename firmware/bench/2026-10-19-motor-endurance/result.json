@@ -1,0 +1,7 @@
+{
+  "errors": [
+    "AssertionError('motion announcement gate timed out; restoring normal image')"
+  ],
+  "software_passed": false,
+  "physical_observation": "pending"
+}
