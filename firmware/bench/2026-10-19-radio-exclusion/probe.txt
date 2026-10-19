@@ -1,0 +1,12 @@
+1. BLE owner turns the AP off
+  serial ev=claimed {'source': 'Ble'}
+  serial ev=wifi {'ap': 'off'}
+  rover AP not joinable (15 s attempt)
+  serial ev=released {}
+  serial ev=wifi {'ap': 'on'}
+  AP back: joined, UDP HELLO ACK
+2. UDP owner stops BLE advertising
+  no advert in 8 s scan
+  serial ev=released {}
+  released: advertising again
+Radio exclusion: passed; car open

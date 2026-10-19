@@ -1,0 +1,19 @@
+1. Idle reset
+  idle-reset-1: booted
+  idle-reset-1: Open, no claim/fault/wheel command for 5 s
+2. Idle reset
+  idle-reset-2: booted
+  idle-reset-2: Open, no claim/fault/wheel command for 5 s
+3. Reset while driving
+  drive: booted
+Gentle forward vx=0.1 for 3 s, then reset while driving
+  reset-while-driving: booted
+  reset-while-driving: Open, no claim/fault/wheel command for 5 s
+4. Power loss: UNPLUG the ESP32 USB cable now
+  unplugged; wait ~5 s, then PLUG IT BACK IN
+  power-restored: booted
+  power-restored: Open, no claim/fault/wheel command for 5 s
+Reset checks: serial passed; wheel observation required
+rc=0
+prior Wi-Fi restored: 855b50c6-388f-428e-99f6-d6d07db30aa8
+1.1.1.1 via 192.168.1.1 dev enp0s20f0u2u3 src 192.168.1.148 uid 1000 

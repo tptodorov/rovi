@@ -1,0 +1,7 @@
+Trial 1/5: upper_bound_ms=1011.059 lease_ms=1000 limit_ms=1050; zero wheels; released
+Trial 2/5: upper_bound_ms=1015.314 lease_ms=1000 limit_ms=1050; zero wheels; released
+Trial 3/5: upper_bound_ms=1013.882 lease_ms=1000 limit_ms=1050; zero wheels; released
+Trial 4/5: upper_bound_ms=1009.014 lease_ms=1000 limit_ms=1050; zero wheels; released
+Trial 5/5: upper_bound_ms=1006.483 lease_ms=1000 limit_ms=1050; zero wheels; released
+UDP lease timing: passed; max_upper_bound_ms=1015.314
+rc=0

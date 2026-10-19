@@ -1,0 +1,7 @@
+=== 1. UDP owner, ROS intruder ===
+UDP silent; ROS streams vx=0.1 for 2 s: wheels must stay still
+UDP lease expired 1049 ms after arming; no ROS claim, zero wheels, AP on
+=== 2. ROS owner, UDP intruder ===
+ROS silent; UDP gets BUSY and streams vx=0.1 for 2 s: wheels must stay still
+ROS lease expired 1003 ms after arming; no UDP claim, zero wheels
+UDP/ROS sharing: passed; released
