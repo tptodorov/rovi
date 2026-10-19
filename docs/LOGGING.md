@@ -50,6 +50,11 @@ does not measure driver-pin propagation or wheel stopping time. Older logs
 lack this field and cannot provide this measurement. Other stop reasons omit
 it, including a motor fault that replaces a lease stop.
 
+The opt-in [motor reversal bench image](../firmware/bench/MOTOR-REVERSALS.md)
+prints an explicit `BENCH ONLY motor-reversal` banner. Its `wheels_pm` values
+are the injected motor-module demands (including ±1000), not the ordinary
+kinematic output. The same field remains a requested command, never feedback.
+
 ## Cost
 
 * **Emitting** (`logger::emit(Event)` on the board) copies a small plain record into a 32-entry ring. No formatting, no I/O, no waiting. A full ring drops the record and counts it.

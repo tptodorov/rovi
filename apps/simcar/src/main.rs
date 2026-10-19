@@ -85,13 +85,36 @@ fn udp_loop(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
 }
 
 fn control_loop(dev: Shared, t0: Instant) {
+    #[cfg(feature = "motor-bench")]
+    let mut drive = {
+        let motor = rovi_motor_control::MotorControl::new(
+            NoPins,
+            rovi_motor_control::Config::PRODUCT,
+            rovi_motor_control::CAR_CHANNELS,
+        )
+        .expect("valid bench motor profile");
+        rovi_drive::Drive::new(motor, &mut dev.lock().unwrap())
+    };
     let mut last = (State::Open, [0.0f32; 4]);
     loop {
         std::thread::sleep(Duration::from_millis(10));
         let (fx, state, wheels) = {
             let mut d = dev.lock().unwrap();
+            #[cfg(not(feature = "motor-bench"))]
             let fx = d.tick(ms(t0));
-            (fx, d.arbiter().state(), d.wheels(ms(t0)))
+            #[cfg(feature = "motor-bench")]
+            let fx = {
+                let tick = drive.tick_motor_bench(&mut d, ms(t0));
+                if let Some(fault) = tick.fault {
+                    log(Event::Fault(fault), t0);
+                }
+                tick.effects
+            };
+            #[cfg(not(feature = "motor-bench"))]
+            let wheels = d.wheels(ms(t0));
+            #[cfg(feature = "motor-bench")]
+            let wheels = rovi_drive::bench::wheels(&d, ms(t0));
+            (fx, d.arbiter().state(), wheels)
         };
         log_effects(fx, t0);
         if (state, wheels) != last {
@@ -104,6 +127,20 @@ fn control_loop(dev: Shared, t0: Instant) {
             );
             last = (state, wheels);
         }
+    }
+}
+
+/// Socket tests exercise the coordinator; no electrical simulation is claimed.
+#[cfg(feature = "motor-bench")]
+struct NoPins;
+#[cfg(feature = "motor-bench")]
+impl rovi_motor_control::Driver for NoPins {
+    type Error = core::convert::Infallible;
+    fn set_stby(&mut self, _: usize, _: bool) -> Result<(), Self::Error> {
+        Ok(())
+    }
+    fn set_bridge(&mut self, _: usize, _: rovi_motor_control::Pins) -> Result<(), Self::Error> {
+        Ok(())
     }
 }
 
@@ -125,6 +162,7 @@ fn main() -> std::io::Result<()> {
         reclaim_window_ms: num(3, Config::DEFAULT.reclaim_window_ms),
         ..Config::DEFAULT
     };
+    #[cfg(not(feature = "motor-bench"))]
     let geometry = Geometry {
         wheels_radius: 0.05,
         center_projection_sum: 0.2,
@@ -133,11 +171,15 @@ fn main() -> std::io::Result<()> {
         offset_theta: 0.0,
         max_wheel_speed: 40.0,
     };
+    #[cfg(feature = "motor-bench")]
+    let geometry = Geometry::CAR;
     let dev: Shared = Arc::new(Mutex::new(
         Device::new(cfg, geometry, session_seed()).expect("the sim profile is valid"),
     ));
     let t0 = Instant::now();
     log(Event::Boot { reset: None }, t0);
+    #[cfg(feature = "motor-bench")]
+    println!("{}", rovi_drive::bench::BANNER);
 
     let (d, u) = (dev.clone(), dev.clone());
     std::thread::spawn(move || control_loop(d, t0));

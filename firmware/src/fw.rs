@@ -317,6 +317,8 @@ async fn main(_spawner: Spawner) -> ! {
     }
     let mut drive = Drive::new(motor, &mut device);
     let dev = RefCell::new(device);
+    #[cfg(feature = "motor-bench")]
+    println!("{}", rovi_drive::bench::BANNER);
     println!(
         "M8 board-only AP=Rovi M8 udp=192.168.4.1:{} WPA2 channel=1 lease_ms={}",
         UDP_PORT,
@@ -544,8 +546,15 @@ async fn main(_spawner: Spawner) -> ! {
             // tick that processes it, and a motor fault raises an out-of-limits stop.
             let (tick, state, wheels) = {
                 let mut d = dev.borrow_mut();
+                #[cfg(not(feature = "motor-bench"))]
                 let tick = drive.tick(&mut d, at);
-                (tick, d.arbiter().state(), d.wheels(at))
+                #[cfg(feature = "motor-bench")]
+                let tick = drive.tick_motor_bench(&mut d, at);
+                #[cfg(not(feature = "motor-bench"))]
+                let wheels = d.wheels(at);
+                #[cfg(feature = "motor-bench")]
+                let wheels = rovi_drive::bench::wheels(&d, at);
+                (tick, d.arbiter().state(), wheels)
             };
             log(tick.effects);
             if let Some(f) = tick.fault {

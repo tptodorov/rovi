@@ -40,6 +40,7 @@ zenoh-embassy = { git = "https://github.com/tptodorov/zenoh-nostd", rev = "761f0
 getrandom = { version = "0.2", features = ["custom"], optional = true }
 
 [features]
+motor-bench = ["rovi-drive/motor-bench"]
 ros = ["dep:zenoh-nostd", "dep:zenoh-embassy", "dep:getrandom"]
 
 [profile.dev.package.esp-radio]

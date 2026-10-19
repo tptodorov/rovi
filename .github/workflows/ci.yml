@@ -69,6 +69,8 @@ jobs:
           (cd firmware && RUSTUP_TOOLCHAIN=stable cargo fmt --check)  # the directory pins the esp toolchain
           cargo test --locked --workspace
           cargo clippy --locked --workspace --all-targets -- -D warnings
+          cargo test --locked -p rovi-drive --features motor-bench
+          cargo clippy --locked -p rovi-drive --features motor-bench --all-targets -- -D warnings
       - name: Product sim car (with and without ROS)
         working-directory: apps/simcar
         run: |
@@ -76,6 +78,13 @@ jobs:
           cargo clippy --locked -- -D warnings
           cargo build --locked --features ros
           cargo build --locked
+      - name: Product motor bench simulator (separate binary)
+        working-directory: apps/simcar
+        env:
+          CARGO_TARGET_DIR: target/motor-bench
+        run: |
+          cargo clippy --locked --features motor-bench -- -D warnings
+          cargo build --locked --features motor-bench
       - name: Product UDP scenarios against the sim car
         run: python3 apps/simcar/scenarios/udp_scenarios.py
       - name: Python unit tests
@@ -208,3 +217,10 @@ jobs:
         run: |
           cargo clippy --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
           cargo build --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+      - name: Product reversal bench firmware with ROS (build only)
+        working-directory: firmware
+        env:
+          CARGO_TARGET_DIR: target/reversal-bench
+        run: |
+          cargo clippy --locked --release --features ros,motor-bench --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
+          cargo build --locked --release --features ros,motor-bench --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
