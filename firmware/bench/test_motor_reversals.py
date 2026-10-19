@@ -6,12 +6,41 @@ import subprocess
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class Reversals(unittest.TestCase):
+    def replay_zero_hold(self, late_claimed=False):
+        sys.path.insert(0, str(ROOT / "firmware/bench"))
+        import motor_reversals as probe
+
+        # Minimal trace from the board: a valid pre-ARM Claimed event remains in
+        # the file on every poll. Rechecking it must not invent a later transition.
+        trace = ("ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=16509\n"
+                 "ev=state state=Armed wheels_pm=0,0,0,0 at_ms=16521\n")
+        if late_claimed:
+            trace += "ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=16540\n"
+        client = SimpleNamespace(session=17, send=lambda *args: None,
+                                 hello=lambda: (probe.udp.ACK, 17, b""))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "car.log"
+            path.write_text(trace)
+            with patch.object(probe, "HOLD_SECONDS", 0.15), \
+                 patch.object(probe.time, "monotonic", side_effect=[0, 0, .05, .10, .20]), \
+                 patch.object(probe.time, "sleep"):
+                probe.stage(client, path, 0, [0] * 4, offset=0)
+
+    def test_claimed_prefix_is_valid_on_every_poll(self):
+        self.replay_zero_hold()
+
+    def test_claimed_after_armed_is_still_rejected(self):
+        with self.assertRaisesRegex(AssertionError, "Claimed"):
+            self.replay_zero_hold(late_claimed=True)
+
     def run_probe(self, bench=True, extra=""):
         binary = ROOT / "apps/simcar/target" / ("motor-bench/debug/simcar" if bench else "debug/simcar")
         self.assertTrue(binary.is_file(), "build normal and motor-bench simcars first")

@@ -1,0 +1,14 @@
+Full-duty bench: first motion in about 6 s
+STOP/BYE: serial release observed
+Traceback (most recent call last):
+  File "/home/todor/tptodorov/rovi/firmware/bench/motor_reversals.py", line 110, in <module>
+    check(parser.parse_args().carlog)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/todor/tptodorov/rovi/firmware/bench/motor_reversals.py", line 91, in check
+    stage(client, path, 0, [0] * 4, offset)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/todor/tptodorov/rovi/firmware/bench/motor_reversals.py", line 49, in stage
+    assert event.get("state") == "Armed", event
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'ev': 'state', 'state': 'Claimed', 'wheels_pm': [0, 0, 0, 0], 'at_ms': 16509}
+rc=1

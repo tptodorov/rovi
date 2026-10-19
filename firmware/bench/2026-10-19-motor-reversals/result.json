@@ -1,0 +1,7 @@
+{
+  "errors": [
+    "AssertionError(('probe failed; no retry', 1))"
+  ],
+  "software_passed": false,
+  "physical_observation": "pending"
+}

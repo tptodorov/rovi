@@ -1,0 +1,17 @@
+{
+  "source": "5cee76b9fe1a47ab4ed964439d0c45e7c24463be",
+  "flashed": false,
+  "bench_features": "ros,motor-bench",
+  "reversal-bench": {
+    "path": "/home/todor/tptodorov/rovi/firmware/target/reversal-bench/xtensa-esp32s3-none-elf/release/rovi-firmware",
+    "sha256": "be93c50c4c07deb0060c98a1c0626e957f6e6db2364b0617f7438c1969213073"
+  },
+  "ros": {
+    "path": "/home/todor/tptodorov/rovi/firmware/target/ros/xtensa-esp32s3-none-elf/release/rovi-firmware",
+    "sha256": "514ba816d3b6b8b3b2c40ee63e156fd4f07ca9be104cef8246d6e848602c73f3"
+  },
+  "authorized": "Todor: go for announced two flashes and ten full-duty reversals",
+  "started": "2026-10-19T14:45:57.948951+02:00",
+  "prior_wifi_uuid": "855b50c6-388f-428e-99f6-d6d07db30aa8",
+  "normal_source": "b12cc21"
+}

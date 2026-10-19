@@ -1,6 +1,10 @@
 # Product motor-module reversal batch
 
-**Prepared only. No board run or flash yet.** This is the remaining task 5.2
+**Reversal acceptance pending.** The [first authorized board attempt](2026-10-19-motor-reversals/notes.md)
+aborted during the initial zero-speed hold because the host checker misread a
+repeated log prefix. No full-duty command was sent; normal ROS firmware was
+restored and Todor confirmed all wheels stayed still. The checker now has a
+failing-then-passing replay regression. This is the remaining task 5.2
 full-scale reversal check. Coast/STBY measurements need a meter/probe (currently
 unavailable); thermal qualification remains a separate supervised batch.
 

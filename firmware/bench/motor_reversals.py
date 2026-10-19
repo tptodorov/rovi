@@ -40,6 +40,8 @@ def stage(client, path, vx, expected, offset=None):
         text = carlog.read(path, offset)
         assert not carlog.PANIC.search(text), "panic during reversal batch"
         events = carlog.events(path, offset)
+        # Every poll rereads the prefix; recompute its Claimed -> Armed order.
+        found = False
         for event in events:
             assert event["ev"] not in ("boot", "stop", "released", "error", "dropped"), event
             if event["ev"] == "state":
