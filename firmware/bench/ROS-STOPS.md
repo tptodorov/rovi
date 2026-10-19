@@ -44,5 +44,9 @@ so firmware lease/owner-loss handling also applies. Always remove only the firew
 rule added for the batch, restore prior Wi-Fi and stop serial capture. Record logs
 and Todor's observations separately; assertions alone do not prove wheel behavior.
 
+The same runner takes another probe name. The UDP/ROS shared-AP batch
+([probe](ros_udp_sharing.py)) also needs the rover's UDP address:
+`ROVI_TARGET=192.168.4.1:7777 ROVI_CARLOG=<live-car.log> bash firmware/bench/ros_stops.sh ros_udp_sharing.py`.
+
 CI executes the identical runner on the product ROS simulator, using loopback
 ports 17450/17797 and its stdout as the serial log. No hardware is involved there.

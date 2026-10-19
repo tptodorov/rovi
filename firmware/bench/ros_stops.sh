@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Motor batch: announced go, stand/wheels clear, motor bank awake, ROS firmware,
 # Rovi Wi-Fi joined and live serial capture. Six gentle 3 s drives.
-# ROVI_CARLOG=<live-car.log> bash firmware/bench/ros_stops.sh
+# ROVI_CARLOG=<live-car.log> bash firmware/bench/ros_stops.sh [probe.py]
+# The probe defaults to ros_stop_checks.py; ROVI_TARGET is passed through for UDP probes.
 set -euo pipefail
+probe=${1:-ros_stop_checks.py}
+[[ $probe =~ ^[a-z_]+\.py$ ]]
 : "${ROVI_CARLOG:?set the live serial capture}"
 test -f "$ROVI_CARLOG"
 root=$(cd "$(dirname "$0")/../.." && pwd)
@@ -37,7 +40,7 @@ from carlog import wait, ev
 found, seen = wait(sys.argv[1], int(sys.argv[2]), ev('ros', link='up'), timeout=20)
 assert found, ('ROS link did not come up', seen[-5:])
 PYWAIT
-docker exec -e ROVI_CARLOG="$log" -e PYTHONPATH=/scenarios \
+docker exec -e ROVI_CARLOG="$log" -e ROVI_TARGET="${ROVI_TARGET:-}" -e PYTHONPATH=/scenarios \
   -e ZENOH_SESSION_CONFIG_URI=/tmp/session.json5 "$name" \
   bash -c 'set -e; source /opt/ros/jazzy/setup.bash
-    python3 /bench/ros_stop_checks.py'
+    python3 "/bench/$1"' _ "$probe"
