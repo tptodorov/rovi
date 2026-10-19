@@ -1,0 +1,15 @@
+Full-duty bench: first motion in about 6 s
+Five minutes forward at 70%; continuously supervise; temperature unmeasured
+Hold: 30/300 s; serial/session checks passing; temperature unmeasured
+Hold: 60/300 s; serial/session checks passing; temperature unmeasured
+Hold: 90/300 s; serial/session checks passing; temperature unmeasured
+Hold: 120/300 s; serial/session checks passing; temperature unmeasured
+Hold: 150/300 s; serial/session checks passing; temperature unmeasured
+Hold: 180/300 s; serial/session checks passing; temperature unmeasured
+Hold: 210/300 s; serial/session checks passing; temperature unmeasured
+Hold: 240/300 s; serial/session checks passing; temperature unmeasured
+Hold: 270/300 s; serial/session checks passing; temperature unmeasured
+Zero/coast, then STOP and release
+STOP/BYE: serial release observed
+Five-minute endurance: serial/session checks passed; physical observation required; thermal acceptance pending
+rc=0

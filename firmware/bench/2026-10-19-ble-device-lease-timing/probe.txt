@@ -1,0 +1,7 @@
+Trial 1/5: host_upper_bound_ms=1058.148 lease_late_ms=7 limit_late_ms=50 lease_ms=1000; zero wheels
+Trial 2/5: host_upper_bound_ms=1049.366 lease_late_ms=4 limit_late_ms=50 lease_ms=1000; zero wheels
+Trial 3/5: host_upper_bound_ms=1050.000 lease_late_ms=4 limit_late_ms=50 lease_ms=1000; zero wheels
+Trial 4/5: host_upper_bound_ms=1048.756 lease_late_ms=4 limit_late_ms=50 lease_ms=1000; zero wheels
+Trial 5/5: host_upper_bound_ms=1050.856 lease_late_ms=2 limit_late_ms=50 lease_ms=1000; zero wheels
+BLE device lease timing: passed; max_lease_late_ms=7 max_host_upper_bound_ms=1058.148; released
+rc=0

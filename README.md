@@ -59,7 +59,7 @@ Never assume a wiring diagram, schematic, or PCB layout targets bare chips. Ask 
 
 #### Product code
 
-The M6 layout follows its [design](openspec/changes/add-four-wheel-api/design.md#package-boundaries). Host builds and the sim car are development evidence only ([ADR-0002](docs/adr/0002-simulation-never-proves-hardware.md)). The M8 experiment stays the frozen bench reference until the product firmware is accepted.
+The M6 layout follows its [design](openspec/changes/add-four-wheel-api/design.md#package-boundaries). Host builds and the sim car are development evidence only ([ADR-0002](docs/adr/0002-simulation-never-proves-hardware.md)). M6 has a [scoped acceptance record](openspec/changes/add-four-wheel-api/verification.md#acceptance-review-task-53); M4/M5/M8 remain frozen comparison/rollback references.
 
 | Path | What | Build and test |
 | --- | --- | --- |
@@ -71,7 +71,20 @@ The M6 layout follows its [design](openspec/changes/add-four-wheel-api/design.md
 | `firmware` | ESP32-S3 firmware; own lockfile, `esp` toolchain | `ROVI_WIFI_PASSWORD=… cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc`; add `--features ros` with `CARGO_TARGET_DIR=target/ros` to keep both builds |
 
 The product GPIO/profile binding and its schematic comparison are recorded in the
-[motor mapping check](firmware/MOTOR-MAPPING.md). Physical acceptance remains separate.
+[motor mapping check](firmware/MOTOR-MAPPING.md). The [board results and deferrals](openspec/changes/add-four-wheel-api/verification.md#physical-evidence-and-deferrals)
+record the confirmed stops, radios, directions, resets, lease timing, reversals and
+five-minute stand endurance. Coast/STBY pin levels, electrical duty/deadband and
+coast with a driven neighbour remain physically unverified by Todor's decision.
+No current protection, loaded/stall qualification, numeric temperature margin or
+precise physical speed tracking is claimed.
+
+Use the default firmware or its `ros` variant for operation. The installed normal
+instrumented ROS image is recorded in the acceptance review. `motor-bench` is an
+opt-in stand-test mode whose fixed setpoint markers request full-scale motor
+vectors; it must not be used for ordinary driving. Every future flash/motor batch
+requires separate authorization, and bench runs restore the normal image. See the
+[reversal](firmware/bench/MOTOR-REVERSALS.md) and [endurance](firmware/bench/MOTOR-ENDURANCE.md)
+procedures for their recorded sequences and cleanup.
 
 ##### ROS capabilities
 
@@ -120,4 +133,4 @@ Status reports commands/state, with no measured velocity. The car has no encoder
 [M5 motion references](experiments/rovi-m5-mecanum-motion/MILESTONE.md) remain approximate.
 Run `ros-scenarios.sh` for ROS owner errors/latches and `ros-capabilities.sh` for heartbeat,
 shared UDP status and release/reconnect, using the product scenario directory above.
-Actual ESP32 notifications and pin behavior require separate board validation.
+Recorded ESP32 delivery results are linked in the acceptance review; the deferred electrical measurements remain unverified.

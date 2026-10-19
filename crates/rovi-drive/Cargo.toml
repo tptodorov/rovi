@@ -6,6 +6,9 @@ license = "MIT OR Apache-2.0"
 publish = false
 description = "Rovi coordinator: connects the device core's state and wheel demands to motor control (no_std)"
 
+[features]
+motor-bench = []
+
 [dependencies]
 rovi-core = { path = "../rovi-core" }
 rovi-motor-control = { path = "../rovi-motor-control" }

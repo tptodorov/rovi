@@ -22,6 +22,9 @@ use rovi_core::{
 };
 use rovi_motor_control::{Driver, Error, Fault as MotorFault, MotorControl};
 
+#[cfg(feature = "motor-bench")]
+pub mod bench;
+
 /// What one control tick did.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Tick {
@@ -58,6 +61,12 @@ impl<D: Driver> Drive<D> {
         self.tick_with(dev, now, Device::wheels)
     }
 
+    /// Bench image only: fixed full-scale vectors, retaining the normal safety coordinator.
+    #[cfg(feature = "motor-bench")]
+    pub fn tick_motor_bench(&mut self, dev: &mut Device, now: u64) -> Tick {
+        self.tick_with(dev, now, bench::wheels)
+    }
+
     /// [`tick`](Self::tick) with the wheel demands from `wheels`: the tests inject faults the
     /// device's validated profile cannot produce.
     fn tick_with(
@@ -73,6 +82,7 @@ impl<D: Driver> Drive<D> {
             let _ = self.motor.standby();
             if let Some(reason) = dev.on_motor_fault(now).stop {
                 effects.stop = Some(reason);
+                effects.lease_late_ms = None;
             }
         }
         Tick { effects, fault }
@@ -133,6 +143,7 @@ mod tests {
     struct Log {
         ops: Vec<Op>,
         fail_bridge: bool,
+        fail_stby: bool,
     }
 
     /// Records every pin write into a log the test shares; `fail_bridge` makes bridge writes fail.
@@ -142,6 +153,9 @@ mod tests {
     impl Driver for Recording {
         type Error = ();
         fn set_stby(&mut self, driver: usize, high: bool) -> Result<(), ()> {
+            if self.0.borrow().fail_stby {
+                return Err(());
+            }
             self.0.borrow_mut().ops.push(Op::Stby(driver, high));
             Ok(())
         }
@@ -345,6 +359,18 @@ mod tests {
     }
 
     #[test]
+    fn a_standby_failure_overriding_a_lease_stop_does_not_report_lease_lateness() {
+        let mut car = Car::new(CAR, MotorConfig::PRODUCT);
+        car.arm_udp(0);
+        car.tick(10);
+        car.log.0.borrow_mut().fail_stby = true;
+        let tick = car.tick(1_051);
+        assert_eq!(tick.fault, Some(Fault::MotorDriver));
+        assert_eq!(tick.effects.stop, Some(StopReason::OutOfLimits));
+        assert_eq!(tick.effects.lease_late_ms, None);
+    }
+
+    #[test]
     fn a_non_finite_wheel_demand_stops_the_device_and_no_tick_recovers_it() {
         // Injected: a validated device profile cannot produce a NaN demand.
         let mut car = Car::new(CAR, MotorConfig::PRODUCT);
@@ -515,5 +541,119 @@ mod tests {
             ENABLE,
             "an explicit arm after a fresh setpoint resumes"
         );
+    }
+
+    #[cfg(feature = "motor-bench")]
+    #[test]
+    fn bench_reverses_all_four_at_700_without_standby_or_session_change() {
+        let mut car = Car::new(CAR, MotorConfig::PRODUCT);
+        car.udp(0, Kind::Hello, &[]);
+        car.setpoint(0, 0.1);
+        car.udp(0, Kind::Arm, &[]);
+        let session = car.session;
+        assert_eq!(car.drive.tick_motor_bench(&mut car.dev, 0).fault, None);
+        assert_eq!(bench::wheels(&car.dev, 0), [1.0; 4]);
+        assert_eq!(car.ops()[6..], ENABLE);
+        for i in 1..=10 {
+            car.take_ops();
+            let reverse = i % 2 == 1;
+            let at = i * 10;
+            car.setpoint(at, if reverse { -0.1 } else { 0.1 });
+            let tick = car.drive.tick_motor_bench(&mut car.dev, at);
+            assert_eq!(tick.fault, None);
+            car.udp(at, Kind::Hello, &[]);
+            assert_eq!(car.session, session);
+            assert_eq!(car.dev.arbiter().state(), State::Armed);
+            assert_eq!(
+                car.ops(),
+                (0..4)
+                    .map(|b| Op::Bridge(
+                        b,
+                        Pins {
+                            in1: !reverse,
+                            in2: reverse,
+                            pwm_pm: 700,
+                        }
+                    ))
+                    .collect::<Vec<_>>()
+            );
+        }
+    }
+
+    #[cfg(feature = "motor-bench")]
+    #[test]
+    fn bench_zero_and_other_demands_coast_and_normal_tick_does_not_scale() {
+        let mut car = Car::new(CAR, MotorConfig::PRODUCT);
+        car.udp(0, Kind::Hello, &[]);
+        car.setpoint(0, 0.1);
+        car.drive.tick_motor_bench(&mut car.dev, 0);
+        assert!(
+            car.ops().is_empty(),
+            "a marker alone must not enable motors"
+        );
+        car.udp(0, Kind::Arm, &[]);
+        car.tick(0);
+        assert!(car.ops().contains(&Op::Bridge(
+            0,
+            Pins {
+                in1: true,
+                in2: false,
+                pwm_pm: 425
+            }
+        )));
+        for vx in [0.0, 0.5, -0.5, 1.0] {
+            car.setpoint(10, vx);
+            car.take_ops();
+            car.drive.tick_motor_bench(&mut car.dev, 10);
+            assert_eq!(bench::wheels(&car.dev, 10), [0.0; 4]);
+            assert_eq!(
+                car.ops(),
+                (0..4)
+                    .map(|b| Op::Bridge(b, Pins::COAST))
+                    .collect::<Vec<_>>()
+            );
+        }
+    }
+
+    #[cfg(feature = "motor-bench")]
+    #[test]
+    fn bench_keeps_stop_lease_release_and_motor_fault_safety_paths() {
+        for mode in [0, 1, 2, 3] {
+            let mut car = Car::new(CAR, MotorConfig::PRODUCT);
+            car.udp(0, Kind::Hello, &[]);
+            car.setpoint(0, 0.1);
+            car.udp(0, Kind::Arm, &[]);
+            car.drive.tick_motor_bench(&mut car.dev, 0);
+            car.take_ops();
+            match mode {
+                0 => {
+                    car.udp(10, Kind::Stop, &[]);
+                }
+                1 => {} // Expiry is processed in the bench tick, just as in the product tick.
+                2 => {
+                    car.udp(10, Kind::Bye, &[]);
+                }
+                _ => car.fail(true),
+            }
+            let tick = car
+                .drive
+                .tick_motor_bench(&mut car.dev, if mode == 3 { 10 } else { 1000 });
+            assert!(!car.drive.motor().is_enabled(), "mode {mode}");
+            assert_eq!(car.ops()[car.ops().len() - 2..], STANDBY);
+            if mode == 1 {
+                assert_eq!(tick.effects.stop, Some(StopReason::LeaseExpired));
+            }
+            if mode == 3 {
+                assert_eq!(tick.fault, Some(Fault::MotorDriver));
+            }
+            car.fail(false);
+            car.take_ops();
+            car.setpoint(1010, 0.1);
+            car.drive.tick_motor_bench(&mut car.dev, 1010);
+            assert!(
+                car.ops().is_empty(),
+                "a fresh stream cannot re-enable mode {mode}"
+            );
+        }
     }
 }

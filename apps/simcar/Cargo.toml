@@ -12,6 +12,8 @@ path = "src/main.rs"
 
 [dependencies]
 rovi-core = { path = "../../crates/rovi-core" }
+rovi-drive = { path = "../../crates/rovi-drive", optional = true }
+rovi-motor-control = { path = "../../crates/rovi-motor-control", optional = true }
 
 # ROS 2 over zenoh-nostd: the tptodorov fork (liveliness tokens and subscriber, sample attachments,
 # optional defmt, embassy-sync 0.8).
@@ -25,4 +27,5 @@ static_cell = { version = "2.1.1", optional = true }
 env_logger = { version = "0.11", optional = true }
 
 [features]
+motor-bench = ["dep:rovi-drive", "rovi-drive/motor-bench", "dep:rovi-motor-control"]
 ros = ["dep:zenoh-nostd", "dep:zenoh-std", "dep:embassy-executor", "dep:embassy-futures", "dep:embassy-sync", "dep:embassy-time", "dep:static_cell", "dep:env_logger"]

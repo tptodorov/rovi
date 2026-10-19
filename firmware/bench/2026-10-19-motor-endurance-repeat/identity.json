@@ -1,0 +1,22 @@
+{
+  "reversal-bench": {
+    "path": "/home/todor/tptodorov/rovi/firmware/target/reversal-bench/xtensa-esp32s3-none-elf/release/rovi-firmware",
+    "sha256": "be93c50c4c07deb0060c98a1c0626e957f6e6db2364b0617f7438c1969213073"
+  },
+  "ros": {
+    "path": "/home/todor/tptodorov/rovi/firmware/target/ros/xtensa-esp32s3-none-elf/release/rovi-firmware",
+    "sha256": "514ba816d3b6b8b3b2c40ee63e156fd4f07ca9be104cef8246d6e848602c73f3"
+  },
+  "bench_features": "ros,motor-bench",
+  "source": "0cec6e707a45099658610f2d7a3980df5c219fa8",
+  "bench_source": "5cee76b9fe1a47ab4ed964439d0c45e7c24463be",
+  "normal_source": "b12cc21",
+  "flashed": false,
+  "installed_image": "normal ROS; restored after aborted unarmed endurance attempt",
+  "mode": "--endurance",
+  "duration_seconds": 300,
+  "previous_attempt": "firmware/bench/2026-10-19-motor-endurance/notes.md",
+  "authorized": "Todor: go for announced two flashes and five-minute full-duty forward endurance",
+  "started": "2026-10-19T15:37:45.362851+02:00",
+  "prior_wifi_uuid": "855b50c6-388f-428e-99f6-d6d07db30aa8"
+}

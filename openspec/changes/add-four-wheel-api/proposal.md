@@ -1,6 +1,6 @@
 # M6: low-level four-wheel API
 
-**Status:** proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of [#48](https://github.com/tptodorov/rovi/pull/48). Open items O1–O8 closed or deferred 2026-10-17. Product hardware acceptance remains pending. The product crates, sim car and firmware are implemented; laptop conformance and CI are tracked in tasks 1–3. Existing experiments remain the comparison/rollback reference; unverified physical limits below remain explicit. Terms are as defined in [`GLOSSARY.md`](../../../GLOSSARY.md).
+**Status:** proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of [#48](https://github.com/tptodorov/rovi/pull/48). Open items O1–O8 closed or deferred 2026-10-17. Scoped product acceptance is recorded on 2026-10-19 in the [task 5.3 review](verification.md#acceptance-review-task-53), using Todor’s physical confirmations and explicit task 5.2 measurement deferrals. The product crates, sim car and firmware are implemented; laptop conformance and CI are tracked in tasks 1–3. Existing experiments remain the comparison/rollback reference; unverified physical limits below remain explicit. Terms are as defined in [`GLOSSARY.md`](../../../GLOSSARY.md).
 
 ## Why
 
@@ -48,6 +48,8 @@ Use [M4 results](../../../experiments/rovi-m4-four-motor-safety/MILESTONE.md#res
 | O8 | **Closed** | D1 A→FL, D1 B→RL, D2 A→FR, D2 B→RR; directions corrected at connectors, all software inversions false, reconfirmed after the motor rework. Each driver has its own STBY, both disabled on a safety stop. |
 | O9 | **Closed** 2026-10-17 | The pinned ordinary publisher did not serve history to a late Jazzy transient-local subscriber (no sample within 3 s; its later live sample arrived). Selected the specified reliable/volatile/depth-1 fallback: every 900 ms (headroom under one second), on claim/release and reconnect. Late subscribers received in 0.413/0.551 s before/after router restart; [probe and fallback evidence](../../../apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md). |
 
+On 2026-10-19 Todor closed task 5.2 with the remaining equipment-dependent checks skipped because suitable measurement tools are unavailable. Coast/STBY pin levels, electrical duty/deadband measurements and the coast/driven-neighbour check remain physically unverified; they return in a later change with suitable tools. Completed board results are retained in the [verification map](verification.md#task-52-disposition); task 5.3 records [acceptance within that scope](verification.md#acceptance-review-task-53). Specified motor behavior is unchanged.
+
 No unresolved product decisions remain. Deferred items are outside this change: it does not claim measured current, a numeric disable bound, coast distance, maximum speeds or operation above 70%. Equipment-gated items return as a new change when the equipment is available. Retain the experiment firmware for comparison; product acceptance is a separate checklist.
 
 ## First implementation scope
@@ -61,9 +63,11 @@ No unresolved product decisions remain. Deferred items are outside this change: 
 ## Impact
 
 * Planning: `openspec/changes/add-four-wheel-api/`, following the [product specification standard](../../../docs/SPECIFICATION.md) and [ADR-0015](../../../docs/adr/0015-native-openspec-workflow.md).
-* Code: `crates/rovi-core`, `crates/rovi-motor-control` and `crates/rovi-drive` in the root workspace, with separate `apps/simcar` and `firmware` packages/lockfiles. The [tasks](tasks.md) and [verification map](verification.md) record software checks and pending physical acceptance.
-* Evidence: host tests and the sim car are development evidence only ([ADR-0002](../../../docs/adr/0002-simulation-never-proves-hardware.md)). Acceptance needs the M4/M5 bench setup.
+* Code: `crates/rovi-core`, `crates/rovi-motor-control` and `crates/rovi-drive` in the root workspace, with separate `apps/simcar` and `firmware` packages/lockfiles. The [tasks](tasks.md) and [verification map](verification.md) record software checks, confirmed board results and explicit physical deferrals.
+* Evidence: host tests and the sim car are development evidence only ([ADR-0002](../../../docs/adr/0002-simulation-never-proves-hardware.md)). The scoped acceptance review uses the product board runs linked in the verification map, preserving M4/M5 as references.
 
 ## Review status
 
 The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and [verification map](verification.md) accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not establish product hardware acceptance or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 closed with the specified volatile fallback and recorded Jazzy evidence.
+
+The 2026-10-19 [final acceptance review](verification.md#acceptance-review-task-53) completes task 5.3 for the recorded scope. It preserves the equipment-dependent checks Todor skipped as physically unverified; no new qualification claims or motor authorization follow from acceptance. Archive/sync remains a separate follow-up after the stack lands.

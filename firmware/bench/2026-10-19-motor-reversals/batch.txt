@@ -1,0 +1,15 @@
+flashing-reversal-bench {}
+capturing-car.log {'pid': 1447067}
+ready-for-motion-announcement {}
+probe-running {'pid': 1447319}
+Traceback (most recent call last):
+  File "/tmp/rovi-run-motor-reversals.py", line 135, in <module>
+    assert code == 0, ('probe failed; no retry', code)
+           ^^^^^^^^^
+AssertionError: ('probe failed; no retry', 1)
+capture stopped 1447067 -2
+flashing-ros {}
+capturing-normal-restored.log {'pid': 1448207}
+Normal ROS image restored: clean boot, no bench banner, no claim/arming for 5 s.
+capture stopped 1448207 -2
+finished {'errors': ["AssertionError(('probe failed; no retry', 1))"]}

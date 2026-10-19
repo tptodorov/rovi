@@ -84,6 +84,7 @@ O1, O2, O5 and O7 are decided (2026-10-17): 70% product cap, measured geometry w
 | --- | --- |
 | Start and stall current (O1) | A current monitor (INA226) or an oscilloscope with a shunt |
 | Numeric STBY disable bound (O4) | A logic analyzer or oscilloscope |
+| Coast/STBY pin levels, electrical duty/deadband and coast with a driven neighbour (task 5.2, skipped by Todor 2026-10-19) | A multimeter/logic probe for static levels; timing/PWM-capable tools for duty/deadband checks |
 | Operation above 70% (O1, O7) | Requalification with the equipment above |
 | Coast distance and maximum speeds (O5, O2) | Tape and video; not scheduled |
 

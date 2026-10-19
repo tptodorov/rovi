@@ -1,0 +1,13 @@
+flashing-reversal-bench {}
+capturing-car.log {'pid': 1488998}
+ready-for-motion-announcement {}
+probe-running {'pid': 1489174}
+Device full-scale-to-zero interval_ms= 300093
+Endurance serial audit: one sustained forward full-scale hold; one session; released/Open; no product errors/panics/drops/reset; temperature unmeasured.
+probe-passed-restoring-normal {}
+capture stopped 1488998 -2
+flashing-ros {}
+capturing-normal-restored.log {'pid': 1503268}
+Normal ROS image restored: clean boot, no bench banner, no claim/arming for 5 s.
+capture stopped 1503268 -2
+finished {'errors': []}
