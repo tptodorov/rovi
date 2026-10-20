@@ -12,7 +12,7 @@
 
 ## 3. Host verification and delivery
 
-- [ ] 3.1 Run client tests against fake peers and the real product simulator, strict OpenSpec/reader validation and authored whitespace checks. Map actual evidence in verification.md and open a PR with CI results.
+- [x] 3.1 Run client tests against fake peers and the real product simulator, strict OpenSpec/reader validation and authored whitespace checks. Map actual evidence in verification.md and open a PR with CI results. **Done:** 39 client tests, strict spec validation, all six reader tests/freshness and whitespace pass. PR [#96](https://github.com/tptodorov/rovi/pull/96) contains the change; CI results are tracked on that PR. Physical acceptance remains task 4.1.
 
 ## 4. Board acceptance
 
