@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>117</b> requirements</div><div><b>200</b> scenarios</div><div><b>28 / 42</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>117</b> requirements</div><div><b>200</b> scenarios</div><div><b>34 / 42</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>iPhone BLE web controller proposal</h2>
       <div class="notice"><p>
 See the proposal for acceptance status.</p>
@@ -2493,7 +2493,7 @@ Target a web controller opened in Bluefy on iPhone.</li>
 <li>
 Phone supports the 72-byte payload (Todor's confirmation, not a new measured app/board result).</li>
 <li>
-Six press-and-hold buttons first; allow a later accelerometer-based input without changing the device API or bypassing safety policy. Full proposal implementation acceptance is still pending.</li>
+Six press-and-hold buttons first; allow a later accelerometer-based input without changing the device API or bypassing safety policy. Todor then explicitly accepted the revised proposal for button implementation; see <a href="#openspec--changes--add-iphone-ble-client--proposal--proposal-acceptance">acceptance record</a>.</li>
 </ul>
 <h3 id="openspec--changes--add-iphone-ble-client--design--existing-protocol-evidence">Existing protocol evidence</h3><p>
 Inspected at main <code>1be50b3</code>; no protocol change is proposed.</p>
@@ -2554,7 +2554,7 @@ Prior evidence</td>
 <h2 id="openspec--changes--add-iphone-ble-client--design--goals--non-goals">Goals / Non-Goals</h2><p>
 <strong>Goals:</strong> Linux-authorable static controller, one foreground phone session, button-first operation, testable codecs/session policy and separate browser/radio/wheel evidence.</p>
 <p>
-<strong>Non-Goals:</strong> native app/scaffold/signing, sensor driving in v1, firmware/security changes, station mode, background driving, automatic recovery, calibration or measured speed. This draft creates no runtime or hosted site.</p>
+<strong>Non-Goals:</strong> native app/scaffold/signing, sensor driving in v1, firmware/security changes, station mode, background driving, automatic recovery, calibration or measured speed. No hosted site is published by this change until task 3.2.</p>
 <h2 id="openspec--changes--add-iphone-ble-client--design--decisions">Decisions</h2><h3 id="openspec--changes--add-iphone-ble-client--design--bluefy-web-delivery-from-linux">Bluefy web delivery from Linux</h3><p>
 Use static HTML/CSS/JavaScript under <code>apps/iphone/</code> with no third-party runtime scripts. Load a versioned page over HTTPS in Bluefy. No command backend, account or paid developer membership is needed for our web code. Propose a repository GitHub Pages deployment at <code>https://tptodorov.github.io/rovi/iphone/</code> (not a live URL claimed by this draft). <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site">GitHub Pages</a> supports static sites in public repositories on GitHub Free. Prepare only the app assets, preserving any existing site configuration; confirm the final origin/HTTPS during delivery. The page is trusted controller code: no third-party runtime scripts or secrets. This spec PR performs no deployment.</p>
 <p>
@@ -2634,7 +2634,7 @@ UI/phone acceptance, not the selected button layout.</td>
 </tbody>
 </table>
 <p>
-Full revised proposal acceptance is pending. Unmeasured browser/hardware results cannot count as passed acceptance; see <a href="#openspec--changes--add-iphone-ble-client--verification">verification</a>.</p>
+Button implementation is authorized by the <a href="#openspec--changes--add-iphone-ble-client--proposal--proposal-acceptance">acceptance record</a>; physical/product acceptance remains pending. Unmeasured browser/hardware results cannot count as passed acceptance; see <a href="#openspec--changes--add-iphone-ble-client--verification">verification</a>.</p>
 <h2 id="openspec--changes--add-iphone-ble-client--design--risks--trade-offs">Risks / Trade-offs</h2><ul>
 <li>
 Browser dependency and opaque picker/state APIs → feature gates and actual-phone checks; no native feature assumptions or guessed host hooks.</li>
@@ -2794,24 +2794,24 @@ Todor selected the laptop client on 2026-10-20 after reviewing the concrete opti
 </section><section class="document" id="openspec--changes--add-iphone-ble-client--tasks" aria-label="tasks">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-iphone-ble-client/tasks.md">Markdown source ↗</a><div class="path">openspec/changes/add-iphone-ble-client/tasks.md</div></header>
     <h1 id="openspec--changes--add-iphone-ble-client--tasks--iphone-ble-web-controller-tasks">iPhone BLE web controller tasks</h1><p>
-<strong>Draft only.</strong> These are future implementation/acceptance tasks, not permission to begin them. <a href="#openspec--changes--add-iphone-ble-client--proposal--proposal-acceptance">Proposal acceptance</a> controls task 1.1; <a href="#openspec--changes--add-iphone-ble-client--verification">verification map</a> defines H/P evidence. Bluefy delivery and button-first input are selected; the complete revised proposal is not accepted. All boxes remain unchecked.</p>
+<strong>Button implementation authorized (2026-10-20).</strong> Physical acceptance and publication remain separate gates. <a href="#openspec--changes--add-iphone-ble-client--proposal--proposal-acceptance">Proposal acceptance</a> controls task 1.1; <a href="#openspec--changes--add-iphone-ble-client--verification">verification map</a> defines H/P evidence. Bluefy delivery and button-first input are selected; the revised proposal is accepted for implementation by the explicit user answer recorded below. Check boxes only after their completion evidence passes.</p>
 <h2 id="openspec--changes--add-iphone-ble-client--tasks--1-acceptance-and-environment">1. Acceptance and environment</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 1.1 Record Todor's explicit acceptance of the revised concrete proposal; completion check: link the exact acceptance message/PR comment in proposal.md and here. Documentation merge alone is insufficient. Do not start implementation beforehand.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 1.1 Todor explicitly accepted in this conversation on 2026-10-20: “Accept proposal and implement buttons”, answering the question naming revised PR #95 and deferred accelerometer control. <a href="#openspec--changes--add-iphone-ble-client--proposal--proposal-acceptance">Acceptance record</a> identifies the accepted commit. Product acceptance/publication/physical tests are not included.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 1.2 Record iPhone model/iOS/Bluefy version and required browser API/lifecycle feature checks; completion check: design.md records the proposed GitHub Pages route and identifies the delivery/phone observations still pending in I1–I4. No Mac, Xcode, signing credentials or membership is required for this web route.</li>
 </ul>
 <h2 id="openspec--changes--add-iphone-ble-client--tasks--2-linux-development-and-tests">2. Linux development and tests</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.1 Implement codecs/capability/Status validation under apps/iphone; completion check: H1 Linux tests match existing Rust/Python vectors for 72-byte zero/six-direction setpoints, f32 limits, sequence wrap and malformed/boundary inputs. No firmware/API changes.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.1 Implement codecs/capability/Status validation under apps/iphone; completion check: H1 Linux tests match existing Rust/Python vectors for 72-byte zero/six-direction setpoints, f32 limits, sequence wrap and malformed/boundary inputs. No firmware/API changes. H1: <code>cd apps/iphone &amp;&amp; npm test</code>, 3 codec tests passed on Linux (2026-10-20).</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Implement the minimal static button UI and expiring intent policy; completion check: H4/H5 Linux browser tests cover six signs/caps, disabled axes, simultaneous touches, release/slide/cancel/lost capture, stalled UI renewal, 250 ms expiry, text/accessibility and no sticky sensor/accessibility input. Sensor APIs remain unused.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.2 Implement the minimal static button UI and expiring intent policy; completion check: H4/H5 Linux browser tests cover six signs/caps, disabled axes, simultaneous touches, release/slide/cancel/lost capture, stalled UI renewal, 250 ms expiry, text/accessibility and no sticky sensor/accessibility input. Sensor APIs remain unused. Evidence: 4 Hold unit tests and 4 Chromium UI tests passed on Linux (2026-10-20).</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Implement the Web Bluetooth adapter with explicit picker/connect, feature/GATT validation and bounded setup; completion check: H2 exercises missing APIs, insecure origin, cancelled/late picker selection, invalid peer/zero-write rejection, claim loss, connect timeout and late completion without automatic recovery. Do not implement native scan/MTU/readiness APIs.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.3 Implement the Web Bluetooth adapter with explicit picker/connect, feature/GATT validation and bounded setup; completion check: H2 exercises missing APIs, insecure origin, cancelled/late picker selection, invalid peer/zero-write rejection, claim loss, connect timeout and late completion without automatic recovery. Do not implement native scan/MTU/readiness APIs. H2: 4 transport, 3 session setup/picker/link-loss tests and the browser missing-API test passed on Linux (2026-10-20).</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.4 Implement serialized GATT/control/Status work and periodic latest-intent transmission; completion check: H3 passes zero-before-ARM, read-promise-only confirmation, STOP priority, safety-stop latch, 200 ms gap/backpressure, read/control deadlines and stale-promise/event cases, with no queued motion.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.4 Implement serialized GATT/control/Status work and periodic latest-intent transmission; completion check: H3 passes zero-before-ARM, read-promise-only confirmation, STOP priority, safety-stop latch, 200 ms gap/backpressure, read/control deadlines and stale-promise/event cases, with no queued motion. H3: 9 session tests passed on Linux (2026-10-20).</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.5 Implement page/host interruption handling and bounded cleanup; completion check: H5 injects blur/hidden/pagehide/verified host inactivity, disconnect/error, reload and failed/hung writes, verifying disconnect attempted within 500 ms while runnable. README documents firmware fallback, browser evidence limits and the later input-interpreter boundary without implementing sensors.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.5 Implement page/host interruption handling and bounded cleanup; completion check: H5 injects blur/hidden/pagehide/verified host inactivity, disconnect/error, reload and failed/hung writes, verifying disconnect attempted within 500 ms while runnable. README documents firmware fallback, browser evidence limits and the later input-interpreter boundary without implementing sensors. H5: 2 cleanup session tests and 4 Chromium blur/hidden/pagehide tests passed on Linux; <a href="../apps/iphone/README.md">README</a> documents limits (2026-10-20).</li>
 </ul>
 <h2 id="openspec--changes--add-iphone-ble-client--tasks--3-reviewable-https-delivery">3. Reviewable HTTPS delivery</h2><ul>
 <li>
@@ -2934,8 +2934,8 @@ Archived/synced 2026-10-20 through the pinned CLI per <a href="../docs/SPECIFICA
 </section><section class="document" id="openspec--changes--add-iphone-ble-client--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-iphone-ble-client/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-iphone-ble-client/verification.md</div></header>
     <h1 id="openspec--changes--add-iphone-ble-client--verification--iphone-ble-web-controller-verification-map">iPhone BLE web controller verification map</h1><p>
-<strong>Planning evidence only (2026-10-20).</strong> No runtime or deployment exists in this change; no Linux app tests, Bluefy/phone checks or wheel acceptance have passed. Todor selected Linux/Bluefy/no subscription, confirmed phone 72-byte support and chose buttons first with sensor alternatives later. These are scope/user evidence, not newly measured browser/firmware results or full proposal acceptance. All <a href="#openspec--changes--add-iphone-ble-client--tasks">tasks</a> remain unchecked.</p>
-<h2 id="openspec--changes--add-iphone-ble-client--verification--linux-host-and-browser-evidence-planned">Linux host and browser evidence planned</h2><table>
+<strong>Linux evidence recorded (2026-10-20); phone evidence pending.</strong> H1–H5 pass on Linux under <a href="../apps/iphone/README.md"><code>apps/iphone</code></a> and in CI. No Bluefy/phone, deployment or wheel check has run. Todor's phone 72-byte confirmation is user evidence, not a measurement. <a href="#openspec--changes--add-iphone-ble-client--tasks">Tasks</a> record which gates are closed.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--verification--linux-host-and-browser-evidence">Linux host and browser evidence</h2><table>
 <thead>
 <tr>
 <th>
@@ -2980,7 +2980,7 @@ Browser/session tests: blur/hidden/pagehide/host-inactivity/disconnect/errors, r
 <p>
 Linux browser tests and fake clocks establish software decisions, not Bluefy/native bridge behavior, iOS scheduling, radio delivery or physical stopping. No Mac/Xcode/Simulator evidence is required or claimed for this web route.</p>
 <h2 id="openspec--changes--add-iphone-ble-client--verification--requirement-and-scenario-coverage">Requirement and scenario coverage</h2><p>
-Each row covers every scenario under the named <a href="#openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec">requirement</a>; H/P IDs are planned evidence, not tests already implemented.</p>
+Each row covers every scenario under the named <a href="#openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec">requirement</a>; H IDs are implemented Linux tests; P IDs are planned phone/board evidence.</p>
 <table>
 <thead>
 <tr>
@@ -3804,11 +3804,11 @@ None. <a href="#openspec--specs--car-control-api--spec">Car control API</a>, <a 
 <h2 id="openspec--changes--add-iphone-ble-client--proposal--impact">Impact</h2><p>
 Future implementation would be static HTML/CSS/JavaScript under <code>apps/iphone/</code>, using Web Bluetooth in Bluefy with no third-party runtime scripts or command server. Propose repository GitHub Pages hosting; verify the final origin/HTTPS during delivery. Existing normal product firmware (default or <code>ros</code>, never <code>motor-bench</code>), GATT UUIDs and codecs remain unchanged. BLE connection itself claims ownership and switches off the car AP; a picker alone does not claim. Missing advertisements do not prove another owner exists.</p>
 <p>
-This PR contains planning Markdown and a regenerated reader only: no runtime/scaffold, hosting publication, device/network tests or firmware changes. Native iOS build/signing, Wi-Fi diagnostics, station mode, BLE credential provisioning (Q21), compact setpoints, pairing/authentication changes, background driving, mixed-axis controls and sensor driving are outside v1.</p>
+Specification PR #95 contains planning Markdown only; the button controller lands in a stacked implementation PR under <code>apps/iphone/</code>. Neither publishes hosting, runs device/network tests or changes firmware. Native iOS build/signing, Wi-Fi diagnostics, station mode, BLE credential provisioning (Q21), compact setpoints, pairing/authentication changes, background driving, mixed-axis controls and sensor driving are outside v1.</p>
 <h2 id="openspec--changes--add-iphone-ble-client--proposal--proposal-acceptance">Proposal acceptance</h2><p>
-<strong>DRAFT — not accepted for implementation.</strong> Todor selected Bluefy web delivery, button-first control with later sensor alternatives, and confirmed phone payload support. Those decisions refine the proposal; they do not accept the complete revised contract or its implementation. Task 1.1 remains unchecked until Todor explicitly accepts this concrete proposal under the <a href="../docs/SPECIFICATION.md#workflow-and-gates">product gates</a>. Documentation merge alone is insufficient. Physical runs need their own announced batch and Todor's go.</p>
+<strong>Accepted for button-based implementation (2026-10-20).</strong> In this conversation Todor answered the explicit proposal question with: “Accept proposal and implement buttons”. This accepts the revised Bluefy requirements in PR #95 at <code>b80e673a085d84c6d6dcd87c031194b5e7912bf4</code>, with accelerometer control deferred. Task 1.1 records that evidence. Product/phone/wheel acceptance remains pending; no deployment or physical test is claimed or authorized by this record. Parent retains merge coordination. Implementation proceeds on the stacked <code>feat/iphone-ble-web</code> branch.</p>
 <p>
-Review the <a href="#openspec--changes--add-iphone-ble-client--design">design/OPEN questions</a>, <a href="#openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec">requirements</a>, <a href="#openspec--changes--add-iphone-ble-client--tasks">tasks</a> and <a href="#openspec--changes--add-iphone-ble-client--verification">verification map</a>. No implementation or physical acceptance task is complete.</p>
+Review the <a href="#openspec--changes--add-iphone-ble-client--design">design/OPEN questions</a>, <a href="#openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec">requirements</a>, <a href="#openspec--changes--add-iphone-ble-client--tasks">tasks</a> and <a href="#openspec--changes--add-iphone-ble-client--verification">verification map</a>. Implementation progress and evidence are tracked there; physical acceptance remains pending.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/proposal.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal--m6-low-level-four-wheel-api">M6: low-level four-wheel API</h1><p>

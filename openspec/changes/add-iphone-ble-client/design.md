@@ -9,7 +9,7 @@ See [proposal](proposal.md) for the selected scope and acceptance gate. The acce
 * Linux only; no Mac or paid Apple Developer membership; avoid a subscription.
 * Target a web controller opened in Bluefy on iPhone.
 * Phone supports the 72-byte payload (Todor's confirmation, not a new measured app/board result).
-* Six press-and-hold buttons first; allow a later accelerometer-based input without changing the device API or bypassing safety policy. Full proposal implementation acceptance is still pending.
+* Six press-and-hold buttons first; allow a later accelerometer-based input without changing the device API or bypassing safety policy. Todor then explicitly accepted the revised proposal for button implementation; see [acceptance record](proposal.md#proposal-acceptance).
 
 ### Existing protocol evidence
 
@@ -29,7 +29,7 @@ Inspected at main `1be50b3`; no protocol change is proposed.
 
 **Goals:** Linux-authorable static controller, one foreground phone session, button-first operation, testable codecs/session policy and separate browser/radio/wheel evidence.
 
-**Non-Goals:** native app/scaffold/signing, sensor driving in v1, firmware/security changes, station mode, background driving, automatic recovery, calibration or measured speed. This draft creates no runtime or hosted site.
+**Non-Goals:** native app/scaffold/signing, sensor driving in v1, firmware/security changes, station mode, background driving, automatic recovery, calibration or measured speed. No hosted site is published by this change until task 3.2.
 
 ## Decisions
 
@@ -86,7 +86,7 @@ Suspension/termination may prevent any cleanup. Firmware lease/window handling r
 | I3 — Q19 full workload | P2 measures 60 s at 20 Hz with Status reads and zero ARM/STOP: no lease expiry, >=200 ms submission gap or one-second control/read timeout. Record connection interval only if measured. Failure requires reviewed changes, not silently relaxed bounds. | Phone acceptance and motor batch; BlueZ results do not pass it. |
 | I4 — lifecycle/accessibility verification | Button-first interaction is selected. P3 verifies actual touch, text/accessibility, blur/hidden/lock/interruption behavior and no background renewal of motion. Missing host signals must still produce expiry/lease fallback; persistent hidden motion fails support. | UI/phone acceptance, not the selected button layout. |
 
-Full revised proposal acceptance is pending. Unmeasured browser/hardware results cannot count as passed acceptance; see [verification](verification.md).
+Button implementation is authorized by the [acceptance record](proposal.md#proposal-acceptance); physical/product acceptance remains pending. Unmeasured browser/hardware results cannot count as passed acceptance; see [verification](verification.md).
 
 ## Risks / Trade-offs
 

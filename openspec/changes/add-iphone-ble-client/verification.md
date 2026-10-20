@@ -1,8 +1,8 @@
 # iPhone BLE web controller verification map
 
-**Planning evidence only (2026-10-20).** No runtime or deployment exists in this change; no Linux app tests, Bluefy/phone checks or wheel acceptance have passed. Todor selected Linux/Bluefy/no subscription, confirmed phone 72-byte support and chose buttons first with sensor alternatives later. These are scope/user evidence, not newly measured browser/firmware results or full proposal acceptance. All [tasks](tasks.md) remain unchecked.
+**Linux evidence recorded (2026-10-20); phone evidence pending.** H1–H5 pass on Linux under [`apps/iphone`](../../../apps/iphone/README.md) and in CI. No Bluefy/phone, deployment or wheel check has run. Todor's phone 72-byte confirmation is user evidence, not a measurement. [Tasks](tasks.md) record which gates are closed.
 
-## Linux host and browser evidence planned
+## Linux host and browser evidence
 
 | ID | Test boundary and completion evidence |
 | --- | --- |
@@ -16,7 +16,7 @@ Linux browser tests and fake clocks establish software decisions, not Bluefy/nat
 
 ## Requirement and scenario coverage
 
-Each row covers every scenario under the named [requirement](specs/iphone-ble-teleoperation/spec.md); H/P IDs are planned evidence, not tests already implemented.
+Each row covers every scenario under the named [requirement](specs/iphone-ble-teleoperation/spec.md); H IDs are implemented Linux tests; P IDs are planned phone/board evidence.
 
 | Requirement | Linux host/browser | Phone/board evidence |
 | --- | --- | --- |
