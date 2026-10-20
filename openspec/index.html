@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>95</b> requirements</div><div><b>170</b> scenarios</div><div><b>19 / 28</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>95</b> requirements</div><div><b>170</b> scenarios</div><div><b>26 / 28</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Laptop UDP teleoperation</h2>
       <div class="notice"><p>
 <strong>Status:</strong> laptop implementation accepted 2026-10-20. Todor selected “Laptop teleoperation client” in response to the post-M6 scope question, after the concrete proposal in #89 was presented. Proceed with the proposed client and laptop validation; firmware changes, flashes and motor runs remain excluded. Every board batch still needs a separate announced go.</p>
@@ -2211,7 +2211,7 @@ See the <a href="#openspec--changes--add-laptop-teleoperation--proposal">proposa
 <strong>Goal:</strong> one small Linux terminal client whose policy can be tested with injected time and socket/terminal boundaries. <strong>Non-goals:</strong> a client framework, configurable bindings/speeds, multi-axis mixing, runtime firmware changes, station networking or proof of physical velocity/stopping distance.</p>
 <h2 id="openspec--changes--add-laptop-teleoperation--design--decisions">Decisions</h2><ul>
 <li>
-Use Python’s standard library (<code>socket</code>, <code>selectors</code>, terminal facilities, monotonic time), invoked from the repository as <code>python3 -m apps.teleop --target HOST:PORT</code>. No new runtime dependency or global installation. A browser UI or gamepad adds another input/runtime boundary without being needed for this first interface.</li>
+Use Python’s standard library (<code>socket</code>, <code>select</code>, terminal facilities, monotonic time), invoked from the repository as <code>python3 -m apps.teleop --target HOST:PORT</code>. No new runtime dependency or global installation. A browser UI or gamepad adds another input/runtime boundary without being needed for this first interface.</li>
 <li>
 Keep policy separate from terminal/socket effects: a current intent, expiry, local arm gate and pending request deadlines. A single event loop handles input/replies before a 50 ms stream tick; no thread or command queue. Reject leases below 200 ms rather than promise a faster supported host cadence. A 200 ms scheduling gap fails closed; this is host policy, not a measured wheel-stop bound.</li>
 <li>
@@ -2357,27 +2357,27 @@ Todor selected this laptop scope on 2026-10-20. Nothing here authorizes a flash 
 </ul>
 <h2 id="openspec--changes--add-laptop-teleoperation--tasks--2-codec-and-client-boundaries">2. Codec and client boundaries</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.1 Extract the existing Python payload codec into one shared location with a compatibility import at its current path. Run the existing 23 codec/log/latency tests, bench tests and UDP scenarios unchanged; document the shared import and confirm no runtime dependency is added.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.1 Extract the existing Python payload codec into one shared location with a compatibility import at its current path. Run the existing 23 codec/log/latency tests, bench tests and UDP scenarios unchanged; document the shared import and confirm no runtime dependency is added. <strong>Done:</strong> <code>apps/client/wire.py</code> is canonical, with the previous path re-exporting it; all 23 existing Python tests, 40 bench tests and 14 UDP scenarios pass.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Implement framed UDP parsing, capability validation, session/peer/request correlation and bounded handshake. Add tests for malformed/truncated payloads, BUSY, unsupported leases, wrong sources/sessions, unsolicited Status and request-sequence wrap; verify no input in these cases can arm or emit nonzero output.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.2 Implement framed UDP parsing, capability validation, session/peer/request correlation and bounded handshake. Add tests for malformed/truncated payloads, BUSY, unsupported leases, wrong sources/sessions, unsolicited Status and request-sequence wrap; verify no input in these cases can arm or emit nonzero output.</li>
 </ul>
 <h2 id="openspec--changes--add-laptop-teleoperation--tasks--3-interactive-motion-policy">3. Interactive motion policy</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Implement the pure clock-driven intent/arming/stop policy test-first. Verify all six signs, smaller/zero limits, explicit R at zero, no queued motion after arm/STOP, exact 250 ms expiry, key repeats and the 200 ms scheduler-gap failure. Document input pulse/renewal semantics with the key map.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.1 Implement the pure clock-driven intent/arming/stop policy test-first. Verify all six signs, smaller/zero limits, explicit R at zero, no queued motion after arm/STOP, exact 250 ms expiry, key repeats and the 200 ms scheduler-gap failure. Document input pulse/renewal semantics with the key map.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Add the Linux terminal/event loop, periodic zeros/setpoints and independent Echo/control deadlines. Use a pseudo-terminal and fake UDP peer to verify missing replies, socket/terminal loss, queued stopped-before-Armed replies and no HELLO/ARM retry. Verify cleanup deadline and terminal restoration even when individual sends fail.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.2 Add the Linux terminal/event loop, periodic zeros/setpoints and independent Echo/control deadlines. Use a pseudo-terminal and fake UDP peer to verify missing replies, socket/terminal loss, queued stopped-before-Armed replies and no HELLO/ARM retry. Verify cleanup deadline and terminal restoration even when individual sends fail.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.3 Present local state, last-reported Status/reply age, session, limits and requested motion. Test output so Echo does not refresh Status age and neither measured speed nor confirmed stop/release is invented. Add a runnable command/help page.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.3 Present local state, last-reported Status/reply age, session, limits and requested motion. Test output so Echo does not refresh Status age and neither measured speed nor confirmed stop/release is invented. Add a runnable command/help page.</li>
 </ul>
 <h2 id="openspec--changes--add-laptop-teleoperation--tasks--4-laptop-integration-and-ci">4. Laptop integration and CI</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 4.1 Exercise the real client/PTY against the product simulator: startup idle, explicit arm, six directions, input expiry, Space latch/re-arm, quit and killed/lost peer. Confirm zero outputs before arm and after expiry/fault, one claim only, and no automatic recovery. Add client tests to existing CI without removing M6 checks.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.1 Exercise the real client/PTY against the product simulator: startup idle, explicit arm, six directions, input expiry, Space latch/re-arm, quit and killed/lost peer. Confirm zero outputs before arm and after expiry/fault, one claim only, and no automatic recovery. Add client tests to existing CI without removing M6 checks.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 4.2 Run relevant Python suites, UDP scenarios, strict OpenSpec/reader checks and authored-file whitespace checks. Replace every planned verification row with actual test/evidence names; review the user command against the README.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.2 Run relevant Python suites, UDP scenarios, strict OpenSpec/reader checks and authored-file whitespace checks. Replace every planned verification row with actual test/evidence names; review the user command against the README. <strong>Done:</strong> 31 client tests pass; shared codec compatibility passed 23 existing Python tests, 40 bench tests and 14 UDP scenarios. Strict active/baseline/archive validation, all six reader tests/freshness, compilation and whitespace checks pass; 28 mapped test names and 86 local documentation links resolve. <code>python3 -m apps.teleop --help</code> runs as documented.</li>
 </ul>
 <h2 id="openspec--changes--add-laptop-teleoperation--tasks--5-separately-authorized-board-acceptance">5. Separately authorized board acceptance</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Prepare a concrete gentle stand sequence and await Todor’s separate go. Test the normal installed firmware without flashing: startup still, arm at zero, six short directions, input expiry, Space, explicit re-arm and quit; verify protocol/serial assertions and Todor’s wheel observations separately. Restore any changed laptop network/capture state. No board run belongs to task 4.</li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Prepare a concrete gentle stand sequence and await Todor’s separate go. Test the normal installed firmware without flashing: startup still, arm at zero, six short directions, input expiry, Space, explicit re-arm and quit; verify protocol/serial assertions and Todor’s wheel observations separately. Restore any changed laptop network/capture state. No board run belongs to task 4. <strong>Prepared, not run:</strong> <a href="../firmware/bench/LAPTOP-TELEOP.md">one-minute stand procedure</a>; waiting for a separate go.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 5.2 Reconcile product evidence with the requirements, record scoped acceptance and update PLAN/usage documentation. Preserve M6 measurement deferrals and do not claim loaded/floor performance or measured stop bounds.</li>
 </ul>
@@ -2441,15 +2441,27 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 </ul>
 </section><section class="document" id="openspec--changes--add-laptop-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-teleoperation/verification.md</div></header>
-    <h1 id="openspec--changes--add-laptop-teleoperation--verification--laptop-teleoperation-verification-plan">Laptop teleoperation verification plan</h1><p>
-<strong>Planned only:</strong> the client and these tests do not exist yet. This draft does not claim a passing test, a physical run or accepted post-M6 scope. Every row is conditional on task 1.1. Requirement links refer to the <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec">proposed contract</a>.</p>
+    <h1 id="openspec--changes--add-laptop-teleoperation--verification--laptop-teleoperation-verification">Laptop teleoperation verification</h1><p>
+<strong>Host implementation verified, 2026-10-20; physical application acceptance pending.</strong>
+Todor selected laptop teleoperation after #89 presented the scope. The client,
+shared codecs and tests now exist. Tasks 5.1/5.2 remain unchecked: no board run
+or physical result is inferred from the laptop checks.</p>
+<p>
+Run from the repository root:</p>
+<pre><code class="language-sh">python3 -m unittest discover -s apps/teleop/tests -t . -v
+</code></pre>
+<p>
+31 client tests cover protocol/policy assertions, real pseudo-terminals and
+fake peers, and the real client against the product simulator. Existing codec
+compatibility passed 23 Python tests, 40 bench tests and 14 UDP scenarios.
+These are host results, not electrical or radio qualification.</p>
 <table>
 <thead>
 <tr>
 <th>
 Requirement</th>
 <th>
-Planned completion evidence</th>
+Actual host evidence</th>
 <th>
 Task</th>
 </tr>
@@ -2459,7 +2471,7 @@ Task</th>
 <td>
 <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-explicit-connection-without-motion">Explicit connection without motion</a></td>
 <td>
-Fake peer/PTY verifies valid HELLO, nonzero session, finite geometry/limits, window bounds, BUSY/timeout/unsupported lease, and no ARM/nonzero output before operator action.</td>
+<code>ProtocolTests.test_handshake_is_single_and_validates_caps</code>, <code>test_invalid_floats_and_window_bounds_are_refused</code>, <code>test_busy_and_zero_session_fail</code>, <code>test_invalid_frames_do_not_refresh_deadline</code>; <code>TerminalTests.test_non_tty_and_invalid_target_never_connect</code> checks no extra claim. The startup part of <code>test_real_cli_start_arm_expiry_space_rearm_and_restore</code> observes zero/no ARM before R.</td>
 <td>
 2.2, 4.1</td>
 </tr>
@@ -2467,7 +2479,7 @@ Fake peer/PTY verifies valid HELLO, nonzero session, finite geometry/limits, win
 <td>
 <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-explicit-arm-and-stop-latch">Explicit arm and stop latch</a></td>
 <td>
-Injected policy events and socket replies prove zero-before-ARM, matching Armed acknowledgement, no implicit re-arm and no remembered direction after R.</td>
+<code>PolicyTests.test_no_implicit_arm_and_new_direction_after_arm</code>, <code>test_reported_stop_and_errors_cancel_motion</code>; real CLI Space latch/re-arm in <code>TerminalTests.test_real_cli_start_arm_expiry_space_rearm_and_restore</code>.</td>
 <td>
 3.1, 3.2, 4.1</td>
 </tr>
@@ -2475,7 +2487,7 @@ Injected policy events and socket replies prove zero-before-ARM, matching Armed 
 <td>
 <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-gentle-planar-directions">Gentle planar directions</a></td>
 <td>
-Decode all six emitted CDR vectors: one axis, expected sign, clamp to smaller/zero capabilities, unused components zero; compare simulator wheel signs.</td>
+<code>PolicyTests.test_all_six_signs_and_latest_only</code>, <code>test_zero_and_smaller_limits</code>; <code>SimulatorTests.test_six_directions_expiry_stop_latch_and_cleanup</code> checks all six actual simulator wheel-sign patterns.</td>
 <td>
 3.1, 4.1</td>
 </tr>
@@ -2483,7 +2495,7 @@ Decode all six emitted CDR vectors: one axis, expected sign, clamp to smaller/ze
 <td>
 <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-input-expiry-and-latest-intent">Input expiry and latest intent</a></td>
 <td>
-Injected clock at expiry−1, expiry and expiry+1; repeat/unknown keys, buffered input, Space/quit priority and no motion replay.</td>
+<code>PolicyTests.test_expiry_boundary_repeat_and_unrelated_keys</code>, <code>test_stop_and_quit_dominate_batch_and_clear_arm</code>; simulator integration checks zero after every input expiry.</td>
 <td>
 3.1, 3.2</td>
 </tr>
@@ -2491,7 +2503,7 @@ Injected clock at expiry−1, expiry and expiry+1; repeat/unknown keys, buffered
 <td>
 <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-periodic-stream-and-scheduling-failure">Periodic stream and scheduling failure</a></td>
 <td>
-Controlled scheduler checks 50 ms sends and wrapping setpoint sequences; 200 ms gap emits no catch-up motion and exits through cleanup.</td>
+<code>PolicyTests.test_loop_gap_boundary_fails_without_catchup</code>, <code>ProtocolTests.test_sequence_wrap_and_control_timeout</code>; <code>TerminalTests.test_stalled_process_discards_buffered_motion_on_resume</code> suspends the actual process, queues W and verifies no motion replay. The client schedules 50 ms ticks; simulator expiry and session survival exercise the real stream.</td>
 <td>
 3.1, 3.2</td>
 </tr>
@@ -2499,7 +2511,7 @@ Controlled scheduler checks 50 ms sends and wrapping setpoint sequences; 200 ms 
 <td>
 <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-validate-and-correlate-device-input">Validate and correlate device input</a></td>
 <td>
-Wrong peer/session/sequence, malformed/unknown Status, unsolicited stop interleaved with ARM; stopped notification cancels pending ARM so a late reply cannot re-enable local motion.</td>
+<code>ProtocolTests.test_control_correlation_stop_cancels_pending_arm</code>, <code>test_bad_status_cannot_enable</code>; <code>RuntimeTests.test_wrong_endpoint_cannot_arm</code> and <code>TerminalTests.test_stop_before_arm_reply_needs_new_operator_arm</code>.</td>
 <td>
 2.2, 3.2</td>
 </tr>
@@ -2507,7 +2519,7 @@ Wrong peer/session/sequence, malformed/unknown Status, unsolicited stop interlea
 <td>
 <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-link-checks-without-automatic-recovery">Link checks without automatic recovery</a></td>
 <td>
-Fake peer drops/delays Echo and control replies; terminal/socket failure; at expiry intent clears, no new claim/re-arm, and Echo never proves ownership. Repeat with a killed simulator.</td>
+<code>ProtocolTests.test_echo_nonce_session_and_age_are_independent</code>; <code>TerminalTests.test_lost_echo_exits_and_restores_without_reclaim</code>, <code>test_missing_arm_reply_fails_without_nonzero</code>; <code>SimulatorTests.test_killed_simulator_ends_client_without_reconnect</code> kills an armed/driving simulator and observes client failure.</td>
 <td>
 3.2, 4.1</td>
 </tr>
@@ -2515,7 +2527,7 @@ Fake peer drops/delays Echo and control replies; terminal/socket failure; at exp
 <td>
 <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-bounded-shutdown-and-honest-reporting">Bounded shutdown and honest reporting</a></td>
 <td>
-PTY tests Space, Esc, Ctrl-C, EOF and each send failure; zero/STOP/BYE attempts bounded to 500 ms, terminal restored, missing STOP acknowledgement and unconfirmed BYE labelled accurately.</td>
+<code>RuntimeTests.test_cleanup_attempts_every_send_despite_failures</code>, <code>test_cleanup_only_accepts_matching_stop_ack</code>, <code>test_unconfirmed_handshake_still_attempts_session_zero_cleanup</code>; PTY tests verify normal/Ctrl-C/SIGTERM restoration and terminal-hangup STOP/BYE. The session-zero cleanup test failed before the early-return fix.</td>
 <td>
 3.2, 4.1</td>
 </tr>
@@ -2523,14 +2535,26 @@ PTY tests Space, Esc, Ctrl-C, EOF and each send failure; zero/STOP/BYE attempts 
 <td>
 <a href="#openspec--changes--add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-observable-commands-and-evidence-limits">Observable commands and evidence limits</a></td>
 <td>
-Output fixtures keep local versus reported state and independent ages distinct; README labels approximate speeds and best-effort cleanup. Physical observations recorded only after a separate go.</td>
+<code>RuntimeTests.test_echo_does_not_refresh_status_age</code>; output and the <a href="../apps/teleop/README.md">usage guide</a> distinguish local versus last-reported state, approximate requested speed and unconfirmed BYE.</td>
 <td>
-3.3, 5.1, 5.2</td>
+3.3; physical 5.1/5.2 pending</td>
 </tr>
 </tbody>
 </table>
 <p>
-Simulator/PTY evidence proves client and protocol behavior only. The separate stand batch checks actual directions, still startup, expiry/STOP and cleanup observations; it does not electrically qualify coast/STBY, measure temperature/current or prove floor control. M6’s <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--task-52-disposition">explicit deferrals</a> remain unchanged.</p>
+Test sources: <a href="../apps/teleop/tests/test_protocol.py">protocol</a>,
+<a href="../apps/teleop/tests/test_policy.py">policy</a>,
+<a href="../apps/teleop/tests/test_runtime.py">runtime</a>,
+<a href="../apps/teleop/tests/test_terminal.py">terminal</a>,
+<a href="../apps/teleop/tests/test_simulator.py">simulator</a>.</p>
+<h2 id="openspec--changes--add-laptop-teleoperation--verification--physical-acceptance-still-pending">Physical acceptance still pending</h2><p>
+The <a href="../firmware/bench/LAPTOP-TELEOP.md">announced stand procedure</a> is
+prepared, not authorized or run. It checks startup stillness, actual directions,
+expiry/Space/final stops and explicit re-arm on the installed normal firmware.
+A fresh go and Todor’s physical observations are required. M6’s <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--task-52-disposition">measurement
+deferrals</a>
+remain unchanged; no electrical coast/STBY, current, temperature margin or
+loaded/floor result is claimed.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/verification.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/verification.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--m6-verification-map">M6 verification map</h1><p>
@@ -3080,6 +3104,13 @@ Product implementation requires explicit proposal acceptance per <a href="../doc
 </ul>
 <h2 id="openspec--changes--add-laptop-teleoperation--proposal--scope-choice">Scope choice</h2><p>
 Todor selected laptop UDP teleoperation on 2026-10-20. The proposed keys, gentle defaults and bounded-input policy define this reversible first client; Q9 and Q21 remain separate future work.</p>
+<h2 id="openspec--changes--add-laptop-teleoperation--proposal--implementation-progress">Implementation progress</h2><p>
+The laptop client is implemented under <code>apps/teleop</code>, using shared <code>apps/client</code>
+payload codecs with the former import path preserved. Host protocol/policy,
+pseudo-terminal, fake-peer and product-simulator tests are linked in the
+<a href="#openspec--changes--add-laptop-teleoperation--verification">verification map</a>. CI includes the client suite. The separate
+stand procedure is prepared but has not run; no physical application acceptance,
+new measurement, firmware change or flash is claimed.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/proposal.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal--m6-low-level-four-wheel-api">M6: low-level four-wheel API</h1><p>

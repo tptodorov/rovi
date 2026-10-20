@@ -32,3 +32,12 @@ None. The client consumes [car-control-api](../../specs/car-control-api/spec.md)
 ## Scope choice
 
 Todor selected laptop UDP teleoperation on 2026-10-20. The proposed keys, gentle defaults and bounded-input policy define this reversible first client; Q9 and Q21 remain separate future work.
+
+## Implementation progress
+
+The laptop client is implemented under `apps/teleop`, using shared `apps/client`
+payload codecs with the former import path preserved. Host protocol/policy,
+pseudo-terminal, fake-peer and product-simulator tests are linked in the
+[verification map](verification.md). CI includes the client suite. The separate
+stand procedure is prepared but has not run; no physical application acceptance,
+new measurement, firmware change or flash is claimed.
