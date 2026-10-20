@@ -8,6 +8,7 @@ pkgs.mkShell {
     pkgs.espup
     pkgs.ffmpeg
     pkgs.go-task
+    pkgs.iw
     pkgs.probe-rs-tools
     (pkgs.python3.withPackages (p: [
       p.bleak
