@@ -1,8 +1,9 @@
-## Purpose
+# motor-control Specification
 
+## Purpose
 Controls four motor channels independently with explicit enable, standby, duty mapping and fault behavior, without depending on device kinematics or transports.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Four independent wheel commands
 
@@ -83,7 +84,7 @@ Wheel command 1.0 SHALL map to the configured maximum PWM duty, enforced indepen
 
 ### Requirement: Zero command behaviour
 
-A zero wheel command SHALL request coast for that wheel without disabling a driven neighbour on the same driver. On the TB6612, this SHALL use IN1=IN2=low and PWM=high while STBY is high. A safety stop SHALL instead deassert both drivers' STBY inputs. Coast distance is not measured or claimed (O5). Source: Toshiba [H-SW table, page 4](../../../../../docs/reference/tb6612fng/datasheet.pdf).
+A zero wheel command SHALL request coast for that wheel without disabling a driven neighbour on the same driver. On the TB6612, this SHALL use IN1=IN2=low and PWM=high while STBY is high. A safety stop SHALL instead deassert both drivers' STBY inputs. Coast distance is not measured or claimed (O5). Source: Toshiba [H-SW table, page 4](../../../docs/reference/tb6612fng/datasheet.pdf).
 
 #### Scenario: Zero coasts a turning wheel
 

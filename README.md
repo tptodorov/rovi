@@ -59,7 +59,7 @@ Never assume a wiring diagram, schematic, or PCB layout targets bare chips. Ask 
 
 #### Product code
 
-The M6 layout follows its [design](openspec/changes/add-four-wheel-api/design.md#package-boundaries). Host builds and the sim car are development evidence only ([ADR-0002](docs/adr/0002-simulation-never-proves-hardware.md)). M6 has a [scoped acceptance record](openspec/changes/add-four-wheel-api/verification.md#acceptance-review-task-53); M4/M5/M8 remain frozen comparison/rollback references.
+The M6 layout follows its [design](openspec/changes/archive/2026-10-20-add-four-wheel-api/design.md#package-boundaries). Host builds and the sim car are development evidence only ([ADR-0002](docs/adr/0002-simulation-never-proves-hardware.md)). M6 has a [scoped acceptance record](openspec/changes/archive/2026-10-20-add-four-wheel-api/verification.md#acceptance-review-task-53); M4/M5/M8 remain frozen comparison/rollback references.
 
 | Path | What | Build and test |
 | --- | --- | --- |
@@ -71,7 +71,7 @@ The M6 layout follows its [design](openspec/changes/add-four-wheel-api/design.md
 | `firmware` | ESP32-S3 firmware; own lockfile, `esp` toolchain | `ROVI_WIFI_PASSWORD=… cargo build --locked --release --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc`; add `--features ros` with `CARGO_TARGET_DIR=target/ros` to keep both builds |
 
 The product GPIO/profile binding and its schematic comparison are recorded in the
-[motor mapping check](firmware/MOTOR-MAPPING.md). The [board results and deferrals](openspec/changes/add-four-wheel-api/verification.md#physical-evidence-and-deferrals)
+[motor mapping check](firmware/MOTOR-MAPPING.md). The [board results and deferrals](openspec/changes/archive/2026-10-20-add-four-wheel-api/verification.md#physical-evidence-and-deferrals)
 record the confirmed stops, radios, directions, resets, lease timing, reversals and
 five-minute stand endurance. Coast/STBY pin levels, electrical duty/deadband and
 coast with a driven neighbour remain physically unverified by Todor's decision.
@@ -89,7 +89,7 @@ procedures for their recorded sequences and cleanup.
 ##### ROS capabilities
 
 The product publishes `/rovi/capabilities` (`std_msgs/String`) before any claim, with the
-[nine keys and units](openspec/changes/add-four-wheel-api/specs/car-control-api/spec.md#requirement-capabilities-encoding).
+[nine keys and units](openspec/specs/car-control-api/spec.md#requirement-capabilities-encoding).
 Use **reliable, volatile, keep-last depth 1**; retained history is unavailable with the pinned
 client ([O9 evidence](apps/simcar/scenarios/evidence/2026-10-17-capabilities/README.md)).
 Capabilities repeat every 900 ms and on claim, release and router reconnect. Reading them does not claim the car.
