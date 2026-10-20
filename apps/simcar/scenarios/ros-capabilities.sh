@@ -9,7 +9,7 @@ log=${ROVI_CAPABILITIES_LOG:-/tmp/rovi-capabilities-sim.log}
 docker build -q -t rovi-ros-sim "$here" >/dev/null
 # Host networking lets the ROS observer use the host's UDP simulator despite bridge firewall
 # rules. A dedicated loopback router port keeps this separate from a bench router on 7447.
-docker run -d --rm --name "$name" --net host -v "$here:/scenarios:ro" -v "$log:$log:ro" rovi-ros-sim \
+docker run -d --rm --name "$name" --net host -v "$here:/repo/apps/simcar/scenarios:ro" -v "$here/../../client:/repo/apps/client:ro" -v "$log:$log:ro" rovi-ros-sim \
   bash -c 'set -e
     source /opt/ros/jazzy/setup.bash
     cfg=/opt/ros/jazzy/share/rmw_zenoh_cpp/config
@@ -30,7 +30,7 @@ wait_link() {
 probe() {
   docker exec -e ROVI_TARGET=127.0.0.1:17794 -e ROVI_CARLOG="$log" \
     -e ZENOH_SESSION_CONFIG_URI=/tmp/session.json5 "$name" \
-    bash -c 'source /opt/ros/jazzy/setup.bash && python3 /scenarios/ros_capabilities.py && python3 /scenarios/ros_status.py'
+    bash -c 'source /opt/ros/jazzy/setup.bash && python3 /repo/apps/simcar/scenarios/ros_capabilities.py && python3 /repo/apps/simcar/scenarios/ros_status.py'
 }
 wait_link 1
 sleep 2 # subscriber starts after initial publication

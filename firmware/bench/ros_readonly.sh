@@ -24,7 +24,7 @@ offset=$(stat -c %s "$log")
 initial_offset=$offset
 docker build -q -t rovi-ros-sim "$scenarios" >/dev/null
 docker run -d --rm --name "$name" --net host \
-  -e ROVI_ROUTER_PORT="$port" -v "$scenarios:/scenarios:ro" -v "$log:$log:ro" \
+  -e ROVI_ROUTER_PORT="$port" -v "$scenarios:/repo/apps/simcar/scenarios:ro" -v "$root/apps/client:/repo/apps/client:ro" -v "$log:$log:ro" \
   rovi-ros-sim bash -c 'set -e
     source /opt/ros/jazzy/setup.bash
     cfg=/opt/ros/jazzy/share/rmw_zenoh_cpp/config
@@ -44,8 +44,8 @@ PY
   docker exec -e ROVI_TARGET="$ROVI_TARGET" -e ROVI_CARLOG="$log" \
     -e ZENOH_SESSION_CONFIG_URI=/tmp/session.json5 "$name" \
     bash -c 'set -e; source /opt/ros/jazzy/setup.bash
-      python3 /scenarios/ros_capabilities.py
-      python3 /scenarios/ros_status.py'
+      python3 /repo/apps/simcar/scenarios/ros_capabilities.py
+      python3 /repo/apps/simcar/scenarios/ros_status.py'
   if [ "$stage" = initial ]; then
     offset=$(stat -c %s "$log")
     docker restart "$name" >/dev/null
