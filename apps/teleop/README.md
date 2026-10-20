@@ -56,5 +56,8 @@ python3 -m unittest discover -s apps/teleop/tests -t . -v
 ```
 
 Tests use loopback UDP peers, pseudo-terminals and the product simulator. They do
-not contact the rover. Physical application acceptance is pending under the
-[separately announced stand procedure](../../firmware/bench/LAPTOP-TELEOP.md).
+not contact the rover. The separately authorized [stand batch](../../firmware/bench/2026-10-20-laptop-teleop/notes.md)
+passed on 2026-10-20 with Todor’s physical confirmation: six directions,
+input-expiry/Space/quit stops, explicit re-arm and startup/unarmed stillness.
+This accepts the application on the stand; loaded/floor use and electrical or
+physical timing measurements remain outside this evidence.

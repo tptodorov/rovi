@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>95</b> requirements</div><div><b>170</b> scenarios</div><div><b>26 / 28</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>95</b> requirements</div><div><b>170</b> scenarios</div><div><b>28 / 28</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Laptop UDP teleoperation</h2>
       <div class="notice"><p>
 <strong>Status:</strong> laptop implementation accepted 2026-10-20. Todor selected “Laptop teleoperation client” in response to the post-M6 scope question, after the concrete proposal in #89 was presented. Proceed with the proposed client and laptop validation; firmware changes, flashes and motor runs remain excluded. Every board batch still needs a separate announced go.</p>
@@ -2377,9 +2377,9 @@ Todor selected this laptop scope on 2026-10-20. Nothing here authorizes a flash 
 </ul>
 <h2 id="openspec--changes--add-laptop-teleoperation--tasks--5-separately-authorized-board-acceptance">5. Separately authorized board acceptance</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Prepare a concrete gentle stand sequence and await Todor’s separate go. Test the normal installed firmware without flashing: startup still, arm at zero, six short directions, input expiry, Space, explicit re-arm and quit; verify protocol/serial assertions and Todor’s wheel observations separately. Restore any changed laptop network/capture state. No board run belongs to task 4. <strong>Prepared, not run:</strong> <a href="../firmware/bench/LAPTOP-TELEOP.md">one-minute stand procedure</a>; waiting for a separate go.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 5.1 Prepare a concrete gentle stand sequence and await Todor’s separate go. Test the normal installed firmware without flashing: startup still, arm at zero, six short directions, input expiry, Space, explicit re-arm and quit; verify protocol/serial assertions and Todor’s wheel observations separately. Restore any changed laptop network/capture state. No board run belongs to task 4. <strong>Done 2026-10-20:</strong> Todor authorized the announced batch with “go”; the actual terminal client passed every protocol/serial assertion, Wi-Fi/capture cleanup completed, and Todor confirmed all directions, stops and still phases. <a href="../firmware/bench/2026-10-20-laptop-teleop/notes.md">Evidence</a>.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 5.2 Reconcile product evidence with the requirements, record scoped acceptance and update PLAN/usage documentation. Preserve M6 measurement deferrals and do not claim loaded/floor performance or measured stop bounds.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 5.2 Reconcile product evidence with the requirements, record scoped acceptance and update PLAN/usage documentation. Preserve M6 measurement deferrals and do not claim loaded/floor performance or measured stop bounds. <strong>Done 2026-10-20:</strong> scoped stand acceptance recorded in the verification map, PLAN and usage documentation; host failure cases remain backed by their separate tests.</li>
 </ul>
 <h2 id="openspec--changes--add-laptop-teleoperation--tasks--workflow-follow-up">Workflow follow-up</h2><ul>
 <li>
@@ -2442,10 +2442,11 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 </section><section class="document" id="openspec--changes--add-laptop-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-teleoperation--verification--laptop-teleoperation-verification">Laptop teleoperation verification</h1><p>
-<strong>Host implementation verified, 2026-10-20; physical application acceptance pending.</strong>
-Todor selected laptop teleoperation after #89 presented the scope. The client,
-shared codecs and tests now exist. Tasks 5.1/5.2 remain unchecked: no board run
-or physical result is inferred from the laptop checks.</p>
+<strong>Application accepted for supervised stand use, 2026-10-20.</strong>
+Todor selected laptop teleoperation after #89 presented the scope, then separately
+authorized the announced board batch and explicitly confirmed its wheel results.
+Host failure tests and physical observations remain separate evidence. All tasks
+are complete; measurement deferrals and loaded/floor exclusions remain.</p>
 <p>
 Run from the repository root:</p>
 <pre><code class="language-sh">python3 -m unittest discover -s apps/teleop/tests -t . -v
@@ -2537,7 +2538,7 @@ Task</th>
 <td>
 <code>RuntimeTests.test_echo_does_not_refresh_status_age</code>; output and the <a href="../apps/teleop/README.md">usage guide</a> distinguish local versus last-reported state, approximate requested speed and unconfirmed BYE.</td>
 <td>
-3.3; physical 5.1/5.2 pending</td>
+3.3, 5.1, 5.2</td>
 </tr>
 </tbody>
 </table>
@@ -2547,14 +2548,32 @@ Test sources: <a href="../apps/teleop/tests/test_protocol.py">protocol</a>,
 <a href="../apps/teleop/tests/test_runtime.py">runtime</a>,
 <a href="../apps/teleop/tests/test_terminal.py">terminal</a>,
 <a href="../apps/teleop/tests/test_simulator.py">simulator</a>.</p>
-<h2 id="openspec--changes--add-laptop-teleoperation--verification--physical-acceptance-still-pending">Physical acceptance still pending</h2><p>
-The <a href="../firmware/bench/LAPTOP-TELEOP.md">announced stand procedure</a> is
-prepared, not authorized or run. It checks startup stillness, actual directions,
-expiry/Space/final stops and explicit re-arm on the installed normal firmware.
-A fresh go and Todor’s physical observations are required. M6’s <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--task-52-disposition">measurement
+<h2 id="openspec--changes--add-laptop-teleoperation--verification--physical-acceptance--tasks-5152">Physical acceptance — tasks 5.1/5.2</h2><p>
+The separately authorized <a href="../firmware/bench/2026-10-20-laptop-teleop/notes.md">stand batch</a>
+passed on the installed normal ROS firmware, without flashing. The actual
+terminal client performed five seconds idle, unarmed W, R at zero, six gentle
+directions with input-expiry pauses, forward/Space, unarmed W, explicit re-arm,
+fresh forward and Ctrl-D. Serial confirmed all six wheel patterns, zero at each
+pause, matching control acknowledgements and final STOP/release/Open. Capture
+stopped, previous Wi-Fi was restored and the internet route was unchanged.
+Todor confirmed: <strong>“Yes, all behaved as expected.”</strong> This includes all directions,
+every stop and still wheels through reset/startup and both unarmed checks.</p>
+<p>
+This accepts the implemented application for supervised stand use. Malformed
+packets, refused/missing controls, lost links and scheduling failures remain
+covered by host tests; they were not injected into this physical batch. M6’s <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--task-52-disposition">measurement
 deferrals</a>
 remain unchanged; no electrical coast/STBY, current, temperature margin or
 loaded/floor result is claimed.</p>
+<h2 id="openspec--changes--add-laptop-teleoperation--verification--shared-codec-container-regression">Shared codec container regression</h2><p>
+The first #90 ROS CI run failed because the scenario compatibility import was
+mounted at <code>/scenarios</code> without the extracted <code>apps/client</code> package. The existing
+<code>apps/simcar/scenarios/ros-capabilities.sh</code> test reproduced <code>IndexError: 3</code> locally
+before the fix. All three affected runners now mount scenarios and the shared
+codec in their repository layout inside the container. The same capabilities
+and reconnect test passes, as do <code>ros_readonly.sh</code> and default <code>ros_stops.sh</code>
+against loopback ROS simulators. The 31 client tests pass again. Firmware and
+UDP wire behavior are unchanged.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/verification.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/verification.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--m6-verification-map">M6 verification map</h1><p>
@@ -3096,7 +3115,7 @@ Preserve M6’s firmware, ownership, wire codes, lease and 70% product cap. No i
 None. The client consumes <a href="#openspec--specs--car-control-api--spec">car-control-api</a>; it does not alter that contract or <a href="#openspec--specs--motor-control--spec">motor-control</a>.</p>
 <h2 id="openspec--changes--add-laptop-teleoperation--proposal--impact">Impact</h2><ul>
 <li>
-Planned code: a small standard-library Python client under <code>apps/teleop</code>, a shared codec module, simulator tests and product usage instructions. No additional runtime dependency.</li>
+Code: a small standard-library Python client under <code>apps/teleop</code>, a shared codec module, simulator tests and product usage instructions. No additional runtime dependency.</li>
 <li>
 Existing Python wire-codec callers retain compatibility; Rust/firmware and experimental behavior remain unchanged.</li>
 <li>
@@ -3109,8 +3128,10 @@ The laptop client is implemented under <code>apps/teleop</code>, using shared <c
 payload codecs with the former import path preserved. Host protocol/policy,
 pseudo-terminal, fake-peer and product-simulator tests are linked in the
 <a href="#openspec--changes--add-laptop-teleoperation--verification">verification map</a>. CI includes the client suite. The separate
-stand procedure is prepared but has not run; no physical application acceptance,
-new measurement, firmware change or flash is claimed.</p>
+stand batch passed on 2026-10-20 with Todor’s explicit wheel observations
+(<a href="../firmware/bench/2026-10-20-laptop-teleop/notes.md">evidence</a>). The
+application is accepted for this supervised stand scope; no new measurement,
+firmware change, flash or loaded/floor result is claimed.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/proposal.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal--m6-low-level-four-wheel-api">M6: low-level four-wheel API</h1><p>

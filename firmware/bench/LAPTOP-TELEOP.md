@@ -1,4 +1,6 @@
-# Laptop teleoperation stand check — prepared, not run
+# Laptop teleoperation stand check
+
+Completed 2026-10-20 with Todor’s physical confirmation: [evidence](2026-10-20-laptop-teleop/notes.md). A future run still needs a separate announced go.
 
 Uses the implemented `python3 -m apps.teleop` client and installed normal ROS
 firmware. No flash, router or firewall rule. Opening the serial capture resets

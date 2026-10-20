@@ -24,8 +24,8 @@ Todor selected this laptop scope on 2026-10-20. Nothing here authorizes a flash 
 
 ## 5. Separately authorized board acceptance
 
-- [ ] 5.1 Prepare a concrete gentle stand sequence and await Todor’s separate go. Test the normal installed firmware without flashing: startup still, arm at zero, six short directions, input expiry, Space, explicit re-arm and quit; verify protocol/serial assertions and Todor’s wheel observations separately. Restore any changed laptop network/capture state. No board run belongs to task 4. **Prepared, not run:** [one-minute stand procedure](../../../firmware/bench/LAPTOP-TELEOP.md); waiting for a separate go.
-- [ ] 5.2 Reconcile product evidence with the requirements, record scoped acceptance and update PLAN/usage documentation. Preserve M6 measurement deferrals and do not claim loaded/floor performance or measured stop bounds.
+- [x] 5.1 Prepare a concrete gentle stand sequence and await Todor’s separate go. Test the normal installed firmware without flashing: startup still, arm at zero, six short directions, input expiry, Space, explicit re-arm and quit; verify protocol/serial assertions and Todor’s wheel observations separately. Restore any changed laptop network/capture state. No board run belongs to task 4. **Done 2026-10-20:** Todor authorized the announced batch with “go”; the actual terminal client passed every protocol/serial assertion, Wi-Fi/capture cleanup completed, and Todor confirmed all directions, stops and still phases. [Evidence](../../../firmware/bench/2026-10-20-laptop-teleop/notes.md).
+- [x] 5.2 Reconcile product evidence with the requirements, record scoped acceptance and update PLAN/usage documentation. Preserve M6 measurement deferrals and do not claim loaded/floor performance or measured stop bounds. **Done 2026-10-20:** scoped stand acceptance recorded in the verification map, PLAN and usage documentation; host failure cases remain backed by their separate tests.
 
 ## Workflow follow-up
 

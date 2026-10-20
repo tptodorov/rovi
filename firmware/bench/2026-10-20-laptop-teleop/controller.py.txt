@@ -1,0 +1,70 @@
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import signal
+import subprocess
+import sys
+import time
+root=Path('/home/todor/tptodorov/rovi')
+sys.path.insert(0,str(root))
+from apps.simcar.scenarios.carlog import events
+out=root/'firmware/bench/2026-10-20-laptop-teleop'
+out.mkdir(exist_ok=False)
+serial=Path('/dev/serial/by-id/usb-1a86_USB_Single_Serial_5C85037678-if00')
+def command(args):return subprocess.check_output(['rtk','proxy',*args],text=True).strip()
+assert not subprocess.run(['pgrep','-x','espflash'],stdout=subprocess.DEVNULL).returncode==0,'serial capture already running'
+prior=command(['nmcli','-g','GENERAL.CON-UUID','device','show','wlp1s0f0'])
+assert prior and prior!='--', 'no saved Wi-Fi connection'
+route=command(['ip','route','get','1.1.1.1'])
+identity={'started':datetime.datetime.now(datetime.timezone.utc).isoformat(),'source':command(['git','rev-parse','HEAD']),'prior_wifi_uuid':prior,'route_before':route,'authorization':'Todor: go for announced laptop teleoperation stand batch','firmware':'normal ROS, previously restored source b12cc21; no flash in this batch'}
+image=root/'firmware/target/ros/xtensa-esp32s3-none-elf/release/rovi-firmware'
+identity['local_normal_image_sha256']=hashlib.sha256(image.read_bytes()).hexdigest()
+assert identity['local_normal_image_sha256']=='514ba816d3b6b8b3b2c40ee63e156fd4f07ca9be104cef8246d6e848602c73f3'
+(out/'identity.json').write_text(json.dumps(identity,indent=2)+'\n')
+shutil.copyfile('/tmp/rovi-laptop-teleop-batch.py',out/'driver.py.txt')
+monitor=None;batch=None
+cleanup={}
+try:
+ with (out/'car.log').open('wb') as capture:
+  monitor=subprocess.Popen(['rtk','proxy','espflash','monitor','--port',str(serial),'--non-interactive','--skip-update-check'],stdout=capture,stderr=subprocess.STDOUT,start_new_session=True)
+  end=time.monotonic()+20
+  while not any(e.get('ev')=='boot' for e in events(out/'car.log')):
+   assert monitor.poll() is None,'serial monitor exited'
+   assert time.monotonic()<end,'missing boot'
+   time.sleep(.1)
+  raw=(out/'car.log').read_text(errors='replace')
+  assert 'MOTOR BENCH' not in raw.upper(),'bench image banner'
+  assert not any(e.get('ev') in ('claimed','error','dropped') for e in events(out/'car.log'))
+  print('clean boot captured; joining AP',flush=True)
+  subprocess.run(['rtk','proxy','nmcli','connection','up','id','rovi-m8'],check=True,timeout=30)
+  with (out/'probe.txt').open('wb') as probe:
+   batch=subprocess.Popen(['rtk','proxy','python3','/tmp/rovi-laptop-teleop-batch.py','--target','192.168.4.1:7777','--log',str(out/'car.log'),'--dir',str(out)],stdout=probe,stderr=probe,start_new_session=True)
+   rc=batch.wait(timeout=700)
+   cleanup['batch_exit']=rc
+   print('board batch exit',rc,flush=True)
+except BaseException as exc:
+ cleanup['failure']=repr(exc)
+ print('controller failure',repr(exc),flush=True)
+finally:
+ if batch and batch.poll() is None:
+  os.killpg(batch.pid,signal.SIGTERM)
+  try:batch.wait(timeout=4)
+  except subprocess.TimeoutExpired:os.killpg(batch.pid,signal.SIGKILL);batch.wait(timeout=3)
+ if monitor and monitor.poll() is None:
+  os.killpg(monitor.pid,signal.SIGINT)
+  try:monitor.wait(timeout=4)
+  except subprocess.TimeoutExpired:os.killpg(monitor.pid,signal.SIGTERM);monitor.wait(timeout=3)
+  cleanup['monitor_exit']=monitor.returncode
+ try:
+  cleanup['wifi_restore_exit']=subprocess.run(['rtk','proxy','nmcli','connection','up','uuid',prior],timeout=30).returncode
+  cleanup['wifi_after']=command(['nmcli','-g','GENERAL.CON-UUID','device','show','wlp1s0f0'])
+  cleanup['route_after']=command(['ip','route','get','1.1.1.1'])
+  cleanup['wifi_restored']=cleanup['wifi_after']==prior
+  cleanup['route_unchanged']=cleanup['route_after']==route
+ except Exception as exc:cleanup['network_cleanup_error']=repr(exc)
+ (out/'cleanup.json').write_text(json.dumps(cleanup,indent=2)+'\n')
+ print(json.dumps(cleanup),flush=True)
+ if cleanup.get('batch_exit')!=0 or not cleanup.get('wifi_restored') or not cleanup.get('route_unchanged'):sys.exit(1)

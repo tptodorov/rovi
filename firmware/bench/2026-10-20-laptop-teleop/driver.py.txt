@@ -1,0 +1,115 @@
+"""One authorized batch through the real terminal client; no retries or network changes."""
+import argparse
+import json
+import os
+from pathlib import Path
+import sys
+import time
+sys.path.insert(0, '/home/todor/tptodorov/rovi')
+from apps.teleop.tests.test_terminal import Terminal
+from apps.simcar.scenarios.carlog import events, check
+
+p=argparse.ArgumentParser()
+p.add_argument('--target',required=True)
+p.add_argument('--log',required=True)
+p.add_argument('--dir',required=True)
+a=p.parse_args()
+out=Path(a.dir);out.mkdir(parents=True,exist_ok=True)
+log=Path(a.log)
+host,port=a.target.split(':')
+t=None
+stages=[]
+result={'result':'aborted','physical_observation':'pending','target':a.target,'stages':stages}
+started=time.monotonic()
+
+def mark(name):
+ record={'stage':name,'elapsed_s':round(time.monotonic()-started,3),'serial_offset':log.stat().st_size}
+ stages.append(record)
+ print(json.dumps(record),flush=True)
+ return record['serial_offset']
+
+def signs(e):return tuple((v>0)-(v<0) for v in e.get('wheels_pm',[]))
+def zero(e):return e.get('ev')=='state' and e.get('wheels_pm')==[0,0,0,0]
+
+def pump(seconds):
+ end=time.monotonic()+seconds
+ while time.monotonic()<end:
+  t.read()
+  assert t.proc.poll() is None, f'client exited {t.proc.returncode}: {t.output[-1500:]!r}'
+  assert not any(e.get('ev') in ('error','dropped') for e in events(log)), 'serial fault/drop'
+
+def fresh(pred,offset,timeout=1.5):
+ end=time.monotonic()+timeout
+ while True:
+  found=[e for e in events(log,offset) if pred(e)]
+  if found:return found[-1]
+  assert time.monotonic()<end, f'missing fresh serial event after {offset}: {events(log,offset)[-6:]}'
+  pump(.03)
+
+def text_since(text,offset,timeout=1.5):
+ end=time.monotonic()+timeout
+ while text.encode() not in t.output[offset:]:
+  assert time.monotonic()<end,f'missing fresh client text {text}: {t.output[offset:][-1000:]!r}'
+  pump(.03)
+
+def repeat(key,seconds):
+ end=time.monotonic()+seconds
+ while time.monotonic()<end:
+  t.key(key)
+  pump(min(.1,max(0,end-time.monotonic())))
+
+def assert_still(offset):
+ assert not any(any(e.get('wheels_pm',[])) for e in events(log,offset)), 'nonzero during still phase'
+
+try:
+ t=Terminal((host,int(port)));t.expect('Connected disarmed')
+ offset=mark('startup-idle-5s');pump(5);assert_still(0)
+ offset=mark('unarmed-W-1s');repeat(b'w',1);assert_still(offset)
+ offset=mark('arm-at-zero');client_at=len(t.output);t.key(b'r')
+ fresh(lambda e:e.get('ev')=='state' and e.get('state')=='Armed' and zero(e),offset)
+ text_since('local=armed',client_at);pump(1);assert_still(offset)
+ mark('ready-for-five-second-motion-announcement');(out/'ready').touch()
+ deadline=time.monotonic()+600
+ while not (out/'motion-go').exists():
+  assert time.monotonic()<deadline,'motion announcement gate timed out'
+  pump(.1)
+ mark('five-second-motion-countdown');pump(5)
+ for key,name,want in [(b'w','forward',(1,1,1,1)),(b's','backward',(-1,-1,-1,-1)),(b'a','strafe-left',(-1,1,-1,1)),(b'd','strafe-right',(1,-1,1,-1)),(b'q','rotate-left',(-1,1,1,-1)),(b'e','rotate-right',(1,-1,-1,1))]:
+  offset=mark(name+'-2s');repeat(key,2)
+  fresh(lambda e:e.get('ev')=='state' and signs(e)==want,offset)
+  offset=mark(name+'-input-expiry-1s');pump(1);fresh(zero,offset)
+ offset=mark('forward-before-Space-1s');repeat(b'w',1);fresh(lambda e:signs(e)==(1,1,1,1),offset)
+ offset=mark('Space-stop');client_at=len(t.output);t.key(b' ')
+ text_since('STOP acknowledged',client_at);fresh(zero,offset)
+ fresh(lambda e:e.get('ev')=='stop' and e.get('reason')=='Stop',offset)
+ offset=mark('unarmed-W-after-Space-1s');repeat(b'w',1);assert_still(offset)
+ offset=mark('explicit-rearm-at-zero');client_at=len(t.output);t.key(b'r')
+ fresh(lambda e:e.get('ev')=='state' and e.get('state')=='Armed' and zero(e),offset)
+ text_since('local=armed',client_at);pump(1);assert_still(offset)
+ offset=mark('final-forward-1s');repeat(b'w',1);fresh(lambda e:signs(e)==(1,1,1,1),offset)
+ offset=mark('Ctrl-D-cleanup');client_at=len(t.output)
+ assert t.finish()==0, t.output[-1500:]
+ assert b'Cleanup: STOP acknowledged' in t.output[client_at:]
+ deadline=time.monotonic()+2
+ while not any(e.get('ev')=='released' for e in events(log,offset)):
+  assert time.monotonic()<deadline,'missing serial release'
+  time.sleep(.05)
+ fresh(zero,offset)
+ assert any(e.get('ev')=='stop' and e.get('reason')=='Stop' for e in events(log,offset))
+ assert any(e.get('ev')=='state' and e.get('state')=='Open' and zero(e) for e in events(log,offset))
+ assert sum(e.get('ev')=='claimed' for e in events(log))==1
+ problems,boots,counts=check(log);assert not problems,problems
+ result.update(result='passed-command-and-client-checks',boots=boots,event_counts=dict(counts),client_exit=t.proc.returncode)
+except BaseException as exc:
+ result['failure']=repr(exc)
+ raise
+finally:
+ if t:
+  if t.proc.poll() is None:
+   try:t.finish(b'\x04')
+   except Exception as exc:result['cleanup_exception']=repr(exc)
+  (out/'client.txt').write_bytes(t.output)
+  result['client_exit']=t.proc.poll()
+  t.close()
+ (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+ print(json.dumps(result),flush=True)

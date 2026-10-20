@@ -1,0 +1,9 @@
+{
+  "started": "2026-10-20T10:44:00.954882+00:00",
+  "source": "d5117dbdd3c9bcb92f3e472666410767b9de140d",
+  "prior_wifi_uuid": "855b50c6-388f-428e-99f6-d6d07db30aa8",
+  "route_before": "1.1.1.1 via 192.168.1.1 dev enp0s20f0u3u3 src 192.168.1.148 uid 1000 \n    cache",
+  "authorization": "Todor: go for announced laptop teleoperation stand batch",
+  "firmware": "normal ROS, previously restored source b12cc21; no flash in this batch",
+  "local_normal_image_sha256": "514ba816d3b6b8b3b2c40ee63e156fd4f07ca9be104cef8246d6e848602c73f3"
+}

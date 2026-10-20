@@ -25,7 +25,7 @@ None. The client consumes [car-control-api](../../specs/car-control-api/spec.md)
 
 ## Impact
 
-* Planned code: a small standard-library Python client under `apps/teleop`, a shared codec module, simulator tests and product usage instructions. No additional runtime dependency.
+* Code: a small standard-library Python client under `apps/teleop`, a shared codec module, simulator tests and product usage instructions. No additional runtime dependency.
 * Existing Python wire-codec callers retain compatibility; Rust/firmware and experimental behavior remain unchanged.
 * Product implementation requires explicit proposal acceptance per [SPECIFICATION](../../../docs/SPECIFICATION.md). Each motor batch remains separately announced and authorized. M6’s [measurement deferrals](../archive/2026-10-20-add-four-wheel-api/verification.md#task-52-disposition) remain in effect.
 
@@ -39,5 +39,7 @@ The laptop client is implemented under `apps/teleop`, using shared `apps/client`
 payload codecs with the former import path preserved. Host protocol/policy,
 pseudo-terminal, fake-peer and product-simulator tests are linked in the
 [verification map](verification.md). CI includes the client suite. The separate
-stand procedure is prepared but has not run; no physical application acceptance,
-new measurement, firmware change or flash is claimed.
+stand batch passed on 2026-10-20 with Todor’s explicit wheel observations
+([evidence](../../../firmware/bench/2026-10-20-laptop-teleop/notes.md)). The
+application is accepted for this supervised stand scope; no new measurement,
+firmware change, flash or loaded/floor result is claimed.

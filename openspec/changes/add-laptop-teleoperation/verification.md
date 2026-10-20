@@ -1,9 +1,10 @@
 # Laptop teleoperation verification
 
-**Host implementation verified, 2026-10-20; physical application acceptance pending.**
-Todor selected laptop teleoperation after #89 presented the scope. The client,
-shared codecs and tests now exist. Tasks 5.1/5.2 remain unchecked: no board run
-or physical result is inferred from the laptop checks.
+**Application accepted for supervised stand use, 2026-10-20.**
+Todor selected laptop teleoperation after #89 presented the scope, then separately
+authorized the announced board batch and explicitly confirmed its wheel results.
+Host failure tests and physical observations remain separate evidence. All tasks
+are complete; measurement deferrals and loaded/floor exclusions remain.
 
 Run from the repository root:
 
@@ -26,7 +27,7 @@ These are host results, not electrical or radio qualification.
 | [Validate and correlate device input](specs/laptop-teleoperation/spec.md#requirement-validate-and-correlate-device-input) | `ProtocolTests.test_control_correlation_stop_cancels_pending_arm`, `test_bad_status_cannot_enable`; `RuntimeTests.test_wrong_endpoint_cannot_arm` and `TerminalTests.test_stop_before_arm_reply_needs_new_operator_arm`. | 2.2, 3.2 |
 | [Link checks without automatic recovery](specs/laptop-teleoperation/spec.md#requirement-link-checks-without-automatic-recovery) | `ProtocolTests.test_echo_nonce_session_and_age_are_independent`; `TerminalTests.test_lost_echo_exits_and_restores_without_reclaim`, `test_missing_arm_reply_fails_without_nonzero`; `SimulatorTests.test_killed_simulator_ends_client_without_reconnect` kills an armed/driving simulator and observes client failure. | 3.2, 4.1 |
 | [Bounded shutdown and honest reporting](specs/laptop-teleoperation/spec.md#requirement-bounded-shutdown-and-honest-reporting) | `RuntimeTests.test_cleanup_attempts_every_send_despite_failures`, `test_cleanup_only_accepts_matching_stop_ack`, `test_unconfirmed_handshake_still_attempts_session_zero_cleanup`; PTY tests verify normal/Ctrl-C/SIGTERM restoration and terminal-hangup STOP/BYE. The session-zero cleanup test failed before the early-return fix. | 3.2, 4.1 |
-| [Observable commands and evidence limits](specs/laptop-teleoperation/spec.md#requirement-observable-commands-and-evidence-limits) | `RuntimeTests.test_echo_does_not_refresh_status_age`; output and the [usage guide](../../../apps/teleop/README.md) distinguish local versus last-reported state, approximate requested speed and unconfirmed BYE. | 3.3; physical 5.1/5.2 pending |
+| [Observable commands and evidence limits](specs/laptop-teleoperation/spec.md#requirement-observable-commands-and-evidence-limits) | `RuntimeTests.test_echo_does_not_refresh_status_age`; output and the [usage guide](../../../apps/teleop/README.md) distinguish local versus last-reported state, approximate requested speed and unconfirmed BYE. | 3.3, 5.1, 5.2 |
 
 Test sources: [protocol](../../../apps/teleop/tests/test_protocol.py),
 [policy](../../../apps/teleop/tests/test_policy.py),
@@ -34,12 +35,32 @@ Test sources: [protocol](../../../apps/teleop/tests/test_protocol.py),
 [terminal](../../../apps/teleop/tests/test_terminal.py),
 [simulator](../../../apps/teleop/tests/test_simulator.py).
 
-## Physical acceptance still pending
+## Physical acceptance — tasks 5.1/5.2
 
-The [announced stand procedure](../../../firmware/bench/LAPTOP-TELEOP.md) is
-prepared, not authorized or run. It checks startup stillness, actual directions,
-expiry/Space/final stops and explicit re-arm on the installed normal firmware.
-A fresh go and Todor’s physical observations are required. M6’s [measurement
+The separately authorized [stand batch](../../../firmware/bench/2026-10-20-laptop-teleop/notes.md)
+passed on the installed normal ROS firmware, without flashing. The actual
+terminal client performed five seconds idle, unarmed W, R at zero, six gentle
+directions with input-expiry pauses, forward/Space, unarmed W, explicit re-arm,
+fresh forward and Ctrl-D. Serial confirmed all six wheel patterns, zero at each
+pause, matching control acknowledgements and final STOP/release/Open. Capture
+stopped, previous Wi-Fi was restored and the internet route was unchanged.
+Todor confirmed: **“Yes, all behaved as expected.”** This includes all directions,
+every stop and still wheels through reset/startup and both unarmed checks.
+
+This accepts the implemented application for supervised stand use. Malformed
+packets, refused/missing controls, lost links and scheduling failures remain
+covered by host tests; they were not injected into this physical batch. M6’s [measurement
 deferrals](../archive/2026-10-20-add-four-wheel-api/verification.md#task-52-disposition)
 remain unchanged; no electrical coast/STBY, current, temperature margin or
 loaded/floor result is claimed.
+
+## Shared codec container regression
+
+The first #90 ROS CI run failed because the scenario compatibility import was
+mounted at `/scenarios` without the extracted `apps/client` package. The existing
+`apps/simcar/scenarios/ros-capabilities.sh` test reproduced `IndexError: 3` locally
+before the fix. All three affected runners now mount scenarios and the shared
+codec in their repository layout inside the container. The same capabilities
+and reconnect test passes, as do `ros_readonly.sh` and default `ros_stops.sh`
+against loopback ROS simulators. The 31 client tests pass again. Firmware and
+UDP wire behavior are unchanged.

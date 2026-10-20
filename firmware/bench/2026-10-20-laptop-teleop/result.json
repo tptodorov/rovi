@@ -1,0 +1,131 @@
+{
+  "result": "passed-command-and-client-checks",
+  "physical_observation": "pending",
+  "target": "192.168.4.1:7777",
+  "stages": [
+    {
+      "stage": "startup-idle-5s",
+      "elapsed_s": 0.053,
+      "serial_offset": 2034
+    },
+    {
+      "stage": "unarmed-W-1s",
+      "elapsed_s": 5.055,
+      "serial_offset": 2121
+    },
+    {
+      "stage": "arm-at-zero",
+      "elapsed_s": 6.057,
+      "serial_offset": 2121
+    },
+    {
+      "stage": "ready-for-five-second-motion-announcement",
+      "elapsed_s": 7.193,
+      "serial_offset": 2173
+    },
+    {
+      "stage": "five-second-motion-countdown",
+      "elapsed_s": 23.378,
+      "serial_offset": 2173
+    },
+    {
+      "stage": "forward-2s",
+      "elapsed_s": 28.385,
+      "serial_offset": 2173
+    },
+    {
+      "stage": "forward-input-expiry-1s",
+      "elapsed_s": 30.397,
+      "serial_offset": 2229
+    },
+    {
+      "stage": "backward-2s",
+      "elapsed_s": 31.41,
+      "serial_offset": 2281
+    },
+    {
+      "stage": "backward-input-expiry-1s",
+      "elapsed_s": 33.417,
+      "serial_offset": 2341
+    },
+    {
+      "stage": "strafe-left-2s",
+      "elapsed_s": 34.422,
+      "serial_offset": 2393
+    },
+    {
+      "stage": "strafe-left-input-expiry-1s",
+      "elapsed_s": 36.439,
+      "serial_offset": 2451
+    },
+    {
+      "stage": "strafe-right-2s",
+      "elapsed_s": 37.443,
+      "serial_offset": 2503
+    },
+    {
+      "stage": "strafe-right-input-expiry-1s",
+      "elapsed_s": 39.455,
+      "serial_offset": 2561
+    },
+    {
+      "stage": "rotate-left-2s",
+      "elapsed_s": 40.469,
+      "serial_offset": 2613
+    },
+    {
+      "stage": "rotate-left-input-expiry-1s",
+      "elapsed_s": 42.471,
+      "serial_offset": 2671
+    },
+    {
+      "stage": "rotate-right-2s",
+      "elapsed_s": 43.479,
+      "serial_offset": 2723
+    },
+    {
+      "stage": "rotate-right-input-expiry-1s",
+      "elapsed_s": 45.48,
+      "serial_offset": 2781
+    },
+    {
+      "stage": "forward-before-Space-1s",
+      "elapsed_s": 46.487,
+      "serial_offset": 2833
+    },
+    {
+      "stage": "Space-stop",
+      "elapsed_s": 47.501,
+      "serial_offset": 2889
+    },
+    {
+      "stage": "unarmed-W-after-Space-1s",
+      "elapsed_s": 47.548,
+      "serial_offset": 2988
+    },
+    {
+      "stage": "explicit-rearm-at-zero",
+      "elapsed_s": 48.56,
+      "serial_offset": 2988
+    },
+    {
+      "stage": "final-forward-1s",
+      "elapsed_s": 49.819,
+      "serial_offset": 3040
+    },
+    {
+      "stage": "Ctrl-D-cleanup",
+      "elapsed_s": 50.834,
+      "serial_offset": 3096
+    }
+  ],
+  "boots": 1,
+  "event_counts": {
+    "boot": 1,
+    "claimed": 1,
+    "state": 19,
+    "stop": 2,
+    "released": 1
+  },
+  "client_exit": 0
+}

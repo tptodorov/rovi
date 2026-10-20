@@ -92,8 +92,8 @@ The [laptop client](apps/teleop/README.md) uses the existing UDP API, with expli
 R to arm, WASD/QE gentle directions, 250 ms input expiry and Space STOP. From the
 repository root: `python3 -m apps.teleop --target 192.168.4.1:7777`. It requires an
 interactive Linux terminal and a separately authorized supervised motor session.
-The client is tested on loopback/PTY/product simulator; its board acceptance is
-pending. No firmware or network configuration change is made by the application.
+The client passes loopback/PTY/product-simulator tests and the
+[physically confirmed stand batch](firmware/bench/2026-10-20-laptop-teleop/notes.md). No firmware or network configuration change is made by the application.
 
 ##### ROS capabilities
 
