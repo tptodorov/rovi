@@ -1,0 +1,5 @@
+clean boot captured; joining AP
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/111)
+board batch exit 0
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/112)
+{"batch_exit": 0, "monitor_exit": -2, "wifi_restore_exit": 0, "wifi_after": "855b50c6-388f-428e-99f6-d6d07db30aa8", "route_after": "1.1.1.1 via 192.168.1.1 dev enp0s20f0u3u3 src 192.168.1.148 uid 1000 \n    cache", "wifi_restored": true, "route_unchanged": true}

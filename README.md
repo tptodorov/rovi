@@ -86,6 +86,15 @@ requires separate authorization, and bench runs restore the normal image. See th
 [reversal](firmware/bench/MOTOR-REVERSALS.md) and [endurance](firmware/bench/MOTOR-ENDURANCE.md)
 procedures for their recorded sequences and cleanup.
 
+##### Laptop teleoperation
+
+The [laptop client](apps/teleop/README.md) uses the existing UDP API, with explicit
+R to arm, WASD/QE gentle directions, 250 ms input expiry and Space STOP. From the
+repository root: `python3 -m apps.teleop --target 192.168.4.1:7777`. It requires an
+interactive Linux terminal and a separately authorized supervised motor session.
+The client passes loopback/PTY/product-simulator tests and the
+[physically confirmed stand batch](firmware/bench/2026-10-20-laptop-teleop/notes.md). No firmware or network configuration change is made by the application.
+
 ##### ROS capabilities
 
 The product publishes `/rovi/capabilities` (`std_msgs/String`) before any claim, with the

@@ -475,11 +475,11 @@ footer {
 </style></head>
 <body><a class="skip" href="#overview">Skip to content</a>
 <aside><a class="brand" href="#overview"><span class="mark">R</span> Rovi <small>Specification reader</small></a>
-<nav aria-label="Specification sections"><a href="#overview">Start here</a><a href="#reading">How to read this</a><a href="#requirement-search">Search requirements</a><a href="#state-flow">Motion state flow</a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--car-control-api--spec">car control api<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--motor-control--spec">motor control<small>Archived change · archive</small></a><a href="#openspec--specs--car-control-api--spec">car control api<small>Baseline · car-control-api</small></a><a href="#openspec--specs--motor-control--spec">motor control<small>Baseline · motor-control</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--design">design<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--tasks">tasks<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification">verification<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal">proposal<small>Archived change · archive</small></a></nav>
+<nav aria-label="Specification sections"><a href="#overview">Start here</a><a href="#reading">How to read this</a><a href="#requirement-search">Search requirements</a><a href="#state-flow">Motion state flow</a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--car-control-api--spec">car control api<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--motor-control--spec">motor control<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec">laptop teleoperation<small>Archived change · archive</small></a><a href="#openspec--specs--car-control-api--spec">car control api<small>Baseline · car-control-api</small></a><a href="#openspec--specs--laptop-teleoperation--spec">laptop teleoperation<small>Baseline · laptop-teleoperation</small></a><a href="#openspec--specs--motor-control--spec">motor control<small>Baseline · motor-control</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--design">design<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design">design<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--tasks">tasks<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks">tasks<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification">verification<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--verification">verification<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal">proposal<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal">proposal<small>Archived change · archive</small></a></nav>
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>86</b> requirements</div><div><b>156</b> scenarios</div><div><b>18 / 18</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>104</b> requirements</div><div><b>184</b> scenarios</div><div><b>28 / 28</b> tasks checked in source</div></div></header>
 <p>No active proposals. Browse baseline and archived documents below.</p>
 <section id="reading" class="reading"><h2>A small reading key</h2>
 <div class="key-grid"><div><b>Requirement</b><p>A rule the product must satisfy. “SHALL” and “MUST” mean required.</p></div>
@@ -1284,6 +1284,127 @@ The configured maximum SHALL limit driven PWM duty, not the PWM-high signal requ
 <li>
 <strong>THEN</strong> FL has both direction pins low and PWM high, while RL is driven at 70%</li>
 </ul>
+</details></article></section><section class="document" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec" aria-label="laptop teleoperation">
+    <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-laptop-teleoperation/specs/laptop-teleoperation/spec.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-laptop-teleoperation/specs/laptop-teleoperation/spec.md</div></header>
+    <h2>laptop teleoperation</h2>
+    <h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--purpose">Purpose</h2><p>
+Lets a laptop operator control the existing car UDP API interactively with explicit arming, bounded motion input, visible state and predictable failure cleanup.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--added-requirements">ADDED Requirements</h2><article class="requirement" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-explicit-connection-without-motion"><h3>Explicit connection without motion</h3><p>
+The client SHALL require an explicit IPv4 target/port and an interactive terminal. It SHALL claim once with version-1 UDP HELLO, validate the returned nonzero session and capabilities, and start locally disarmed with zero intent. BUSY, invalid capabilities or a one-second handshake timeout SHALL fail without ARM or nonzero setpoints. Leases shorter than 200 ms SHALL be reported unsupported.</p>
+<details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-connection-starts-disarmed"><summary>Connection starts disarmed</summary><ul>
+<li>
+<strong>WHEN</strong> an operator connects to a valid target</li>
+<li>
+<strong>THEN</strong> the client displays the negotiated limits and session and sends no ARM or nonzero setpoint</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-refused-or-unsupported-connection"><summary>Refused or unsupported connection</summary><ul>
+<li>
+<strong>WHEN</strong> the target returns BUSY, invalid capabilities, an unsupported lease, or no valid reply within one second</li>
+<li>
+<strong>THEN</strong> the client reports failure and sends no ARM or nonzero setpoint</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-explicit-arm-and-stop-latch"><h3>Explicit arm and stop latch</h3><p>
+Only an operator R key SHALL request ARM, after clearing motion and sending a fresh zero setpoint. Motion SHALL remain disabled until a matching successful Armed Status reply arrives. A refused/timed-out ARM, STOP or reported safety stop SHALL clear intent and require a new R key before further motion. Held or repeated motion keys SHALL never arm the car.</p>
+<details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-keys-cannot-arm"><summary>Keys cannot arm</summary><ul>
+<li>
+<strong>GIVEN</strong> a connected but locally disarmed client</li>
+<li>
+<strong>WHEN</strong> motion keys arrive</li>
+<li>
+<strong>THEN</strong> no nonzero setpoint is sent</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-arm-does-not-replay-a-direction"><summary>Arm does not replay a direction</summary><ul>
+<li>
+<strong>GIVEN</strong> previous motion intent exists</li>
+<li>
+<strong>WHEN</strong> R is pressed and ARM succeeds</li>
+<li>
+<strong>THEN</strong> the client starts armed at zero and requires a subsequent motion key</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-gentle-planar-directions"><h3>Gentle planar directions</h3><p>
+W/S SHALL request forward/backward, A/D left/right strafe, and Q/E counter-clockwise/clockwise rotation in base_link. Only one direction SHALL be active at a time. Translation magnitude SHALL be min(0.1 m/s, the advertised axis maximum), rotation min(0.3 rad/s, advertised maximum). Disabled axes SHALL remain zero. Other Twist components SHALL be zero; simultaneous keys SHALL not combine velocities.</p>
+<details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-limits-below-the-defaults-are-respected"><summary>Limits below the defaults are respected</summary><ul>
+<li>
+<strong>GIVEN</strong> an armed client whose advertised max_vx is 0.05 m/s</li>
+<li>
+<strong>WHEN</strong> W is received</li>
+<li>
+<strong>THEN</strong> vx is 0.05 and vy/wz are zero</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-new-direction-replaces-the-previous-one"><summary>New direction replaces the previous one</summary><ul>
+<li>
+<strong>GIVEN</strong> W was the current direction</li>
+<li>
+<strong>WHEN</strong> E is received</li>
+<li>
+<strong>THEN</strong> vx/vy become zero and only clockwise wz is requested</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-input-expiry-and-latest-intent"><h3>Input expiry and latest intent</h3><p>
+Each recognized motion key SHALL expire 250 ms after its monotonic receipt time. The next send after expiry SHALL be zero. Key repeats SHALL refresh that window; unrelated keys SHALL not. Buffered motion SHALL not form a playback queue. STOP, quit, disarm and failure SHALL clear buffered motion. The client SHALL describe key repeat as renewal, not claim it receives physical key-release events.</p>
+<details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-motion-input-expires"><summary>Motion input expires</summary><ul>
+<li>
+<strong>GIVEN</strong> W was received at t and no subsequent motion key arrives</li>
+<li>
+<strong>WHEN</strong> a send occurs at or after t+250 ms</li>
+<li>
+<strong>THEN</strong> the transmitted setpoint is zero</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-stop-wins-over-buffered-movement"><summary>Stop wins over buffered movement</summary><ul>
+<li>
+<strong>WHEN</strong> a read batch contains movement and Space or quit</li>
+<li>
+<strong>THEN</strong> movement is discarded and no later queued key replays it</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-periodic-stream-and-scheduling-failure"><h3>Periodic stream and scheduling failure</h3><p>
+While connected, the client SHALL send the current zero or armed intent every 50 ms with wrapping u32 setpoint sequences. It SHALL process received stops and input expiry before each send. A send-loop gap of at least 200 ms SHALL clear intent and end the run through cleanup; catching up SHALL not send a backlog of motion. Host scheduling SHALL not be described as a guaranteed physical stopping bound.</p>
+<details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-delayed-loop-cannot-replay-motion"><summary>Delayed loop cannot replay motion</summary><ul>
+<li>
+<strong>GIVEN</strong> nonzero intent and a 200 ms gap since the last send-loop iteration</li>
+<li>
+<strong>WHEN</strong> the client resumes</li>
+<li>
+<strong>THEN</strong> it sends no further nonzero setpoint and enters cleanup</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-validate-and-correlate-device-input"><h3>Validate and correlate device input</h3><p>
+The client SHALL accept only correctly framed/versioned replies from the selected endpoint, validating payload lengths and codes. After claim, Status SHALL match the current session and either a pending control sequence or the unsolicited sequence zero. Wrong-peer, malformed, stale-session and unmatched replies SHALL not authorize motion or extend reply deadlines. Unsolicited stopped Status SHALL disable local motion before the next send.</p>
+<details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-queued-notification-precedes-an-arm-reply"><summary>Queued notification precedes an ARM reply</summary><ul>
+<li>
+<strong>WHEN</strong> a stopped notification arrives before the matching ARM reply</li>
+<li>
+<strong>THEN</strong> the client clears motion and does not confuse the notification with a successful ARM</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-intruder-packet-cannot-enable-movement"><summary>Intruder packet cannot enable movement</summary><ul>
+<li>
+<strong>WHEN</strong> another endpoint or session sends an Armed Status</li>
+<li>
+<strong>THEN</strong> local arming remains unchanged</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-link-checks-without-automatic-recovery"><h3>Link checks without automatic recovery</h3><p>
+The client SHALL check link responsiveness using nonce/sequence-matched Echo every 250 ms, allowing 500 ms for each reply. Echo SHALL not be described as proof of ownership or arming. A missed Echo/control deadline, socket error or terminal loss SHALL clear intent and terminate through cleanup. The client SHALL send no HELLO after its initial handshake and SHALL never reconnect or re-arm automatically.</p>
+<details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-lost-link-requires-a-new-operator-session"><summary>Lost link requires a new operator session</summary><ul>
+<li>
+<strong>WHEN</strong> an Echo or ARM reply deadline expires</li>
+<li>
+<strong>THEN</strong> local motion stops, cleanup runs, and no automatic HELLO or ARM is sent</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-bounded-shutdown-and-honest-reporting"><h3>Bounded shutdown and honest reporting</h3><p>
+Space SHALL clear motion and request STOP; quit, Ctrl-C, EOF and handled errors SHALL also exit through cleanup. Cleanup SHALL attempt zero, STOP and BYE within 500 ms total without indefinite waits, even if an earlier send fails, and restore terminal settings. Successful STOP acknowledgement SHALL require matching stopped/Stop Status. The client SHALL label unacknowledged stops and BYE as unconfirmed attempts, never verified wheel stop or release.</p>
+<details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-cleanup-tolerates-a-failed-send"><summary>Cleanup tolerates a failed send</summary><ul>
+<li>
+<strong>WHEN</strong> sending zero or STOP fails during cleanup</li>
+<li>
+<strong>THEN</strong> BYE and terminal restoration are still attempted within the cleanup deadline</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-observable-commands-and-evidence-limits"><h3>Observable commands and evidence limits</h3><p>
+The client SHALL show connection/local-arm state, session, last valid device Status, reply age and requested vx/vy/wz. Last-reported Status SHALL be distinguished from live physical state; Echo SHALL not refresh Status age. Documentation SHALL identify open-loop speeds as approximate and UDP cleanup as best effort. Simulator passes SHALL not count as wheel, radio or electrical acceptance.</p>
+<details class="scenario" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--scenario-a-responsive-rebooted-device-does-not-prove-ownership"><summary>A responsive rebooted device does not prove ownership</summary><ul>
+<li>
+<strong>GIVEN</strong> the car reboots and answers Echo but does not accept the old session</li>
+<li>
+<strong>WHEN</strong> the client displays its state</li>
+<li>
+<strong>THEN</strong> it shows Status as last reported with its original age, sends no new HELLO and does not claim ownership recovery</li>
+</ul>
 </details></article></section><section class="document" id="openspec--specs--car-control-api--spec" aria-label="car control api">
     <header class="doc-header"><span class="eyebrow">Baseline</span><a href="specs/car-control-api/spec.md">Markdown source ↗</a><div class="path">openspec/specs/car-control-api/spec.md</div></header>
     <h2>car control api</h2>
@@ -1863,6 +1984,127 @@ The adapter SHALL retain sequence high-water marks for every accepted owner publ
 <li>
 <strong>THEN</strong> sequence 99 is rejected and cannot renew the lease</li>
 </ul>
+</details></article></section><section class="document" id="openspec--specs--laptop-teleoperation--spec" aria-label="laptop teleoperation">
+    <header class="doc-header"><span class="eyebrow">Baseline</span><a href="specs/laptop-teleoperation/spec.md">Markdown source ↗</a><div class="path">openspec/specs/laptop-teleoperation/spec.md</div></header>
+    <h2>laptop teleoperation</h2>
+    <h1 id="openspec--specs--laptop-teleoperation--spec--laptop-teleoperation-specification">laptop-teleoperation Specification</h1><h2 id="openspec--specs--laptop-teleoperation--spec--purpose">Purpose</h2><p>
+Lets a laptop operator control the existing car UDP API interactively with explicit arming, bounded motion input, visible state and predictable failure cleanup.</p>
+<h2 id="openspec--specs--laptop-teleoperation--spec--requirements">Requirements</h2><article class="requirement" id="openspec--specs--laptop-teleoperation--spec--requirement-explicit-connection-without-motion"><h3>Explicit connection without motion</h3><p>
+The client SHALL require an explicit IPv4 target/port and an interactive terminal. It SHALL claim once with version-1 UDP HELLO, validate the returned nonzero session and capabilities, and start locally disarmed with zero intent. BUSY, invalid capabilities or a one-second handshake timeout SHALL fail without ARM or nonzero setpoints. Leases shorter than 200 ms SHALL be reported unsupported.</p>
+<details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-connection-starts-disarmed"><summary>Connection starts disarmed</summary><ul>
+<li>
+<strong>WHEN</strong> an operator connects to a valid target</li>
+<li>
+<strong>THEN</strong> the client displays the negotiated limits and session and sends no ARM or nonzero setpoint</li>
+</ul>
+</details><details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-refused-or-unsupported-connection"><summary>Refused or unsupported connection</summary><ul>
+<li>
+<strong>WHEN</strong> the target returns BUSY, invalid capabilities, an unsupported lease, or no valid reply within one second</li>
+<li>
+<strong>THEN</strong> the client reports failure and sends no ARM or nonzero setpoint</li>
+</ul>
+</details></article><article class="requirement" id="openspec--specs--laptop-teleoperation--spec--requirement-explicit-arm-and-stop-latch"><h3>Explicit arm and stop latch</h3><p>
+Only an operator R key SHALL request ARM, after clearing motion and sending a fresh zero setpoint. Motion SHALL remain disabled until a matching successful Armed Status reply arrives. A refused/timed-out ARM, STOP or reported safety stop SHALL clear intent and require a new R key before further motion. Held or repeated motion keys SHALL never arm the car.</p>
+<details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-keys-cannot-arm"><summary>Keys cannot arm</summary><ul>
+<li>
+<strong>GIVEN</strong> a connected but locally disarmed client</li>
+<li>
+<strong>WHEN</strong> motion keys arrive</li>
+<li>
+<strong>THEN</strong> no nonzero setpoint is sent</li>
+</ul>
+</details><details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-arm-does-not-replay-a-direction"><summary>Arm does not replay a direction</summary><ul>
+<li>
+<strong>GIVEN</strong> previous motion intent exists</li>
+<li>
+<strong>WHEN</strong> R is pressed and ARM succeeds</li>
+<li>
+<strong>THEN</strong> the client starts armed at zero and requires a subsequent motion key</li>
+</ul>
+</details></article><article class="requirement" id="openspec--specs--laptop-teleoperation--spec--requirement-gentle-planar-directions"><h3>Gentle planar directions</h3><p>
+W/S SHALL request forward/backward, A/D left/right strafe, and Q/E counter-clockwise/clockwise rotation in base_link. Only one direction SHALL be active at a time. Translation magnitude SHALL be min(0.1 m/s, the advertised axis maximum), rotation min(0.3 rad/s, advertised maximum). Disabled axes SHALL remain zero. Other Twist components SHALL be zero; simultaneous keys SHALL not combine velocities.</p>
+<details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-limits-below-the-defaults-are-respected"><summary>Limits below the defaults are respected</summary><ul>
+<li>
+<strong>GIVEN</strong> an armed client whose advertised max_vx is 0.05 m/s</li>
+<li>
+<strong>WHEN</strong> W is received</li>
+<li>
+<strong>THEN</strong> vx is 0.05 and vy/wz are zero</li>
+</ul>
+</details><details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-new-direction-replaces-the-previous-one"><summary>New direction replaces the previous one</summary><ul>
+<li>
+<strong>GIVEN</strong> W was the current direction</li>
+<li>
+<strong>WHEN</strong> E is received</li>
+<li>
+<strong>THEN</strong> vx/vy become zero and only clockwise wz is requested</li>
+</ul>
+</details></article><article class="requirement" id="openspec--specs--laptop-teleoperation--spec--requirement-input-expiry-and-latest-intent"><h3>Input expiry and latest intent</h3><p>
+Each recognized motion key SHALL expire 250 ms after its monotonic receipt time. The next send after expiry SHALL be zero. Key repeats SHALL refresh that window; unrelated keys SHALL not. Buffered motion SHALL not form a playback queue. STOP, quit, disarm and failure SHALL clear buffered motion. The client SHALL describe key repeat as renewal, not claim it receives physical key-release events.</p>
+<details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-motion-input-expires"><summary>Motion input expires</summary><ul>
+<li>
+<strong>GIVEN</strong> W was received at t and no subsequent motion key arrives</li>
+<li>
+<strong>WHEN</strong> a send occurs at or after t+250 ms</li>
+<li>
+<strong>THEN</strong> the transmitted setpoint is zero</li>
+</ul>
+</details><details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-stop-wins-over-buffered-movement"><summary>Stop wins over buffered movement</summary><ul>
+<li>
+<strong>WHEN</strong> a read batch contains movement and Space or quit</li>
+<li>
+<strong>THEN</strong> movement is discarded and no later queued key replays it</li>
+</ul>
+</details></article><article class="requirement" id="openspec--specs--laptop-teleoperation--spec--requirement-periodic-stream-and-scheduling-failure"><h3>Periodic stream and scheduling failure</h3><p>
+While connected, the client SHALL send the current zero or armed intent every 50 ms with wrapping u32 setpoint sequences. It SHALL process received stops and input expiry before each send. A send-loop gap of at least 200 ms SHALL clear intent and end the run through cleanup; catching up SHALL not send a backlog of motion. Host scheduling SHALL not be described as a guaranteed physical stopping bound.</p>
+<details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-delayed-loop-cannot-replay-motion"><summary>Delayed loop cannot replay motion</summary><ul>
+<li>
+<strong>GIVEN</strong> nonzero intent and a 200 ms gap since the last send-loop iteration</li>
+<li>
+<strong>WHEN</strong> the client resumes</li>
+<li>
+<strong>THEN</strong> it sends no further nonzero setpoint and enters cleanup</li>
+</ul>
+</details></article><article class="requirement" id="openspec--specs--laptop-teleoperation--spec--requirement-validate-and-correlate-device-input"><h3>Validate and correlate device input</h3><p>
+The client SHALL accept only correctly framed/versioned replies from the selected endpoint, validating payload lengths and codes. After claim, Status SHALL match the current session and either a pending control sequence or the unsolicited sequence zero. Wrong-peer, malformed, stale-session and unmatched replies SHALL not authorize motion or extend reply deadlines. Unsolicited stopped Status SHALL disable local motion before the next send.</p>
+<details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-queued-notification-precedes-an-arm-reply"><summary>Queued notification precedes an ARM reply</summary><ul>
+<li>
+<strong>WHEN</strong> a stopped notification arrives before the matching ARM reply</li>
+<li>
+<strong>THEN</strong> the client clears motion and does not confuse the notification with a successful ARM</li>
+</ul>
+</details><details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-intruder-packet-cannot-enable-movement"><summary>Intruder packet cannot enable movement</summary><ul>
+<li>
+<strong>WHEN</strong> another endpoint or session sends an Armed Status</li>
+<li>
+<strong>THEN</strong> local arming remains unchanged</li>
+</ul>
+</details></article><article class="requirement" id="openspec--specs--laptop-teleoperation--spec--requirement-link-checks-without-automatic-recovery"><h3>Link checks without automatic recovery</h3><p>
+The client SHALL check link responsiveness using nonce/sequence-matched Echo every 250 ms, allowing 500 ms for each reply. Echo SHALL not be described as proof of ownership or arming. A missed Echo/control deadline, socket error or terminal loss SHALL clear intent and terminate through cleanup. The client SHALL send no HELLO after its initial handshake and SHALL never reconnect or re-arm automatically.</p>
+<details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-lost-link-requires-a-new-operator-session"><summary>Lost link requires a new operator session</summary><ul>
+<li>
+<strong>WHEN</strong> an Echo or ARM reply deadline expires</li>
+<li>
+<strong>THEN</strong> local motion stops, cleanup runs, and no automatic HELLO or ARM is sent</li>
+</ul>
+</details></article><article class="requirement" id="openspec--specs--laptop-teleoperation--spec--requirement-bounded-shutdown-and-honest-reporting"><h3>Bounded shutdown and honest reporting</h3><p>
+Space SHALL clear motion and request STOP; quit, Ctrl-C, EOF and handled errors SHALL also exit through cleanup. Cleanup SHALL attempt zero, STOP and BYE within 500 ms total without indefinite waits, even if an earlier send fails, and restore terminal settings. Successful STOP acknowledgement SHALL require matching stopped/Stop Status. The client SHALL label unacknowledged stops and BYE as unconfirmed attempts, never verified wheel stop or release.</p>
+<details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-cleanup-tolerates-a-failed-send"><summary>Cleanup tolerates a failed send</summary><ul>
+<li>
+<strong>WHEN</strong> sending zero or STOP fails during cleanup</li>
+<li>
+<strong>THEN</strong> BYE and terminal restoration are still attempted within the cleanup deadline</li>
+</ul>
+</details></article><article class="requirement" id="openspec--specs--laptop-teleoperation--spec--requirement-observable-commands-and-evidence-limits"><h3>Observable commands and evidence limits</h3><p>
+The client SHALL show connection/local-arm state, session, last valid device Status, reply age and requested vx/vy/wz. Last-reported Status SHALL be distinguished from live physical state; Echo SHALL not refresh Status age. Documentation SHALL identify open-loop speeds as approximate and UDP cleanup as best effort. Simulator passes SHALL not count as wheel, radio or electrical acceptance.</p>
+<details class="scenario" id="openspec--specs--laptop-teleoperation--spec--scenario-a-responsive-rebooted-device-does-not-prove-ownership"><summary>A responsive rebooted device does not prove ownership</summary><ul>
+<li>
+<strong>GIVEN</strong> the car reboots and answers Echo but does not accept the old session</li>
+<li>
+<strong>WHEN</strong> the client displays its state</li>
+<li>
+<strong>THEN</strong> it shows Status as last reported with its original age, sends no new HELLO and does not claim ownership recovery</li>
+</ul>
 </details></article></section><section class="document" id="openspec--specs--motor-control--spec" aria-label="motor control">
     <header class="doc-header"><span class="eyebrow">Baseline</span><a href="specs/motor-control/spec.md">Markdown source ↗</a><div class="path">openspec/specs/motor-control/spec.md</div></header>
     <h2>motor control</h2>
@@ -2066,7 +2308,6 @@ The configured maximum SHALL limit driven PWM duty, not the PWM-high signal requ
 </ul>
 </details></article></section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design" aria-label="design">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/design.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/design.md</div></header>
-    
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design--m6-implementation-design">M6 implementation design</h1><h2 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design--context">Context</h2><p>
 See <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal">proposal</a> for scope and evidence. M8 has a host-tested <code>no_std</code> core plus separate firmware and simulator packages; M4 added a pure motor mapping function that currently imports the arbiter state. The working firmware remains our bench reference. This change extracts that behavior and applies the reviewed corrections, with no automatic flash or measurement sweep.</p>
 <h2 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design--goals--non-goals">Goals / Non-Goals</h2><p>
@@ -2173,9 +2414,44 @@ Tape and video; not scheduled</td>
 </table>
 <p>
 They return as a new change when a requirement needs them. O9 is the laptop capability test with the fixed fallback above. No new measurement sweep is scheduled.</p>
+</section><section class="document" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design" aria-label="design">
+    <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-laptop-teleoperation/design.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-laptop-teleoperation/design.md</div></header>
+    <h1 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design--laptop-teleoperation-design">Laptop teleoperation design</h1><h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design--context">Context</h2><p>
+See the <a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal">proposal</a> for motivation and accepted laptop scope. The existing <a href="#openspec--specs--car-control-api--spec">car API</a> and <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification">M6 evidence</a> are the boundaries. <code>apps/simcar/scenarios/wire.py</code> already supplies golden-tested TwistStamped, Status and capability codecs; its scenario <code>Client</code> is a test helper, not a product transport.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design--goals--non-goals">Goals / Non-Goals</h2><p>
+<strong>Goal:</strong> one small Linux terminal client whose policy can be tested with injected time and socket/terminal boundaries. <strong>Non-goals:</strong> a client framework, configurable bindings/speeds, multi-axis mixing, runtime firmware changes, station networking or proof of physical velocity/stopping distance.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design--decisions">Decisions</h2><ul>
+<li>
+Use Python’s standard library (<code>socket</code>, <code>select</code>, terminal facilities, monotonic time), invoked from the repository as <code>python3 -m apps.teleop --target HOST:PORT</code>. No new runtime dependency or global installation. A browser UI or gamepad adds another input/runtime boundary without being needed for this first interface.</li>
+<li>
+Keep policy separate from terminal/socket effects: a current intent, expiry, local arm gate and pending request deadlines. A single event loop handles input/replies before a 50 ms stream tick; no thread or command queue. Reject leases below 200 ms rather than promise a faster supported host cadence. A 200 ms scheduling gap fails closed; this is host policy, not a measured wheel-stop bound.</li>
+<li>
+Use R for arm, WASD translation, QE rotation, Space STOP, Esc/Ctrl-C quit. Terminal bytes provide key repeats, not trustworthy key-up/focus events: each direction is a 250 ms request that needs renewal. Drain buffered input to the latest motion intent; stop/quit overrides that batch, and arming clears it. Never replay accumulated input after a scheduling gap. Zero intent keeps the owner’s lease live while idle/disarmed; Space sends STOP while retaining the session and zero stream.</li>
+<li>
+Share, rather than copy, the existing payload codec in a small <code>apps/client</code> Python package. Keep a thin compatibility import at the existing scenario module path so bench/ROS/experimental users retain their imports and golden tests. Add frame validation in the client boundary; avoid converting every existing test helper into a production client in the same change.</li>
+<li>
+Correlate every control reply by endpoint, session and a nonzero request sequence; preserve unsolicited sequence-zero stops separately. Use wrapping u32 setpoint ordering independently. Only one ARM may be pending. If a stopped notification arrives while ARM is pending, cancel that request locally; a delayed Armed reply cannot revive local motion. A later R sends zero and a new request. Do not retry ARM automatically.</li>
+<li>
+Echo checks only reachability. UDP has no observational owner-status read, and HELLO can claim after a reset. Therefore perform HELLO only once and label Status as last reported with its own age. A reset may leave a responsive car rejecting the old session; this client never claims it silently. A new operator-started process is required to reclaim after terminal/link failure.</li>
+<li>
+All connect/control waits and cleanup are bounded. On exit try zero, STOP, BYE; catch individual send failures so later cleanup still runs, then restore terminal state in an outer finally block. STOP success needs the matching state/reason acknowledgement; BYE has no release acknowledgement and remains best effort. No promise that the wheel stopped merely because a datagram was sent.</li>
+</ul>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design--risks--trade-offs">Risks / Trade-offs</h2><ul>
+<li>
+Terminal repeat may begin after the 250 ms window, producing an initial pause → document this pulse/renewal behavior; deterministic expiry matters more than pretending key-up exists.</li>
+<li>
+Wi-Fi can silently stall (<a href="https://github.com/tptodorov/rovi/issues/23">#23</a>) → missed Echo deadlines end the client, the device lease remains independent, and no reconnect is automatic. This change does not diagnose or close #23.</li>
+<li>
+UDP can lose a stop or release → bounded best effort and explicit unconfirmed reporting; retain the device watchdog. No application-level emergency-stop guarantee.</li>
+<li>
+Existing source/net and motor bench evidence does not qualify a new terminal application → simulator/PTY evidence first, then a separately announced gentle stand batch; no loaded/floor test or electrical measurement is implied.</li>
+</ul>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design--migration-and-rollback">Migration and rollback</h2><p>
+Add the client without firmware or API changes. Preserve the current codec import through a compatibility module and rerun its existing tests and simulator scenarios. Keep the normal ROS firmware installed. Rollback removes the new application and restores the codec location; no board image or protocol migration is needed.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design--scope-decision">Scope decision</h2><p>
+Todor selected the laptop client on 2026-10-20 after reviewing the concrete option in #89. Implementation uses the proposed keys, 250 ms intent window and gentle defaults; no new ADR is needed for these reversible client choices.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--tasks" aria-label="tasks">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/tasks.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/tasks.md</div></header>
-    
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--tasks--tasks">Tasks</h1><p>
 Host tests establish software behavior only. Physical acceptance uses <a href="../docs/adr/0002-simulation-never-proves-hardware.md">ADR-0002</a>. <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--design">Design</a> defines package boundaries; <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification">verification</a> maps every requirement to its check. Existing experiments remain the rollback reference.</p>
 <h2 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--tasks--1-accept-and-extract-laptop">1. Accept and extract (laptop)</h2><ul>
@@ -2228,9 +2504,46 @@ Host tests establish software behavior only. Physical acceptance uses <a href=".
 <li>
 <strong>Done 2026-10-20:</strong> after the acceptance PR stack merged in <code>f5a2d8e</code>, the pinned CLI archived/synced this change. Baseline purposes were reviewed, all 43 requirements/78 scenarios preserved, and relocated links repaired. Strict baseline/archive validation and all five reader tests/freshness pass per <a href="../docs/SPECIFICATION.md">the specification standard</a>. Archive is not an implementation task checkbox.</li>
 </ul>
+</section><section class="document" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks" aria-label="tasks">
+    <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-laptop-teleoperation/tasks.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-laptop-teleoperation/tasks.md</div></header>
+    <h1 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks--tasks">Tasks</h1><p>
+Todor selected this laptop scope on 2026-10-20. Nothing here authorizes a flash or motor run. <a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--verification">Verification map</a>.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks--1-choose-and-accept-the-next-scope">1. Choose and accept the next scope</h2><ul>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 1.1 Laptop scope accepted 2026-10-20: Todor selected “Laptop teleoperation client” after #89 presented the concrete option. Contract review preserves the existing car API and defines explicit arm, gentle limits, input expiry and failure cleanup. Strict OpenSpec/reader validation passes; no firmware or motor-run authorization.</li>
+</ul>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks--2-codec-and-client-boundaries">2. Codec and client boundaries</h2><ul>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.1 Extract the existing Python payload codec into one shared location with a compatibility import at its current path. Run the existing 23 codec/log/latency tests, bench tests and UDP scenarios unchanged; document the shared import and confirm no runtime dependency is added. <strong>Done:</strong> <code>apps/client/wire.py</code> is canonical, with the previous path re-exporting it; all 23 existing Python tests, 40 bench tests and 14 UDP scenarios pass.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.2 Implement framed UDP parsing, capability validation, session/peer/request correlation and bounded handshake. Add tests for malformed/truncated payloads, BUSY, unsupported leases, wrong sources/sessions, unsolicited Status and request-sequence wrap; verify no input in these cases can arm or emit nonzero output.</li>
+</ul>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks--3-interactive-motion-policy">3. Interactive motion policy</h2><ul>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.1 Implement the pure clock-driven intent/arming/stop policy test-first. Verify all six signs, smaller/zero limits, explicit R at zero, no queued motion after arm/STOP, exact 250 ms expiry, key repeats and the 200 ms scheduler-gap failure. Document input pulse/renewal semantics with the key map.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.2 Add the Linux terminal/event loop, periodic zeros/setpoints and independent Echo/control deadlines. Use a pseudo-terminal and fake UDP peer to verify missing replies, socket/terminal loss, queued stopped-before-Armed replies and no HELLO/ARM retry. Verify cleanup deadline and terminal restoration even when individual sends fail.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.3 Present local state, last-reported Status/reply age, session, limits and requested motion. Test output so Echo does not refresh Status age and neither measured speed nor confirmed stop/release is invented. Add a runnable command/help page.</li>
+</ul>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks--4-laptop-integration-and-ci">4. Laptop integration and CI</h2><ul>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.1 Exercise the real client/PTY against the product simulator: startup idle, explicit arm, six directions, input expiry, Space latch/re-arm, quit and killed/lost peer. Confirm zero outputs before arm and after expiry/fault, one claim only, and no automatic recovery. Add client tests to existing CI without removing M6 checks.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.2 Run relevant Python suites, UDP scenarios, strict OpenSpec/reader checks and authored-file whitespace checks. Replace every planned verification row with actual test/evidence names; review the user command against the README. <strong>Done:</strong> 31 client tests pass; shared codec compatibility passed 23 existing Python tests, 40 bench tests and 14 UDP scenarios. Strict active/baseline/archive validation, all six reader tests/freshness, compilation and whitespace checks pass; 28 mapped test names and 86 local documentation links resolve. <code>python3 -m apps.teleop --help</code> runs as documented.</li>
+</ul>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks--5-separately-authorized-board-acceptance">5. Separately authorized board acceptance</h2><ul>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 5.1 Prepare a concrete gentle stand sequence and await Todor’s separate go. Test the normal installed firmware without flashing: startup still, arm at zero, six short directions, input expiry, Space, explicit re-arm and quit; verify protocol/serial assertions and Todor’s wheel observations separately. Restore any changed laptop network/capture state. No board run belongs to task 4. <strong>Done 2026-10-20:</strong> Todor authorized the announced batch with “go”; the actual terminal client passed every protocol/serial assertion, Wi-Fi/capture cleanup completed, and Todor confirmed all directions, stops and still phases. <a href="../firmware/bench/2026-10-20-laptop-teleop/notes.md">Evidence</a>.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 5.2 Reconcile product evidence with the requirements, record scoped acceptance and update PLAN/usage documentation. Preserve M6 measurement deferrals and do not claim loaded/floor performance or measured stop bounds. <strong>Done 2026-10-20:</strong> scoped stand acceptance recorded in the verification map, PLAN and usage documentation; host failure cases remain backed by their separate tests.</li>
+</ul>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks--workflow-follow-up">Workflow follow-up</h2><ul>
+<li>
+Archived/synced 2026-10-20 through the pinned CLI per <a href="../docs/SPECIFICATION.md">SPECIFICATION</a>, preserving evidence and repairing relocated links. The accepted baseline contains the same nine requirements and 14 scenarios.</li>
+</ul>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/verification.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/verification.md</div></header>
-    
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--m6-verification-map">M6 verification map</h1><p>
 Rows map the 43 requirements and their 78 scenarios to implemented software
 checks, recorded board results and explicit physical deferrals. The task 5.3
@@ -2746,9 +3059,143 @@ Reconcile these results with every requirement; record acceptance and update ins
 Deferred outside this change: start/stall current or current protection, operation above 70%,
 a numeric GPIO disable bound (O4), coast distance and measured maximum speeds. These are not
 missing host tests or implicit product claims; the equipment/scope decisions are in the proposal.</p>
+</section><section class="document" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--verification" aria-label="verification">
+    <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-laptop-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-laptop-teleoperation/verification.md</div></header>
+    <h1 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--verification--laptop-teleoperation-verification">Laptop teleoperation verification</h1><p>
+<strong>Application accepted for supervised stand use, 2026-10-20.</strong>
+Todor selected laptop teleoperation after #89 presented the scope, then separately
+authorized the announced board batch and explicitly confirmed its wheel results.
+Host failure tests and physical observations remain separate evidence. All tasks
+are complete; measurement deferrals and loaded/floor exclusions remain.</p>
+<p>
+Run from the repository root:</p>
+<pre><code class="language-sh">python3 -m unittest discover -s apps/teleop/tests -t . -v
+</code></pre>
+<p>
+31 client tests cover protocol/policy assertions, real pseudo-terminals and
+fake peers, and the real client against the product simulator. Existing codec
+compatibility passed 23 Python tests, 40 bench tests and 14 UDP scenarios.
+These are host results, not electrical or radio qualification.</p>
+<table>
+<thead>
+<tr>
+<th>
+Requirement</th>
+<th>
+Actual host evidence</th>
+<th>
+Task</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-explicit-connection-without-motion">Explicit connection without motion</a></td>
+<td>
+<code>ProtocolTests.test_handshake_is_single_and_validates_caps</code>, <code>test_invalid_floats_and_window_bounds_are_refused</code>, <code>test_busy_and_zero_session_fail</code>, <code>test_invalid_frames_do_not_refresh_deadline</code>; <code>TerminalTests.test_non_tty_and_invalid_target_never_connect</code> checks no extra claim. The startup part of <code>test_real_cli_start_arm_expiry_space_rearm_and_restore</code> observes zero/no ARM before R.</td>
+<td>
+2.2, 4.1</td>
+</tr>
+<tr>
+<td>
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-explicit-arm-and-stop-latch">Explicit arm and stop latch</a></td>
+<td>
+<code>PolicyTests.test_no_implicit_arm_and_new_direction_after_arm</code>, <code>test_reported_stop_and_errors_cancel_motion</code>; real CLI Space latch/re-arm in <code>TerminalTests.test_real_cli_start_arm_expiry_space_rearm_and_restore</code>.</td>
+<td>
+3.1, 3.2, 4.1</td>
+</tr>
+<tr>
+<td>
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-gentle-planar-directions">Gentle planar directions</a></td>
+<td>
+<code>PolicyTests.test_all_six_signs_and_latest_only</code>, <code>test_zero_and_smaller_limits</code>; <code>SimulatorTests.test_six_directions_expiry_stop_latch_and_cleanup</code> checks all six actual simulator wheel-sign patterns.</td>
+<td>
+3.1, 4.1</td>
+</tr>
+<tr>
+<td>
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-input-expiry-and-latest-intent">Input expiry and latest intent</a></td>
+<td>
+<code>PolicyTests.test_expiry_boundary_repeat_and_unrelated_keys</code>, <code>test_stop_and_quit_dominate_batch_and_clear_arm</code>; simulator integration checks zero after every input expiry.</td>
+<td>
+3.1, 3.2</td>
+</tr>
+<tr>
+<td>
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-periodic-stream-and-scheduling-failure">Periodic stream and scheduling failure</a></td>
+<td>
+<code>PolicyTests.test_loop_gap_boundary_fails_without_catchup</code>, <code>ProtocolTests.test_sequence_wrap_and_control_timeout</code>; <code>TerminalTests.test_stalled_process_discards_buffered_motion_on_resume</code> suspends the actual process, queues W and verifies no motion replay. The client schedules 50 ms ticks; simulator expiry and session survival exercise the real stream.</td>
+<td>
+3.1, 3.2</td>
+</tr>
+<tr>
+<td>
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-validate-and-correlate-device-input">Validate and correlate device input</a></td>
+<td>
+<code>ProtocolTests.test_control_correlation_stop_cancels_pending_arm</code>, <code>test_bad_status_cannot_enable</code>; <code>RuntimeTests.test_wrong_endpoint_cannot_arm</code> and <code>TerminalTests.test_stop_before_arm_reply_needs_new_operator_arm</code>.</td>
+<td>
+2.2, 3.2</td>
+</tr>
+<tr>
+<td>
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-link-checks-without-automatic-recovery">Link checks without automatic recovery</a></td>
+<td>
+<code>ProtocolTests.test_echo_nonce_session_and_age_are_independent</code>; <code>TerminalTests.test_lost_echo_exits_and_restores_without_reclaim</code>, <code>test_missing_arm_reply_fails_without_nonzero</code>; <code>SimulatorTests.test_killed_simulator_ends_client_without_reconnect</code> kills an armed/driving simulator and observes client failure.</td>
+<td>
+3.2, 4.1</td>
+</tr>
+<tr>
+<td>
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-bounded-shutdown-and-honest-reporting">Bounded shutdown and honest reporting</a></td>
+<td>
+<code>RuntimeTests.test_cleanup_attempts_every_send_despite_failures</code>, <code>test_cleanup_only_accepts_matching_stop_ack</code>, <code>test_unconfirmed_handshake_still_attempts_session_zero_cleanup</code>; PTY tests verify normal/Ctrl-C/SIGTERM restoration and terminal-hangup STOP/BYE. The session-zero cleanup test failed before the early-return fix.</td>
+<td>
+3.2, 4.1</td>
+</tr>
+<tr>
+<td>
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec--requirement-observable-commands-and-evidence-limits">Observable commands and evidence limits</a></td>
+<td>
+<code>RuntimeTests.test_echo_does_not_refresh_status_age</code>; output and the <a href="../apps/teleop/README.md">usage guide</a> distinguish local versus last-reported state, approximate requested speed and unconfirmed BYE.</td>
+<td>
+3.3, 5.1, 5.2</td>
+</tr>
+</tbody>
+</table>
+<p>
+Test sources: <a href="../apps/teleop/tests/test_protocol.py">protocol</a>,
+<a href="../apps/teleop/tests/test_policy.py">policy</a>,
+<a href="../apps/teleop/tests/test_runtime.py">runtime</a>,
+<a href="../apps/teleop/tests/test_terminal.py">terminal</a>,
+<a href="../apps/teleop/tests/test_simulator.py">simulator</a>.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--verification--physical-acceptance--tasks-5152">Physical acceptance — tasks 5.1/5.2</h2><p>
+The separately authorized <a href="../firmware/bench/2026-10-20-laptop-teleop/notes.md">stand batch</a>
+passed on the installed normal ROS firmware, without flashing. The actual
+terminal client performed five seconds idle, unarmed W, R at zero, six gentle
+directions with input-expiry pauses, forward/Space, unarmed W, explicit re-arm,
+fresh forward and Ctrl-D. Serial confirmed all six wheel patterns, zero at each
+pause, matching control acknowledgements and final STOP/release/Open. Capture
+stopped, previous Wi-Fi was restored and the internet route was unchanged.
+Todor confirmed: <strong>“Yes, all behaved as expected.”</strong> This includes all directions,
+every stop and still wheels through reset/startup and both unarmed checks.</p>
+<p>
+This accepts the implemented application for supervised stand use. Malformed
+packets, refused/missing controls, lost links and scheduling failures remain
+covered by host tests; they were not injected into this physical batch. M6’s <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--task-52-disposition">measurement
+deferrals</a>
+remain unchanged; no electrical coast/STBY, current, temperature margin or
+loaded/floor result is claimed.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--verification--shared-codec-container-regression">Shared codec container regression</h2><p>
+The first #90 ROS CI run failed because the scenario compatibility import was
+mounted at <code>/scenarios</code> without the extracted <code>apps/client</code> package. The existing
+<code>apps/simcar/scenarios/ros-capabilities.sh</code> test reproduced <code>IndexError: 3</code> locally
+before the fix. All three affected runners now mount scenarios and the shared
+codec in their repository layout inside the container. The same capabilities
+and reconnect test passes, as do <code>ros_readonly.sh</code> and default <code>ros_stops.sh</code>
+against loopback ROS simulators. The 31 client tests pass again. Firmware and
+UDP wire behavior are unchanged.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/proposal.md</div></header>
-    
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal--m6-low-level-four-wheel-api">M6: low-level four-wheel API</h1><p>
 <strong>Status:</strong> archived/synced 2026-10-20 after <a href="https://github.com/tptodorov/rovi/pull/87">#87</a> merged in <code>f5a2d8e</code>; proposed 2026-10-10; laptop implementation scope accepted 2026-10-17 by Todor's merge of <a href="https://github.com/tptodorov/rovi/pull/48">#48</a>. Open items O1–O8 closed or deferred 2026-10-17. Scoped product acceptance is recorded on 2026-10-19 in the <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--acceptance-review-task-53">task 5.3 review</a>, using Todor’s physical confirmations and explicit task 5.2 measurement deferrals. The product crates, sim car and firmware are implemented; laptop conformance and CI are tracked in tasks 1–3. Existing experiments remain the comparison/rollback reference; unverified physical limits below remain explicit. Terms are as defined in <a href="../GLOSSARY.md"><code>GLOSSARY.md</code></a>.</p>
 <h2 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal--why">Why</h2><p>
@@ -2897,6 +3344,47 @@ Evidence: host tests and the sim car are development evidence only (<a href="../
 The 2026-10-17 review findings are addressed: ROS latch exceptions, complete motor fault/configuration recovery, clamped kinematics, shared Wi-Fi exclusion, explicit transport edge cases and ROS field/QoS contracts. The design and <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification">verification map</a> accompany the requirements. Todor merged #48 on 2026-10-17, accepting the laptop implementation tasks (task 1.1). That does not establish product hardware acceptance or authorize a flash/motor run. The same day Todor agreed O1 and O2; O5 and O7 closed with them, and O4 and O1's current measurement are deferred as equipment-gated. O9 closed with the specified volatile fallback and recorded Jazzy evidence.</p>
 <p>
 The 2026-10-19 <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--acceptance-review-task-53">final acceptance review</a> completes task 5.3 for the recorded scope. It preserves the equipment-dependent checks Todor skipped as physically unverified; no new qualification claims or motor authorization follow from acceptance. The pinned CLI archived/synced this change on 2026-10-20 after the stack landed, creating the <a href="#openspec--specs--car-control-api--spec">car control API</a> and <a href="#openspec--specs--motor-control--spec">motor control</a> baselines without changing requirement behavior. Measurements explicitly deferred at acceptance remain unverified.</p>
+</section><section class="document" id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal" aria-label="proposal">
+    <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-laptop-teleoperation/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-laptop-teleoperation/proposal.md</div></header>
+    <h1 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal--laptop-udp-teleoperation">Laptop UDP teleoperation</h1><p>
+<strong>Status:</strong> implemented and accepted for supervised stand use on 2026-10-20. Todor selected the laptop scope, separately authorized the announced board batch, and confirmed all directions, stops and still phases. Archived/synced through the pinned CLI on 2026-10-20; <a href="#openspec--specs--laptop-teleoperation--spec">accepted requirements</a>. Each future motor batch still needs its own announced go.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal--why">Why</h2><p>
+The <a href="../docs/VISION.md">vision</a> calls for teleoperation above the device API. M6 now provides that API, but the laptop tools are scenario/bench runners rather than an interactive product client.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal--what-changes">What Changes</h2><ul>
+<li>
+Add a Linux terminal client over the existing UDP protocol: explicit target, connect disarmed, explicit arm, six gentle directions, STOP and quit.</li>
+<li>
+Bound each recognized motion key to a 250 ms input window; stream zeros when input expires, and clear motion on STOP, faults or communication failure. No automatic claim/re-arm after failure.</li>
+<li>
+Reuse the tested TwistStamped, capability and Status codecs. Add deterministic policy tests, simulated UDP peers and product-simulator coverage before any separately authorized board test.</li>
+<li>
+Preserve M6’s firmware, ownership, wire codes, lease and 70% product cap. No iPhone/BLE client, ROS controller, station mode, floor/autonomous behavior or new physical qualification claim in this change.</li>
+</ul>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal--capabilities">Capabilities</h2><h3 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal--new-capabilities">New Capabilities</h3><ul>
+<li>
+<code>laptop-teleoperation</code>: interactive laptop input, client-side arming, bounded command streaming, status presentation and shutdown over the existing UDP API.</li>
+</ul>
+<h3 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal--modified-capabilities">Modified Capabilities</h3><p>
+None. The client consumes <a href="#openspec--specs--car-control-api--spec">car-control-api</a>; it does not alter that contract or <a href="#openspec--specs--motor-control--spec">motor-control</a>.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal--impact">Impact</h2><ul>
+<li>
+Code: a small standard-library Python client under <code>apps/teleop</code>, a shared codec module, simulator tests and product usage instructions. No additional runtime dependency.</li>
+<li>
+Existing Python wire-codec callers retain compatibility; Rust/firmware and experimental behavior remain unchanged.</li>
+<li>
+Product implementation requires explicit proposal acceptance per <a href="../docs/SPECIFICATION.md">SPECIFICATION</a>. Each motor batch remains separately announced and authorized. M6’s <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification--task-52-disposition">measurement deferrals</a> remain in effect.</li>
+</ul>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal--scope-choice">Scope choice</h2><p>
+Todor selected laptop UDP teleoperation on 2026-10-20. The proposed keys, gentle defaults and bounded-input policy define this reversible first client; Q9 and Q21 remain separate future work.</p>
+<h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal--implementation-progress">Implementation progress</h2><p>
+The laptop client is implemented under <code>apps/teleop</code>, using shared <code>apps/client</code>
+payload codecs with the former import path preserved. Host protocol/policy,
+pseudo-terminal, fake-peer and product-simulator tests are linked in the
+<a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--verification">verification map</a>. CI includes the client suite. The separate
+stand batch passed on 2026-10-20 with Todor’s explicit wheel observations
+(<a href="../firmware/bench/2026-10-20-laptop-teleop/notes.md">evidence</a>). The
+application is accepted for this supervised stand scope; no new measurement,
+firmware change, flash or loaded/floor result is claimed.</p>
 </section>
 <footer>Generated from OpenSpec Markdown. Make changes in the source, then run <code>npm run spec:build</code>. This reader does not approve a proposal or authorize hardware tests.</footer></main><script>const requirements = [...document.querySelectorAll('.requirement')];
 const search = document.querySelector('#search');

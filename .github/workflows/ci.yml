@@ -93,6 +93,7 @@ jobs:
         run: |
           (cd apps/simcar/scenarios && python3 -m unittest test_wire test_carlog test_latency)
           python3 -m unittest discover -s firmware/bench -p 'test_*.py'
+          python3 -m unittest discover -s apps/teleop/tests -t .
           (cd experiments/rovi-m8-setpoint-ros/sim && python3 -m unittest test_wire test_carlog test_latency test_plot_car test_compare_track test_ble_client)
           (cd experiments/rovi-m3-wifi-queue && python3 -m unittest test_client)
       - name: M4 carrier matches the schematic; build-guide images are up to date
