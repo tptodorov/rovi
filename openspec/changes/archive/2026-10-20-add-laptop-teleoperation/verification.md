@@ -27,17 +27,17 @@ These are host results, not electrical or radio qualification.
 | [Validate and correlate device input](specs/laptop-teleoperation/spec.md#requirement-validate-and-correlate-device-input) | `ProtocolTests.test_control_correlation_stop_cancels_pending_arm`, `test_bad_status_cannot_enable`; `RuntimeTests.test_wrong_endpoint_cannot_arm` and `TerminalTests.test_stop_before_arm_reply_needs_new_operator_arm`. | 2.2, 3.2 |
 | [Link checks without automatic recovery](specs/laptop-teleoperation/spec.md#requirement-link-checks-without-automatic-recovery) | `ProtocolTests.test_echo_nonce_session_and_age_are_independent`; `TerminalTests.test_lost_echo_exits_and_restores_without_reclaim`, `test_missing_arm_reply_fails_without_nonzero`; `SimulatorTests.test_killed_simulator_ends_client_without_reconnect` kills an armed/driving simulator and observes client failure. | 3.2, 4.1 |
 | [Bounded shutdown and honest reporting](specs/laptop-teleoperation/spec.md#requirement-bounded-shutdown-and-honest-reporting) | `RuntimeTests.test_cleanup_attempts_every_send_despite_failures`, `test_cleanup_only_accepts_matching_stop_ack`, `test_unconfirmed_handshake_still_attempts_session_zero_cleanup`; PTY tests verify normal/Ctrl-C/SIGTERM restoration and terminal-hangup STOP/BYE. The session-zero cleanup test failed before the early-return fix. | 3.2, 4.1 |
-| [Observable commands and evidence limits](specs/laptop-teleoperation/spec.md#requirement-observable-commands-and-evidence-limits) | `RuntimeTests.test_echo_does_not_refresh_status_age`; output and the [usage guide](../../../apps/teleop/README.md) distinguish local versus last-reported state, approximate requested speed and unconfirmed BYE. | 3.3, 5.1, 5.2 |
+| [Observable commands and evidence limits](specs/laptop-teleoperation/spec.md#requirement-observable-commands-and-evidence-limits) | `RuntimeTests.test_echo_does_not_refresh_status_age`; output and the [usage guide](../../../../apps/teleop/README.md) distinguish local versus last-reported state, approximate requested speed and unconfirmed BYE. | 3.3, 5.1, 5.2 |
 
-Test sources: [protocol](../../../apps/teleop/tests/test_protocol.py),
-[policy](../../../apps/teleop/tests/test_policy.py),
-[runtime](../../../apps/teleop/tests/test_runtime.py),
-[terminal](../../../apps/teleop/tests/test_terminal.py),
-[simulator](../../../apps/teleop/tests/test_simulator.py).
+Test sources: [protocol](../../../../apps/teleop/tests/test_protocol.py),
+[policy](../../../../apps/teleop/tests/test_policy.py),
+[runtime](../../../../apps/teleop/tests/test_runtime.py),
+[terminal](../../../../apps/teleop/tests/test_terminal.py),
+[simulator](../../../../apps/teleop/tests/test_simulator.py).
 
 ## Physical acceptance — tasks 5.1/5.2
 
-The separately authorized [stand batch](../../../firmware/bench/2026-10-20-laptop-teleop/notes.md)
+The separately authorized [stand batch](../../../../firmware/bench/2026-10-20-laptop-teleop/notes.md)
 passed on the installed normal ROS firmware, without flashing. The actual
 terminal client performed five seconds idle, unarmed W, R at zero, six gentle
 directions with input-expiry pauses, forward/Space, unarmed W, explicit re-arm,
@@ -50,7 +50,7 @@ every stop and still wheels through reset/startup and both unarmed checks.
 This accepts the implemented application for supervised stand use. Malformed
 packets, refused/missing controls, lost links and scheduling failures remain
 covered by host tests; they were not injected into this physical batch. M6’s [measurement
-deferrals](../archive/2026-10-20-add-four-wheel-api/verification.md#task-52-disposition)
+deferrals](../2026-10-20-add-four-wheel-api/verification.md#task-52-disposition)
 remain unchanged; no electrical coast/STBY, current, temperature margin or
 loaded/floor result is claimed.
 

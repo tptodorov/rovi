@@ -2,7 +2,7 @@
 
 ## Context
 
-See the [proposal](proposal.md) for motivation and accepted laptop scope. The existing [car API](../../specs/car-control-api/spec.md) and [M6 evidence](../archive/2026-10-20-add-four-wheel-api/verification.md) are the boundaries. `apps/simcar/scenarios/wire.py` already supplies golden-tested TwistStamped, Status and capability codecs; its scenario `Client` is a test helper, not a product transport.
+See the [proposal](proposal.md) for motivation and accepted laptop scope. The existing [car API](../../../specs/car-control-api/spec.md) and [M6 evidence](../2026-10-20-add-four-wheel-api/verification.md) are the boundaries. `apps/simcar/scenarios/wire.py` already supplies golden-tested TwistStamped, Status and capability codecs; its scenario `Client` is a test helper, not a product transport.
 
 ## Goals / Non-Goals
 

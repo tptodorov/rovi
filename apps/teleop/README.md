@@ -61,3 +61,7 @@ passed on 2026-10-20 with Todor’s physical confirmation: six directions,
 input-expiry/Space/quit stops, explicit re-arm and startup/unarmed stillness.
 This accepts the application on the stand; loaded/floor use and electrical or
 physical timing measurements remain outside this evidence.
+
+The [accepted requirements](../../openspec/specs/laptop-teleoperation/spec.md)
+and [archived verification map](../../openspec/changes/archive/2026-10-20-add-laptop-teleoperation/verification.md)
+record the host tests and scoped physical acceptance.

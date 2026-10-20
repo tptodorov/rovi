@@ -1,10 +1,10 @@
 # Laptop UDP teleoperation
 
-**Status:** laptop implementation accepted 2026-10-20. Todor selected “Laptop teleoperation client” in response to the post-M6 scope question, after the concrete proposal in #89 was presented. Proceed with the proposed client and laptop validation; firmware changes, flashes and motor runs remain excluded. Every board batch still needs a separate announced go.
+**Status:** implemented and accepted for supervised stand use on 2026-10-20. Todor selected the laptop scope, separately authorized the announced board batch, and confirmed all directions, stops and still phases. Archived/synced through the pinned CLI on 2026-10-20; [accepted requirements](../../../specs/laptop-teleoperation/spec.md). Each future motor batch still needs its own announced go.
 
 ## Why
 
-The [vision](../../../docs/VISION.md) calls for teleoperation above the device API. M6 now provides that API, but the laptop tools are scenario/bench runners rather than an interactive product client.
+The [vision](../../../../docs/VISION.md) calls for teleoperation above the device API. M6 now provides that API, but the laptop tools are scenario/bench runners rather than an interactive product client.
 
 ## What Changes
 
@@ -21,13 +21,13 @@ The [vision](../../../docs/VISION.md) calls for teleoperation above the device A
 
 ### Modified Capabilities
 
-None. The client consumes [car-control-api](../../specs/car-control-api/spec.md); it does not alter that contract or [motor-control](../../specs/motor-control/spec.md).
+None. The client consumes [car-control-api](../../../specs/car-control-api/spec.md); it does not alter that contract or [motor-control](../../../specs/motor-control/spec.md).
 
 ## Impact
 
 * Code: a small standard-library Python client under `apps/teleop`, a shared codec module, simulator tests and product usage instructions. No additional runtime dependency.
 * Existing Python wire-codec callers retain compatibility; Rust/firmware and experimental behavior remain unchanged.
-* Product implementation requires explicit proposal acceptance per [SPECIFICATION](../../../docs/SPECIFICATION.md). Each motor batch remains separately announced and authorized. M6’s [measurement deferrals](../archive/2026-10-20-add-four-wheel-api/verification.md#task-52-disposition) remain in effect.
+* Product implementation requires explicit proposal acceptance per [SPECIFICATION](../../../../docs/SPECIFICATION.md). Each motor batch remains separately announced and authorized. M6’s [measurement deferrals](../2026-10-20-add-four-wheel-api/verification.md#task-52-disposition) remain in effect.
 
 ## Scope choice
 
@@ -40,6 +40,6 @@ payload codecs with the former import path preserved. Host protocol/policy,
 pseudo-terminal, fake-peer and product-simulator tests are linked in the
 [verification map](verification.md). CI includes the client suite. The separate
 stand batch passed on 2026-10-20 with Todor’s explicit wheel observations
-([evidence](../../../firmware/bench/2026-10-20-laptop-teleop/notes.md)). The
+([evidence](../../../../firmware/bench/2026-10-20-laptop-teleop/notes.md)). The
 application is accepted for this supervised stand scope; no new measurement,
 firmware change, flash or loaded/floor result is claimed.
