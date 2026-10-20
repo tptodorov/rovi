@@ -17,8 +17,8 @@
 
 ## 3. Reviewable HTTPS delivery
 
-- [ ] 3.1 Prepare deployment to the selected origin without publishing; completion check: Linux checks/build pass, static output contains only first-party runtime assets/no secrets, version/revision is visible and the documented deployment/rollback is reviewable. Host simulation is labelled as such.
-- [ ] 3.2 Publish within an authorized implementation/delivery task; completion check: record HTTPS URL and deployed revision, verify required feature checks render correctly on iPhone, and document opening the page in Bluefy rather than Safari. This specification-authoring PR does not authorize publication.
+- [x] 3.1 Prepare deployment to the selected origin without publishing; completion check: Linux checks/build pass, static output contains only first-party runtime assets/no secrets, version/revision is visible and the documented deployment/rollback is reviewable. Host simulation is labelled as such. Evidence: `npm run build` emits only the 8 first-party assets plus `version.txt`; [README](../../../apps/iphone/README.md) documents `publish.sh` and rollback (2026-10-20).
+- [ ] 3.2 Publish within an authorized implementation/delivery task; completion check: record HTTPS URL and deployed revision, verify required feature checks render correctly on iPhone, and document opening the page in Bluefy rather than Safari. Todor authorized publication on 2026-10-20. Published revision `118e651509c4` to <https://tptodorov.github.io/rovi/iphone/> (`gh-pages` branch, HTTPS enforced); headless Chromium on Linux loaded only first-party assets and showed the Bluefy-required message. Pending: render check in Bluefy on the iPhone.
 
 ## 4. Phone and physical acceptance
 
