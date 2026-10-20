@@ -1,55 +1,56 @@
-# iPhone BLE client verification map
+# iPhone BLE web controller verification map
 
-**Planning evidence only (2026-10-20).** No iPhone app exists in this change; no unit/UI/device/wheel acceptance has passed. The [requirements](specs/iphone-ble-teleoperation/spec.md) are proposed. All [tasks](tasks.md) remain unchecked. Existing laptop results explain the protocol and do not close iPhone Q18/Q19. This file is the future evidence ledger; do not infer acceptance from artifact completeness or a green documentation check.
+**Planning evidence only (2026-10-20).** No runtime or deployment exists in this change; no Linux app tests, Bluefy/phone checks or wheel acceptance have passed. Todor selected Linux/Bluefy/no subscription, confirmed phone 72-byte support and chose buttons first with sensor alternatives later. These are scope/user evidence, not newly measured browser/firmware results or full proposal acceptance. All [tasks](tasks.md) remain unchecked.
 
-## Host and UI evidence planned
+## Linux host and browser evidence planned
 
 | ID | Test boundary and completion evidence |
 | --- | --- |
-| H1 | Codec unit tests: 72-byte golden setpoints (zero/six directions), endian/CDR layout, u32 wrap, 27-byte capabilities with f32 limits, finite/geometry/window/version/length checks and all Status codes/invalid combinations. Compare with existing [wire vectors](../../../experiments/rovi-m8-setpoint-ros/sim/test_wire.py) and [product encoding](../../../crates/rovi-core/src/capabilities.rs). |
-| H2 | Fake central/peripheral: no scan before user action; same-name candidates; manual selection, properties and payload<72; every setup timeout/claim-loss/error; denied/off/resetting/unsupported states; successful connect received after cancellation. Capture writes and show no ARM/nonzero on setup failure. |
-| H3 | Fake clock and delegate event traces: zero-before-ARM, no notification-only confirmation, subscription/read separation, current-operation write success plus fresh Status, control refusal/deadlines, queued STOP over pending ARM, safety-stop latch, malformed/old-generation callbacks, read deadline and no automatic recovery. Inject 199/200 ms submission gaps and backpressure with release during blockage; no catch-up writes. |
-| H4 | Touch/state and UI tests: all six signs and capped magnitudes; zero axes; multiple touches; release, outside/re-entry, cancellation, lost tracking and 249/250 ms expiry; pre-arm and post-STOP stale touches; local/requested/reported state and age. Repeating the transmitted value must not renew input. |
-| H5 | Lifecycle/cleanup fakes plus UI tests: inactive/lock signals, background, permission/power/service loss, disconnect and termination/relaunch state; zero and STOP failures/hangs independently; cancellation by the shared 500 ms deadline while runnable. Text/accessibility/Dynamic Type checks; accessibility activation cannot latch movement. |
+| H1 | Codec tests: 72-byte zero/six-direction vectors, endian/CDR layout, u32 wrap, 27-byte capabilities/f32 limits, finite/geometry/window/version/length checks and all valid/invalid Status combinations. Compare [wire vectors](../../../experiments/rovi-m8-setpoint-ros/sim/test_wire.py) and [product encoder](../../../crates/rovi-core/src/capabilities.rs). |
+| H2 | Fake Web Bluetooth and Linux browser: HTTPS/API gates, explicit user picker/name filter/service access, cancelled/no/late selection, no remembered auto-connect, GATT properties, zero-write rejection, setup/claim timeouts and late connect results. No ARM/nonzero on setup failure; no invented picker cancellation/MTU/readiness methods. |
+| H3 | Fake clock/promise/event traces: fresh zero before one ARM; only current successful write plus subsequent read promise confirms; notifications/cached value cannot grant motion. STOP over pending ARM, safety-stop latch, malformed/stale results, read/control deadlines, serial GATT work, one pending setpoint and no backlog. Inject 199/200 ms gaps and pending-write completion after release. |
+| H4 | Linux browser/pointer tests: six signs/capped values, zero axes, multi-touch, release/outside/re-entry/cancel/lost capture; 249/250 ms expiry; UI frame renewal stalls while transmitter continues; pre-arm/post-STOP touches never replay. No sensor input or motion permission in v1. |
+| H5 | Browser/session tests: blur/hidden/pagehide/host-inactivity/disconnect/errors, reload/return manual recovery; zero/STOP failures/hangs independently; disconnect by shared 500 ms deadline while runnable. Check text sizing, labels, targets, non-color state and no sticky accessibility activation. Verify static output/HTTPS deployment instructions contain no secrets/remote runtime scripts. |
 
-Host/fake clocks establish software decisions, not scheduling guarantees, iOS radio delivery or physical stopping. UI Simulator evidence establishes layout/interaction logic only; it cannot resolve phone/firmware compatibility.
+Linux browser tests and fake clocks establish software decisions, not Bluefy/native bridge behavior, iOS scheduling, radio delivery or physical stopping. No Mac/Xcode/Simulator evidence is required or claimed for this web route.
 
 ## Requirement and scenario coverage
 
-Each row covers all scenarios under the named requirement; evidence IDs describe planned checks, not tests already implemented.
+Each row covers every scenario under the named [requirement](specs/iphone-ble-teleoperation/spec.md); H/P IDs are planned evidence, not tests already implemented.
 
-| Proposed requirement | Host/UI | Required phone/board evidence |
+| Requirement | Linux host/browser | Phone/board evidence |
 | --- | --- | --- |
-| Explicit discovery and selection | H2 (two names/no results) | P1 discovery/selection; absence is inconclusive |
-| Validate the connected car | H1/H2 (incompatibility/claim expiry) | P1 capacity/GATT/setup and I2 |
-| Existing BLE wire contract | H1 (directions/wrap) | P1 accepted zero stream; P4 direction observations |
-| Explicit zero then ARM | H3/H4 (old hold/refused or late ARM) | P2 controls; P4 no replay |
-| Gentle single-axis directions | H1/H4 (signs/caps/disabled axes) | P3 interaction; P4 six directions |
-| Hold cancellation and input expiry | H4 (release/cancel/expiry/outside) | P3 real touch; P4 release stop |
-| Periodic latest-intent stream | H3 (backpressure/200 ms) | P2 stream workload and I3 |
-| Validate Status and link health | H1/H3 (unchanged Status/read timeout/old callbacks) | P2 read/notify ordering; P3 loss |
-| STOP and re-arm latch | H3/H4 (STOP/ARM/touch race) | P2 confirmation; P4 observed latch |
-| Active foreground and manual recovery | H2/H5 (lock/off/loss/resume) | P3 interruptions/termination |
-| Bounded best-effort shutdown | H5 (blocked zero/STOP/cancel) | P3 observed attempt/detection delays; P4 loss fallback |
-| Visible state and evidence limits | H4/H5 (Armed without motion/accessibility) | P3 usability/labels; P4 distinguish wheel observation |
+| Supported web delivery | H2/H5 (HTTPS/API refusal/assets) | P1 actual API support/deployed revision |
+| Explicit discovery and selection | H2 (browser picker/cancel/late result) | P1 name-only picker/no automatic claim |
+| Validate the connected car | H1/H2 (incompatibility/claim loss) | P1 actual zero/ARM/Status path and I2 |
+| Existing BLE wire contract | H1 (directions/wrap) | P1 zero path; P4 wheel directions |
+| Explicit zero then ARM | H3/H4 (old hold/refusal/late confirmation) | P2 controls; P4 no replay |
+| Gentle single-axis directions | H1/H4 (signs/caps/disabled axes) | P3 touch; P4 six directions |
+| Hold cancellation and input expiry | H4 (release/cancel/expiry/frame stall) | P3 actual pointer/lifecycle; P4 release |
+| Periodic latest-intent stream | H3 (pending write/backpressure/gap) | P2 complete workload and I3 |
+| Validate Status and link health | H1/H3 (read deadline/old event) | P2 read/notify/error behavior; P3 loss |
+| STOP and re-arm latch | H3/H4 (STOP/ARM/touch race) | P2 confirmation; P4 latch observation |
+| Active foreground and manual recovery | H2/H5 (inactive/return/reload) | P3 actual host events/frame expiry/termination |
+| Bounded best-effort shutdown | H5 (blocked writes/disconnect) | P3 attempt/detection delay; P4 loss fallback |
+| Visible state and evidence limits | H4/H5 (Armed without motion/unavailable MTU) | P3 usability/labels; P4 separate wheel observation |
 
-## Real phone / normal product firmware evidence planned
+## Bluefy / normal product firmware evidence planned
 
-These are proposed procedures, **not authorization to run them**. No device, network, router, serial capture or motor activity occurred while writing this draft. Use the current normal product default or `ros` image; never `motor-bench`. Do not change firmware to make a phone pass.
+These are proposed checks, **not authorization to run them**. No hosted page, phone, network, router, serial or motor activity occurred while revising this draft. Use normal default or `ros` firmware; never `motor-bench`. Do not change firmware to make Bluefy pass.
 
-* **P1 — payload/claim (I2, Q18):** with motor power disabled and a separately authorized batch, record phone model/iOS, Xcode/app/firmware revisions, capacity from `.withoutResponse`, raw capabilities/Status and, where authorized instrumentation is available, board ATT MTU for 10 manual connect/disconnect cycles. Require capacity>=72 and observed MTU>=75 every time; record setup latency versus claim_ms, claimed-disarmed state, rejection paths and release observation separately. Missing board MTU evidence leaves that measurement open even if zero writes work.
-* **P2 — full streaming/control workload (I3, Q19):** with motor power disabled, run 60 s of 20 Hz zero setpoints, including Status polling and explicit ARM/STOP/re-arm at zero. Require no lease expiry, no submission gap>=200 ms and no one-second control/read-transaction timeout. Log gap distribution, readiness stalls, notification subscription/read ordering and control completion/read latency. Record connection interval only from actual authorized measurement. A phone that fails is unsupported pending reviewed changes; laptop results and a timer frequency do not establish iOS throughput or interval.
-* **P3 — phone lifecycle and UI (I4):** with motor power disabled, exercise actual hold/release/slide/multiple-touch, app switcher, Home/background, lock/unlock, interruption, Bluetooth off/on, permission deny/change, service invalidation/disconnect, force termination/relaunch and a deliberately unavailable peer. Record callback and last-submission times, cleanup attempts and any device-reported stop. Capture UI evidence of manual recovery, ageing Status and no sticky VoiceOver activation. Never require cleanup to run after suspension/kill; verify firmware fallback separately. If a case cannot be induced, record it as unverified rather than a fake-test pass.
-* **P4 — supervised physical acceptance:** only after P1–P3 and a newly announced batch with Todor's go, wheels off ground, test each gentle direction briefly, release-to-zero, STOP while holding, fresh ARM/new-press recovery, lock/background and link loss. Record Todor's wheel observations separately from app/GATT/firmware logs. Confirm the firmware's lease fallback under loss; host deadlines are not physical stopping bounds. Do not claim electrical/coast bounds, floor speed accuracy, range or unattended safety from this batch.
+* **P1 — browser/claim/payload integration (I1/I2):** motor power disabled, separately authorized batch. Record phone/iOS/Bluefy/web/firmware revisions, HTTPS origin, split with/without-response write APIs, explicit read promises/notifications, name-only picker and error behavior. Across 10 manual connections, verify validated setup and explicit ARM/STOP at zero with the expected fresh Status. The phone's 72-byte capability is user-confirmed; this checks our browser/firmware path. Record ATT MTU/capacity only if actually measured externally; unavailable MTU is not a browser failure or fabricated API result. Record claim timing and release observations separately.
+* **P2 — full workload (I3/Q19):** motor power disabled, separately authorized batch. Run 60 s at 20 Hz zero including Status polling and explicit ARM/STOP/re-arm at zero. Require no lease expiry, submission gap>=200 ms or one-second control/read timeout. Log pending-operation delays, promise durations, submission-gap distribution and read/control latency. Only actual instrumentation can establish connection interval; timer frequency/BlueZ cannot. Failing performance requires reviewed contract/approach changes before motor checks.
+* **P3 — host lifecycle and usability (I1/I4):** motor power disabled, separately authorized batch. Verify real pointer/hold/cancel/multi-touch, accessibility/text sizing, Bluefy browser controls, blur/page visibility, app switch/Home, lock/unlock, interruptions, Bluetooth off/on, permission changes, navigation, force termination/reload and unavailable peer. Record detected events, UI renewal expiry, last nonzero submission, cleanup attempts and device-reported state. P3 fails if an inactive host keeps renewing nonzero intent/streaming it; unsupported signals must not silently become a safety promise. Distinguish observed expiry/firmware fallback from runnable cleanup. Record non-inducible cases as unverified.
+* **P4 — supervised wheel acceptance:** only after P1–P3 and a separately announced batch with Todor's go, wheels off ground. Observe six directions briefly, release-to-zero, STOP during hold, new ARM/new press, lock/background and link loss. Record Todor's physical observations separately from browser/protocol/firmware logs. Confirm independent lease fallback; app deadlines are not physical stop bounds. No electrical/coast limits, floor speed accuracy, range or unattended-safety claim.
 
-Each run records date, exact procedure, hardware/app/firmware identity, raw logs and observed failures. A physical run requires its own safe setup/cleanup announcement and Todor's confirmation. Existing [hardware policy](../../../README.md#hardware-validation-policy) and [product acceptance gates](../../../docs/SPECIFICATION.md#workflow-and-gates) apply. Failed or missing evidence leaves its task unchecked; changes to the contract return to proposal review.
+Record date, exact steps, hardware/browser/web/firmware identities, logs, observations and failures. [Hardware policy](../../../README.md#hardware-validation-policy) and [acceptance gates](../../../docs/SPECIFICATION.md#workflow-and-gates) apply. Missing/failed evidence leaves its task unchecked; revised behavior returns to proposal review.
 
 ## Draft checks
 
-Authoring checks on 2026-10-20 (these validate documentation only):
+Web revision authoring checks on 2026-10-20 (documentation evidence only):
 
-* `rtk npm run spec:check`: active draft plus three baseline capabilities pass strict validation (4/4).
+* `rtk npm run spec:check`: strict active draft plus three baseline specs pass (4/4).
 * `rtk npm run openspec -- validate --archived --strict --no-interactive`: both archived changes pass (2/2).
-* `rtk npm run spec:build` regenerates `openspec/index.html`; `rtk npm run spec:reader:check` passes all six tests and freshness checking.
-* Local Markdown review/check resolves all 34 relative links/anchors across the five authored documents; each of 12 added requirements has scenarios and an H/P mapping. Reviewed zero/ARM ordering, read/notify ambiguity, stop/input priority, deadlines, lifecycle recovery and explicit OPEN gates for consistency.
-* `rtk git diff --check` passes. Accepted specs, roadmap, runtime/firmware and Wi-Fi files remain unchanged. No implementation or physical acceptance is implied; the artifact status “4/4 complete” means planning files exist only.
+* `rtk npm run spec:build` regenerates the reader; `rtk npm run spec:reader:check` passes six tests and freshness checking.
+* All 34 local links/anchors resolve, and all 13 proposed requirements have scenarios and verification mappings. Reviewed picker timing/focus, capability checks, read-promise confirmation, serialized writes, lifecycle expiry, cleanup and deferred sensor scope for consistency.
+* `rtk git diff --check` passes. Accepted specs, roadmap, runtime/firmware and Wi-Fi files remain unchanged. No deployment, phone/board result or implementation acceptance is implied.

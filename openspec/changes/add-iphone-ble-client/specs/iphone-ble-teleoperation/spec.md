@@ -6,34 +6,46 @@ Lets an iPhone user control the normal product car over its existing BLE API wit
 
 ## ADDED Requirements
 
+### Requirement: Supported web delivery
+
+The controller SHALL run as an HTTPS page with Bluefy as its supported iPhone BLE host. It SHALL check the picker API before selection and required GATT read/notify and explicit write modes before writes; missing support SHALL disable control with an explanation. V1 SHALL use buttons without requesting motion-sensor permission. Published assets SHALL contain no secrets or third-party runtime scripts.
+
+#### Scenario: Unsupported host
+
+- **WHEN** the page opens without required Web Bluetooth APIs, including in an unsupported Safari session, or without HTTPS
+- **THEN** it explains that supported Bluefy/HTTPS is required and sends no ARM or nonzero setpoints
+
+
 ### Requirement: Explicit discovery and selection
 
-The client SHALL scan only after a user action while active with Bluetooth powered on and authorized, for at most 10 seconds. It SHALL discover the existing name-only advertisement without requiring an advertised service UUID, list distinct peripheral identifiers, and connect only to the selected entry. Scanning SHALL NOT claim the car. No result SHALL be described as proof that the car is busy.
+The client SHALL invoke the browser device picker only from an explicit Choose & Connect action while active. It SHALL select the existing name-only advertisement without requiring an advertised service UUID, request access to the product service, and connect only to the chosen device. The picker SHALL NOT be described as a claim; GATT connection is the claim. Cancellation/no result SHALL NOT be described as proof that the car is busy.
 
-#### Scenario: Two cars share the advertised name
+#### Scenario: Browser selection precedes connection
 
-- **WHEN** two peripherals advertise `Rovi M8` during a scan
-- **THEN** both appear with distinguishable identifiers and signal strength, and neither is connected automatically
-- **AND** Connect explains that connection claims the car and switches off its Wi-Fi AP
+- **WHEN** Choose & Connect opens the browser picker, including when same-name candidates exist
+- **THEN** no GATT connection occurs until the user selects a candidate, and the page does not auto-select a remembered device
+- **AND** the action explains that connecting claims the car and switches off its Wi-Fi AP; the page does not promise picker RSSI or distinguishable hardware addresses
 
-#### Scenario: No advertisement is found
+#### Scenario: Picker cancelled or completed after local cancellation
 
-- **WHEN** the scan ends without a candidate
-- **THEN** the client offers a new manual scan and describes power, range and another owner as possible causes
+- **WHEN** the picker is cancelled, has no selection, or returns after the local attempt was cancelled
+- **THEN** no connection is started; a new manual action is required
+- **AND** the page does not claim it can impose a scan timeout or forcibly dismiss the browser picker
 
 ### Requirement: Validate the connected car
 
-Connection SHALL start locally disarmed at zero. Before streaming, the client SHALL validate product GATT properties, 27-byte version-1 capabilities, positive finite geometry, finite nonnegative limits, nonzero windows, lease >=500 ms, claim >=1000 ms, write-without-response capacity >=72 bytes and a valid Claimed or Stopped Status. Setup SHALL finish within 10 seconds of Connect or end through cleanup; rejected setup SHALL send no ARM or nonzero setpoint.
+Setup SHALL start locally disarmed at zero. Before regular streaming, the client SHALL validate GATT properties, 27-byte version-1 capabilities, positive finite geometry, finite nonnegative limits, nonzero windows, lease >=500 ms, claim >=1000 ms, valid Claimed/Stopped Status and an initial 72-byte zero write submission. Setup SHALL finish within 10 seconds of GATT connect invocation or end through cleanup. It SHALL send no ARM or nonzero setpoint.
 
 #### Scenario: Unsupported payload or capabilities
 
-- **WHEN** the selected peripheral lacks required characteristics/properties, has malformed/unsupported capabilities, short windows, or permits fewer than 72 bytes per setpoint write
-- **THEN** the client explains incompatibility, attempts disconnect and never fragments a setpoint or substitutes a compact protocol
+- **WHEN** required characteristics/properties or capabilities are invalid, windows are unsupported, or the initial 72-byte submission is rejected
+- **THEN** the client reports incompatibility and attempts disconnect without fragmentation, protocol substitution or automatic reconnect
+- **AND** a resolved without-response write is not displayed as proof of device receipt or measured MTU
 
 #### Scenario: Claim expires during setup
 
 - **WHEN** discovery/subscription takes longer than the car's claim window and the car releases the connection
-- **THEN** setup fails without reconnecting automatically, even if the local 10-second deadline has not passed
+- **THEN** setup fails without automatic reconnect, even if the local 10-second deadline has not passed
 
 ### Requirement: Existing BLE wire contract
 
@@ -62,7 +74,7 @@ Only a new user ARM action SHALL initiate arming. It SHALL invalidate all touche
 
 ### Requirement: Gentle single-axis directions
 
-The UI SHALL provide forward/back, left/right strafe and counter-clockwise/clockwise rotation in base_link. Each press SHALL select one axis only: translation magnitude min(0.1 m/s, advertised axis maximum), rotation min(0.3 rad/s, advertised maximum). Zero-limit axes SHALL be disabled. Multiple simultaneous direction touches SHALL request zero and require all direction touches released before a new press; velocities SHALL NOT combine.
+V1 input SHALL use six hold buttons: forward/back, left/right strafe and counter-clockwise/clockwise rotation in base_link. Each press SHALL select one axis only: translation magnitude min(0.1 m/s, advertised axis maximum), rotation min(0.3 rad/s, advertised maximum). Zero-limit axes SHALL be disabled. Multiple simultaneous direction touches SHALL request zero and require all direction touches released before a new press; velocities SHALL NOT combine.
 
 #### Scenario: Direction mapping respects limits
 
@@ -82,14 +94,14 @@ Nonzero intent SHALL require a tracked press inside one direction control while 
 
 ### Requirement: Periodic latest-intent stream
 
-After setup the client SHALL attempt one latest setpoint every 50 ms, zero when locally disarmed, awaiting ARM or without valid hold intent. It SHALL check stop/lifecycle events and input expiry before each send and obey BLE write-without-response readiness. It SHALL retain no motion backlog. A scheduler gap or interval without submitting a setpoint of >=200 ms SHALL revoke local arm and end through cleanup, without catch-up motion.
+After setup the client SHALL attempt one latest setpoint every 50 ms, zero when locally disarmed, awaiting ARM or without valid hold intent. It SHALL check lifecycle, stops and expiry before sending, allow at most one pending setpoint write promise and retain no motion backlog. A scheduler gap or interval without submitting a setpoint of >=200 ms SHALL revoke local arm and end through cleanup, without catch-up motion. Write rejection SHALL end the session.
 
 #### Scenario: Transport backpressure
 
-- **GIVEN** a nonzero hold and BLE is not ready for writes
-- **WHEN** readiness returns before the 200 ms failure bound
-- **THEN** only current unexpired intent is submitted, with no accumulated writes
-- **AND** readiness returning at or after the bound cannot resume motion
+- **GIVEN** a nonzero hold and a pending write prevents another submission
+- **WHEN** that procedure completes before the 200 ms failure bound
+- **THEN** the next send uses only current unexpired intent, with no accumulated writes
+- **AND** completion at or after the bound cannot resume motion; a promise resolving does not confirm applied wheel motion
 
 ### Requirement: Validate Status and link health
 
@@ -113,13 +125,14 @@ STOP SHALL remain available throughout a connected session, clear intent immedia
 
 ### Requirement: Active foreground and manual recovery
 
-Leaving the active foreground, including lock or system interruption, SHALL revoke local arm, clear touches, stop scanning/normal streaming and end through cleanup. Bluetooth unavailable/resetting, permission denial/revocation, disconnect or service invalidation SHALL do the same. Return to active, permission restoration, Bluetooth restoration and app relaunch SHALL remain disconnected/disarmed until manual Connect and ARM; no restoration or automatic reconnect SHALL replay control.
+During a connected session, blur/hidden/pagehide, host inactivity, observed permission/service loss or Bluetooth failure SHALL clear holds, revoke local arm and end through cleanup. Return/reload/restoration SHALL require manual Choose & Connect and ARM, never automatic recovery/replay. A pending picker SHALL NOT connect while inactive. If inactive UI stops renewing input, expiry SHALL clear motion even while transmission runs. Sustained inactive motion SHALL fail host acceptance.
 
 #### Scenario: Lock or Bluetooth loss while holding
 
-- **WHEN** the phone locks, the app becomes inactive/backgrounded, Bluetooth becomes unavailable or permission is lost
-- **THEN** no further nonzero intent is generated, cleanup is attempted while execution remains available, and foreground return cannot resume the hold
-- **AND** suspension/termination without callbacks relies on the firmware lease rather than a promised phone cleanup
+- **WHEN** the phone locks, changes app, or loses Bluetooth while a direction is held
+- **THEN** observed inactivity/loss clears motion before another send, and foreground return cannot resume the hold
+- **AND** if execution or UI renewal stops without an event, input expiry or the independent firmware lease stops motion; runnable cleanup is not promised after suspension/termination
+- **AND** phone checks must reject a host that keeps renewing nonzero motion while inactive
 
 ### Requirement: Bounded best-effort shutdown
 
@@ -133,9 +146,9 @@ Disconnect, setup failure, interruption and handled failure SHALL clear intent a
 
 ### Requirement: Visible state and evidence limits
 
-The UI SHALL show selected peripheral, connection phase, local motion permission, limits, payload capacity, requested vx/vy/wz and last-reported device state/reason/error with observation age. Controls SHALL have text/accessibility labels, adequate touch targets and state cues beyond color; accessibility activation SHALL NOT latch nonzero motion. Documentation SHALL identify approximate open-loop references and distinguish unit/UI simulation from phone/radio/wheel evidence.
+The UI SHALL show selected device name/available opaque ID, connection phase, local arm, limits, 72-byte packet size, requested vx/vy/wz and last-reported state/reason/error with age. Unexposed MTU/capacity SHALL be labelled unavailable. Controls SHALL have text/accessibility labels, adequate targets and cues beyond color; accessibility activation SHALL NOT latch motion. Docs SHALL identify approximate open-loop references and separate Linux fake/browser evidence from phone/radio/wheel evidence.
 
 #### Scenario: Reported Armed does not mean moving wheels
 
-- **WHEN** the last reported Status is Armed but no direction is held, or a lifecycle failure has revoked local permission
+- **WHEN** last-reported Status is Armed but no direction is held, or interruption revoked local permission
 - **THEN** requested motion is zero, Status retains its observation age, and the UI does not claim measured speed, live wheel state or certified emergency stopping
