@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-20T11:19:27.782453+00:00",
+  "source": "5a6952fe54669110604a78677299c4058b9c751d",
+  "authorization": "Todor: go for announced 15-minute no-motion Wi-Fi observation; conditional single rejoin and 10-second recovery; capture/network restoration",
+  "setup": "USB connected; motor power disconnected per announced readiness",
+  "firmware": "previously restored normal ROS image, source b12cc21; no flash",
+  "local_normal_image_sha256": "514ba816d3b6b8b3b2c40ee63e156fd4f07ca9be104cef8246d6e848602c73f3",
+  "interface": "wlp1s0f0",
+  "prior_wifi_uuid": "855b50c6-388f-428e-99f6-d6d07db30aa8",
+  "route_before": "1.1.1.1 via 192.168.1.1 dev enp0s20f0u3u3 src 192.168.1.148 uid 1000 \n    cache"
+}
