@@ -1,0 +1,11 @@
+{
+  "failure": "CalledProcessError(3, ['rtk', 'proxy', 'nmcli', '--wait', '20', 'connection', 'up', 'id', 'rovi-m8'])",
+  "monitor_exit": -2,
+  "firewall_restored": true,
+  "wifi_restore_exit": 0,
+  "wifi_after": "<uuid>",
+  "route_after": "1.1.1.1 via <other-ipv4> dev enp0s20f0u3u3 src <other-ipv4> uid 1000 \n    cache",
+  "wifi_restored": true,
+  "route_unchanged": true,
+  "finished": "2026-10-20T14:26:18.856016+00:00"
+}

@@ -4,6 +4,10 @@ Follow-up to the [Echo-only baseline](2026-10-20-wifi-soak/notes.md) for
 [#23](https://github.com/tptodorov/rovi/issues/23). It adds a connected ROS router
 and `iw` snapshots, with the current normal firmware. A clean run leaves #23 open.
 
+[2026-10-20 board result](2026-10-20-ros-wifi-soak/notes.md): 4,363 Echo replies,
+zero loss, no ROS disconnect during 15 minutes; laptop power saving was off.
+Two setup failures and complete cleanup evidence are preserved alongside it.
+
 ## Scope and setup
 
 Fifteen minutes of observation, plus setup/cleanup. Motor power disconnected,

@@ -1,0 +1,41 @@
+{
+  "firewall_order_verified": {
+    "allow_index": 1,
+    "terminal_reject_index": 29
+  },
+  "soak_summary": {
+    "started": "2026-10-20T14:29:00.444690+00:00",
+    "finished": "2026-10-20T14:44:04.592828+00:00",
+    "target": [
+      "192.168.4.1",
+      7777
+    ],
+    "requested_seconds": 900.0,
+    "interface": "wlp1s0f0",
+    "complete": true,
+    "sent": 4363,
+    "lost": 0,
+    "link_transitions": 1,
+    "verdict": "no loss observed",
+    "reassociation_requested": false,
+    "journal_limit_lines": 2000
+  },
+  "serial_audit": {
+    "boots": 1,
+    "event_counts": {
+      "boot": 1,
+      "ros": 3
+    },
+    "problems": []
+  },
+  "completed": true,
+  "monitor_exit": -2,
+  "firewall_remove_exit": 0,
+  "firewall_restored": true,
+  "wifi_restore_exit": 0,
+  "wifi_after": "<uuid>",
+  "route_after": "1.1.1.1 via <other-ipv4> dev enp0s20f0u3u3 src <other-ipv4> uid 1000 \n    cache",
+  "wifi_restored": true,
+  "route_unchanged": true,
+  "finished": "2026-10-20T14:44:10.227019+00:00"
+}

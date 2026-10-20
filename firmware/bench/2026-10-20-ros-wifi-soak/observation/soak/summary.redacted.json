@@ -1,0 +1,17 @@
+{
+  "started": "2026-10-20T14:29:00.444690+00:00",
+  "finished": "2026-10-20T14:44:04.592828+00:00",
+  "target": [
+    "192.168.4.1",
+    7777
+  ],
+  "requested_seconds": 900.0,
+  "interface": "wlp1s0f0",
+  "complete": true,
+  "sent": 4363,
+  "lost": 0,
+  "link_transitions": 1,
+  "verdict": "no loss observed",
+  "reassociation_requested": false,
+  "journal_limit_lines": 2000
+}
