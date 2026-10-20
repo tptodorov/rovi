@@ -47,6 +47,8 @@ class SimulatorTests(unittest.TestCase):
         t.key(b'r');time.sleep(.1);start=len(events(self.log.name));t.key(b'w')
         self.wait_state(lambda e:signs(e.get('wheels_pm',[]))==(1,1,1,1),start)
         self.assertEqual(t.finish(),0)
+        # Release is logged by UDP before the control loop publishes its next state.
+        self.wait_state(lambda e:e.get('state')=='Open' and e.get('wheels_pm')==[0,0,0,0],start)
         end=time.monotonic()+1
         while not any(e.get('ev')=='released' for e in events(self.log.name)):
             self.assertLess(time.monotonic(),end);time.sleep(.01)
