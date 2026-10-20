@@ -11,7 +11,7 @@
 
 ## 3. Host delivery
 
-- [ ] 3.1 Run full client suite with product simulator, test with installed Bleak in Nix shell, strict specs/reader/link/whitespace checks, and open a stacked PR with mapped evidence and CI status.
+- [x] 3.1 Run full client suite with product simulator, test with installed Bleak in Nix shell, strict specs/reader/link/whitespace checks, and open a stacked PR with mapped evidence and CI status. **Done:** 59 client tests and the 20 BLE tests with Bleak 2.1.1 pass; strict specs, all six reader tests/freshness, link/test mapping and whitespace pass. PR [#97](https://github.com/tptodorov/rovi/pull/97) is stacked on #96; CI results are tracked there. Task 4.1 remains separate and pending.
 
 ## 4. Board acceptance
 
