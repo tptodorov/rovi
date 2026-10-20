@@ -25,7 +25,7 @@ The local `beep()` invocation completed successfully through PipeWire on
 
 ## Physical acceptance — pending
 
-The original client's [stand acceptance](../../../../firmware/bench/2026-10-20-laptop-teleop/notes.md)
+The original client's [stand acceptance](../../../firmware/bench/2026-10-20-laptop-teleop/notes.md)
 does not accept this new recovery behavior. Proposed separate test: gentle stand
 motion, a brief laptop Wi-Fi disconnect, no wheel motion during reconnect,
 audible loss alert, recovered disarmed state, fresh R/direction, Space/quit and
