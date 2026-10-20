@@ -103,8 +103,7 @@ export function buildPage(documents = loadDocuments()) {
   }).join('');
   const body = documents.map(doc => `<section class="document" id="${docId(doc.path)}" aria-label="${esc(label(doc))}">
     <header class="doc-header"><span class="eyebrow">${esc(kind(doc))}</span><a href="${esc(relative(resolve(root, 'openspec'), resolve(root, doc.path)))}">Markdown source ↗</a><div class="path">${esc(doc.path)}</div></header>
-    ${doc.path.endsWith('/spec.md') ? `<h2>${esc(label(doc))}</h2>` : ''}
-    ${renderDocument(doc, paths)}</section>`).join('');
+    ${doc.path.endsWith('/spec.md') ? `<h2>${esc(label(doc))}</h2>\n    ` : ''}${renderDocument(doc, paths)}</section>`).join('');
   const stateDoc = ['openspec/specs/car-control-api/spec.md', 'openspec/changes/add-four-wheel-api/specs/car-control-api/spec.md'].find(path => paths.has(path));
   let flow = '';
   if (stateDoc) {

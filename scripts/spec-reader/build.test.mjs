@@ -66,3 +66,8 @@ test('motion state flow survives archive and links to the baseline when availabl
     assert.ok(html.includes(`href="#${target}--requirement-boot-state"`), `wrong flow target for ${paths}`);
   }
 });
+
+test('plain change documents do not add whitespace-only lines', () => {
+  const html = buildPage([{ path: 'openspec/changes/demo/design.md', text: '# Design\n\nA proposed client.' }]);
+  assert.ok(!/^[ \t]+$/m.test(html), 'generated document wrapper contains trailing whitespace');
+});

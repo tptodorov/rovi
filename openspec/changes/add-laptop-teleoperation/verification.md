@@ -1,0 +1,17 @@
+# Laptop teleoperation verification plan
+
+**Planned only:** the client and these tests do not exist yet. This draft does not claim a passing test, a physical run or accepted post-M6 scope. Every row is conditional on task 1.1. Requirement links refer to the [proposed contract](specs/laptop-teleoperation/spec.md).
+
+| Requirement | Planned completion evidence | Task |
+| --- | --- | --- |
+| [Explicit connection without motion](specs/laptop-teleoperation/spec.md#requirement-explicit-connection-without-motion) | Fake peer/PTY verifies valid HELLO, nonzero session, finite geometry/limits, window bounds, BUSY/timeout/unsupported lease, and no ARM/nonzero output before operator action. | 2.2, 4.1 |
+| [Explicit arm and stop latch](specs/laptop-teleoperation/spec.md#requirement-explicit-arm-and-stop-latch) | Injected policy events and socket replies prove zero-before-ARM, matching Armed acknowledgement, no implicit re-arm and no remembered direction after R. | 3.1, 3.2, 4.1 |
+| [Gentle planar directions](specs/laptop-teleoperation/spec.md#requirement-gentle-planar-directions) | Decode all six emitted CDR vectors: one axis, expected sign, clamp to smaller/zero capabilities, unused components zero; compare simulator wheel signs. | 3.1, 4.1 |
+| [Input expiry and latest intent](specs/laptop-teleoperation/spec.md#requirement-input-expiry-and-latest-intent) | Injected clock at expiry−1, expiry and expiry+1; repeat/unknown keys, buffered input, Space/quit priority and no motion replay. | 3.1, 3.2 |
+| [Periodic stream and scheduling failure](specs/laptop-teleoperation/spec.md#requirement-periodic-stream-and-scheduling-failure) | Controlled scheduler checks 50 ms sends and wrapping setpoint sequences; 200 ms gap emits no catch-up motion and exits through cleanup. | 3.1, 3.2 |
+| [Validate and correlate device input](specs/laptop-teleoperation/spec.md#requirement-validate-and-correlate-device-input) | Wrong peer/session/sequence, malformed/unknown Status, unsolicited stop interleaved with ARM; stopped notification cancels pending ARM so a late reply cannot re-enable local motion. | 2.2, 3.2 |
+| [Link checks without automatic recovery](specs/laptop-teleoperation/spec.md#requirement-link-checks-without-automatic-recovery) | Fake peer drops/delays Echo and control replies; terminal/socket failure; at expiry intent clears, no new claim/re-arm, and Echo never proves ownership. Repeat with a killed simulator. | 3.2, 4.1 |
+| [Bounded shutdown and honest reporting](specs/laptop-teleoperation/spec.md#requirement-bounded-shutdown-and-honest-reporting) | PTY tests Space, Esc, Ctrl-C, EOF and each send failure; zero/STOP/BYE attempts bounded to 500 ms, terminal restored, missing STOP acknowledgement and unconfirmed BYE labelled accurately. | 3.2, 4.1 |
+| [Observable commands and evidence limits](specs/laptop-teleoperation/spec.md#requirement-observable-commands-and-evidence-limits) | Output fixtures keep local versus reported state and independent ages distinct; README labels approximate speeds and best-effort cleanup. Physical observations recorded only after a separate go. | 3.3, 5.1, 5.2 |
+
+Simulator/PTY evidence proves client and protocol behavior only. The separate stand batch checks actual directions, still startup, expiry/STOP and cleanup observations; it does not electrically qualify coast/STBY, measure temperature/current or prove floor control. M6’s [explicit deferrals](../archive/2026-10-20-add-four-wheel-api/verification.md#task-52-disposition) remain unchanged.
