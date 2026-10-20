@@ -1,6 +1,6 @@
 # Laptop UDP teleoperation
 
-**Status:** draft 2026-10-20. M6 is accepted/archived; the post-M6 direction is not yet confirmed. This proposal uses laptop teleoperation as the working choice, pending Todor’s preference. No client implementation, firmware change, flash or motor run is authorized by this draft.
+**Status:** laptop implementation accepted 2026-10-20. Todor selected “Laptop teleoperation client” in response to the post-M6 scope question, after the concrete proposal in #89 was presented. Proceed with the proposed client and laptop validation; firmware changes, flashes and motor runs remain excluded. Every board batch still needs a separate announced go.
 
 ## Why
 
@@ -31,4 +31,4 @@ None. The client consumes [car-control-api](../../specs/car-control-api/spec.md)
 
 ## Scope choice
 
-The [PLAN](../../../docs/PLAN.md) has no committed post-M6 milestone. Todor has been asked to choose laptop teleoperation, AP+station mode or an iPhone BLE client. This draft makes the laptop option reviewable; it does not settle Q9 or Q21.
+Todor selected laptop UDP teleoperation on 2026-10-20. The proposed keys, gentle defaults and bounded-input policy define this reversible first client; Q9 and Q21 remain separate future work.

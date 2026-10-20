@@ -2,7 +2,7 @@
 
 ## Context
 
-See the [proposal](proposal.md) for motivation and provisional scope. The existing [car API](../../specs/car-control-api/spec.md) and [M6 evidence](../archive/2026-10-20-add-four-wheel-api/verification.md) are the boundaries. `apps/simcar/scenarios/wire.py` already supplies golden-tested TwistStamped, Status and capability codecs; its scenario `Client` is a test helper, not a product transport.
+See the [proposal](proposal.md) for motivation and accepted laptop scope. The existing [car API](../../specs/car-control-api/spec.md) and [M6 evidence](../archive/2026-10-20-add-four-wheel-api/verification.md) are the boundaries. `apps/simcar/scenarios/wire.py` already supplies golden-tested TwistStamped, Status and capability codecs; its scenario `Client` is a test helper, not a product transport.
 
 ## Goals / Non-Goals
 
@@ -29,6 +29,6 @@ See the [proposal](proposal.md) for motivation and provisional scope. The existi
 
 Add the client without firmware or API changes. Preserve the current codec import through a compatibility module and rerun its existing tests and simulator scenarios. Keep the normal ROS firmware installed. Rollback removes the new application and restores the codec location; no board image or protocol migration is needed.
 
-## Scope decision before implementation
+## Scope decision
 
-The post-M6 direction is awaiting Todor’s preference. The proposed keys, 250 ms intent window and gentle defaults are a concrete laptop option, not settled product decisions. Accept or revise the proposal before implementation; no new ADR is needed for these reversible client choices.
+Todor selected the laptop client on 2026-10-20 after reviewing the concrete option in #89. Implementation uses the proposed keys, 250 ms intent window and gentle defaults; no new ADR is needed for these reversible client choices.

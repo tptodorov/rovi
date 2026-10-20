@@ -1,10 +1,10 @@
 # Tasks
 
-This is a draft laptop option. Tasks 2–5 apply only if task 1.1 accepts this scope; a different post-M6 choice requires revising the artifacts first. Nothing here authorizes a flash or motor run. [Verification map](verification.md).
+Todor selected this laptop scope on 2026-10-20. Nothing here authorizes a flash or motor run. [Verification map](verification.md).
 
 ## 1. Choose and accept the next scope
 
-- [ ] 1.1 Confirm laptop UDP teleoperation as the next product task and review the proposed keys, gentle limits, input timeout and failure behavior. Record Todor’s explicit acceptance in the proposal before implementation; verify strict OpenSpec validation and consistency with the unchanged car API.
+- [x] 1.1 Laptop scope accepted 2026-10-20: Todor selected “Laptop teleoperation client” after #89 presented the concrete option. Contract review preserves the existing car API and defines explicit arm, gentle limits, input expiry and failure cleanup. Strict OpenSpec/reader validation passes; no firmware or motor-run authorization.
 
 ## 2. Codec and client boundaries
 
