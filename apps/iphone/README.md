@@ -15,6 +15,11 @@ From this directory:
   `rtk nix shell nixpkgs#openssl --command env ROVI_CHROMIUM=/run/current-system/sw/bin/chromium npm run test:browser`.
 * `rtk npm run build` — copies runtime assets and `version.txt` into `dist/iphone/`.
   It deploys nothing.
+* `./publish.sh` — builds a clean commit and pushes it to the `gh-pages` branch, served at
+  <https://tptodorov.github.io/rovi/iphone/>. The page footer and `version.txt` show the
+  revision. Rollback: `git push --force-with-lease origin <older-gh-pages-commit>:gh-pages`.
+
+Open the URL in **Bluefy**, not Safari: Safari has no Web Bluetooth.
 
 No test touches a BLE device. Runtime assets use no third-party scripts or command server.
 
