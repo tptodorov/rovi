@@ -1,0 +1,176 @@
+[
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20/car.log",
+    "published": "setup-firewall/car.redacted.log",
+    "source_sha256": "e77f08f638e8b9e4ce3406cf1f9a24f532a5759e4c06281897363f949dfdd47b",
+    "published_sha256": "e77f08f638e8b9e4ce3406cf1f9a24f532a5759e4c06281897363f949dfdd47b"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20/cleanup.json",
+    "published": "setup-firewall/cleanup.redacted.json",
+    "source_sha256": "b5e443625cccb2af1d47ffa00f79e663b5698e99233fa42d24d733adfb0a0195",
+    "published_sha256": "391cb27203612128f4a1425795750dbcdd4a4fd3a8db241e95f100982dfdd7ed"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20/controller-journal.json",
+    "published": "setup-firewall/controller-journal.redacted.json",
+    "source_sha256": "1833315540ef3538bbe455a5aae2a5fc82a10200cbf98a4d94ac5c2167b66ea0",
+    "published_sha256": "d8ac02cb8f3c852d1004b475a61e8837218bc1c11ce994de064b97aa9691f424"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20/controller.py.txt",
+    "published": "setup-firewall/controller.py.redacted.txt",
+    "source_sha256": "346dcacbaedc96343ea835f309de7fbea981215a1c856b3e1aff6c682ec0a507",
+    "published_sha256": "23a8863c8304da617680bff335aaecd48c5fd21233d549e37cd1c4432b9b9c1c"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20/identity.json",
+    "published": "setup-firewall/identity.redacted.json",
+    "source_sha256": "2a05f00fe01a1c8ef3688226351eebf88c6a287a4b907042fa3f61dfaf3788b2",
+    "published_sha256": "6bd72e8c788c2dcf1d80ae179752639df2064fae5c915ed298d2ae6910d99df6"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20/soak/router.json5",
+    "published": "setup-firewall/soak/router.redacted.json5",
+    "source_sha256": "68d6b941f1cd19e48e830b6516d993cebf43cd4147cf5c800f81ee3ff0c94b76",
+    "published_sha256": "43b934b3366df7694ad645eed6ed7d71568a81da4cb73705a45cb65305747f05"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20/soak/router.log",
+    "published": "setup-firewall/soak/router.redacted.log",
+    "source_sha256": "263e32bc61eafc15cb060cd0aa14555ce7b5de887221a1343de2fd0daabf9894",
+    "published_sha256": "b4f96df5f2cbadd9c598ad7289d578c7d7dde02f2e4dacd1fd296785dcef55de"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20/soak.txt",
+    "published": "setup-firewall/soak.redacted.txt",
+    "source_sha256": "2acb9e67676a7386fb3dde10c4c7ea91dd33786fbf7cad3a93ccfbcd86d1f995",
+    "published_sha256": "2acb9e67676a7386fb3dde10c4c7ea91dd33786fbf7cad3a93ccfbcd86d1f995"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-retry/car.log",
+    "published": "setup-monitor/car.redacted.log",
+    "source_sha256": "04c8e470e1cbd48a15e4145a700b53aac70d56ed49ce26f34ac18eaf6bae874e",
+    "published_sha256": "04c8e470e1cbd48a15e4145a700b53aac70d56ed49ce26f34ac18eaf6bae874e"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-retry/cleanup.json",
+    "published": "setup-monitor/cleanup.redacted.json",
+    "source_sha256": "dbde2ecee95018e481b2dd8d1941cf6fd3d86a4c4de1981839c323e1c3c319e8",
+    "published_sha256": "b8d3f34a8531f85ebe18de7f833a393029c5bc02927bba4fc7d3088260a84bac"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-retry/controller-journal.json",
+    "published": "setup-monitor/controller-journal.redacted.json",
+    "source_sha256": "ad0899d48a2505c087e4c5affc84e48b0d724f126c3f78f0aab33f032e3f4a00",
+    "published_sha256": "5e3e9c6ee9b285759d86108ae0c578be7deb43f41b462c80096b049b0ed7a566"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-retry/controller.py.txt",
+    "published": "setup-monitor/controller.py.redacted.txt",
+    "source_sha256": "9a78fc0ae3df7f937af245eeb8f9d62930c9783a74d9b8da5ebc482de6ce2489",
+    "published_sha256": "d01dcd8e18c10a665ed6d4528ec7cb08f7593c78ec236eab18553140c8ee6e45"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-retry/identity.json",
+    "published": "setup-monitor/identity.redacted.json",
+    "source_sha256": "a25f84364f17e7811ffe9ce32fcf9a0ae3c4f95b5dd71cf5caccbec2acb7a19a",
+    "published_sha256": "1a1ce9e17d202a68fcc1d8cd192503fb661c4173a2d5d244fb4174f4debf6f56"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/after-soak-echo.json",
+    "published": "observation/after-soak-echo.redacted.json",
+    "source_sha256": "c7517320728fd7247f8e0ce0f378f1e849ea5fcbd253ee162cf3cb62e323c86f",
+    "published_sha256": "c7517320728fd7247f8e0ce0f378f1e849ea5fcbd253ee162cf3cb62e323c86f"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/car.log",
+    "published": "observation/car.redacted.log",
+    "source_sha256": "27fdccebf2c3a8d656adc9934709b607a750c6e04d3ce68555da1dba77039660",
+    "published_sha256": "b4237c69a349b687a11af55040a16dc34dbee1990a7239cc107a0b222c49d59c"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/cleanup.json",
+    "published": "observation/cleanup.redacted.json",
+    "source_sha256": "00ce0d7136e93728f567773814ff2261e905db5c2bcecaa3425e8638dbadd45c",
+    "published_sha256": "ccf1fce1226c9cb107b010302b706a4ade12e72eb87761b26d9988efb86ab570"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/controller-journal.json",
+    "published": "observation/controller-journal.redacted.json",
+    "source_sha256": "4bf966b202108ea595f1eb7b6c6ebfe05e7a05a8c3d6bd1c652e712f6391b38f",
+    "published_sha256": "be0c996aa96c4a4f057e589c3ea7a1259071a60fc4861daf8d79d123d938132d"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/controller.py.txt",
+    "published": "observation/controller.py.redacted.txt",
+    "source_sha256": "325606eea964d6404b7ef429b367f3b564b6f8db2dd73d5ede2543d5eea9c8d4",
+    "published_sha256": "0c42ab852fa6d177c6bedad70ff72ecdc95f40a7e6113442231dda34a741e9b4"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/identity.json",
+    "published": "observation/identity.redacted.json",
+    "source_sha256": "9902c0d3e1b7a6519fce44d5b0ac588f3f0094256b8b7df638f2e0ef7f84d6af",
+    "published_sha256": "1d5b417c38868d1188f5be76303deb6ea2e08f4c298fae6257ce9143e92b5c53"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak/echo.jsonl",
+    "published": "observation/soak/echo.jsonl.gz",
+    "source_sha256": "d6b2c98eb042976fa0d0c8dc8d80cde56fb62adb07b2773bd2aa7394c1a99d55",
+    "published_sha256": "2ccf865e87b8e88b669cdb751250706c9d7a06afdc8c82af1e843045ef7c3405"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak/end.json",
+    "published": "observation/soak/end.redacted.json",
+    "source_sha256": "baba6f8169a18aba1237633edf7b9dfc1f817cb16de74476a6d4cfcf77d26017",
+    "published_sha256": "6badd0e109b0dd5990d902225924d64ba4fb6e5ff0976e6a935f96f5300cde5f"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak/journal.json",
+    "published": "observation/soak/journal.redacted.json",
+    "source_sha256": "ae4a7bd7797b65a8a1be3be7d6386007f017a7aa6f8e3f4cb9c46b852265cd8e",
+    "published_sha256": "ae4a7bd7797b65a8a1be3be7d6386007f017a7aa6f8e3f4cb9c46b852265cd8e"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak/ros-link.json",
+    "published": "observation/soak/ros-link.redacted.json",
+    "source_sha256": "db8069aaf60cd97cf757a836401a1a63a26f9939f0aef2c037dce2cbd5aa536a",
+    "published_sha256": "db8069aaf60cd97cf757a836401a1a63a26f9939f0aef2c037dce2cbd5aa536a"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak/router.json5",
+    "published": "observation/soak/router.redacted.json5",
+    "source_sha256": "68d6b941f1cd19e48e830b6516d993cebf43cd4147cf5c800f81ee3ff0c94b76",
+    "published_sha256": "43b934b3366df7694ad645eed6ed7d71568a81da4cb73705a45cb65305747f05"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak/router.log",
+    "published": "observation/soak/router.redacted.log",
+    "source_sha256": "f3c347ca2b4eb3a0785eda285fa4d119b3547ba938324d5281eb076ff73fdc60",
+    "published_sha256": "00682e2c5bee072e1e2ab3a0d71a6b658ee7cc4617badf34859b7c9d337e911c"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak/start.json",
+    "published": "observation/soak/start.redacted.json",
+    "source_sha256": "2c04ce887ce77577b1b30040229363f6ba0525aabd6b928d098feba1a1d92ef2",
+    "published_sha256": "404a216c7df586b225505bcd0eb0d9d7f3950dd4a3a77e5ab24745b9d9654de4"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak/summary.json",
+    "published": "observation/soak/summary.redacted.json",
+    "source_sha256": "42c8a7162c86a9797a54fe14b0bd1ebe92cfb53c584cff911449cc7940a52c96",
+    "published_sha256": "42c8a7162c86a9797a54fe14b0bd1ebe92cfb53c584cff911449cc7940a52c96"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak/transition-001.json",
+    "published": "observation/soak/transition-001.redacted.json",
+    "source_sha256": "3f48eed976b6987453b1cd268e2e1b6c46e5c6c49d92aa97961271e4d999141c",
+    "published_sha256": "8d8dd0430971896bad5ecfd97cf23fb523da735f77a23f5208a806f2fdb234ce"
+  },
+  {
+    "source": "/tmp/rovi-ros-wifi-soak-2026-10-20-run/soak.txt",
+    "published": "observation/soak.redacted.txt",
+    "source_sha256": "e6000fcd9f37b3f94fb3ae9e520afff11e531fc1038bb4d69cbebfc43235e16e",
+    "published_sha256": "e6000fcd9f37b3f94fb3ae9e520afff11e531fc1038bb4d69cbebfc43235e16e"
+  }
+]

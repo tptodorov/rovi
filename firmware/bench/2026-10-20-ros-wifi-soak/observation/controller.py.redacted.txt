@@ -1,0 +1,161 @@
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import signal
+import socket
+import subprocess
+import sys
+import time
+
+root=Path('<home>/tptodorov/rovi')
+os.chdir(root)
+sys.path.insert(0,str(root/'firmware/bench'))
+import wifi_soak
+from apps.simcar.scenarios import carlog
+raw=Path('/tmp/rovi-ros-wifi-soak-2026-10-20-run')
+raw.mkdir(mode=0o700,exist_ok=False)
+(raw/'controller.pid').write_text(str(os.getpid()))
+serial='/dev/serial/by-id/usb-1a86_USB_Single_Serial_5C85037678-if00'
+interface='wlp1s0f0'
+def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
+def read(args):return subprocess.check_output(['rtk','proxy',*args],text=True).strip()
+def note(text):print(now(),text,flush=True)
+def interrupted(*_):raise KeyboardInterrupt
+signal.signal(signal.SIGTERM,interrupted)
+assert subprocess.run(['pgrep','-x','espflash'],stdout=subprocess.DEVNULL).returncode==1,'serial monitor already running'
+assert Path(serial).exists(),'serial port missing'
+prior=read(['nmcli','-g','GENERAL.CON-UUID','device','show',interface])
+assert prior and prior!='--','missing prior Wi-Fi UUID'
+route=read(['ip','route','get','1.1.1.1'])
+image=root/'firmware/target/ros/xtensa-esp32s3-none-elf/release/rovi-firmware'
+digest=hashlib.sha256(image.read_bytes()).hexdigest()
+assert digest=='514ba816d3b6b8b3b2c40ee63e156fd4f07ca9be104cef8246d6e848602c73f3','normal image digest changed'
+identity={'started':now(),'source':read(['git','rev-parse','HEAD']),
+          'authorization':'Todor: do wifi follow up task, then continue with your local task; authorized current-ROS no-motion observation and scoped setup/cleanup',
+          'setup':'USB connected; motor power disconnected per announced readiness; normal monitor startup resumes application after preserved aborted setups',
+          'firmware':'previously restored normal ROS image, source b12cc21; no flash',
+          'local_normal_image_sha256':digest,'interface':interface,'prior_wifi_uuid':prior,'route_before':route}
+(raw/'identity.json').write_text(json.dumps(identity,indent=2)+'\n')
+shutil.copyfile('/tmp/rovi-ros-wifi-soak-run-controller.py',raw/'controller.py.txt')
+shutil.copyfile('/tmp/rovi-ros-wifi-soak-2026-10-20/car.log',raw/'previous-boot.log')
+monitor=probe=None
+cleanup={}
+rule=['-i',interface,'-s','192.168.4.1/32','-d','192.168.4.2/32','-p','tcp','--dport','7447','-m','comment','--comment','rovi-ros-wifi-soak','-j','nixos-fw-accept']
+def firewall(op):return subprocess.run(['rtk','proxy','sudo','-n','iptables',op,'nixos-fw',*(['1'] if op=='-I' else []),*rule],capture_output=True,text=True,timeout=10)
+prior_rule=firewall('-C')
+assert prior_rule.returncode in (0,1),prior_rule.stderr
+assert 'Permission denied' not in prior_rule.stderr and 'password' not in prior_rule.stderr,prior_rule.stderr
+prior_rule_present=prior_rule.returncode==0
+rule_added=False
+identity['firewall_rule_preexisting']=prior_rule_present
+(raw/'identity.json').write_text(json.dumps(identity,indent=2)+'\n')
+
+def audit():
+ assert monitor.poll() is None,'serial monitor exited'
+ events=carlog.events(raw/'car.log')
+ assert sum(e.get('ev')=='boot' for e in events)==1,'unexpected reset or missing normal boot'
+ assert not any(e.get('ev') in ('claimed','released','stop','error','dropped') for e in events),'unexpected ownership/safety/fault event'
+ assert not any(e.get('state')=='Armed' or any(e.get('wheels_pm',[])) for e in events),'unexpected arming/nonzero command'
+ assert not carlog.PANIC.search(carlog.read(raw/'car.log')),'panic'
+
+def run_probe(name,seconds):
+ global probe
+ with (raw/f'{name}.txt').open('wb') as transcript:
+  command=['rtk','proxy','python3','firmware/bench/wifi_soak.py','--target','192.168.4.1:7777','--interface',interface,'--seconds',str(seconds),'--output',str(raw/name)]
+  if name=='soak':command=['rtk','proxy','bash','firmware/bench/ros_wifi_soak.sh',interface,str(seconds),str(raw/name)]
+  env={**os.environ,'ROVI_TARGET':'192.168.4.1:7777','ROVI_CARLOG':str(raw/'car.log'),'ROVI_ROUTER_PORT':'7447'}
+  probe=subprocess.Popen(command,env=env,stdout=transcript,stderr=subprocess.STDOUT,start_new_session=True)
+  end=time.monotonic()+seconds+200
+  last_audit=0
+  while probe.poll() is None:
+   if time.monotonic()-last_audit>.5:
+    audit();last_audit=time.monotonic()
+   assert time.monotonic()<end,'probe exceeded bounded observation/setup time'
+   time.sleep(.1)
+  audit()
+  assert probe.returncode in (0,1),f'probe failed: {probe.returncode}'
+  assert (raw/name/'summary.json').exists(),'ROS setup failed before timed observation; see runner transcript'
+  summary=json.loads((raw/name/'summary.json').read_text())
+  assert summary['complete'] and summary['sent']>0,'observation incomplete/no samples'
+  note(f'{name} finished: {summary}')
+  return summary
+
+try:
+ with (raw/'car.log').open('wb') as capture:
+  note('normal serial-monitor startup; resume application with fresh boot capture')
+  monitor=subprocess.Popen(['rtk','proxy','espflash','monitor','--port',serial,'--non-interactive','--skip-update-check'],stdout=capture,stderr=subprocess.STDOUT,start_new_session=True)
+  end=time.monotonic()+20
+  while not any(e.get('ev')=='boot' for e in carlog.events(raw/'car.log')):
+   assert monitor.poll() is None,'monitor failed'
+   assert time.monotonic()<end,'missing application boot'
+   time.sleep(.1)
+  assert 'BENCH ONLY' not in carlog.read(raw/'car.log'),'bench image detected'
+  audit()
+  note('normal application boot captured; joining Rovi AP')
+  subprocess.run(['rtk','proxy','nmcli','--wait','20','connection','up','id','rovi-m8'],check=True,timeout=30)
+  if not prior_rule_present:
+   applied=firewall('-I');assert applied.returncode==0,applied.stderr;rule_added=True
+  rules=read(['sudo','-n','iptables','-S','nixos-fw']).splitlines()
+  allow=next(i for i,line in enumerate(rules) if '--comment rovi-ros-wifi-soak' in line)
+  reject=rules.index('-A nixos-fw -j nixos-fw-log-refuse')
+  assert allow<reject,'temporary firewall rule is unreachable after terminal reject'
+  cleanup['firewall_order_verified']={'allow_index':allow,'terminal_reject_index':reject}
+  note('starting idle ROS session and 900-second Echo observation; scoped firewall rule active')
+  summary=run_probe('soak',900)
+  cleanup['soak_summary']=summary
+  time.sleep(1) # Capture the deliberate router-close link event separately from the soak.
+  with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as sock:
+   sock.connect(('192.168.4.1',7777));reachable=wifi_soak.echo(sock,0xfffffff0)
+  (raw/'after-soak-echo.json').write_text(json.dumps({'at':now(),**reachable},indent=2)+'\n')
+  if not reachable['ok']:
+   note('still unreachable after saved diagnostics; performing the single announced rejoin')
+   cleanup['recovery_rejoin_exit']=subprocess.run(['rtk','proxy','nmcli','--wait','20','connection','up','id','rovi-m8'],timeout=30).returncode
+   cleanup['recovery_summary']=run_probe('recovery',10)
+  else:
+   note('reachable after observation; no recovery rejoin needed')
+  audit()
+  problems,boots,counts=carlog.check(raw/'car.log')
+  assert not problems,problems
+  cleanup['serial_audit']={'boots':boots,'event_counts':dict(counts),'problems':problems}
+  cleanup['completed']=True
+except BaseException as exc:
+ cleanup['failure']=repr(exc)
+ note(f'aborting: {exc!r}')
+finally:
+ if probe and probe.poll() is None:
+  os.killpg(probe.pid,signal.SIGINT)
+  try:probe.wait(timeout=35)
+  except subprocess.TimeoutExpired:os.killpg(probe.pid,signal.SIGTERM);probe.wait(timeout=3)
+ if monitor and monitor.poll() is None:
+  os.killpg(monitor.pid,signal.SIGINT)
+  try:monitor.wait(timeout=4)
+  except subprocess.TimeoutExpired:os.killpg(monitor.pid,signal.SIGTERM);monitor.wait(timeout=3)
+  cleanup['monitor_exit']=monitor.returncode
+ try:
+  # The runner owns this uniquely named router, confirmed absent during preflight.
+  leftover=subprocess.run(['rtk','proxy','docker','container','inspect','rovi-ros-wifi-soak'],capture_output=True)
+  if leftover.returncode==0:
+   cleanup['router_cleanup_exit']=subprocess.run(['rtk','proxy','docker','rm','-f','rovi-ros-wifi-soak'],capture_output=True).returncode
+  if rule_added:
+   removed=firewall('-D');cleanup['firewall_remove_exit']=removed.returncode
+  after_rule=firewall('-C')
+  cleanup['firewall_restored']=(after_rule.returncode==0)==prior_rule_present
+ except Exception as exc:cleanup['firewall_cleanup_error']=repr(exc)
+ try:
+  cleanup['wifi_restore_exit']=subprocess.run(['rtk','proxy','nmcli','--wait','20','connection','up','uuid',prior],timeout=30).returncode
+  cleanup['wifi_after']=read(['nmcli','-g','GENERAL.CON-UUID','device','show',interface])
+  cleanup['route_after']=read(['ip','route','get','1.1.1.1'])
+  cleanup['wifi_restored']=cleanup['wifi_after']==prior
+  cleanup['route_unchanged']=cleanup['route_after']==route
+ except Exception as exc:cleanup['network_cleanup_error']=repr(exc)
+ try:
+  journal=wifi_soak.command(['journalctl','--no-pager','--output=short-iso-precise','--since',identity['started'],'--lines=2000','-u','NetworkManager','-u','wpa_supplicant'])
+  (raw/'controller-journal.json').write_text(json.dumps(journal,indent=2)+'\n')
+ except Exception as exc:cleanup['journal_cleanup_error']=repr(exc)
+ cleanup['finished']=now()
+ (raw/'cleanup.json').write_text(json.dumps(cleanup,indent=2)+'\n')
+ note(f'cleanup: {cleanup}')
+ if not cleanup.get('completed') or not cleanup.get('wifi_restored') or not cleanup.get('route_unchanged') or not cleanup.get('firewall_restored'):sys.exit(1)

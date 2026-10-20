@@ -1,0 +1,17 @@
+{
+  "command": [
+    "journalctl",
+    "--no-pager",
+    "--output=short-iso-precise",
+    "--since",
+    "2026-10-20T14:28:53.001467+00:00",
+    "--lines=2000",
+    "-u",
+    "NetworkManager",
+    "-u",
+    "wpa_supplicant"
+  ],
+  "exit": 0,
+  "stdout": "2026-10-20T16:28:55.450437+02:00 <laptop> wpa_supplicant[2016]: nl80211: send_event_marker failed: Source based routing not supported\n2026-10-20T16:28:55.450475+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: CTRL-EVENT-DISCONNECTED bssid=<mac> reason=3 locally_generated=1\n2026-10-20T16:28:55.454901+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: CTRL-EVENT-DSCP-POLICY clear_all\n2026-10-20T16:28:57.831941+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: SME: Trying to authenticate with <mac> (SSID='Rovi M8' freq=2412 MHz)\n2026-10-20T16:28:57.878825+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: Trying to associate with <mac> (SSID='Rovi M8' freq=2412 MHz)\n2026-10-20T16:28:57.888467+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: Associated with <mac>\n2026-10-20T16:28:57.888772+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: CTRL-EVENT-SUBNET-STATUS-UPDATE status=0\n2026-10-20T16:28:57.920745+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: WPA: Key negotiation completed with <mac> [PTK=CCMP GTK=CCMP]\n2026-10-20T16:28:57.920767+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: CTRL-EVENT-CONNECTED - Connection to <mac> completed [id=0 id_str=]\n2026-10-20T16:44:06.471508+02:00 <laptop> wpa_supplicant[2016]: nl80211: send_event_marker failed: Source based routing not supported\n2026-10-20T16:44:06.471527+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: CTRL-EVENT-DISCONNECTED bssid=<mac> reason=3 locally_generated=1\n2026-10-20T16:44:06.471890+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: CTRL-EVENT-DSCP-POLICY clear_all\n2026-10-20T16:44:09.382132+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: SME: Trying to authenticate with <mac> (SSID='<previous-ssid>' freq=5220 MHz)\n2026-10-20T16:44:09.430806+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: Trying to associate with <mac> (SSID='<previous-ssid>' freq=5220 MHz)\n2026-10-20T16:44:09.446323+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: Associated with <mac>\n2026-10-20T16:44:09.446378+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: CTRL-EVENT-SUBNET-STATUS-UPDATE status=0\n2026-10-20T16:44:09.502836+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: WPA: Key negotiation completed with <mac> [PTK=CCMP GTK=CCMP]\n2026-10-20T16:44:09.502861+02:00 <laptop> wpa_supplicant[2016]: wlp1s0f0: CTRL-EVENT-CONNECTED - Connection to <mac> completed [id=0 id_str=]\n",
+  "stderr": ""
+}

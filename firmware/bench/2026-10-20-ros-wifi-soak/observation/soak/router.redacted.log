@@ -1,0 +1,10 @@
+[2m2026-10-20T14:28:59.529120Z[0m [32m INFO[0m ThreadId(02) [2mzenoh::net::runtime[0m[2m:[0m Using ZID: <zenoh-id>
+[2m2026-10-20T14:28:59.530412Z[0m [32m INFO[0m ThreadId(02) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Zenoh can be reached at: tcp/[<other-ipv6>]:7447
+[2m2026-10-20T14:28:59.530435Z[0m [32m INFO[0m ThreadId(02) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Zenoh can be reached at: tcp/[<other-ipv6>]:7447
+[2m2026-10-20T14:28:59.530439Z[0m [32m INFO[0m ThreadId(02) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Zenoh can be reached at: tcp/[<other-ipv6>]:7447
+[2m2026-10-20T14:28:59.530443Z[0m [32m INFO[0m ThreadId(02) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Zenoh can be reached at: tcp/<other-ipv4>:7447
+[2m2026-10-20T14:28:59.530445Z[0m [32m INFO[0m ThreadId(02) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Zenoh can be reached at: tcp/[<other-ipv6>]:7447
+[2m2026-10-20T14:28:59.530448Z[0m [32m INFO[0m ThreadId(02) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Zenoh can be reached at: tcp/[<other-ipv6>]:7447
+[2m2026-10-20T14:28:59.530451Z[0m [32m INFO[0m ThreadId(02) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Zenoh can be reached at: tcp/192.168.4.2:7447
+[2m2026-10-20T14:28:59.530454Z[0m [32m INFO[0m ThreadId(02) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Zenoh can be reached at: tcp/<other-ipv4>:7447
+Started Zenoh router with id <zenoh-id>

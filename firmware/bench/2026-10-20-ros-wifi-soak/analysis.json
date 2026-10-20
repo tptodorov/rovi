@@ -1,0 +1,26 @@
+{
+  "attempts": 4363,
+  "replies": 4363,
+  "losses": 0,
+  "first_sample": {
+    "at": "2026-10-20T14:29:02.508920+00:00",
+    "elapsed_s": 0.0,
+    "sequence": 1,
+    "ok": true,
+    "rtt_ms": 4.66
+  },
+  "last_sample": {
+    "at": "2026-10-20T14:44:02.402351+00:00",
+    "elapsed_s": 899.894,
+    "sequence": 4363,
+    "ok": true,
+    "rtt_ms": 5.011
+  },
+  "echo_uncompressed_sha256": "d6b2c98eb042976fa0d0c8dc8d80cde56fb62adb07b2773bd2aa7394c1a99d55",
+  "rtt_ms": {
+    "min": 4.056,
+    "median": 4.901,
+    "p95_nearest_rank": 8.659,
+    "max": 46.614
+  }
+}

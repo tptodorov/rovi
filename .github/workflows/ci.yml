@@ -174,6 +174,20 @@ jobs:
           trap 'kill "$car" 2>/dev/null || true; wait "$car" 2>/dev/null || true; rm -f "$log"' EXIT
           ROVI_CARLOG="$log" ROVI_ROUTER_PORT=17453 \
             bash firmware/bench/ros_stops.sh ros_lease_timing.py
+      - name: Idle ROS Wi-Fi observation (loopback only)
+        run: |
+          log=$(mktemp)
+          work=$(mktemp -d)
+          output=$work/probe
+          ROVI_ZENOH_ROUTER=tcp/127.0.0.1:17454 apps/simcar/target/debug/simcar 17801 >"$log" 2>&1 &
+          car=$!
+          trap 'kill "$car" 2>/dev/null || true; wait "$car" 2>/dev/null || true; rm -f "$log"; rm -rf "$work"' EXIT
+          for _ in $(seq 50); do
+            grep -q 'ev=boot' "$log" && break
+            sleep 0.1
+          done
+          ROVI_TARGET=127.0.0.1:17801 ROVI_CARLOG="$log" ROVI_ROUTER_PORT=17454 \
+            bash firmware/bench/ros_wifi_soak.sh lo 2 "$output"
 
   firmware:
     name: firmware (ESP32-S3)

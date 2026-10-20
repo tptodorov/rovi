@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-20T14:25:55.819485+00:00",
+  "source": "9baabf49d85a86a7481229b9f077499eaa857973",
+  "authorization": "Todor: do wifi follow up task, then continue with your local task; authorized current-ROS no-motion observation and scoped setup/cleanup",
+  "setup": "USB connected; motor power disconnected per announced readiness; monitor attaches without reset after preserved aborted setup",
+  "firmware": "previously restored normal ROS image, source b12cc21; no flash",
+  "local_normal_image_sha256": "514ba816d3b6b8b3b2c40ee63e156fd4f07ca9be104cef8246d6e848602c73f3",
+  "interface": "wlp1s0f0",
+  "prior_wifi_uuid": "<uuid>",
+  "route_before": "1.1.1.1 via <other-ipv4> dev enp0s20f0u3u3 src <other-ipv4> uid 1000 \n    cache",
+  "firewall_rule_preexisting": false
+}
