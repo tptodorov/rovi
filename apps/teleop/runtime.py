@@ -51,6 +51,19 @@ def console(fd, message):
         pass  # A full output pipe must not delay the command loop.
 
 
+def read_keys(input_fd):
+    chunks = []
+    for _ in range(16):
+        try:
+            data = os.read(input_fd,4096)
+        except BlockingIOError:
+            return b''.join(chunks)
+        if not data:
+            raise ClientError('terminal closed')
+        chunks.append(data)
+    raise ClientError('excess buffered terminal input; aborting')
+
+
 class Client:
     def __init__(self, peer, sock, input_fd, emit, *, clock=milliseconds, wait=wait_readable, alert=beep):
         self.peer,self.sock,self.input_fd,self.emit = peer,sock,input_fd,emit
@@ -107,16 +120,7 @@ class Client:
         raise ClientError('too many incoming datagrams; aborting')
 
     def keys(self):
-        chunks = []
-        for _ in range(16):
-            try:
-                data = os.read(self.input_fd,4096)
-            except BlockingIOError:
-                return b''.join(chunks)
-            if not data:
-                raise ClientError('terminal closed')
-            chunks.append(data)
-        raise ClientError('excess buffered terminal input; aborting')
+        return read_keys(self.input_fd)
 
     def snapshot(self, now):
         s = self.session

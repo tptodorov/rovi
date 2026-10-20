@@ -1,14 +1,28 @@
-# Laptop UDP teleoperation
+# Laptop keyboard teleoperation
 
 Linux, Python 3.10+ and the normal M6 firmware. No installation or extra Python
-package is needed. From the repository root, after manually joining the car AP:
+package is needed for UDP. From the repository root, after joining the car AP:
 
 ```sh
 python3 -m apps.teleop --target 192.168.4.1:7777
 ```
 
+For BLE, use Bleak from the existing project Nix shell. No Wi-Fi join is needed:
+
+```sh
+nix-shell --run 'python3 -m apps.teleop --ble'
+```
+
+Bare `--ble` scans for one advertising `Rovi M8`. If several match, pin the car
+with `--ble AA:BB:CC:DD:EE:FF`. BLE and `--target` are mutually exclusive.
+After name discovery, retries stay pinned to that car's MAC. They cannot roam
+to another car with the same name. Quit
+any UDP/other controller first: an owned car does not advertise. BLE connection
+claims ownership and turns the car AP off; the client does not change laptop
+network settings or switch transports automatically. Both modes use the keys below.
+
 Use this only for a separately authorized, supervised motor session. The client
-requires a real terminal and an explicit IPv4 target/port. It does not change
+requires a real terminal and an explicit transport selection. It does not change
 Wi-Fi, firewall rules or firmware. Do not use the opt-in `motor-bench` image.
 
 | Key | Action |
@@ -42,6 +56,14 @@ R and directions typed during reconnection are discarded. Press **R again**,
 then a new direction; previous motion never resumes automatically. Esc/Ctrl-C/
 Ctrl-D also work while retrying. Startup timeout/BUSY retries never arm.
 
+BLE discovery and connection each have a five-second bound per attempt. The
+client validates the GATT service, capabilities and support for 72-byte setpoint
+writes (ATT MTU at least 75); incompatible peers fail closed. Initial BLE control
+also waits for a matching Echo. ARM requires an acknowledged GATT write and a
+fresh Armed Status read; notifications alone cannot arm. Space or a safety stop
+invalidates any pending ARM confirmation. BLE GATT operations have short
+deadlines, keep latest intent only and discard closed-connection callbacks.
+
 A brief laptop beep announces each connection drop. Repeated failed attempts
 stay quiet until a claim and Echo confirm recovery. Direct playback uses the
 installed PipeWire `pw-play` utility; no Python package is needed. Keep laptop
@@ -63,6 +85,10 @@ BYE/release is always labelled unconfirmed. Missing acknowledgement or cleanup
 errors give a nonzero exit. Terminal settings are restored on ordinary exit and
 handled errors/signals; the device watchdog remains independent of the client.
 
+BLE cleanup instead attempts zero, STOP/readback and disconnect within 500 ms
+total. An earlier failed write does not skip disconnect. The display reports
+unconfirmed STOP/disconnect honestly; neither proves physical wheel stillness.
+
 ## Laptop validation
 
 ```sh
@@ -80,6 +106,10 @@ recovery and audio are the [follow-up](../../openspec/changes/add-teleop-reconne
 host tests include dropped Echo/ARM replies, initial unavailable/BUSY targets,
 stale replies, simulator restart, buffered keys, retry quit and audio failures.
 Its separate board/audio acceptance is pending; it does not establish a Wi-Fi fix.
+BLE keyboard transport is the [next follow-up](../../openspec/changes/add-laptop-ble-teleoperation/proposal.md).
+Fake GATT and actual CLI/PTY tests cover validation, directions, expiry, control
+races, loss/recovery and bounded cleanup; its separate radio/motor acceptance
+is pending. These tests do not connect to a Bluetooth device.
 
 The [accepted requirements](../../openspec/specs/laptop-teleoperation/spec.md)
 and [archived verification map](../../openspec/changes/archive/2026-10-20-add-laptop-teleoperation/verification.md)

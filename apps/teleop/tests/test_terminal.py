@@ -46,9 +46,10 @@ class Peer:
         self.alive=False;self.thread.join(timeout=1);self.sock.close()
 
 class Terminal:
-    def __init__(self,peer):
+    def __init__(self,peer,command=None):
         self.master,self.slave=pty.openpty();self.before=termios.tcgetattr(self.slave);self.output=b''
-        self.proc=subprocess.Popen([sys.executable,'-u','-m','apps.teleop','--target',f'{peer[0]}:{peer[1]}'],cwd=ROOT,stdin=self.slave,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        command=command or [sys.executable,'-u','-m','apps.teleop','--target',f'{peer[0]}:{peer[1]}']
+        self.proc=subprocess.Popen(command,cwd=ROOT,stdin=self.slave,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     def read(self):
         if select.select([self.proc.stdout],[],[],.02)[0]:
             data=os.read(self.proc.stdout.fileno(),65536)
