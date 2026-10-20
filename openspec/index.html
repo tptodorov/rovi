@@ -475,12 +475,30 @@ footer {
 </style></head>
 <body><a class="skip" href="#overview">Skip to content</a>
 <aside><a class="brand" href="#overview"><span class="mark">R</span> Rovi <small>Specification reader</small></a>
-<nav aria-label="Specification sections"><a href="#overview">Start here</a><a href="#reading">How to read this</a><a href="#requirement-search">Search requirements</a><a href="#state-flow">Motion state flow</a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--car-control-api--spec">car control api<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--motor-control--spec">motor control<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec">laptop teleoperation<small>Archived change · archive</small></a><a href="#openspec--specs--car-control-api--spec">car control api<small>Baseline · car-control-api</small></a><a href="#openspec--specs--laptop-teleoperation--spec">laptop teleoperation<small>Baseline · laptop-teleoperation</small></a><a href="#openspec--specs--motor-control--spec">motor control<small>Baseline · motor-control</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--design">design<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design">design<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--tasks">tasks<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks">tasks<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification">verification<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--verification">verification<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal">proposal<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal">proposal<small>Archived change · archive</small></a></nav>
+<nav aria-label="Specification sections"><a href="#overview">Start here</a><a href="#reading">How to read this</a><a href="#requirement-search">Search requirements</a><a href="#state-flow">Motion state flow</a><a href="#openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec">iphone ble teleoperation<small>Change document · add-iphone-ble-client</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--car-control-api--spec">car control api<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--motor-control--spec">motor control<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--specs--laptop-teleoperation--spec">laptop teleoperation<small>Archived change · archive</small></a><a href="#openspec--specs--car-control-api--spec">car control api<small>Baseline · car-control-api</small></a><a href="#openspec--specs--laptop-teleoperation--spec">laptop teleoperation<small>Baseline · laptop-teleoperation</small></a><a href="#openspec--specs--motor-control--spec">motor control<small>Baseline · motor-control</small></a><a href="#openspec--changes--add-iphone-ble-client--design">design<small>Change document · add-iphone-ble-client</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--design">design<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design">design<small>Archived change · archive</small></a><a href="#openspec--changes--add-iphone-ble-client--tasks">tasks<small>Change document · add-iphone-ble-client</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--tasks">tasks<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks">tasks<small>Archived change · archive</small></a><a href="#openspec--changes--add-iphone-ble-client--verification">verification<small>Change document · add-iphone-ble-client</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--verification">verification<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--verification">verification<small>Archived change · archive</small></a><a href="#openspec--changes--add-iphone-ble-client--proposal">proposal<small>Change document · add-iphone-ble-client</small></a><a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal">proposal<small>Archived change · archive</small></a><a href="#openspec--changes--archive--2026-10-20-add-laptop-teleoperation--proposal">proposal<small>Archived change · archive</small></a></nav>
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>104</b> requirements</div><div><b>184</b> scenarios</div><div><b>28 / 28</b> tasks checked in source</div></div></header>
-<p>No active proposals. Browse baseline and archived documents below.</p>
+<div class="metrics"><div><b>116</b> requirements</div><div><b>199</b> scenarios</div><div><b>28 / 41</b> tasks checked in source</div></div></header>
+<div class="overview"><h2>iPhone BLE client proposal</h2>
+      <div class="notice"><p>
+See the proposal for acceptance status.</p>
+</div>
+      <h3>Why this matters</h3><p>
+Rovi's <a href="../docs/VISION.md">vision</a> includes an iPhone controller, but the accepted product has only laptop clients. Propose the first phone interface against the existing BLE API, with explicit safety behavior and a device verification plan for <a href="../docs/PLAN.md#open-questions-and-decisions">roadmap Q9/Q18/Q19</a>.</p>
+
+      <h3>What you get</h3><ul>
+<li>
+Propose a native SwiftUI/CoreBluetooth iPhone application: foreground discovery, explicit car selection/connect, visible capabilities and last-reported Status.</li>
+<li>
+Connect disarmed; require an explicit ARM action with a fresh zero setpoint before six gentle press-and-hold directions become usable. Release/cancel clears intent; STOP latches local motion off until a new ARM and a new touch.</li>
+<li>
+Bound input age, streaming stalls and cleanup. Leaving the active foreground, locking, Bluetooth/permission loss or disconnection ends the session without automatic reconnect, re-arm or motion replay.</li>
+<li>
+Verify codecs/state transitions with fakes and UI tests separately from real iPhone/normal-firmware BLE, lifecycle and supervised wheel checks. Q18/Q19 remain open until measured on the selected phone.</li>
+</ul>
+
+      <a class="button" href="#openspec--changes--add-iphone-ble-client--proposal">Open decisions &amp; evidence →</a></div>
 <section id="reading" class="reading"><h2>A small reading key</h2>
 <div class="key-grid"><div><b>Requirement</b><p>A rule the product must satisfy. “SHALL” and “MUST” mean required.</p></div>
 <div><b>Scenario</b><p><strong>Given</strong> = starting conditions.<br><strong>When</strong> = an action or event.<br><strong>Then</strong> = the expected result.</p></div>
@@ -504,7 +522,148 @@ footer {
 <div class="controls"><output id="matches" aria-live="polite"></output><button id="expand" type="button">Expand scenarios</button><button id="collapse" type="button">Collapse scenarios</button><button id="print" type="button">Print / PDF</button></div>
 <p id="empty" hidden>No matching requirements. Try a shorter phrase.</p>
 <noscript>Search needs JavaScript. All documents and expandable scenarios remain readable below.</noscript></section>
-<section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--car-control-api--spec" aria-label="car control api">
+<section class="document" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec" aria-label="iphone ble teleoperation">
+    <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-iphone-ble-client/specs/iphone-ble-teleoperation/spec.md">Markdown source ↗</a><div class="path">openspec/changes/add-iphone-ble-client/specs/iphone-ble-teleoperation/spec.md</div></header>
+    <h2>iphone ble teleoperation</h2>
+    <h1 id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--iphone-ble-teleoperation-delta">iPhone BLE teleoperation delta</h1><h2 id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--purpose">Purpose</h2><p>
+Lets an iPhone user control the normal product car over its existing BLE API with explicit arming, bounded touch intent and visible limits on connection and physical-state evidence.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--added-requirements">ADDED Requirements</h2><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-explicit-discovery-and-selection"><h3>Explicit discovery and selection</h3><p>
+The client SHALL scan only after a user action while active with Bluetooth powered on and authorized, for at most 10 seconds. It SHALL discover the existing name-only advertisement without requiring an advertised service UUID, list distinct peripheral identifiers, and connect only to the selected entry. Scanning SHALL NOT claim the car. No result SHALL be described as proof that the car is busy.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-two-cars-share-the-advertised-name"><summary>Two cars share the advertised name</summary><ul>
+<li>
+<strong>WHEN</strong> two peripherals advertise <code>Rovi M8</code> during a scan</li>
+<li>
+<strong>THEN</strong> both appear with distinguishable identifiers and signal strength, and neither is connected automatically</li>
+<li>
+<strong>AND</strong> Connect explains that connection claims the car and switches off its Wi-Fi AP</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-no-advertisement-is-found"><summary>No advertisement is found</summary><ul>
+<li>
+<strong>WHEN</strong> the scan ends without a candidate</li>
+<li>
+<strong>THEN</strong> the client offers a new manual scan and describes power, range and another owner as possible causes</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-validate-the-connected-car"><h3>Validate the connected car</h3><p>
+Connection SHALL start locally disarmed at zero. Before streaming, the client SHALL validate product GATT properties, 27-byte version-1 capabilities, positive finite geometry, finite nonnegative limits, nonzero windows, lease &gt;=500 ms, claim &gt;=1000 ms, write-without-response capacity &gt;=72 bytes and a valid Claimed or Stopped Status. Setup SHALL finish within 10 seconds of Connect or end through cleanup; rejected setup SHALL send no ARM or nonzero setpoint.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-unsupported-payload-or-capabilities"><summary>Unsupported payload or capabilities</summary><ul>
+<li>
+<strong>WHEN</strong> the selected peripheral lacks required characteristics/properties, has malformed/unsupported capabilities, short windows, or permits fewer than 72 bytes per setpoint write</li>
+<li>
+<strong>THEN</strong> the client explains incompatibility, attempts disconnect and never fragments a setpoint or substitutes a compact protocol</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-claim-expires-during-setup"><summary>Claim expires during setup</summary><ul>
+<li>
+<strong>WHEN</strong> discovery/subscription takes longer than the car's claim window and the car releases the connection</li>
+<li>
+<strong>THEN</strong> setup fails without reconnecting automatically, even if the local 10-second deadline has not passed</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-existing-ble-wire-contract"><h3>Existing BLE wire contract</h3><p>
+The client SHALL use the existing product UUIDs and write each setpoint as one 72-byte value: little-endian u32 sequence plus 68-byte little-endian TwistStamped CDR, empty frame, zero timestamp, and only vx/vy/wz nonzero. Sequences SHALL advance with wrapping u32 ordering per connection. ARM/STOP SHALL use one-byte values 1/2 with response. BLE SHALL have no UDP header, numeric session ID, HELLO or BYE.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-wire-values-agree-with-the-product"><summary>Wire values agree with the product</summary><ul>
+<li>
+<strong>WHEN</strong> zero, each direction and a sequence wrapping from 4294967295 to 0 are encoded</li>
+<li>
+<strong>THEN</strong> bytes match the existing Rust/Python product vectors and the unused Twist fields are zero</li>
+<li>
+<strong>AND</strong> a new connection starts a new sequence history</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-explicit-zero-then-arm"><h3>Explicit zero then ARM</h3><p>
+Only a new user ARM action SHALL initiate arming. It SHALL invalidate all touches, stream fresh zero and send ARM once. Local motion permission SHALL require both successful completion of that ARM write and a subsequent fresh Status read reporting Armed/none/none within one second of the action. A notification alone SHALL NOT grant motion. Failure, refusal or timeout SHALL clear intent and end through cleanup; late callbacks SHALL NOT arm locally.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-touch-predates-arm"><summary>Touch predates ARM</summary><ul>
+<li>
+<strong>GIVEN</strong> a direction is held while locally disarmed</li>
+<li>
+<strong>WHEN</strong> ARM succeeds</li>
+<li>
+<strong>THEN</strong> only zero is sent until that touch is released and a new direction press begins</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-arm-is-refused-or-its-confirmation-is-late"><summary>ARM is refused or its confirmation is late</summary><ul>
+<li>
+<strong>WHEN</strong> ARM returns an ATT error or its write/Status confirmation misses the one-second deadline</li>
+<li>
+<strong>THEN</strong> the client remains locally disarmed and requires a new connection and explicit ARM before motion</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-gentle-single-axis-directions"><h3>Gentle single-axis directions</h3><p>
+The UI SHALL provide forward/back, left/right strafe and counter-clockwise/clockwise rotation in base_link. Each press SHALL select one axis only: translation magnitude min(0.1 m/s, advertised axis maximum), rotation min(0.3 rad/s, advertised maximum). Zero-limit axes SHALL be disabled. Multiple simultaneous direction touches SHALL request zero and require all direction touches released before a new press; velocities SHALL NOT combine.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-direction-mapping-respects-limits"><summary>Direction mapping respects limits</summary><ul>
+<li>
+<strong>WHEN</strong> each direction is held after successful ARM</li>
+<li>
+<strong>THEN</strong> forward/back use +/-vx, left/right +/-vy, counter-clockwise/clockwise +/-wz, with other fields zero and advertised limits respected</li>
+<li>
+<strong>AND</strong> max_vx=0.05 yields forward vx=0.05, while max_vy=0 disables both strafe controls</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-hold-cancellation-and-input-expiry"><h3>Hold cancellation and input expiry</h3><p>
+Nonzero intent SHALL require a tracked press inside one direction control while active and locally armed. Release, leaving its bounds, cancellation or lost tracking SHALL clear intent before the next send. Hold renewal SHALL expire after 250 ms on a monotonic clock; the transmitter SHALL NOT renew input itself. Release/expiry SHALL send zero and require a new press, retaining local arm; STOP/interruption SHALL require re-arm and a new press.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-finger-release-or-missing-renewals"><summary>Finger release or missing renewals</summary><ul>
+<li>
+<strong>WHEN</strong> a held direction ends, is cancelled, slides outside, or has no renewal for 250 ms</li>
+<li>
+<strong>THEN</strong> the next setpoint is zero and no buffered motion is played back</li>
+<li>
+<strong>AND</strong> sliding back inside does not resume motion without a new press</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-periodic-latest-intent-stream"><h3>Periodic latest-intent stream</h3><p>
+After setup the client SHALL attempt one latest setpoint every 50 ms, zero when locally disarmed, awaiting ARM or without valid hold intent. It SHALL check stop/lifecycle events and input expiry before each send and obey BLE write-without-response readiness. It SHALL retain no motion backlog. A scheduler gap or interval without submitting a setpoint of &gt;=200 ms SHALL revoke local arm and end through cleanup, without catch-up motion.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-transport-backpressure"><summary>Transport backpressure</summary><ul>
+<li>
+<strong>GIVEN</strong> a nonzero hold and BLE is not ready for writes</li>
+<li>
+<strong>WHEN</strong> readiness returns before the 200 ms failure bound</li>
+<li>
+<strong>THEN</strong> only current unexpired intent is submitted, with no accumulated writes</li>
+<li>
+<strong>AND</strong> readiness returning at or after the bound cannot resume motion</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-validate-status-and-link-health"><h3>Validate Status and link health</h3><p>
+The client SHALL validate three-byte Status codes and state/reason consistency, subscribe to changes and schedule a Status read every 500 ms while ready, with at most one transaction pending. A transaction taking &gt;=1000 ms, malformed Status, GATT error, Open Status or unexpected Armed Status SHALL revoke local motion and end through cleanup. Stopped Status SHALL revoke local arm. Callbacks from old connections or cancelled operations SHALL NOT change the current session.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-silence-and-old-callbacks"><summary>Silence and old callbacks</summary><ul>
+<li>
+<strong>WHEN</strong> Status is unchanged without notifications</li>
+<li>
+<strong>THEN</strong> reads refresh its observation age; missing a read deadline ends the session</li>
+<li>
+<strong>AND</strong> an Armed callback from an earlier connection cannot authorize a newly connected session</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-stop-and-re-arm-latch"><h3>STOP and re-arm latch</h3><p>
+STOP SHALL remain available throughout a connected session, clear intent immediately and request Control=2 with response. It SHALL override ARM and touch input. Confirmation SHALL require successful STOP write completion and a subsequent fresh Stopped/Stop/none Status read within one second. Confirmed STOP or reported safety stop SHALL require explicit ARM and a new press before motion; unconfirmed STOP SHALL end through cleanup. Zero alone SHALL NOT be described as STOP.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-stop-races-with-arm-and-touch"><summary>STOP races with ARM and touch</summary><ul>
+<li>
+<strong>WHEN</strong> STOP occurs while ARM is pending or direction events are queued</li>
+<li>
+<strong>THEN</strong> pending local arming is invalidated, queued direction input is discarded, and any late Armed result cannot enable motion</li>
+<li>
+<strong>AND</strong> after confirmed STOP the client may keep streaming zero to retain ownership until manual re-arm or Disconnect</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-active-foreground-and-manual-recovery"><h3>Active foreground and manual recovery</h3><p>
+Leaving the active foreground, including lock or system interruption, SHALL revoke local arm, clear touches, stop scanning/normal streaming and end through cleanup. Bluetooth unavailable/resetting, permission denial/revocation, disconnect or service invalidation SHALL do the same. Return to active, permission restoration, Bluetooth restoration and app relaunch SHALL remain disconnected/disarmed until manual Connect and ARM; no restoration or automatic reconnect SHALL replay control.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-lock-or-bluetooth-loss-while-holding"><summary>Lock or Bluetooth loss while holding</summary><ul>
+<li>
+<strong>WHEN</strong> the phone locks, the app becomes inactive/backgrounded, Bluetooth becomes unavailable or permission is lost</li>
+<li>
+<strong>THEN</strong> no further nonzero intent is generated, cleanup is attempted while execution remains available, and foreground return cannot resume the hold</li>
+<li>
+<strong>AND</strong> suspension/termination without callbacks relies on the firmware lease rather than a promised phone cleanup</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-bounded-best-effort-shutdown"><h3>Bounded best-effort shutdown</h3><p>
+Disconnect, setup failure, interruption and handled failure SHALL clear intent and stop normal writes, then independently attempt zero and STOP where supported, and local cancellation, within 500 ms total while runnable. Cancellation SHALL still be attempted if a write fails or never completes. The UI SHALL distinguish attempted, device-reported STOP and local disconnect; it SHALL NOT infer physical wheel stop or immediate ownership release from a write or cancellation.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-shutdown-cannot-complete-its-writes"><summary>Shutdown cannot complete its writes</summary><ul>
+<li>
+<strong>WHEN</strong> zero is blocked or STOP receives no completion</li>
+<li>
+<strong>THEN</strong> local cancellation is requested by the shared 500 ms deadline without waiting indefinitely</li>
+<li>
+<strong>AND</strong> late callbacks are ignored and stop/release remain unconfirmed</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--requirement-visible-state-and-evidence-limits"><h3>Visible state and evidence limits</h3><p>
+The UI SHALL show selected peripheral, connection phase, local motion permission, limits, payload capacity, requested vx/vy/wz and last-reported device state/reason/error with observation age. Controls SHALL have text/accessibility labels, adequate touch targets and state cues beyond color; accessibility activation SHALL NOT latch nonzero motion. Documentation SHALL identify approximate open-loop references and distinguish unit/UI simulation from phone/radio/wheel evidence.</p>
+<details class="scenario" id="openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec--scenario-reported-armed-does-not-mean-moving-wheels"><summary>Reported Armed does not mean moving wheels</summary><ul>
+<li>
+<strong>WHEN</strong> the last reported Status is Armed but no direction is held, or a lifecycle failure has revoked local permission</li>
+<li>
+<strong>THEN</strong> requested motion is zero, Status retains its observation age, and the UI does not claim measured speed, live wheel state or certified emergency stopping</li>
+</ul>
+</details></article></section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--car-control-api--spec" aria-label="car control api">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/specs/car-control-api/spec.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/specs/car-control-api/spec.md</div></header>
     <h2>car control api</h2>
     <h2 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--car-control-api--spec--purpose">Purpose</h2><p>
@@ -2306,7 +2465,169 @@ The configured maximum SHALL limit driven PWM duty, not the PWM-high signal requ
 <li>
 <strong>THEN</strong> FL has both direction pins low and PWM high, while RL is driven at 70%</li>
 </ul>
-</details></article></section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design" aria-label="design">
+</details></article></section><section class="document" id="openspec--changes--add-iphone-ble-client--design" aria-label="design">
+    <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-iphone-ble-client/design.md">Markdown source ↗</a><div class="path">openspec/changes/add-iphone-ble-client/design.md</div></header>
+    <h1 id="openspec--changes--add-iphone-ble-client--design--iphone-ble-client-design-draft">iPhone BLE client design (draft)</h1><h2 id="openspec--changes--add-iphone-ble-client--design--context">Context</h2><p>
+See <a href="#openspec--changes--add-iphone-ble-client--proposal">proposal</a> for scope and acceptance status. The <a href="#openspec--specs--car-control-api--spec">car API</a> is accepted; this application consumes it. The <a href="#openspec--specs--laptop-teleoperation--spec">laptop client</a> supplies the gentle direction/explicit-arm precedent, but its UDP handshake and reply correlation do not apply to BLE. <a href="../docs/PLAN.md#open-questions-and-decisions">Q9/Q18/Q19/Q21</a> remain the roadmap's source of truth.</p>
+<h3 id="openspec--changes--add-iphone-ble-client--design--existing-protocol-evidence">Existing protocol evidence</h3><p>
+Inspected at main <code>1be50b3</code>; no protocol change is proposed.</p>
+<table>
+<thead>
+<tr>
+<th>
+Concern</th>
+<th>
+Normal product evidence and consequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Advertisement/claim</td>
+<td>
+<a href="../firmware/src/fw.rs#L365">Firmware BLE loop</a> advertises flags and <code>Rovi M8</code> in scan response, without service UUID. Scan foreground with services=nil, filter local name, then validate the service after explicit Connect. <code>on_ble_connect</code> claims immediately; AP goes off. Name, RSSI and peripheral identifier distinguish candidates, not authenticate them.</td>
+</tr>
+<tr>
+<td>
+GATT</td>
+<td>
+<a href="../firmware/src/fw.rs#L57">RoviService</a>: service <code>d47a0010-45b2-4d19-8db0-6bd87e9c0001</code>; same suffix with <code>0011</code> Setpoint (write without response), <code>0012</code> Control (write with response), <code>0013</code> Capabilities (read), <code>0014</code> Status (read/notify), <code>0015</code> Echo (write without response/notify). Require the first four characteristics and properties; Echo is optional and unused by this design.</td>
+</tr>
+<tr>
+<td>
+Setpoint</td>
+<td>
+<a href="../experiments/rovi-m8-setpoint-ros/sim/wire.py#L14">Python wire reference</a> and <a href="../crates/rovi-core/src/device.rs">Rust decoder</a>: u32 LE sequence + 68-byte CDR = 72 bytes. CDR is <code>00 01 00 00</code>, zero seconds/nanoseconds, string length 1, NUL and padding, six f64 LE Twist values. Empty frame means base_link. No stamp synchronization, UDP envelope or BLE numeric session.</td>
+</tr>
+<tr>
+<td>
+Capabilities</td>
+<td>
+<a href="../crates/rovi-core/src/capabilities.rs#L42">Canonical encoder</a>: <code>u8 version</code>, five f32 LE (radius, centre projection sum, max_vx, max_vy, max_wz), three u16 LE (lease/claim/reclaim ms), 27 bytes. Preserve f32 values when widening to Double; do not round limits upward.</td>
+</tr>
+<tr>
+<td>
+Status/control</td>
+<td>
+<a href="../crates/rovi-core/src/status.rs#L35">Status encoder</a>: state 0 Open/1 Claimed/2 Armed/3 Stopped; reason 0 none/1 Stop/2 LeaseExpired/3 OwnerLost/4 OutOfLimits; error 0 none/1 Busy/2 NotOwner/3 NotReady/4 Invalid. Non-Stopped requires reason=0; Stopped requires a nonzero reason. Control ARM=1/STOP=2; refused writes return ATT Value Not Allowed and retain owner error in Status.</td>
+</tr>
+<tr>
+<td>
+Windows</td>
+<td>
+<a href="../crates/rovi-core/src/arbiter.rs#L32">Arbiter defaults</a>: lease 1000, claim 10000, reclaim 5000 ms. Valid disarmed zero setpoints retain ownership. STOP does not release; BLE disconnect does. After expiry firmware disconnects. Use advertised windows, not these defaults as constants.</td>
+</tr>
+<tr>
+<td>
+Prior clients/results</td>
+<td>
+<a href="../experiments/rovi-m8-setpoint-ros/sim/ble_client.py">Bleak client</a>, <a href="../firmware/bench/ble_status_echo.py">normal-firmware Status/Echo probe</a>, and <a href="../firmware/bench/2026-10-19-ble-device-lease-timing/notes.md">BLE lease results</a> inform the contract. They are laptop/BlueZ evidence, not iPhone validation.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="openspec--changes--add-iphone-ble-client--design--goals--non-goals">Goals / Non-Goals</h2><p>
+<strong>Goals:</strong> small native UI; testable codec/session logic; one foreground controller; fail closed on unsupported payload/limits and stale operations; phone evidence collected separately from fake-transport evidence.</p>
+<p>
+<strong>Non-Goals:</strong> changes to firmware/API/security, background control, automatic reconnect, persistent commands, calibration, measured speed, mixed-axis joystick, Wi-Fi/ROS configuration or distribution infrastructure. No code or device activity is part of this draft.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--design--decisions">Decisions</h2><h3 id="openspec--changes--add-iphone-ble-client--design--native-ui-and-one-session-owner">Native UI and one session owner</h3><p>
+Propose SwiftUI + CoreBluetooth with no third-party runtime dependency. Future <code>apps/iphone/</code> would contain the app, codec/session unit tests and UI tests. Keep codecs and a deterministic session state machine separate from the CoreBluetooth adapter and touch UI so fake-clock/fake-peripheral tests need no radio. One serial executor owns BLE operations, deadlines and session generations; the UI provides timestamped touch intent and immediately invalidates it on inactivity. Avoid sharing mutable arming state between independent timers.</p>
+<p>
+The proposed screen has Scan/results/Connect, then connection/local-arm and last-reported Status, ARM, prominent STOP, six labelled hold controls, requested values and Disconnect. No numeric tuning or settings screen in v1. Text, VoiceOver labels, Dynamic Type and usable hit targets apply to all controls. Standard accessibility activation never becomes a sticky motion toggle; device usability review must verify a deliberate hold interaction or keep nonzero controls unavailable for unsupported activation modes (OPEN I4).</p>
+<p>
+Compared with a web client or a joystick, this keeps BLE/lifecycle integration native and requests one bounded axis at a time. The six-button choice is proposed for Todor's review, not a prior accepted product decision.</p>
+<h3 id="openspec--changes--add-iphone-ble-client--design--connection-validation-and-streaming">Connection, validation and streaming</h3><p>
+No connection from scan, app launch or a remembered identifier. Stop scan on selection/timeout/inactivity; retain the selected CBPeripheral through that connection only. Check authorization and manager poweredOn before discovery/connect; show denied/off/resetting/unsupported distinctly. Include a specific <code>NSBluetoothAlwaysUsageDescription</code> explaining discovery and control. A settings change permits manual retry, not automatic connection.</p>
+<p>
+Within the single 10-second Connect deadline, discover the exact service/characteristics, validate properties/capabilities, check <code>maximumWriteValueLength(for: .withoutResponse) &gt;= 72</code>, read valid Claimed or Stopped Status and enable notifications. Claim is already running during discovery; if firmware times it out, offer manual retry. Only after validation start the 50 ms zero stream. The lease&gt;=500 ms and claim&gt;=1000 ms checks are this client's supported-profile floor; current product defaults exceed them. They are not measured iOS timing guarantees.</p>
+<p>
+UI hold tracking renews intent while the same physical touch remains inside the control; release, cancellation, a second direction or lifecycle change invalidates it. The transmitter never extends the 250 ms input deadline. Expiry and STOP win before any send. Check <code>canSendWriteWithoutResponse</code>; on readiness send current intent at the next due send, never drain old samples. A 200 ms scheduler/submission gap ends the session. CoreBluetooth's own queued writes cannot be recalled: keep application submissions to one per 50 ms and never promise immediate physical cessation from the app's deadline.</p>
+<h3 id="openspec--changes--add-iphone-ble-client--design--control-confirmation-without-invented-ble-sequence-replies">Control confirmation without invented BLE sequence replies</h3><p>
+BLE Status has no request ID. Serialize Control writes, allow only one pending control transaction, and associate it with a local connection generation and operation epoch. ARM clears holds, submits fresh zero before ARM and continues zero throughout confirmation. Write submission is not proof that zero arrived; a refused ARM ends the session rather than being retried automatically.</p>
+<p>
+Only the current successful with-response Control completion plus a fresh explicit Status read can confirm ARM/STOP. CoreBluetooth delivers reads and notifications through the same delegate method; a pending read flag alone cannot correlate them. For an unambiguous read, pause Status notifications, await the subscription-state completion and drain prior callbacks on the serial executor, perform the sole Status read, then restore notifications and await completion before enabling motion. Use this serialized read procedure for periodic health reads too; continue latest zero/armed-intent streaming during normal health reads. All control steps share the one-second control deadline. Any ambiguity/error/deadline failure closes the session. Validate this ordering with fakes and the selected real phone before acceptance.</p>
+<p>
+Notifications can revoke local arm at any time but never grant it. Ignore duplicate Stopped reports while explicitly recovering from that same stop; a new stop transition during ARM invalidates the attempt. STOP invalidates pending local ARM immediately, discards touch input and takes priority over further application writes. If an in-flight ARM cannot be cancelled, keep intent zero, send STOP when possible and cancel the connection on timeout. Never treat the late ARM completion as permission to move.</p>
+<p>
+Schedule a Status read every 500 ms with at most one outstanding transaction; if one remains pending at the next period, do not overlap it. Its 1000 ms deadline includes disabling/restoring notifications and the read response. Coordinate polling with controls; a control confirmation read also satisfies that period. Status polling does not renew firmware leases. This uses existing readable Status rather than adding Echo traffic or implying Echo proves ownership.</p>
+<h3 id="openspec--changes--add-iphone-ble-client--design--lifecycle-and-shutdown">Lifecycle and shutdown</h3><p>
+Control is active-foreground only. Use scene/activity notifications and touch cancellation to revoke permission immediately on inactive, including app switcher, Control Center, incoming interruption or lock. Disable background Bluetooth modes, state restoration and automatic reconnect. Return from any interruption requires a new manual connection and ARM.</p>
+<p>
+Disconnect/failure/interruption first clears local intent and ends the normal stream. Under one 500 ms runnable deadline, attempt zero if permitted, attempt STOP with response independently, then call <code>cancelPeripheralConnection</code> even if earlier operations fail or hang. Do not wait for normal one-second control confirmation during cleanup; any obtained Status can be reported as last observed. Cancel pending connect as well as an established connection. Invalidate the generation so delayed connect/write/read/notification callbacks cannot affect another session; a late successful connect after cancellation is cancelled again.</p>
+<p>
+This bounds local attempts only. iOS may suspend or terminate without allowing cleanup. Apple also documents that cancelling the app's local connection need not immediately tear down a shared physical link. Firmware lease/claim/reclaim behavior remains the independent fallback; zero/STOP/cancellation is best effort. UI says “STOP requested”, “device reported Stopped/Stop”, or “local connection ended”, never “wheels verified stopped” or “ownership definitely released”.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--design--apple-platform-facts-checked-2026-10-20">Apple platform facts checked 2026-10-20</h2><ul>
+<li>
+<a href="https://developer.apple.com/documentation/corebluetooth/cbperipheral/maximumwritevaluelength%28for%3A%29"><code>maximumWriteValueLength(for:)</code></a> gives a per-write-type byte capacity. Use it rather than inventing a public iOS MTU setting; capacity&gt;=72 is the client gate, not proof of actual ATT MTU. Firmware needs MTU&gt;=75 for its 72-byte packet; Q18 still needs phone/board evidence.</li>
+<li>
+<a href="https://developer.apple.com/documentation/corebluetooth/cbperipheral/writevalue%28_%3Afor%3Atype%3A%29"><code>writeValue</code></a> provides write completion only with response; without-response delivery is not guaranteed. <a href="https://developer.apple.com/documentation/corebluetooth/cbperipheral/cansendwritewithoutresponse"><code>canSendWriteWithoutResponse</code></a> and <a href="https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate/peripheralisready%28tosendwritewithoutresponse%3A%29">readiness callback</a> support flow control, not lease acknowledgements. <a href="https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate/peripheral%28_%3Adidupdatevaluefor%3Aerror%3A%29-1xyna">Value callbacks</a> serve both reads and notifications.</li>
+<li>
+<a href="https://developer.apple.com/documentation/corebluetooth/cbcentralmanager/scanforperipherals%28withservices%3Aoptions%3A%29">Scanning</a> normally benefits from a service filter, but the existing advertisement requires the foreground unfiltered exception. <a href="https://developer.apple.com/documentation/corebluetooth/cbmanagerstate">Bluetooth manager states</a> and the required <a href="https://developer.apple.com/documentation/bundleresources/information-property-list/nsbluetoothalwaysusagedescription">usage description</a> define availability and permission handling.</li>
+<li>
+<a href="https://developer.apple.com/documentation/swiftui/scenephase">Scene phase</a> exposes activity changes. Apple's <a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/CoreBluetoothBackgroundProcessingForIOSApps/PerformingTasksWhileYourAppIsInTheBackground.html">background guide</a> explains that suspended foreground-only apps cannot process Bluetooth work; background support would not guarantee indefinite execution either. <a href="https://developer.apple.com/documentation/corebluetooth/cbcentralmanager/cancelperipheralconnection%28_%3A%29">Cancellation</a> is nonblocking and does not guarantee immediate physical link teardown.</li>
+</ul>
+<h2 id="openspec--changes--add-iphone-ble-client--design--prerequisites-and-open-questions">Prerequisites and OPEN questions</h2><p>
+This Linux worktree does not establish that a Mac, compatible Xcode/macOS pair, signing team or test iPhone is available. <a href="https://developer.apple.com/documentation/xcode/running-your-app-on-simulated-or-physical-devices">Apple's device workflow</a> requires Xcode/platform support on a Mac and device signing/provisioning. Local device deployment needs a trusted/paired phone, Apple Account/team and unique bundle ID, with <a href="https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device">Developer Mode</a> where required. A <a href="https://developer.apple.com/help/account/basics/about-your-developer-account">Personal Team</a> can support personal device development, with seven-day provisioning expiry; do not assume paid membership or credentials. Simulator/fake tests do not establish radio behavior.</p>
+<table>
+<thead>
+<tr>
+<th>
+OPEN</th>
+<th>
+How to settle</th>
+<th>
+Blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+I1 — execution environment and supported OS</td>
+<td>
+Todor identifies Mac access, installed Xcode/macOS, iPhone model/iOS, signing team and bundle ID; record a supported minimum iOS/toolchain pair before scaffolding. Proposed deployment is local development signing; TestFlight/App Store need separate scope.</td>
+<td>
+App scaffold/build/signing tasks 2.x/3.x; independent protocol review can proceed after acceptance.</td>
+</tr>
+<tr>
+<td>
+I2 — Q18 on iPhone</td>
+<td>
+On normal firmware, record phone-reported without-response capacity and board-observed ATT MTU over 10 manual connections; all must fit the unchanged 72-byte packet. A low/unreliable capacity fails compatibility, not triggers a compact fallback here.</td>
+<td>
+Real-phone compatibility acceptance (4.1); cannot close from BlueZ MTU 247.</td>
+</tr>
+<tr>
+<td>
+I3 — Q19 stream/control responsiveness</td>
+<td>
+Measure 20 Hz for 60 seconds at zero, submission-gap distribution, backpressure, Status reads/subscription transitions and ARM/STOP confirmation against normal firmware. No lease expiry, no &gt;=200 ms submission gap and no control/read timeout are the proposed gate. Record actual interval only if captured by instrumentation; never infer iOS interval from the 50 ms timer or BlueZ's 45 ms. A failing result requires revised proposal/review before loosening bounds.</td>
+<td>
+Real-phone acceptance (4.2) and motor batch (4.4); not pure host tests.</td>
+</tr>
+<tr>
+<td>
+I4 — touch/accessibility/lifecycle usability</td>
+<td>
+Todor reviews six labelled hold controls; verify hold/release/cancel, VoiceOver behavior, Dynamic Type and inactive/lock transitions on the selected phone. Resolve a usable bounded accessible hold interaction before claiming accessible motion; any alternate interaction changing the contract needs review.</td>
+<td>
+UI acceptance (3.2/4.3); six-direction state/codec work can be tested independently.</td>
+</tr>
+</tbody>
+</table>
+<p>
+All choices above remain proposed until task 1.1 records Todor's acceptance. Unmeasured I2/I3 can remain open during independent host implementation after that gate, but never count as passed phone acceptance. <a href="#openspec--changes--add-iphone-ble-client--verification">Verification</a> specifies evidence tiers and stop conditions.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--design--risks--trade-offs">Risks / Trade-offs</h2><ul>
+<li>
+Same-name or spoofed peripherals → validate GATT/capabilities and require selection; this is compatibility, not authenticated identity. Existing API security is unchanged.</li>
+<li>
+Failed/slow setup consumes the claim window; zero streams intentionally retain ownership even after STOP → show ownership effects and explicit Disconnect; never quietly reconnect to hide them.</li>
+<li>
+SDK/runtime timing, buffered radio writes and suspension can exceed local intentions → firmware lease fallback, honest state labels and mandatory physical evidence. Gentle references are approximate and can overcome the motor deadband; they are not measured slow speeds.</li>
+<li>
+Pausing notifications for unambiguous reads adds ATT overhead → test the complete workload under I3. Do not claim the laptop's throughput transfers to iOS.</li>
+</ul>
+<h2 id="openspec--changes--add-iphone-ble-client--design--migration-plan">Migration Plan</h2><p>
+After explicit proposal acceptance and I1 resolution, implement in <code>apps/iphone/</code> without modifying existing transports. Run host/UI checks, then separately authorized normal-firmware phone checks, then a separately announced supervised wheels-off-ground batch. Record phone/OS/app/firmware revisions and Todor's observations. Rollback is closing/uninstalling the app and restoring manual controller use; no firmware migration or credentials are introduced. Archive only after the acceptance review, not after this documentation PR.</p>
+</section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design" aria-label="design">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/design.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/design.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design--m6-implementation-design">M6 implementation design</h1><h2 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design--context">Context</h2><p>
 See <a href="#openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal">proposal</a> for scope and evidence. M8 has a host-tested <code>no_std</code> core plus separate firmware and simulator packages; M4 added a pure motor mapping function that currently imports the arbiter state. The working firmware remains our bench reference. This change extracts that behavior and applies the reviewed corrections, with no automatic flash or measurement sweep.</p>
@@ -2450,6 +2771,50 @@ Existing source/net and motor bench evidence does not qualify a new terminal app
 Add the client without firmware or API changes. Preserve the current codec import through a compatibility module and rerun its existing tests and simulator scenarios. Keep the normal ROS firmware installed. Rollback removes the new application and restores the codec location; no board image or protocol migration is needed.</p>
 <h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--design--scope-decision">Scope decision</h2><p>
 Todor selected the laptop client on 2026-10-20 after reviewing the concrete option in #89. Implementation uses the proposed keys, 250 ms intent window and gentle defaults; no new ADR is needed for these reversible client choices.</p>
+</section><section class="document" id="openspec--changes--add-iphone-ble-client--tasks" aria-label="tasks">
+    <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-iphone-ble-client/tasks.md">Markdown source ↗</a><div class="path">openspec/changes/add-iphone-ble-client/tasks.md</div></header>
+    <h1 id="openspec--changes--add-iphone-ble-client--tasks--iphone-ble-client-tasks">iPhone BLE client tasks</h1><p>
+<strong>Draft only.</strong> These are future implementation/acceptance tasks, not permission to begin them. Nothing below is complete. <a href="#openspec--changes--add-iphone-ble-client--proposal--proposal-acceptance">Proposal acceptance</a> controls task 1.1; <a href="#openspec--changes--add-iphone-ble-client--verification">verification map</a> defines H/P evidence. Resolve changes to the proposed contract through review before implementation.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--tasks--1-acceptance-and-prerequisites">1. Acceptance and prerequisites</h2><ul>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 1.1 Record Todor's explicit acceptance of the concrete proposal and selected scope; completion check: link the exact acceptance message/PR comment in proposal.md and here. Documentation merge alone is insufficient. Do not start 2.x/3.x beforehand.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 1.2 Resolve OPEN I1 and review I4; completion check: record Mac/Xcode/macOS access, target phone/iOS, supported deployment minimum, signing team/bundle ID and reviewed six-control/hold approach in design.md, without credentials. No scaffold until I1 is resolved; any interaction contract change updates the spec first.</li>
+</ul>
+<h2 id="openspec--changes--add-iphone-ble-client--tasks--2-app-foundation-and-ble-session">2. App foundation and BLE session</h2><ul>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.1 Create the minimal native app/test targets under apps/iphone using the agreed environment and no third-party runtime dependencies; completion check: reproducible xcodebuild build/test commands pass on the selected Mac with a fake transport, and README records prerequisites, signing and simulator evidence limits.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Implement version-1 codecs and capability/Status validation; completion check: H1 golden, malformed, boundary and wrapping-sequence tests pass against existing Rust/Python vectors, with no firmware/API changes.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Implement explicit scan/select/connect, GATT validation, payload/window checks and bounded setup; completion check: H2 fake-central tests cover same-name candidates, unavailable Bluetooth/denied permission, incompatible peer, claim loss, connect timeout and late callbacks, without automatic connection or motion.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.4 Implement serialized controls/Status reads and the 50 ms latest-intent stream with local generations/deadlines; completion check: H3 verifies fresh-zero ARM, read/notification separation, backpressure, stop priority, 200 ms failure, 1000 ms read deadline, refusal and stale callbacks. Document which confirmations remain device-reported.</li>
+</ul>
+<h2 id="openspec--changes--add-iphone-ble-client--tasks--3-touch-ui-and-interruption-handling">3. Touch UI and interruption handling</h2><ul>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Implement six gentle hold controls and visible local/reported state with ARM, STOP and Disconnect; completion check: H4 verifies all direction signs/limits, disabled axes, multi-touch, release/slide/cancel, 250 ms input expiry, pre-arm touch invalidation and no motion replay.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Implement active-foreground cancellation, permission/Bluetooth/service-loss handling and bounded cleanup; completion check: H5 injects every interruption and a failed/hung write, verifies cancellation attempted within 500 ms and no late re-arm/reconnect. UI tests check labels, Dynamic Type, non-color state cues and no sticky accessibility activation. Document the approved I4 hold interaction and physical checks still pending.</li>
+</ul>
+<h2 id="openspec--changes--add-iphone-ble-client--tasks--4-real-phone-verification-and-scoped-acceptance">4. Real-phone verification and scoped acceptance</h2><ul>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 4.1 After separate authorization, run P1 on the selected iPhone and unchanged normal product firmware with motor power disabled; completion check: record 10 manual connection trials, phone capacity and board ATT MTU, claim/setup behavior, revisions and logs. Resolve I2/Q18 for that phone only; fakes/BlueZ do not pass this task.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 4.2 After separate authorization, run P2's complete zero-stream/read/control workload; completion check: record 60 s at 20 Hz, gap/backpressure/control timing, zero lease expiries/timeouts, and resolve I3/Q19 for that phone only. A failed gate requires proposal revision before motor checks; do not quietly relax bounds.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 4.3 After separate authorization, run P3 with motor power disabled; completion check: real touch and accessibility review plus inactive/background/lock, permission/off/reset, disconnect, termination and relaunch evidence show cleared intent/manual recovery, with unconfirmed cleanup clearly labelled. Resolve I4 and distinguish measured app behavior from firmware fallback.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 4.4 Announce the exact P4 supervised wheels-off-ground batch and obtain Todor's go before any motor run; completion check: record Todor's physical confirmation for six directions, release, STOP/re-arm and loss stops on normal firmware, plus phone/app/firmware identities and separate observation vs protocol evidence.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 4.5 Review every requirement/scenario against H1–H5 and P1–P4, with all implementation gates resolved; completion check: publish dated evidence and Todor's scoped product acceptance, run strict active/baseline/archived validation and reader checks, and leave any unmeasured physical bound explicitly unclaimed. Draft-authoring checks alone cannot close this task.</li>
+</ul>
+<h2 id="openspec--changes--add-iphone-ble-client--tasks--workflow-follow-up">Workflow follow-up</h2><ul>
+<li>
+After implementation and product acceptance, archive with the pinned CLI under <a href="../docs/SPECIFICATION.md#workflow-and-gates">the specification standard</a>; never move deltas manually.</li>
+<li>
+Review generated baseline purpose, requirement/scenario coverage and links in baseline/archive, regenerate the reader, and repeat strict and archived validation plus reader checks in the archive PR. Parent owns merge coordination; do not auto-merge this draft.</li>
+</ul>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--tasks" aria-label="tasks">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/tasks.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/tasks.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--tasks--tasks">Tasks</h1><p>
@@ -2541,6 +2906,194 @@ Todor selected this laptop scope on 2026-10-20. Nothing here authorizes a flash 
 <h2 id="openspec--changes--archive--2026-10-20-add-laptop-teleoperation--tasks--workflow-follow-up">Workflow follow-up</h2><ul>
 <li>
 Archived/synced 2026-10-20 through the pinned CLI per <a href="../docs/SPECIFICATION.md">SPECIFICATION</a>, preserving evidence and repairing relocated links. The accepted baseline contains the same nine requirements and 14 scenarios.</li>
+</ul>
+</section><section class="document" id="openspec--changes--add-iphone-ble-client--verification" aria-label="verification">
+    <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-iphone-ble-client/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-iphone-ble-client/verification.md</div></header>
+    <h1 id="openspec--changes--add-iphone-ble-client--verification--iphone-ble-client-verification-map">iPhone BLE client verification map</h1><p>
+<strong>Planning evidence only (2026-10-20).</strong> No iPhone app exists in this change; no unit/UI/device/wheel acceptance has passed. The <a href="#openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec">requirements</a> are proposed. All <a href="#openspec--changes--add-iphone-ble-client--tasks">tasks</a> remain unchecked. Existing laptop results explain the protocol and do not close iPhone Q18/Q19. This file is the future evidence ledger; do not infer acceptance from artifact completeness or a green documentation check.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--verification--host-and-ui-evidence-planned">Host and UI evidence planned</h2><table>
+<thead>
+<tr>
+<th>
+ID</th>
+<th>
+Test boundary and completion evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+H1</td>
+<td>
+Codec unit tests: 72-byte golden setpoints (zero/six directions), endian/CDR layout, u32 wrap, 27-byte capabilities with f32 limits, finite/geometry/window/version/length checks and all Status codes/invalid combinations. Compare with existing <a href="../experiments/rovi-m8-setpoint-ros/sim/test_wire.py">wire vectors</a> and <a href="../crates/rovi-core/src/capabilities.rs">product encoding</a>.</td>
+</tr>
+<tr>
+<td>
+H2</td>
+<td>
+Fake central/peripheral: no scan before user action; same-name candidates; manual selection, properties and payload&lt;72; every setup timeout/claim-loss/error; denied/off/resetting/unsupported states; successful connect received after cancellation. Capture writes and show no ARM/nonzero on setup failure.</td>
+</tr>
+<tr>
+<td>
+H3</td>
+<td>
+Fake clock and delegate event traces: zero-before-ARM, no notification-only confirmation, subscription/read separation, current-operation write success plus fresh Status, control refusal/deadlines, queued STOP over pending ARM, safety-stop latch, malformed/old-generation callbacks, read deadline and no automatic recovery. Inject 199/200 ms submission gaps and backpressure with release during blockage; no catch-up writes.</td>
+</tr>
+<tr>
+<td>
+H4</td>
+<td>
+Touch/state and UI tests: all six signs and capped magnitudes; zero axes; multiple touches; release, outside/re-entry, cancellation, lost tracking and 249/250 ms expiry; pre-arm and post-STOP stale touches; local/requested/reported state and age. Repeating the transmitted value must not renew input.</td>
+</tr>
+<tr>
+<td>
+H5</td>
+<td>
+Lifecycle/cleanup fakes plus UI tests: inactive/lock signals, background, permission/power/service loss, disconnect and termination/relaunch state; zero and STOP failures/hangs independently; cancellation by the shared 500 ms deadline while runnable. Text/accessibility/Dynamic Type checks; accessibility activation cannot latch movement.</td>
+</tr>
+</tbody>
+</table>
+<p>
+Host/fake clocks establish software decisions, not scheduling guarantees, iOS radio delivery or physical stopping. UI Simulator evidence establishes layout/interaction logic only; it cannot resolve phone/firmware compatibility.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--verification--requirement-and-scenario-coverage">Requirement and scenario coverage</h2><p>
+Each row covers all scenarios under the named requirement; evidence IDs describe planned checks, not tests already implemented.</p>
+<table>
+<thead>
+<tr>
+<th>
+Proposed requirement</th>
+<th>
+Host/UI</th>
+<th>
+Required phone/board evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Explicit discovery and selection</td>
+<td>
+H2 (two names/no results)</td>
+<td>
+P1 discovery/selection; absence is inconclusive</td>
+</tr>
+<tr>
+<td>
+Validate the connected car</td>
+<td>
+H1/H2 (incompatibility/claim expiry)</td>
+<td>
+P1 capacity/GATT/setup and I2</td>
+</tr>
+<tr>
+<td>
+Existing BLE wire contract</td>
+<td>
+H1 (directions/wrap)</td>
+<td>
+P1 accepted zero stream; P4 direction observations</td>
+</tr>
+<tr>
+<td>
+Explicit zero then ARM</td>
+<td>
+H3/H4 (old hold/refused or late ARM)</td>
+<td>
+P2 controls; P4 no replay</td>
+</tr>
+<tr>
+<td>
+Gentle single-axis directions</td>
+<td>
+H1/H4 (signs/caps/disabled axes)</td>
+<td>
+P3 interaction; P4 six directions</td>
+</tr>
+<tr>
+<td>
+Hold cancellation and input expiry</td>
+<td>
+H4 (release/cancel/expiry/outside)</td>
+<td>
+P3 real touch; P4 release stop</td>
+</tr>
+<tr>
+<td>
+Periodic latest-intent stream</td>
+<td>
+H3 (backpressure/200 ms)</td>
+<td>
+P2 stream workload and I3</td>
+</tr>
+<tr>
+<td>
+Validate Status and link health</td>
+<td>
+H1/H3 (unchanged Status/read timeout/old callbacks)</td>
+<td>
+P2 read/notify ordering; P3 loss</td>
+</tr>
+<tr>
+<td>
+STOP and re-arm latch</td>
+<td>
+H3/H4 (STOP/ARM/touch race)</td>
+<td>
+P2 confirmation; P4 observed latch</td>
+</tr>
+<tr>
+<td>
+Active foreground and manual recovery</td>
+<td>
+H2/H5 (lock/off/loss/resume)</td>
+<td>
+P3 interruptions/termination</td>
+</tr>
+<tr>
+<td>
+Bounded best-effort shutdown</td>
+<td>
+H5 (blocked zero/STOP/cancel)</td>
+<td>
+P3 observed attempt/detection delays; P4 loss fallback</td>
+</tr>
+<tr>
+<td>
+Visible state and evidence limits</td>
+<td>
+H4/H5 (Armed without motion/accessibility)</td>
+<td>
+P3 usability/labels; P4 distinguish wheel observation</td>
+</tr>
+</tbody>
+</table>
+<h2 id="openspec--changes--add-iphone-ble-client--verification--real-phone--normal-product-firmware-evidence-planned">Real phone / normal product firmware evidence planned</h2><p>
+These are proposed procedures, <strong>not authorization to run them</strong>. No device, network, router, serial capture or motor activity occurred while writing this draft. Use the current normal product default or <code>ros</code> image; never <code>motor-bench</code>. Do not change firmware to make a phone pass.</p>
+<ul>
+<li>
+<strong>P1 — payload/claim (I2, Q18):</strong> with motor power disabled and a separately authorized batch, record phone model/iOS, Xcode/app/firmware revisions, capacity from <code>.withoutResponse</code>, raw capabilities/Status and, where authorized instrumentation is available, board ATT MTU for 10 manual connect/disconnect cycles. Require capacity&gt;=72 and observed MTU&gt;=75 every time; record setup latency versus claim_ms, claimed-disarmed state, rejection paths and release observation separately. Missing board MTU evidence leaves that measurement open even if zero writes work.</li>
+<li>
+<strong>P2 — full streaming/control workload (I3, Q19):</strong> with motor power disabled, run 60 s of 20 Hz zero setpoints, including Status polling and explicit ARM/STOP/re-arm at zero. Require no lease expiry, no submission gap&gt;=200 ms and no one-second control/read-transaction timeout. Log gap distribution, readiness stalls, notification subscription/read ordering and control completion/read latency. Record connection interval only from actual authorized measurement. A phone that fails is unsupported pending reviewed changes; laptop results and a timer frequency do not establish iOS throughput or interval.</li>
+<li>
+<strong>P3 — phone lifecycle and UI (I4):</strong> with motor power disabled, exercise actual hold/release/slide/multiple-touch, app switcher, Home/background, lock/unlock, interruption, Bluetooth off/on, permission deny/change, service invalidation/disconnect, force termination/relaunch and a deliberately unavailable peer. Record callback and last-submission times, cleanup attempts and any device-reported stop. Capture UI evidence of manual recovery, ageing Status and no sticky VoiceOver activation. Never require cleanup to run after suspension/kill; verify firmware fallback separately. If a case cannot be induced, record it as unverified rather than a fake-test pass.</li>
+<li>
+<strong>P4 — supervised physical acceptance:</strong> only after P1–P3 and a newly announced batch with Todor's go, wheels off ground, test each gentle direction briefly, release-to-zero, STOP while holding, fresh ARM/new-press recovery, lock/background and link loss. Record Todor's wheel observations separately from app/GATT/firmware logs. Confirm the firmware's lease fallback under loss; host deadlines are not physical stopping bounds. Do not claim electrical/coast bounds, floor speed accuracy, range or unattended safety from this batch.</li>
+</ul>
+<p>
+Each run records date, exact procedure, hardware/app/firmware identity, raw logs and observed failures. A physical run requires its own safe setup/cleanup announcement and Todor's confirmation. Existing <a href="../README.md#hardware-validation-policy">hardware policy</a> and <a href="../docs/SPECIFICATION.md#workflow-and-gates">product acceptance gates</a> apply. Failed or missing evidence leaves its task unchecked; changes to the contract return to proposal review.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--verification--draft-checks">Draft checks</h2><p>
+Authoring checks on 2026-10-20 (these validate documentation only):</p>
+<ul>
+<li>
+<code>rtk npm run spec:check</code>: active draft plus three baseline capabilities pass strict validation (4/4).</li>
+<li>
+<code>rtk npm run openspec -- validate --archived --strict --no-interactive</code>: both archived changes pass (2/2).</li>
+<li>
+<code>rtk npm run spec:build</code> regenerates <code>openspec/index.html</code>; <code>rtk npm run spec:reader:check</code> passes all six tests and freshness checking.</li>
+<li>
+Local Markdown review/check resolves all 34 relative links/anchors across the five authored documents; each of 12 added requirements has scenarios and an H/P mapping. Reviewed zero/ARM ordering, read/notify ambiguity, stop/input priority, deadlines, lifecycle recovery and explicit OPEN gates for consistency.</li>
+<li>
+<code>rtk git diff --check</code> passes. Accepted specs, roadmap, runtime/firmware and Wi-Fi files remain unchanged. No implementation or physical acceptance is implied; the artifact status “4/4 complete” means planning files exist only.</li>
 </ul>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/verification.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/verification.md</div></header>
@@ -3194,6 +3747,34 @@ codec in their repository layout inside the container. The same capabilities
 and reconnect test passes, as do <code>ros_readonly.sh</code> and default <code>ros_stops.sh</code>
 against loopback ROS simulators. The 31 client tests pass again. Firmware and
 UDP wire behavior are unchanged.</p>
+</section><section class="document" id="openspec--changes--add-iphone-ble-client--proposal" aria-label="proposal">
+    <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-iphone-ble-client/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/add-iphone-ble-client/proposal.md</div></header>
+    <h1 id="openspec--changes--add-iphone-ble-client--proposal--iphone-ble-client-proposal">iPhone BLE client proposal</h1><h2 id="openspec--changes--add-iphone-ble-client--proposal--why">Why</h2><p>
+Rovi's <a href="../docs/VISION.md">vision</a> includes an iPhone controller, but the accepted product has only laptop clients. Propose the first phone interface against the existing BLE API, with explicit safety behavior and a device verification plan for <a href="../docs/PLAN.md#open-questions-and-decisions">roadmap Q9/Q18/Q19</a>.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--proposal--what-changes">What Changes</h2><ul>
+<li>
+Propose a native SwiftUI/CoreBluetooth iPhone application: foreground discovery, explicit car selection/connect, visible capabilities and last-reported Status.</li>
+<li>
+Connect disarmed; require an explicit ARM action with a fresh zero setpoint before six gentle press-and-hold directions become usable. Release/cancel clears intent; STOP latches local motion off until a new ARM and a new touch.</li>
+<li>
+Bound input age, streaming stalls and cleanup. Leaving the active foreground, locking, Bluetooth/permission loss or disconnection ends the session without automatic reconnect, re-arm or motion replay.</li>
+<li>
+Verify codecs/state transitions with fakes and UI tests separately from real iPhone/normal-firmware BLE, lifecycle and supervised wheel checks. Q18/Q19 remain open until measured on the selected phone.</li>
+</ul>
+<h2 id="openspec--changes--add-iphone-ble-client--proposal--capabilities">Capabilities</h2><h3 id="openspec--changes--add-iphone-ble-client--proposal--new-capabilities">New Capabilities</h3><ul>
+<li>
+<code>iphone-ble-teleoperation</code>: iPhone discovery, ownership, explicit arming, touch control, interruption handling and honest feedback through the existing BLE interface.</li>
+</ul>
+<h3 id="openspec--changes--add-iphone-ble-client--proposal--modified-capabilities">Modified Capabilities</h3><p>
+None. <a href="#openspec--specs--car-control-api--spec">Car control API</a>, <a href="#openspec--specs--motor-control--spec">motor control</a> and <a href="#openspec--specs--laptop-teleoperation--spec">laptop teleoperation</a> retain their accepted contracts.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--proposal--impact">Impact</h2><p>
+Future implementation would live under <code>apps/iphone/</code>, using Apple's SDKs without a new third-party runtime dependency. Existing normal product firmware (default or <code>ros</code>, never <code>motor-bench</code>), GATT UUIDs and codecs remain unchanged. BLE connection itself claims ownership and switches off the car AP; discovery alone does not. A missing advertisement cannot distinguish another owner from power/range issues.</p>
+<p>
+This PR contains planning Markdown and a regenerated specification reader only: no app scaffold, Swift, firmware, flashing or device/network tests. Wi-Fi diagnostics, UDP/ROS clients, station mode, BLE credential provisioning (Q21), compact setpoints, pairing/authentication changes, background driving, joystick/mixed-axis control and App Store/TestFlight distribution are outside this proposal.</p>
+<h2 id="openspec--changes--add-iphone-ble-client--proposal--proposal-acceptance">Proposal acceptance</h2><p>
+<strong>DRAFT — proposed scope, not accepted for implementation.</strong> Todor authorized specification authoring and a draft PR only. No implementation acceptance is recorded. Merging this documentation PR alone does not authorize implementation; Todor must explicitly accept this concrete proposal under the <a href="../docs/SPECIFICATION.md#workflow-and-gates">product gates</a>. Task 1.1 remains unchecked until that evidence exists. Physical runs need their own announced batch and Todor's go.</p>
+<p>
+Review the <a href="#openspec--changes--add-iphone-ble-client--design">design and OPEN questions</a>, <a href="#openspec--changes--add-iphone-ble-client--specs--iphone-ble-teleoperation--spec">proposed requirements</a>, <a href="#openspec--changes--add-iphone-ble-client--tasks">tasks</a> and <a href="#openspec--changes--add-iphone-ble-client--verification">verification map</a>. No future implementation or physical acceptance task is complete.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/proposal.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--proposal--m6-low-level-four-wheel-api">M6: low-level four-wheel API</h1><p>
