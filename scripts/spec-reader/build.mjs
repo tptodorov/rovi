@@ -105,9 +105,9 @@ export function buildPage(documents = loadDocuments()) {
     <header class="doc-header"><span class="eyebrow">${esc(kind(doc))}</span><a href="${esc(relative(resolve(root, 'openspec'), resolve(root, doc.path)))}">Markdown source ↗</a><div class="path">${esc(doc.path)}</div></header>
     ${doc.path.endsWith('/spec.md') ? `<h2>${esc(label(doc))}</h2>` : ''}
     ${renderDocument(doc, paths)}</section>`).join('');
-  const stateDoc = 'openspec/changes/add-four-wheel-api/specs/car-control-api/spec.md';
+  const stateDoc = ['openspec/specs/car-control-api/spec.md', 'openspec/changes/add-four-wheel-api/specs/car-control-api/spec.md'].find(path => paths.has(path));
   let flow = '';
-  if (paths.has(stateDoc)) {
+  if (stateDoc) {
     const prefix = '#' + docId(stateDoc) + '--requirement-';
     flow = readFileSync(join(here, 'state-flow.html'), 'utf8').replaceAll('REQUIREMENT:', prefix);
   }

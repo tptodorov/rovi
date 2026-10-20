@@ -13,7 +13,7 @@ confirmed all wheels stayed still through both flashes/boots and cleanup.
 The controller allows a ten-minute unarmed announcement window. The repeat
 establishes five-minute motor/radio endurance and a qualitative supervised
 heating result on the stand. The remaining task 5.2 measurements were subsequently
-[skipped by Todor](../../openspec/changes/add-four-wheel-api/verification.md#task-52-disposition)
+[skipped by Todor](../../openspec/changes/archive/2026-10-20-add-four-wheel-api/verification.md#task-52-disposition)
 because suitable tools are unavailable; they remain physically unverified.
 
 Use the same opt-in `ros,motor-bench` image and 70% product profile as the

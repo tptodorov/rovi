@@ -107,7 +107,7 @@ If the owner sends no valid setpoint within the claim window, ownership SHALL be
 
 ### Requirement: Explicit arming
 
-New owners SHALL start disarmed. BLE/UDP SHALL require the owner's explicit arm and a valid lease. ROS SHALL auto-arm on an owner's valid setpoint only after a claim or lease expiry ([ADR-0011](../../../../../docs/adr/0011-ros-auto-arm.md)). After STOP or out-of-limits, all sources SHALL require a fresh setpoint followed by explicit arm. Disarmed setpoints SHALL renew the lease while wheel commands remain zero.
+New owners SHALL start disarmed. BLE/UDP SHALL require the owner's explicit arm and a valid lease. ROS SHALL auto-arm on an owner's valid setpoint only after a claim or lease expiry ([ADR-0011](../../../../../../docs/adr/0011-ros-auto-arm.md)). After STOP or out-of-limits, all sources SHALL require a fresh setpoint followed by explicit arm. Disarmed setpoints SHALL renew the lease while wheel commands remain zero.
 
 #### Scenario: Setpoints alone do not move the car
 

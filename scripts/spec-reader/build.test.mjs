@@ -55,3 +55,14 @@ test('every current requirement and scenario is included, with unique and reacha
 test('inline emphasis and code use the same heading slug as source links', () => {
   assert.equal(slug('Requirement: `ARM` / STOP'), 'requirement-arm--stop');
 });
+
+test('motion state flow survives archive and links to the baseline when available', () => {
+  const baseline = 'openspec/specs/car-control-api/spec.md';
+  const change = 'openspec/changes/add-four-wheel-api/specs/car-control-api/spec.md';
+  for (const paths of [[baseline], [change], [change, baseline]]) {
+    const html = buildPage(paths.map(path => ({ path, text: '## Purpose\nCar control.' })));
+    const target = paths.includes(baseline) ? 'openspec--specs--car-control-api--spec' : 'openspec--changes--add-four-wheel-api--specs--car-control-api--spec';
+    assert.match(html, /id="state-flow"/, `missing flow for ${paths}`);
+    assert.ok(html.includes(`href="#${target}--requirement-boot-state"`), `wrong flow target for ${paths}`);
+  }
+});
