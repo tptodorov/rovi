@@ -1,4 +1,4 @@
-"""Version-one framing and one non-reconnecting UDP session; no socket effects."""
+"""Version-one framing and one UDP connection attempt; no socket effects."""
 import math
 import struct
 from apps.client.wire import Capabilities, Status, cdr
@@ -7,7 +7,11 @@ HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY, ECHO = range(1, 10)
 HEADER = struct.Struct("<2sBBII")
 
 class ClientError(Exception):
-    """The operator must start a new session after a failed run."""
+    """A fatal client error that exits through cleanup."""
+
+
+class LinkError(ClientError):
+    """A connection failure that permits a fresh, disarmed attempt."""
 
 
 def frame(kind, session, sequence, payload=b""):
@@ -41,10 +45,10 @@ def capabilities(payload):
 
 
 class Session:
-    def __init__(self):
+    def __init__(self, sequence=0):
         self.session = 0
         self.caps = None
-        self.sequence = 0
+        self.sequence = sequence
         self.setpoint_sequence = 0
         self.hello = None
         self.started = False
@@ -62,7 +66,7 @@ class Session:
 
     def start(self, now):
         if self.started:
-            raise ClientError("automatic reconnect is disabled")
+            raise ClientError("connection attempt already started")
         self.started = True
         q = self.next_sequence()
         self.hello = (q, now + 1000)
@@ -90,11 +94,11 @@ class Session:
 
     def check(self, now):
         if self.hello and now >= self.hello[1]:
-            raise ClientError("HELLO reply timeout")
+            raise LinkError("HELLO reply timeout")
         if self.pending and now >= self.pending[2]:
-            raise ClientError("control reply timeout")
+            raise LinkError("control reply timeout")
         if any(now >= deadline for _, deadline in self.echoes.values()):
-            raise ClientError("Echo reply timeout")
+            raise LinkError("Echo reply timeout")
 
     def receive(self, data, now):
         try:
@@ -105,7 +109,7 @@ class Session:
             if q != self.hello[0] or now >= self.hello[1]:
                 return None
             if kind == BUSY:
-                raise ClientError("car is busy")
+                raise LinkError("car is busy")
             if kind != ACK:
                 return None
             if not session:

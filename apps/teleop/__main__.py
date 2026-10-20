@@ -26,7 +26,7 @@ def interrupted(signum, _frame):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog='python3 -m apps.teleop',description='Gentle terminal teleoperation over the existing Rovi UDP API. No automatic re-arm/reconnect.')
+    parser = argparse.ArgumentParser(prog='python3 -m apps.teleop',description='Gentle terminal teleoperation over the existing Rovi UDP API. Reconnects disarmed; press R to arm.')
     parser.add_argument('--target',type=target,required=True,metavar='IPV4:PORT')
     args = parser.parse_args(argv)
     previous = {sig:signal.getsignal(sig) for sig in (signal.SIGTERM,signal.SIGHUP)}

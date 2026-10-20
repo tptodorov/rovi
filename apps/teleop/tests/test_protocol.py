@@ -31,6 +31,14 @@ class ProtocolTests(unittest.TestCase):
             s=Session(); seq=parse(s.start(0))[2]
             with self.assertRaises(ClientError): s.receive(frame(kind,session,seq,payload),1)
 
+    def test_new_attempt_rejects_old_handshake_and_old_session_status(self):
+        first=self.claimed()
+        second=Session(first.sequence);q=parse(second.start(1000))[2]
+        self.assertIsNone(second.receive(frame(ACK,42,first.sequence,CAPS),1001))
+        self.assertIsNone(second.receive(frame(STATUS,42,0,b'\x02\x00\x00'),1001))
+        self.assertEqual(second.receive(frame(ACK,43,q,CAPS),1002)[0],'claimed')
+        self.assertIsNone(second.receive(frame(STATUS,42,0,b'\x02\x00\x00'),1003))
+
     def test_control_correlation_stop_cancels_pending_arm(self):
         s=self.claimed(); seq=parse(s.control(ARM,10))[2]
         self.assertIsNone(s.receive(frame(STATUS,41,seq,b'\x02\x00\x00'),11))
