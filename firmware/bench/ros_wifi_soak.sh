@@ -42,7 +42,8 @@ trap finish EXIT
 PYTHONPATH="$root/apps/simcar/scenarios" python3 - "$log" "$offset" <<'PY'
 import sys
 from carlog import wait, ev
-found, seen = wait(sys.argv[1], int(sys.argv[2]), ev('ros', link='up'), timeout=25)
+# A board may still be backing off its first TCP attempt while the router was absent.
+found, seen = wait(sys.argv[1], int(sys.argv[2]), ev('ros', link='up'), timeout=120)
 assert found, ('ROS link did not come up', seen[-5:])
 PY
 echo 'ROS link up; observing idle router session without ROS application publishers'

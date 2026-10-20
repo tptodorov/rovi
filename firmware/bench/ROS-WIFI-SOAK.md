@@ -20,9 +20,13 @@ transport is not replayed; no firmware rollback belongs to this check.
    presence. Start fresh serial capture and verify a normal boot/free car.
 2. Join `rovi-m8`; add the temporary firewall accept rule only if absent:
    interface `wlp1s0f0`, source `192.168.4.1/32`, destination `192.168.4.2/32`,
-   TCP destination port 7447. Do not replace an existing router or listener.
+   TCP destination port 7447. Insert it before NixOS's terminal reject rule
+   (`iptables -I nixos-fw 1 ...`); appending after that rule cannot work.
+   Do not replace an existing router or listener.
 3. Start the ROS runner below. It waits for fresh `ros link=up` before beginning
    the 900-second Echo observation. Do not reconnect or restart during it.
+   Setup allows up to 120 seconds for an existing TCP attempt/backoff; this
+   warm-up is outside the timed observation.
 4. Preserve Echo, NetworkManager, association/power-save, ICMP, route, service
    journal, ROS link and router configuration/log evidence. A ROS link-down is
    diagnostic evidence, not automatically proof of a motor or firmware fault.
