@@ -1,0 +1,37 @@
+{
+  "echo_samples": 4385,
+  "lost": 0,
+  "first_sample_at": "2026-10-20T11:19:35.548299+00:00",
+  "last_sample_at": "2026-10-20T11:34:35.503900+00:00",
+  "last_sample_elapsed_s": 899.956,
+  "rtt_ms": {
+    "min": 3.246,
+    "median": 4.269,
+    "p95_nearest_rank": 5.9,
+    "max": 29.389
+  },
+  "icmp_snapshots": [
+    {
+      "snapshot": "start.json",
+      "sent": 3,
+      "received": 3
+    },
+    {
+      "snapshot": "transition-001.json",
+      "sent": 3,
+      "received": 3
+    },
+    {
+      "snapshot": "end.json",
+      "sent": 3,
+      "received": 3
+    }
+  ],
+  "source_jsonl_sha256": "7f58cf46ba72f0f7c7528a2956db04dbca3f621316ae3b3e689b7f9c4c0d39d9",
+  "controller_sha256": "562e144f98447cc0be2915ada5c8d36e276fcfbc9b1e4ddfecae679615f44bbf",
+  "coverage_gaps": [
+    "iw link and power_save unavailable",
+    "No ROS router/keepalive traffic in this baseline"
+  ],
+  "issue_23_disposition": "not reproduced in this baseline; remains open"
+}

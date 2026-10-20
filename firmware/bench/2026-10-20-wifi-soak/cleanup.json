@@ -1,0 +1,34 @@
+{
+  "soak_summary": {
+    "started": "2026-10-20T11:19:33.495571+00:00",
+    "finished": "2026-10-20T11:34:37.629692+00:00",
+    "target": [
+      "192.168.4.1",
+      7777
+    ],
+    "requested_seconds": 900.0,
+    "interface": "wlp1s0f0",
+    "complete": true,
+    "sent": 4385,
+    "lost": 0,
+    "link_transitions": 1,
+    "verdict": "no loss observed",
+    "reassociation_requested": false,
+    "journal_limit_lines": 2000
+  },
+  "serial_audit": {
+    "boots": 1,
+    "event_counts": {
+      "boot": 1
+    },
+    "problems": []
+  },
+  "completed": true,
+  "monitor_exit": -2,
+  "wifi_restore_exit": 0,
+  "wifi_after": "855b50c6-388f-428e-99f6-d6d07db30aa8",
+  "route_after": "1.1.1.1 via 192.168.1.1 dev enp0s20f0u3u3 src 192.168.1.148 uid 1000 \n    cache",
+  "wifi_restored": true,
+  "route_unchanged": true,
+  "finished": "2026-10-20T11:34:41.690110+00:00"
+}
