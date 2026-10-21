@@ -15,6 +15,7 @@ class SimulatorTests(unittest.TestCase):
         self.assertTrue(BIN.exists(),'build apps/simcar before running integration tests')
         with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as reservation:
             reservation.bind(('127.0.0.1',0));port=reservation.getsockname()[1]
+        self.port=port
         self.log=tempfile.NamedTemporaryFile()
         self.car=subprocess.Popen([BIN,str(port),'1000','10000','5000'],stdout=self.log,stderr=self.log)
         self.tty=None
@@ -55,10 +56,19 @@ class SimulatorTests(unittest.TestCase):
         seen=events(self.log.name)
         self.assertEqual(sum(e.get('ev')=='claimed' for e in seen),1)
         self.assertEqual([e for e in seen if e.get('ev')=='state'][-1].get('wheels_pm'),[0,0,0,0])
-    def test_killed_simulator_ends_client_without_reconnect(self):
+    def test_restarted_simulator_reconnects_disarmed_until_new_arm_and_direction(self):
         self.tty.key(b'r');self.tty.expect('local=armed');self.tty.key(b'w')
         self.wait_state(lambda e:any(e.get('wheels_pm',[])))
         self.car.terminate();self.car.wait(timeout=2)
-        self.tty.proc.wait(timeout=3);self.tty.finish(None)
-        self.assertEqual(self.tty.proc.returncode,1)
+        self.tty.expect('Connection lost:')
+        self.assertIsNone(self.tty.proc.poll())
+        self.tty.key(b'rw')
+        start=len(events(self.log.name))
+        self.car=subprocess.Popen([BIN,str(self.port),'1000','10000','5000'],stdout=self.log,stderr=self.log)
+        self.tty.expect('Reconnected disarmed',timeout=4)
+        self.tty.key(b'w');time.sleep(.15)
+        self.assertFalse(any(any(e.get('wheels_pm',[])) for e in events(self.log.name)[start:]))
+        self.tty.key(b'r');time.sleep(.15);self.tty.key(b'w')
+        self.wait_state(lambda e:any(e.get('wheels_pm',[])),start)
+        self.assertEqual(self.tty.finish(),0)
         self.assertIn(b'release unconfirmed',self.tty.output)

@@ -11,7 +11,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
-from apps.teleop.protocol import parse, frame, HELLO, ACK, ARM, STOP, BYE, STATUS, ECHO, SETPOINT
+from apps.teleop.protocol import parse, frame, HELLO, ACK, ARM, STOP, BYE, STATUS, ECHO, SETPOINT, BUSY
 from apps.teleop.tests.test_protocol import CAPS
 
 ROOT=Path(__file__).resolve().parents[3]
@@ -24,6 +24,7 @@ class Peer:
     def __init__(self):
         self.sock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM);self.sock.bind(('127.0.0.1',0));self.sock.settimeout(.02)
         self.address=self.sock.getsockname();self.packets=[];self.drop_echo=False;self.drop_arm=False;self.stop_before_arm=False
+        self.drop_hello=False;self.busy=False
         self.alive=True;self.thread=threading.Thread(target=self.serve,daemon=True);self.thread.start()
     def serve(self):
         while self.alive:
@@ -34,7 +35,7 @@ class Peer:
             except ValueError:continue
             self.packets.append(p);kind,session,q,payload=p
             reply=None
-            if kind==HELLO:reply=frame(ACK,42,q,CAPS)
+            if kind==HELLO and not self.drop_hello:reply=frame(BUSY,0,q) if self.busy else frame(ACK,42,q,CAPS)
             if kind==ARM and not self.drop_arm:
                 if self.stop_before_arm:self.sock.sendto(frame(STATUS,42,0,b'\x03\x02\x00'),peer)
                 reply=frame(STATUS,42,q,b'\x02\x00\x00')
@@ -45,9 +46,10 @@ class Peer:
         self.alive=False;self.thread.join(timeout=1);self.sock.close()
 
 class Terminal:
-    def __init__(self,peer):
+    def __init__(self,peer,command=None):
         self.master,self.slave=pty.openpty();self.before=termios.tcgetattr(self.slave);self.output=b''
-        self.proc=subprocess.Popen([sys.executable,'-u','-m','apps.teleop','--target',f'{peer[0]}:{peer[1]}'],cwd=ROOT,stdin=self.slave,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        command=command or [sys.executable,'-u','-m','apps.teleop','--target',f'{peer[0]}:{peer[1]}']
+        self.proc=subprocess.Popen(command,cwd=ROOT,stdin=self.slave,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     def read(self):
         if select.select([self.proc.stdout],[],[],.02)[0]:
             data=os.read(self.proc.stdout.fileno(),65536)
@@ -92,17 +94,41 @@ class TerminalTests(unittest.TestCase):
         self.assertEqual(sum(x[0]==HELLO for x in p.packets),1)
         self.assertEqual(p.packets[-1][0],BYE)
         self.assertIn(b'release unconfirmed',t.output)
-    def test_lost_echo_exits_and_restores_without_reclaim(self):
-        self.peer.drop_echo=True
-        self.tty.proc.wait(timeout=3);self.tty.finish(None)
-        self.assertEqual(self.tty.proc.returncode,1)
-        self.assertEqual(termios.tcgetattr(self.tty.slave),self.tty.before)
-        self.assertEqual(sum(x[0]==HELLO for x in self.peer.packets),1)
-        self.assertTrue(any(x[0]==BYE for x in self.peer.packets))
-    def test_missing_arm_reply_fails_without_nonzero(self):
-        self.peer.drop_arm=True;self.tty.key(b'rw');self.tty.proc.wait(timeout=3);self.tty.finish(None)
-        self.assertEqual(self.tty.proc.returncode,1)
+    def test_lost_echo_reconnects_disarmed_without_replaying_motion(self):
+        t=self.tty;p=self.peer
+        t.key(b'r');t.expect('local=armed');t.key(b'w')
+        p.drop_echo=True
+        t.expect('Connection lost:',timeout=2)
+        self.assertIsNone(t.proc.poll())
+        start=len(p.packets);t.key(b'rw')
+        p.drop_echo=False
+        t.expect('Reconnected disarmed',timeout=3)
+        t.key(b'w');time.sleep(.15)
+        self.assertFalse(any(x[0]==ARM or (x[0]==SETPOINT and any(vector(x))) for x in p.packets[start:]))
+        self.assertGreaterEqual(sum(x[0]==HELLO for x in p.packets),2)
+        self.assertEqual(t.finish(),0)
+        self.assertEqual(termios.tcgetattr(t.slave),t.before)
+    def test_missing_arm_reply_reconnects_without_nonzero(self):
+        self.peer.drop_arm=True;self.tty.key(b'rw');self.tty.expect('Connection lost: control reply timeout')
+        self.tty.expect('Reconnected disarmed')
+        self.assertIsNone(self.tty.proc.poll())
         self.assertFalse(any(x[0]==SETPOINT and any(vector(x)) for x in self.peer.packets))
+        self.assertEqual(self.tty.finish(),0)
+
+    def test_quit_during_retry_wait_does_not_start_another_attempt(self):
+        self.peer.drop_echo=True;self.tty.expect('Connection lost:')
+        before=sum(p[0]==HELLO for p in self.peer.packets)
+        self.assertEqual(self.tty.finish(b'\x1b'),0)
+        self.assertEqual(sum(p[0]==HELLO for p in self.peer.packets),before)
+        self.assertEqual(termios.tcgetattr(self.tty.slave),self.tty.before)
+
+    def test_repeated_hello_success_without_echo_cannot_enable_motion(self):
+        self.peer.drop_echo=True;self.tty.expect('Connection lost:')
+        self.tty.expect('Claimed disarmed')
+        start=len(self.peer.packets);self.tty.key(b'rw');time.sleep(.2)
+        self.assertFalse(any(p[0]==ARM or (p[0]==SETPOINT and any(vector(p))) for p in self.peer.packets[start:]))
+        self.assertNotIn(b'Reconnected disarmed',self.tty.output)
+        self.tty.finish()
     def test_stop_before_arm_reply_needs_new_operator_arm(self):
         self.peer.stop_before_arm=True;self.tty.key(b'r');time.sleep(.15);self.tty.key(b'w');time.sleep(.15)
         self.assertFalse(any(x[0]==SETPOINT and any(vector(x)) for x in self.peer.packets))
@@ -136,3 +162,22 @@ class TerminalTests(unittest.TestCase):
         self.assertEqual(self.tty.proc.returncode,1)
         self.assertTrue(any(p[0]==STOP for p in self.peer.packets))
         self.assertTrue(any(p[0]==BYE for p in self.peer.packets))
+
+
+class StartupRecoveryTests(unittest.TestCase):
+    def test_unavailable_then_busy_target_recovers_without_arming(self):
+        peer=Peer();peer.drop_hello=True;t=None
+        try:
+            t=Terminal(peer.address)
+            t.expect('Connection unavailable: HELLO reply timeout')
+            self.assertIsNone(t.proc.poll())
+            peer.busy=True;peer.drop_hello=False
+            t.expect('car is busy',timeout=3)
+            t.key(b'rw');peer.busy=False
+            t.expect('Connected disarmed',timeout=3)
+            self.assertFalse(any(p[0]==ARM or (p[0]==SETPOINT and any(vector(p))) for p in peer.packets))
+            self.assertEqual(t.finish(),0)
+            self.assertEqual(termios.tcgetattr(t.slave),t.before)
+        finally:
+            if t:t.close()
+            peer.close()

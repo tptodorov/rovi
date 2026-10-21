@@ -1,5 +1,6 @@
 import unittest
-from apps.teleop.protocol import Session, frame, parse, ACK, ARM, STOP, BYE, ECHO, STATUS, SETPOINT
+from unittest.mock import Mock
+from apps.teleop.protocol import Session, LinkError, frame, parse, ACK, ARM, STOP, BYE, ECHO, STATUS, SETPOINT
 from apps.teleop.runtime import Client
 from apps.teleop.tests.test_protocol import CAPS
 
@@ -68,3 +69,32 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual([p[0] for p in sock.sent],[SETPOINT,STOP,BYE])
         self.assertTrue(all(p[1]==0 for p in sock.sent))
         self.assertLessEqual(clock.now,500)
+
+    def test_one_alert_per_outage_until_echo_confirms_recovery(self):
+        c,clock,_,out=self.client()
+        c.alert=Mock(return_value=False);c.cleanup=Mock(return_value=True)
+        c.keys=lambda:b'rw' # Buffered keys during waits cannot request controls.
+        attempts=[]
+        def attempt():
+            attempts.append(clock.now)
+            if len(attempts)==3:
+                q=parse(c.session.start(clock.now))[2]
+                c.receive(frame(ACK,43,q,CAPS),clock.now)
+                # A new claim alone cannot clear the outage alert latch.
+                self.assertTrue(c.recovering)
+                packet=c.session.echo(clock.now)
+                c.receive(packet,clock.now)
+                self.assertFalse(c.recovering)
+                self.assertFalse(c.policy.armed)
+            if len(attempts)<4:raise LinkError('injected outage')
+        c.run_session=attempt
+        c.run()
+        self.assertEqual(c.alert.call_count,2)
+        self.assertTrue(all(b-a>=1000 for a,b in zip(attempts,attempts[1:])))
+        self.assertEqual(sum('\a' in s for s in out),2)
+
+    def test_socket_failures_are_recoverable_link_errors(self):
+        c,_,sock,_=self.client(fail=(ARM,))
+        with self.assertRaises(LinkError):c.send(c.session.control(ARM,2))
+        sock.recvfrom=Mock(side_effect=OSError('network unavailable'))
+        with self.assertRaises(LinkError):c.drain_socket()

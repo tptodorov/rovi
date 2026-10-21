@@ -1,0 +1,68 @@
+# iPhone motion driving feasibility
+
+Researched 2026-10-21. Research only: no implementation, deployment, phone test, BLE access or motor commands.
+
+## Decision
+
+**Conditional go for a sensor-only spike; no-go for claiming motion driving is supported today.** The existing web client has a reusable safety/session path. Actual Bluefy permission and usable sensor delivery are gating unknowns. A native app, Mac or firmware change is **not presumed necessary**: a JavaScript input extension is likely sufficient *if* the phone gates below pass; that is an inference, not demonstrated compatibility.
+
+## Primary evidence and limits
+
+| Evidence | Established fact / remaining uncertainty |
+| --- | --- |
+| [W3C motion/orientation](https://www.w3.org/TR/orientation-event/) | `DeviceMotionEvent` supplies acceleration with/without gravity, rotation rate and interval; `DeviceOrientationEvent` supplies alpha/beta/gamma angles. Fields may be null. Secure context, permission, transient user activation when prompting, and visible-document checks are specified. This draft is an API contract, not Bluefy implementation evidence. |
+| [WebKit shipping privacy behavior](https://webkit.org/tracking-prevention/#anti-fingerprinting) | Mobile motion/orientation access requires user permission. This does not establish Bluefy's host configuration, sample delivery or permission persistence. |
+| [Apple WKUIDelegate permission API](https://developer.apple.com/documentation/webkit/wkuidelegate/webview(_:requestdeviceorientationandmotionpermissionfor:initiatedbyframe:decisionhandler:)) | A WKWebView host can decide orientation/motion access for an origin and initiating frame; the documented default without that delegate method is prompt. Page JavaScript cannot override host denial. This identifies a host constraint, not evidence of Bluefy's implementation. |
+| [W3C Generic Sensor](https://www.w3.org/TR/generic-sensor/) | A separate sensor-object framework, with activation/readings/frequency semantics; concrete APIs such as Accelerometer and RelativeOrientationSensor are not aliases for the DOM events. A requested frequency is not guaranteed delivery. No checked primary source establishes these APIs in Bluefy: do not make them a dependency or assume their absence proves DOM events unavailable. |
+| [Bluefy guide](https://bluefy.app/guide.html), [official site](https://bluefy.app/), [PNN Soft product article](https://pnnsoft.com/blog/detail/bluefy-the-web-ble-browser-for-ios) | Document web BLE use, with HTTPS required by the guide. References to sensor readings concern connected peripherals, not proof of phone accelerometer access. No explicit phone motion API support was found. |
+| [Developer's App Store description/release notes](https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055) | Advertise BLE and `BLENative.notifyAppState`, background peripheral access and screen-dimming controls. They do not establish motion API support or exact hook registration/lifecycle reliability. Do not enable background driving or suppress locking. |
+
+**Implementation recommendation:** feature-detect each DOM event API and its optional `requestPermission`; invoke permission directly from a dedicated Enable Sensors tap, before unrelated asynchronous work. Handle rejection, denial, missing APIs and null/non-finite fields visibly and fail closed. Permission granted is insufficient without valid events. Use a top-level HTTPS page; do not rely on iframe delegation or Safari permission settings carrying over. Enabling sensors and calibrating must never ARM or connect BLE.
+
+## Useful input: tilt, not inertial navigation
+
+**Engineering inference/recommendation:** use a calibrated relative tilt as a bounded velocity reference. Gravity-inclusive acceleration can estimate tilt while the phone is approximately still; hand translation/shaking contaminates that estimate. Relative orientation angles are another candidate if delivered reliably. Neither is a measurement of car speed. Avoid compass heading as a requirement.
+
+Do not integrate raw acceleration into velocity/position: bias, gravity-removal and frame errors accumulate, and moving the phone is not moving the car. Compare orientation-based tilt with a lightly filtered gravity estimate in the no-command spike; select one measured path rather than building sensor fusion first.
+
+The [W3C event model](https://www.w3.org/TR/orientation-event/#deviceorientation) allows orientation updates on significant change, while motion events use an implementation-defined interval. A steady held tilt therefore needs testing: an orientation API that stops emitting cannot prove sample freshness. Evaluate periodic `devicemotion` readings directly; never keep a cached orientation alive with timer ticks.
+
+Suggested initial interaction: fixed portrait posture, pitch for forward/back and roll for left/right strafe; yaw remains zero. A steering-style roll-to-wz mapping is an alternative needing an explicit user choice, not an implicit blend. Start with one axis to keep the spike small.
+
+- Calibrate neutral only while disarmed and approximately still; show the neutral posture and signs. Never silently recenter during a hold.
+- Apply a symmetric dead zone, continuous scaling outside it, then saturation. Tune angles from phone jitter/usability measurements, not guessed sensor precision.
+- Clamp each enabled axis to `min(0.1 m/s, advertised maximum)` or `min(0.3 rad/s, advertised maximum)` for yaw; zero-limit axes stay disabled. Do not round limits upward.
+- Keep filtering modest and time-based; measure neutral noise, step response and release latency. Heavy smoothing delays control; cancellation bypasses smoothing and clears immediately.
+- Treat screen-orientation/posture changes as invalidation: zero, revoke local motion authority, require manual recalibration/re-arm/new hold. Do not swap axes beneath an active finger. Verify actual orientation detection on Bluefy; restrict posture if reliable detection is unavailable.
+
+## Existing code and exact input seam
+
+Repository facts: [archived design](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/design.md) deliberately reserves a later sensor interpreter while excluding sensors from v1. [Archived input requirements](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/specs/iphone-ble-teleoperation/spec.md) explicitly require six single-axis buttons, no combined velocities and no sensor permission in v1. This report does not change that contract or authorize implementation.
+
+| Reuse | Necessary adaptation in a future implementation |
+| --- | --- |
+| [Session](../../apps/iphone/session.js): `requested`, explicit zero/ARM/fresh Status confirmation, STOP priority, generation invalidation, deadlines, cleanup, serialized latest-intent sending | `requested` currently calls a concrete `Hold.intent`; `press` expects a direction name. Introduce the smallest input selection seam that returns bounded latest `{vx,vy,wz}` or ZERO and supports invalidation. Route every existing clear/reset path through the selected input, including ARM completion, reported stops and close. No new transmitter. |
+| [Hold](../../apps/iphone/hold.js): pointer tracking, expiry and blocked-until-release behavior | It stores direction names and a single current pointer; it cannot directly represent analog vectors or independently expire sensor samples. Preserve button behavior; add a small tilt/deadman interpreter with separate sample and hold freshness. |
+| [UI](../../apps/iphone/ui.js): tracked pointers/capture, bounds exit, cancellation/lost capture, STOP touch-down, blur/hidden/pagehide and foreground checks | Add permission/calibration/mode UI and a held deadman. Existing animation frames renew button holds; they must not renew cached tilt freshness. Clear both inputs on mode changes; never combine buttons and tilt. |
+| [Wire codec/limits](../../apps/iphone/wire.js), [BLE transport](../../apps/iphone/transport.js), [scheduler](../../apps/iphone/app.js) | Reuse the 72-byte codec, UUIDs, capabilities/Status checks and transport unchanged. `direction` encodes fixed single-axis magnitudes; analog mapping needs its own finite validation/clamping before the same session gate. |
+
+**Contract consequence:** even single-axis analog tilt requires updating the v1 button-only input requirements before product implementation. Simultaneous vx/vy or vx/wz additionally requires explicitly replacing “velocities SHALL NOT combine,” documenting mapping and combined-motion acceptance. Existing wire fields already carry all three; no wire/firmware change appears necessary. Per-axis clipping alone does not demonstrate acceptable combined wheel behavior; stand acceptance must cover saturation and resulting direction.
+
+## Non-negotiable safety boundary
+
+- Nonzero output requires explicit successful ARM, active foreground, valid calibration, a **new user-held deadman after ARM**, fresh valid sensor data and current input generation. Sensor events never ARM, select/connect a device, or write BLE.
+- Preserve the 50 ms latest-intent stream, no backlog/catch-up, one in-flight procedure, 200 ms stream failure, existing 250 ms hold expiry, caps and Status/cleanup deadlines. The transmitter may send fresh sequence numbers with ZERO; it must never extend input validity.
+- Maintain independent monotonic deadlines for the tracked hold and the last valid sensor event. Proposed sensor stale cutoff: at most 250 ms, preferably shorter if measured cadence permits. Only a newly received valid sample advances sample freshness; timer ticks, animation frames, unchanged cached values and filter output cannot. A genuinely new event with an unchanged value is valid; mere existence of a value is not.
+- Release, bounds exit, pointer cancellation or lost tracking clears before the next send and requires release/new press. Sensor stale/null/error, orientation change, permission loss or lifecycle interruption also revoke local motion authority; prefer ending the session through existing cleanup and manual recovery. New samples alone cannot resume driving.
+- STOP stays prominent and overrides ARM/input. Return from hidden/lock/app switch cannot restore a hold, reconnect or ARM automatically. Ignore late events from previous input/session generations. Preserve requested vs device-reported vs physically unverified state.
+- Sensor delivery may continue while UI activity stops: require independent deadman/UI freshness as well as sensor freshness. If Bluefy renews nonzero intent while actually inactive despite these checks, that host/version is unsupported. Suspension may prevent cleanup; existing firmware lease expiry remains the independent fallback, not a measured physical stopping bound.
+
+## Smallest next experiment — separately authorized, sensor-only
+
+1. A standalone top-level HTTPS diagnostic page on the actual iPhone, with **no Bluetooth API calls, no Session/transport creation and no motor commands**. Record phone model, iOS/Bluefy versions and origin. Safari may be a diagnostic comparison, never a substitute for Bluefy acceptance.
+2. Record API presence; permission prompt/result/error from an explicit tap; denial/retry/reload behavior; non-null finite fields and signs. For at least 60 s stationary and tilting, measure actual event arrival gaps (median/p95/max), sample age, declared interval, UI frame gaps and null counts. API presence or a granted promise alone fails the gate.
+3. Display calibrated intent and deadman state locally only. Measure jitter/dead-zone stability, saturation and filter step delay; confirm release clears immediately and stale samples expire within the chosen bound even while a synthetic 50 ms consumer keeps ticking. Simulate frozen/null input with UI running and frozen UI renewal with events running.
+4. Observe blur, browser UI/tab switch, app switch, hidden/pagehide, lock/unlock, orientation changes and foreground return. Record event ordering and whether callbacks continue; do not assume lock produces a particular event. If no callbacks run during suspension, check elapsed monotonic age before consuming anything on return. Verify manual recovery and rejection of cached/late values.
+5. **Gate:** conditional go only if Bluefy produces useful finite foreground samples with sufficient measured margin below the stale cutoff, usable latency, and fail-closed lifecycle/deadman behavior. Missing/denied/null-only sensors or unsafe inactive renewal means no-go on that host/version; retain buttons. Marginal cadence means review the design, not relax existing safety bounds.
+
+Only after that evidence: a separately reviewed/authorized input change with deterministic mapping/expiry/lifecycle tests, then separately authorized BLE acceptance (full 20 Hz workload plus sensors, ARM/STOP/status), then supervised wheels-off-ground acceptance covering release, sensor loss, orientation, interruption, caps and any blended axes. Existing button-controller acceptance does not pass these new gates. No such experiment or implementation was performed here.
