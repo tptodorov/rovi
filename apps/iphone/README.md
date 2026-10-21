@@ -2,7 +2,10 @@
 
 Static HTTPS controller for Bluefy on iPhone; button control first, sensors deferred.
 Implementation is authorized by the [proposal acceptance record](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/proposal.md#proposal-acceptance).
-Phone/radio/wheel acceptance is separate and remains pending.
+Implementation and scoped phone/stand acceptance completed on 2026-10-21:
+six directions/stops confirmed, ATT MTU 247 on iPhone 11 Pro/Bluefy, and
+STOP-while-holding fixed and rechecked. [Acceptance and limits](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/tasks.md#4-phone-and-physical-acceptance)
+retain the unexplained early drops, P2 closure decision and skipped VoiceOver check.
 
 ## Commands
 

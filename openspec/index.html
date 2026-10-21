@@ -3190,7 +3190,7 @@ Disconnect/failure first clears intent and stops the normal stream. Under one 50
 Suspension/termination may prevent any cleanup. Firmware lease/window handling remains the independent fallback; local disconnect or resolved writes do not establish physical link teardown, ownership release or wheel stop. Show requested, device-reported and unconfirmed states separately, retaining the original Status observation age.</p>
 <h2 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--design--platform-sources-checked-2026-10-20">Platform sources checked 2026-10-20</h2><p>
 <a href="https://webbluetoothcg.github.io/web-bluetooth/">Web Bluetooth specification</a> defines secure-context user selection, service access, characteristic properties, separate write modes, read promises and notification events. These are API contracts, not evidence that Bluefy implements every method. <a href="https://bluefy.app/">Bluefy's official site</a> and <a href="https://bluefy.app/guide.html">guide</a> document its GATT bridge and HTTPS requirement. The <a href="https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055">App Store release notes</a> mention a host app-state hook; exact hook registration/semantics must be verified instead of guessed. Apple's <a href="https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/CoreBluetoothBackgroundProcessingForIOSApps/PerformingTasksWhileYourAppIsInTheBackground.html">foreground/background guide</a> explains why suspension cannot be treated as a runnable cleanup opportunity.</p>
-<h2 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--design--open-questions-and-acceptance-gates">OPEN questions and acceptance gates</h2><table>
+<h2 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--design--original-acceptance-gates">Original acceptance gates</h2><table>
 <thead>
 <tr>
 <th>
@@ -3237,7 +3237,10 @@ UI/phone acceptance, not the selected button layout.</td>
 </tbody>
 </table>
 <p>
-Button implementation is authorized by the <a href="#openspec--changes--archive--2026-10-21-add-iphone-ble-client--proposal--proposal-acceptance">acceptance record</a>; physical/product acceptance remains pending. Unmeasured browser/hardware results cannot count as passed acceptance; see <a href="#openspec--changes--archive--2026-10-21-add-iphone-ble-client--verification">verification</a>.</p>
+These proposal-stage gates are retained for traceability. Implementation and
+scoped phone/stand acceptance completed on 2026-10-21; <a href="#openspec--changes--archive--2026-10-21-add-iphone-ble-client--tasks">tasks</a> and
+<a href="#openspec--changes--archive--2026-10-21-add-iphone-ble-client--verification">verification</a> record the evidence, P2 closure decision and
+untested limits. Unmeasured browser/hardware results remain unclaimed.</p>
 <h2 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--design--risks--trade-offs">Risks / Trade-offs</h2><ul>
 <li>
 Browser dependency and opaque picker/state APIs → feature gates and actual-phone checks; no native feature assumptions or guessed host hooks.</li>
@@ -4319,7 +4322,32 @@ UDP wire behavior are unchanged.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-21-add-iphone-ble-client/verification.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-21-add-iphone-ble-client/verification.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--verification--iphone-ble-web-controller-verification-map">iPhone BLE web controller verification map</h1><p>
-<strong>Linux evidence recorded (2026-10-20); phone evidence pending.</strong> H1–H5 pass on Linux under <a href="../apps/iphone/README.md"><code>apps/iphone</code></a> and in CI. No Bluefy/phone, deployment or wheel check has run. Todor's phone 72-byte confirmation is user evidence, not a measurement. <a href="#openspec--changes--archive--2026-10-21-add-iphone-ble-client--tasks">Tasks</a> record which gates are closed.</p>
+<strong>Scoped acceptance recorded 2026-10-21.</strong> H1–H5 pass on Linux under
+<a href="../apps/iphone/README.md"><code>apps/iphone</code></a> and in CI; phone/stand results
+are recorded below. <a href="#openspec--changes--archive--2026-10-21-add-iphone-ble-client--tasks--4-phone-and-physical-acceptance">Tasks</a> retain
+the exact evidence and Todor's accepted limits. This supersedes the draft's
+pending-evidence summary; the original planned checks remain for traceability.</p>
+<h2 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--verification--recorded-phone-evidence">Recorded phone evidence</h2><ul>
+<li>
+P1: Todor reported ten successful connect/zero-ARM/STOP cycles. A serial-captured
+<a href="../firmware/bench/2026-10-21-iphone-ble-drops/notes.md">five-cycle diagnosis</a>
+measured ATT MTU 247 on iPhone 11 Pro/Bluefy. Earlier BLE drops were not reproduced.</li>
+<li>
+P2: a reported 1,614-write (~80 s) run had max submission gap 158 ms and slowest
+write 17 ms. Todor closed P2 by decision; there is no serial-captured full
+workload, the earlier drops remain unexplained and the iOS connection interval
+is unmeasured. Closure is not a new reliability or timing measurement.</li>
+<li>
+<a href="../firmware/bench/2026-10-21-iphone-p3/notes.md">P3</a>: touch, Home, lock,
+Bluetooth-off and reload checks reached zero/STOP or firmware link-loss stop;
+no background renewal or automatic reconnect was observed. VoiceOver was skipped.</li>
+<li>
+<a href="../firmware/bench/2026-10-21-iphone-p4/notes.md">P4</a>: Todor confirmed
+all six directions and stops on the stand. STOP while holding was subsequently
+fixed on touch-down and <a href="../firmware/bench/2026-10-21-iphone-stop-recheck/notes.md">rechecked with motor power off</a>.
+Phone UI limits prevented Bluetooth-off during a held direction; no new
+physical stop-latency, electrical or floor qualification is claimed.</li>
+</ul>
 <h2 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--verification--linux-host-and-browser-evidence">Linux host and browser evidence</h2><table>
 <thead>
 <tr>
@@ -4365,7 +4393,7 @@ Browser/session tests: blur/hidden/pagehide/host-inactivity/disconnect/errors, r
 <p>
 Linux browser tests and fake clocks establish software decisions, not Bluefy/native bridge behavior, iOS scheduling, radio delivery or physical stopping. No Mac/Xcode/Simulator evidence is required or claimed for this web route.</p>
 <h2 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--verification--requirement-and-scenario-coverage">Requirement and scenario coverage</h2><p>
-Each row covers every scenario under the named <a href="#openspec--changes--archive--2026-10-21-add-iphone-ble-client--specs--iphone-ble-teleoperation--spec">requirement</a>; H IDs are implemented Linux tests; P IDs are planned phone/board evidence.</p>
+Each row covers every scenario under the named <a href="#openspec--changes--archive--2026-10-21-add-iphone-ble-client--specs--iphone-ble-teleoperation--spec">requirement</a>; H IDs are Linux tests; P IDs identify the phone/board checks whose results and limits are above.</p>
 <table>
 <thead>
 <tr>
@@ -4484,8 +4512,11 @@ P3 usability/labels; P4 separate wheel observation</td>
 </tr>
 </tbody>
 </table>
-<h2 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--verification--bluefy--normal-product-firmware-evidence-planned">Bluefy / normal product firmware evidence planned</h2><p>
-These are proposed checks, <strong>not authorization to run them</strong>. No hosted page, phone, network, router, serial or motor activity occurred while revising this draft. Use normal default or <code>ros</code> firmware; never <code>motor-bench</code>. Do not change firmware to make Bluefy pass.</p>
+<h2 id="openspec--changes--archive--2026-10-21-add-iphone-ble-client--verification--original-planned-bluefy--normal-product-firmware-checks">Original planned Bluefy / normal product firmware checks</h2><p>
+These are the original planned checks, <strong>not authorization to repeat them</strong>.
+Their completed results and accepted limits are recorded above and in tasks.md.
+Draft authoring itself performed no hardware work. Runs use normal default or
+<code>ros</code> firmware; never <code>motor-bench</code> or firmware changed merely to make Bluefy pass.</p>
 <ul>
 <li>
 <strong>P1 — browser/claim/payload integration (I1/I2):</strong> motor power disabled, separately authorized batch. Record phone/iOS/Bluefy/web/firmware revisions, HTTPS origin, split with/without-response write APIs, explicit read promises/notifications, name-only picker and error behavior. Across 10 manual connections, verify validated setup and explicit ARM/STOP at zero with the expected fresh Status. The phone's 72-byte capability is user-confirmed; this checks our browser/firmware path. Record ATT MTU/capacity only if actually measured externally; unavailable MTU is not a browser failure or fabricated API result. Record claim timing and release observations separately.</li>

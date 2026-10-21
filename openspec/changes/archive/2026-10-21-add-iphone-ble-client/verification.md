@@ -1,6 +1,28 @@
 # iPhone BLE web controller verification map
 
-**Linux evidence recorded (2026-10-20); phone evidence pending.** H1–H5 pass on Linux under [`apps/iphone`](../../../../apps/iphone/README.md) and in CI. No Bluefy/phone, deployment or wheel check has run. Todor's phone 72-byte confirmation is user evidence, not a measurement. [Tasks](tasks.md) record which gates are closed.
+**Scoped acceptance recorded 2026-10-21.** H1–H5 pass on Linux under
+[`apps/iphone`](../../../../apps/iphone/README.md) and in CI; phone/stand results
+are recorded below. [Tasks](tasks.md#4-phone-and-physical-acceptance) retain
+the exact evidence and Todor's accepted limits. This supersedes the draft's
+pending-evidence summary; the original planned checks remain for traceability.
+
+## Recorded phone evidence
+
+- P1: Todor reported ten successful connect/zero-ARM/STOP cycles. A serial-captured
+  [five-cycle diagnosis](../../../../firmware/bench/2026-10-21-iphone-ble-drops/notes.md)
+  measured ATT MTU 247 on iPhone 11 Pro/Bluefy. Earlier BLE drops were not reproduced.
+- P2: a reported 1,614-write (~80 s) run had max submission gap 158 ms and slowest
+  write 17 ms. Todor closed P2 by decision; there is no serial-captured full
+  workload, the earlier drops remain unexplained and the iOS connection interval
+  is unmeasured. Closure is not a new reliability or timing measurement.
+- [P3](../../../../firmware/bench/2026-10-21-iphone-p3/notes.md): touch, Home, lock,
+  Bluetooth-off and reload checks reached zero/STOP or firmware link-loss stop;
+  no background renewal or automatic reconnect was observed. VoiceOver was skipped.
+- [P4](../../../../firmware/bench/2026-10-21-iphone-p4/notes.md): Todor confirmed
+  all six directions and stops on the stand. STOP while holding was subsequently
+  fixed on touch-down and [rechecked with motor power off](../../../../firmware/bench/2026-10-21-iphone-stop-recheck/notes.md).
+  Phone UI limits prevented Bluetooth-off during a held direction; no new
+  physical stop-latency, electrical or floor qualification is claimed.
 
 ## Linux host and browser evidence
 
@@ -16,7 +38,7 @@ Linux browser tests and fake clocks establish software decisions, not Bluefy/nat
 
 ## Requirement and scenario coverage
 
-Each row covers every scenario under the named [requirement](specs/iphone-ble-teleoperation/spec.md); H IDs are implemented Linux tests; P IDs are planned phone/board evidence.
+Each row covers every scenario under the named [requirement](specs/iphone-ble-teleoperation/spec.md); H IDs are Linux tests; P IDs identify the phone/board checks whose results and limits are above.
 
 | Requirement | Linux host/browser | Phone/board evidence |
 | --- | --- | --- |
@@ -34,9 +56,12 @@ Each row covers every scenario under the named [requirement](specs/iphone-ble-te
 | Bounded best-effort shutdown | H5 (blocked writes/disconnect) | P3 attempt/detection delay; P4 loss fallback |
 | Visible state and evidence limits | H4/H5 (Armed without motion/unavailable MTU) | P3 usability/labels; P4 separate wheel observation |
 
-## Bluefy / normal product firmware evidence planned
+## Original planned Bluefy / normal product firmware checks
 
-These are proposed checks, **not authorization to run them**. No hosted page, phone, network, router, serial or motor activity occurred while revising this draft. Use normal default or `ros` firmware; never `motor-bench`. Do not change firmware to make Bluefy pass.
+These are the original planned checks, **not authorization to repeat them**.
+Their completed results and accepted limits are recorded above and in tasks.md.
+Draft authoring itself performed no hardware work. Runs use normal default or
+`ros` firmware; never `motor-bench` or firmware changed merely to make Bluefy pass.
 
 * **P1 — browser/claim/payload integration (I1/I2):** motor power disabled, separately authorized batch. Record phone/iOS/Bluefy/web/firmware revisions, HTTPS origin, split with/without-response write APIs, explicit read promises/notifications, name-only picker and error behavior. Across 10 manual connections, verify validated setup and explicit ARM/STOP at zero with the expected fresh Status. The phone's 72-byte capability is user-confirmed; this checks our browser/firmware path. Record ATT MTU/capacity only if actually measured externally; unavailable MTU is not a browser failure or fabricated API result. Record claim timing and release observations separately.
 * **P2 — full workload (I3/Q19):** motor power disabled, separately authorized batch. Run 60 s at 20 Hz zero including Status polling and explicit ARM/STOP/re-arm at zero. Require no lease expiry, submission gap>=200 ms or one-second control/read timeout. Log pending-operation delays, promise durations, submission-gap distribution and read/control latency. Only actual instrumentation can establish connection interval; timer frequency/BlueZ cannot. Failing performance requires reviewed contract/approach changes before motor checks.

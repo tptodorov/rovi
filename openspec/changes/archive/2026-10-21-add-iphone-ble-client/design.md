@@ -77,7 +77,7 @@ Suspension/termination may prevent any cleanup. Firmware lease/window handling r
 
 [Web Bluetooth specification](https://webbluetoothcg.github.io/web-bluetooth/) defines secure-context user selection, service access, characteristic properties, separate write modes, read promises and notification events. These are API contracts, not evidence that Bluefy implements every method. [Bluefy's official site](https://bluefy.app/) and [guide](https://bluefy.app/guide.html) document its GATT bridge and HTTPS requirement. The [App Store release notes](https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055) mention a host app-state hook; exact hook registration/semantics must be verified instead of guessed. Apple's [foreground/background guide](https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/CoreBluetoothBackgroundProcessingForIOSApps/PerformingTasksWhileYourAppIsInTheBackground.html) explains why suspension cannot be treated as a runnable cleanup opportunity.
 
-## OPEN questions and acceptance gates
+## Original acceptance gates
 
 | Item | How to settle | Blocks |
 | --- | --- | --- |
@@ -86,7 +86,10 @@ Suspension/termination may prevent any cleanup. Firmware lease/window handling r
 | I3 — Q19 full workload | P2 measures 60 s at 20 Hz with Status reads and zero ARM/STOP: no lease expiry, >=200 ms submission gap or one-second control/read timeout. Record connection interval only if measured. Failure requires reviewed changes, not silently relaxed bounds. | Phone acceptance and motor batch; BlueZ results do not pass it. |
 | I4 — lifecycle/accessibility verification | Button-first interaction is selected. P3 verifies actual touch, text/accessibility, blur/hidden/lock/interruption behavior and no background renewal of motion. Missing host signals must still produce expiry/lease fallback; persistent hidden motion fails support. | UI/phone acceptance, not the selected button layout. |
 
-Button implementation is authorized by the [acceptance record](proposal.md#proposal-acceptance); physical/product acceptance remains pending. Unmeasured browser/hardware results cannot count as passed acceptance; see [verification](verification.md).
+These proposal-stage gates are retained for traceability. Implementation and
+scoped phone/stand acceptance completed on 2026-10-21; [tasks](tasks.md) and
+[verification](verification.md) record the evidence, P2 closure decision and
+untested limits. Unmeasured browser/hardware results remain unclaimed.
 
 ## Risks / Trade-offs
 
