@@ -73,3 +73,19 @@ Task 3.1's neutral/stream subcheck passes. Permission retry, held-input interrup
 reference/posture loss, lock/app-switch and fresh manual recovery on the actual
 phone remain to be recorded; task 3.1 as a whole stays open. Motor-on acceptance
 also remains open and needs its own announced batch and fresh go.
+
+
+## Posture report and interface change
+
+During the requested interruption test, Todor reported disarming with the message
+“Phone moved outside the calibrated operating posture”. He thought it might occur
+during z-axis rotation or loss of the pad press, and said holding the pad while
+tilting was difficult, requesting a different interface. The triggering sensor
+values and timing relative to lock/app-switch were not captured; neither those
+lifecycle checks nor a specific rotation defect are accepted by this response.
+
+Physical mode is being changed to explicit tap START/PAUSE after neutral/ARM,
+without a held touch. START requires neutral; frame/sample expiry and STOP remain.
+Posture limits stay unchanged and faults will include the angle/value/limit.
+The old build's reported neutral/stream result remains valid for that build;
+tap-based phone UX and motor-on behavior need new acceptance.

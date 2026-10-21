@@ -10,10 +10,10 @@ interaction; it does not establish sensor-plus-BLE or motor acceptance.
 
 - Add a Buttons / Physical selector, defaulting to Buttons without persistence.
 - In Physical mode, explicitly enable orientation sensors, then capture neutral
-  and ARM in one tap while disarmed, followed by a new drive-pad hold. Combine forward/back tilt, strafe tilt
+  and ARM in one tap while disarmed, followed by an explicit START at neutral. Combine forward/back tilt, strafe tilt
   and heading offset into gentle vx/vy/wz. Holding a twist sustains rotation.
-- Block motion on unavailable input; sensor/posture loss during a hold ends the
-  session. Released-pad sensor gaps or reading posture retain neutral and arm at
+- Block motion on unavailable input; sensor/posture loss while driving ends the
+  session. Paused sensor gaps or reading posture retain neutral and arm at
   zero. Preserve STOP, stream, cleanup and lifecycle recovery. Keep safety status
   and STOP visible while scrolling.
 - Keep the isolated diagnostic available and separate phone/radio/motor evidence.
@@ -27,7 +27,7 @@ None.
 ### Modified Capabilities
 
 - `iphone-ble-teleoperation`: selectable button/physical input, calibration,
-  bounded blended velocities, independent sample/hold expiry and mode switching.
+  bounded blended velocities, independent sample/foreground expiry and mode switching.
 
 ## Impact
 
@@ -55,3 +55,12 @@ power off. He subsequently confirmed a 60 s neutral hold at requested zero on
 iPhone 11: 1,366 writes, max gap 180 ms, slowest write 19 ms. The original
 Bluefy trigger remains unclassified; remaining phone interruption/recovery and
 motor-on acceptance remain open.
+
+
+Todor then reported posture-triggered disarming and difficulty keeping the drive
+pad pressed while moving the phone, explicitly requesting a different interface.
+Replace only Physical mode's held pad with tap START/PAUSE, a neutral prerequisite
+for START and a separate frame-renewal deadline. Buttons retain press-and-hold.
+Keep the existing posture limits and identify the exact failing angle in messages;
+the reported rotation/drop-of-touch cause is not yet established. This UI change
+requires another motor-power-off retest; earlier held-pad results remain historical.

@@ -64,42 +64,43 @@ batch still needs its own announced stand setup and fresh go.
    **SET NEUTRAL & ARM** while disarmed. That single action captures neutral and
    arms at zero. Each ARM captures the current neutral; there is no separate
    calibration tap. Connecting clears any earlier calibration.
-4. Use a **new** hold on **Hold to drive with phone**.
+4. At calibrated neutral (all three offsets within ±3°), tap **START TILT CONTROL**.
+   Put both hands where comfortable; no touch needs to stay on the screen.
    Tip forward/back to drive; sideways to strafe; turn the whole phone left/right
    to rotate. Holding a twist sustains rotation; all three components can combine.
-5. Return to neutral or release to zero. **STOP** disarms and requires fresh ARM
-   and a new hold. Changing modes also clears calibration and disarms; an open
-   connection may remain after confirmed STOP. Enable sensors again when selecting
-   Physical, then use Set neutral & ARM.
+5. Return to neutral for zero while control keeps running, or tap **PAUSE TILT
+   CONTROL** for zero with driving paused. Restart requires a fresh START at neutral.
+   **STOP** disarms and requires fresh ARM then START. Mode changes also clear
+   calibration and disarm; confirmed STOP may leave the connection open. Enable
+   sensors again when selecting Physical, then use Set neutral & ARM and START.
 
 Each axis uses a 3° dead zone and scales to full gentle reference at 20°:
-up to 0.1 m/s per translation axis or 0.3 rad/s rotation, further clipped by the
-car's advertised limits. These are open-loop references, not measured velocities.
-Neutral beta/gamma must be within ±30°; current beta/gamma must remain within
-±60° and heading offset within ±90° to drive. While the pad is released, sensor
-pauses and reading posture block the pad at zero without discarding neutral or arm;
-returning readings cannot replay a rejected press. Scroll cancels any hold. During
-a held drive, sensor/posture loss or hold expiry closes the session. Changed
-reference or invalid values also close an armed session, including while released.
-No automatic recentering, reconnection or re-arming occurs.
+up to 0.1 m/s per translation axis or 0.3 rad/s rotation, clipped by advertised
+limits. These are open-loop references, not measured velocities. Neutral beta/gamma
+must be within ±30°; current beta/gamma must stay within ±60° and heading offset
+within ±90° to drive. Posture faults identify the offending angle/value/limit.
+While paused, sensor gaps and reading posture block START at zero without
+losing arm/neutral. Returning readings cannot replay a rejected START. Scroll
+pauses Physical control. While running, sensor/posture loss or foreground-renewal
+expiry ends the session. Invalid values or changed reference also close an armed
+session while paused. No automatic recentering, reconnection or restart occurs.
 
 Only fresh orientation callbacks renew the 250 ms sample deadline; only UI frames
-renew the separate 250 ms hold deadline. Cached angles and transmitter ticks
-cannot keep either alive. A sticky safety panel keeps local arm, STOP and the
-session/fault reason visible while scrolling. Lock/app switch/screen rotation
-require manual Enable, connection, Set neutral & ARM and a new press. Existing stream/Status/cleanup
-deadlines remain unchanged. No compass heading, declared motion interval or
-integrated gyro rate is used for control.
+renew the separate 250 ms running-input deadline. Cached angles and stream ticks
+cannot keep either alive. The sticky safety panel keeps arm, START/PAUSE, STOP
+and the session/fault reason visible while scrolling. Lock/app switch/screen
+rotation require manual Enable, connect, Set neutral & ARM and START. Existing
+stream/Status/cleanup deadlines are unchanged. No compass heading, declared
+motion interval or integrated gyro rate controls the car.
 
-The [first motor-power-off phone run](../../firmware/bench/2026-10-21-iphone-physical/notes.md)
-confirmed directions, neutral/release and STOP/mode changes, but exposed the
-scrolling and calibration UX defects addressed above. Todor confirmed the corrected
-scrolling/status and one-tap neutral/ARM retest works on build `780f65eff594`, with
-motor power off. A subsequent 60 s neutral hold on reported iPhone 11 stayed at
-requested zero: 1,366 writes, max gap 180 ms, slowest write 19 ms. These are
-session counters, not an exact 60 s trace or radio-delivery measurement. The
-original trigger remains unclassified; remaining phone interruption/recovery and
-motor-on acceptance are open.
+Earlier [motor-power-off phone results](../../firmware/bench/2026-10-21-iphone-physical/notes.md)
+cover held-pad build `780f65eff594`: signs, neutral/release, STOP/mode changes,
+corrected scrolling/calibration and a 60 s requested-zero hold on reported iPhone 11
+(1,366 writes, max gap 180 ms, slowest write 19 ms). Those session counters do not
+define an exact 60 s trace or radio-delivery timing. Todor subsequently found
+holding the pad while tilting awkward and reported posture-triggered disarming.
+The new tap START/PAUSE interaction needs its own motor-power-off retest. The
+original rotation/drop-of-touch cause and motor-on acceptance remain unverified.
 
 ## Phone sensor test
 

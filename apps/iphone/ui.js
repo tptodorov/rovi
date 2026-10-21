@@ -5,7 +5,6 @@ export function mount(session) {
   const buttons = [...document.querySelectorAll('[data-direction]')];
   const drive = byId('physical-drive');
   const pointers = new Map();
-  const contacts = new Set();
   const active = () => document.visibilityState === 'visible' && document.hasFocus();
   session.active = active;
   let sensorEpoch = 0, sensorListener = null, permissionPending = false;
@@ -50,17 +49,16 @@ export function mount(session) {
     stopTouchedAt = performance.now(); void session.stop();
   });
   byId('stop').addEventListener('click', () => { if (performance.now() - stopTouchedAt > 1000) void session.stop(); });
-  for (const button of [...buttons, drive]) {
+  drive.addEventListener('click', () => session.togglePhysical());
+  for (const button of buttons) {
     button.addEventListener('contextmenu', event => event.preventDefault());
     button.addEventListener('click', event => event.preventDefault()); // Click/accessibility activation cannot latch motion.
     button.addEventListener('pointerdown', event => {
       if (button.disabled || (event.pointerType === 'mouse' && event.button !== 0)) return;
       event.preventDefault();
-      if (button === drive && (!event.isPrimary || contacts.size !== 1)) { session.physical.clear(); return; }
       pointers.set(event.pointerId, button);
       button.setPointerCapture(event.pointerId);
-      if (button === drive) session.pressPhysical(event.pointerId);
-      else session.press(event.pointerId, button.dataset.direction);
+      session.press(event.pointerId, button.dataset.direction);
     });
     button.addEventListener('pointermove', event => {
       if (!pointers.has(event.pointerId)) return;
@@ -71,21 +69,17 @@ export function mount(session) {
     });
     const release = event => {
       pointers.delete(event.pointerId);
-      if (button === drive) { session.physical.release(event.pointerId); render(); }
-      else session.release(event.pointerId);
+      session.release(event.pointerId);
     };
     button.addEventListener('pointerup', release);
     button.addEventListener('pointercancel', release);
     button.addEventListener('lostpointercapture', release);
   }
-  // A second touch outside the drive pad also cancels physical motion.
-  document.addEventListener('pointerdown', event => {
-    contacts.add(event.pointerId);
-    if (session.mode === 'physical' && session.physical.hold.current !== null && !pointers.has(event.pointerId)) session.physical.clear();
-  }, true);
-  for (const event of ['pointerup', 'pointercancel']) document.addEventListener(event, value => contacts.delete(value.pointerId), true);
-  document.addEventListener('scroll', () => { session.clearInputs(); render(); }, { capture: true, passive: true });
-  const inactive = () => { detachSensors(); session.physical.disable(); pointers.clear(); contacts.clear(); void session.inactive(); };
+  document.addEventListener('scroll', () => {
+    if (session.physical.driving) session.message = 'Scrolling paused tilt control at zero. Return to neutral, then tap START.';
+    session.clearInputs(); render();
+  }, { capture: true, passive: true });
+  const inactive = () => { detachSensors(); session.physical.disable(); pointers.clear(); void session.inactive(); };
   window.addEventListener('blur', () => { if (session.phase !== 'choosing') inactive(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) inactive(); });
   window.addEventListener('pagehide', inactive);
@@ -99,13 +93,16 @@ export function mount(session) {
     byId('control-mode').value = session.mode;
     byId('button-controls').hidden = physicalMode;
     byId('physical-controls').hidden = !physicalMode;
-    byId('hold-hint').textContent = physicalMode ? 'Hold neutral · Set neutral & ARM · new hold to drive · release to zero' : 'Hold to move · release to zero · STOP requires a new ARM';
+    byId('hold-hint').textContent = physicalMode ? 'Set neutral & ARM · tap START · tilt to move · tap PAUSE for zero' : 'Hold to move · release to zero · STOP requires a new ARM';
     byId('sensors-enable').disabled = permissionPending || session.localArm || Boolean(session.control) || !['disconnected', 'ready'].includes(session.phase);
-    byId('physical-status').textContent = physical.problem || (physicalReady ? (session.localArm ? 'Neutral set. Use a new hold to drive; release to zero.' : 'Hold neutral, then tap Set neutral & ARM.') : 'Drive paused: wait for fresh readings and return to the screen-up operating posture.');
+    byId('physical-status').textContent = physical.problem || (physicalReady ? (physical.driving ? 'Tilt control running. Tap PAUSE for zero or STOP to disarm.' : 'Tilt control paused. Return to neutral, then tap START after ARM.') : 'Drive paused: wait for fresh readings and return to the screen-up operating posture.');
     const sample = physical.sample;
     byId('physical-reading').textContent = sample ? `α ${sample.alpha.toFixed(1)}° · β ${sample.beta.toFixed(1)}° · γ ${sample.gamma.toFixed(1)}° · age ${Math.max(0, performance.now() - sample.at).toFixed(0)} ms` : 'No sensor reading';
-    drive.disabled = !physicalMode || !session.localArm || !physicalReady || !['vx', 'vy', 'wz'].some(axis => session.caps?.[`max_${axis}`] > 0);
-    drive.dataset.held = String(physical.hold.current !== null);
+    drive.hidden = !physicalMode;
+    byId('physical-requested').hidden = !physicalMode;
+    drive.disabled = !physicalMode || session.phase !== 'ready' || !session.localArm || Boolean(session.control) || (!physical.driving && !physical.canStart(performance.now())) || !['vx', 'vy', 'wz'].some(axis => session.caps?.[`max_${axis}`] > 0);
+    drive.textContent = physical.driving ? 'PAUSE TILT CONTROL' : 'START TILT CONTROL';
+    drive.setAttribute('aria-pressed', String(physical.driving));
     byId('phase').textContent = session.phase;
     document.body.dataset.phase = session.phase;
     document.body.dataset.armed = String(session.localArm);
@@ -119,6 +116,7 @@ export function mount(session) {
     byId('device').textContent = session.device ? `${session.device.name || 'Selected car'}${session.device.id ? ` · ${session.device.id}` : ''}` : 'No car selected';
     const motion = session.requested ?? ZERO;
     byId('requested').textContent = `vx ${motion.vx.toFixed(2)} · vy ${motion.vy.toFixed(2)} · wz ${motion.wz.toFixed(2)}`;
+    byId('physical-requested').textContent = `Requested: ${byId('requested').textContent}`;
     if (session.reported) {
       const { state, reason, error } = session.reported;
       byId('reported').textContent = `${state} · reason ${reason} · error ${error}`;

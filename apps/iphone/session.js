@@ -45,8 +45,12 @@ export class Session {
     if (this.mode !== 'physical' || !this.active()) return;
     this.physical.update(value, this.now()); this.checkPhysical(); this.changed();
   }
-  pressPhysical(id) {
-    this.physical.press(id, this.mode === 'physical' && this.localArm && this.phase === 'ready' && this.active(), this.now());
+  togglePhysical() {
+    if (this.mode !== 'physical' || !this.localArm || this.control || this.phase !== 'ready' || !this.active()) return;
+    if (this.physical.driving) {
+      this.physical.clear(); this.message = 'Tilt control paused at zero. Return to neutral, then tap START.';
+    } else if (this.physical.start(this.now())) this.message = 'Tilt control running. Tilt to move; tap PAUSE for zero or STOP to disarm.';
+    else this.message = this.physical.problem || 'Return to calibrated neutral with fresh readings before START.';
     this.changed();
   }
   checkPhysical() {
@@ -70,7 +74,7 @@ export class Session {
     if (unsupported) { this.message = unsupported; this.changed(); return; }
     const generation = ++this.generation;
     this.phase = 'choosing'; this.localArm = false; this.hold.reset();
-    this.physical.hold.reset(); this.physical.invalidate('Hold neutral, then tap Set neutral & ARM.');
+    this.physical.invalidate('Hold neutral, then tap Set neutral & ARM.');
     this.caps = null; this.reported = null; this.device = null; this.seq = 0;
     this.stats = { writes: 0, maxGap: 0, maxWrite: 0 };
     this.message = 'Select the car in Bluefy’s picker. The picker alone does not claim it.'; this.changed();
@@ -210,7 +214,7 @@ export class Session {
           const confirmed = report.error === 'none' && (control.kind === 'arm' ? report.state === 'Armed' : report.state === 'Stopped' && report.reason === 'Stop');
           if (!confirmed) throw new Error(`${control.kind.toUpperCase()} was not confirmed by the fresh Status read`);
           this.control = null; this.localArm = control.kind === 'arm'; this.clearInputs();
-          this.message = this.localArm ? (this.mode === 'physical' ? 'Armed at zero. A new phone drive-pad hold is required.' : 'Armed at zero. A new direction press is required.') : 'Car reported Stopped/Stop. ARM again before moving.';
+          this.message = this.localArm ? (this.mode === 'physical' ? 'Armed at zero; tilt control paused. Tap START at neutral to drive.' : 'Armed at zero. A new direction press is required.') : 'Car reported Stopped/Stop. ARM again before moving.';
         }));
       }
       return;

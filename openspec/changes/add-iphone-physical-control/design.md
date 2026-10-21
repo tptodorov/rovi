@@ -4,7 +4,7 @@
 
 Keep one Session owner and one serialized BLE stream. A small Physical interpreter
 beside Hold supplies bounded intent; it never arms, connects or writes BLE. Keep
-button Hold behavior intact. All Session invalidation paths clear both holds;
+button Hold behavior intact. All Session invalidation paths clear button holds and Physical running state;
 close also disables physical input and discards calibration.
 
 ## Input and permissions
@@ -23,7 +23,7 @@ callback. Neutral must be screen-up, beta/gamma within ±30°. Current beta/gamm
 must remain within ±60°, and shortest heading offset within ±90°. These explicit
 software limits keep the selected Euler mapping away from inversion/singular
 postures; they are not measured sensor-accuracy limits. Screen orientation changes
-end Physical sessions. Do not silently recenter or rotate axes under an active hold.
+end Physical sessions. Do not silently recenter or rotate axes under running Physical control.
 
 ## Mapping
 
@@ -40,31 +40,33 @@ below 0.05° for 13.1 s. Longer drift and mixed-motion physical bounds remain un
 
 Mode changes clear both inputs and calibration, revoke local arm, supersede ARM
 with STOP while ready, and cancel setup/picker attempts. A fresh ARM and new
-post-arm hold are mandatory. A ready connection can remain open after confirmed
+post-arm input action are mandatory. A ready connection can remain open after confirmed
 STOP. Permission alone never arms. Connecting discards earlier calibration;
-ARM completion clears holds but preserves valid calibration.
+ARM completion clears input but preserves valid calibration.
 
-Physical nonzero requires active foreground, local arm, calibration, one tracked
-drive-pad pointer and a fresh orientation sample. UI frames alone renew the hold
-(250 ms). Only new valid callbacks renew sample freshness (250 ms). Test expiry
-before replacing an old sample, so a late callback cannot hide a missed deadline.
-Cached values and transmitter ticks cannot renew either input deadline.
+Physical mode uses explicit tap START/PAUSE after confirmed Set neutral & ARM.
+START requires all three shortest offsets within ±3° of neutral, fresh valid
+orientation and active foreground; an early/rejected START is never queued.
+START latches running input, independent of finger release. PAUSE and scroll clear
+running input to zero while retaining arm/neutral; no sample can restart it.
+STOP, mode changes, ARM completion, cleanup and reported safety stops also clear
+running state. Buttons retain their existing held-pointer interpreter.
 
-Release/bounds exit/cancel/multi-touch/scroll clears the hold before another send,
-with new press required. Sensor/posture loss during a held drive or hold expiry
-revokes calibration and ends through cleanup. When released, a sample gap or
-out-of-envelope reading posture blocks new holds at zero but retains neutral and
-arm. Rejected touches stay blocked until release; fresh data cannot replay them.
-Invalid values or changed reference still revoke calibration and close armed or
-arming sessions. Return after lifecycle loss requires manual sensor enabling,
-connection, Set neutral & ARM and a new hold.
-Old permission completions and detached callbacks cannot affect a later mode/session.
+Only UI frames renew the Physical running deadline (250 ms); only new sensor
+callbacks renew sample freshness (250 ms). Test expiry before replacing samples
+or renewing a deadline, so resumed execution cannot hide a missed deadline.
+Sensor/posture loss while running or foreground-renewal expiry revokes calibration
+and ends through cleanup. When paused, gaps or reading posture block START at zero
+but retain neutral and arm. Invalid values/reference changes still close armed or
+arming sessions. Lifecycle return requires manual enabling, connection, ARM and
+START. No silent recentering or automatic recovery is introduced.
 
-Keep a sticky safety panel outside the drive section: local arm state, ARM/STOP
-and the latest session reason stay visible through scrolling and fault cleanup.
-Show temporary sensor/posture unavailability near the physical pad. The phone's
-original scroll trigger was not captured; host tests reproduce released-pad gaps
-and reading posture without weakening stream or lifecycle deadlines.
+Keep Physical START/PAUSE alongside arm state, ARM/STOP, requested motion and the latest session
+reason in the sticky safety panel. Give running/paused text and the offending
+angle/value/limit on posture faults. Screen-up tilt limits stay ±60° absolute,
+heading offset ±90°; the interface change does not establish a cause for the
+reported z-axis interruption. Earlier held-pad UX/neutral results are evidence for
+that build, not acceptance of this new interaction.
 
 Keep 50 ms attempted sends, 200 ms scheduler/submission failure, Status validation,
 STOP priority and 500 ms runnable cleanup unchanged. Phone measurements found a
@@ -77,4 +79,4 @@ Pure input tests plus Session fake-GATT and real-page browser tests cover this
 state model; they do not establish phone/BLE or physical stopping. Phone acceptance
 must combine sensors and the full BLE workload, exercise all invalidations and
 extend quiet evidence to 60 s. A separate stand batch covers six signs, mixed axes,
-neutral/release, STOP, mode changes and interruptions. No floor test is included.
+neutral/PAUSE, STOP, mode changes and interruptions. No floor test is included.

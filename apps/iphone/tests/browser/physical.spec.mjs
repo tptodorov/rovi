@@ -35,13 +35,35 @@ async function ready(page) {
   await expect(page.locator('#arm')).toBeEnabled();
   await page.locator('#arm').click(); await expect(page.locator('#local-arm')).toHaveText('Locally armed');
 }
-async function hold(page) {
-  await page.locator('#physical-drive').scrollIntoViewIfNeeded();
-  const box = await page.locator('#physical-drive').boundingBox();
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
-}
+async function start(page) { await page.locator('#physical-drive').click(); }
 const zero = 'vx 0.00 · vy 0.00 · wz 0.00';
-test('scrolling while released preserves arm and keeps STOP and status visible', async ({ page }) => {
+test('tap starts tilt control without holding; tap pauses and neutral is required to restart', async ({ page }) => {
+  await ready(page);
+  await page.locator('#physical-drive').click();
+  await page.evaluate(() => { window.phoneAngles = { alpha: 10, beta: -20, gamma: -20 }; });
+  await expect(page.locator('#requested')).toHaveText('vx 0.10 · vy 0.10 · wz 0.30');
+  await expect(page.locator('#physical-requested')).toContainText('vx 0.10 · vy 0.10 · wz 0.30');
+  await page.waitForTimeout(350);
+  await expect(page.locator('#physical-drive')).toHaveText('PAUSE TILT CONTROL');
+  await page.locator('#physical-drive').click();
+  await expect(page.locator('#requested')).toHaveText(zero);
+  await expect(page.locator('#local-arm')).toHaveText('Locally armed');
+  await expect(page.locator('#physical-drive')).toBeDisabled();
+  await page.evaluate(() => { window.phoneAngles = { alpha: 350, beta: 0, gamma: 0 }; });
+  await expect(page.locator('#physical-drive')).toBeEnabled();
+  await expect(page.locator('#requested')).toHaveText(zero);
+  await page.locator('#physical-drive').click();
+  await page.evaluate(() => { window.phoneAngles.alpha = 10; });
+  await expect(page.locator('#requested')).toContainText('wz 0.30');
+  await page.locator('#stop').click();
+  await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
+  await expect(page.locator('#requested')).toHaveText(zero);
+  await page.locator('#arm').click();
+  await expect(page.locator('#local-arm')).toHaveText('Locally armed');
+  await expect(page.locator('#physical-drive')).toHaveText('START TILT CONTROL');
+  await expect(page.locator('#requested')).toHaveText(zero);
+});
+test('scrolling while paused preserves arm and keeps STOP and status visible', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await ready(page);
   await page.evaluate(() => { window.emitAngles = false; });
@@ -49,7 +71,7 @@ test('scrolling while released preserves arm and keeps STOP and status visible',
   await expect(page.locator('#phase')).toHaveText('ready');
   await expect(page.locator('#local-arm')).toHaveText('Locally armed');
   await expect(page.locator('#requested')).toHaveText(zero);
-  for (const id of ['local-arm', 'stop', 'message']) await expect(page.locator(`#${id}`)).toBeInViewport();
+  for (const id of ['local-arm', 'stop', 'message', 'physical-drive', 'physical-requested']) await expect(page.locator(`#${id}`)).toBeInViewport();
   await page.evaluate(() => { window.phoneAngles.beta = 75; window.emitAngles = true; });
   await expect(page.locator('#physical-reading')).toContainText('β 75.0');
   await expect(page.locator('#physical-drive')).toBeDisabled();
@@ -60,21 +82,24 @@ test('scrolling while released preserves arm and keeps STOP and status visible',
   await page.locator('#stop').click(); await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
   expect(errors).toEqual([]);
 });
-test('scroll cancels a held drive without replay or discarding neutral', async ({ page }) => {
-  await ready(page); await hold(page);
+test('scroll pauses running control without replay or discarding neutral', async ({ page }) => {
+  await ready(page); await start(page);
   await page.evaluate(() => { window.phoneAngles.alpha = 10; });
   await expect(page.locator('#requested')).toContainText('wz 0.30');
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(page.locator('#requested')).toHaveText(zero);
   await expect(page.locator('#local-arm')).toHaveText('Locally armed');
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(page.locator('#requested')).toHaveText(zero); await page.mouse.up();
-  await hold(page); await expect(page.locator('#requested')).toContainText('wz 0.30'); await page.mouse.up();
+  await expect(page.locator('#requested')).toHaveText(zero);
+  await expect(page.locator('#physical-drive')).toBeDisabled();
+  await page.evaluate(() => { window.phoneAngles.alpha = 350; });
+  await start(page); await page.evaluate(() => { window.phoneAngles.alpha = 10; });
+  await expect(page.locator('#requested')).toContainText('wz 0.30');
 });
-test('default Buttons never prompt; Physical combines angles and switching while held stops/disarms', async ({ page }, info) => {
+test('default Buttons never prompt; Physical combines angles and switching while running stops/disarms', async ({ page }, info) => {
   await expect(page.locator('#control-mode')).toHaveValue('buttons');
   expect(await page.evaluate(() => window.permissionCalls)).toBe(0);
-  await ready(page); await hold(page);
+  await ready(page); await start(page);
   const revision = await page.locator('meta[name="rovi-build"]').getAttribute('content');
   if (revision !== 'source-checkout') await expect(page.locator('#version')).toHaveText(`Build ${revision}`);
   await page.evaluate(() => { window.phoneAngles = { alpha: 10, beta: -20, gamma: -20 }; });
@@ -84,7 +109,7 @@ test('default Buttons never prompt; Physical combines angles and switching while
   await page.locator('#control-mode').selectOption('buttons');
   await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
   await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');
-  await expect(page.locator('#requested')).toHaveText(zero); await page.mouse.up();
+  await expect(page.locator('#requested')).toHaveText(zero);
 });
 test('permission denial and late permission after mode switch cannot arm or enable Physical', async ({ page }) => {
   await page.locator('#connect').click(); await expect(page.locator('#phase')).toHaveText('ready');
@@ -101,25 +126,25 @@ test('permission denial and late permission after mode switch cannot arm or enab
 });
 test('sensor or UI renewal loss independently ends Physical; returning data does not recover', async ({ page }) => {
   for (const source of ['emitAngles', 'holdFrames']) {
-    await ready(page); await hold(page);
+    await ready(page); await start(page);
     await page.evaluate(() => { window.phoneAngles = { alpha: 10, beta: -20, gamma: -20 }; });
     await expect(page.locator('#requested')).toContainText('vx 0.10');
     await page.evaluate(key => { window[key] = false; }, source);
     await expect(page.locator('#phase')).toHaveText('disconnected');
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    for (const id of ['local-arm', 'stop', 'message']) await expect(page.locator(`#${id}`)).toBeInViewport();
-    await expect(page.locator('#message')).toContainText(source === 'emitAngles' ? 'Sensor readings expired' : 'Drive hold expired');
-    await page.evaluate(key => { window[key] = true; }, source); await page.mouse.up();
+    for (const id of ['local-arm', 'stop', 'message', 'physical-drive', 'physical-requested']) await expect(page.locator(`#${id}`)).toBeInViewport();
+    await expect(page.locator('#message')).toContainText(source === 'emitAngles' ? 'Sensor readings expired' : 'Foreground renewal expired');
+    await page.evaluate(key => { window[key] = true; }, source);
     await expect(page.locator('#requested')).toHaveText(zero); await expect(page.locator('#arm')).toBeDisabled();
     await page.reload();
   }
 });
-test('screen orientation change while held closes and cannot reconnect automatically', async ({ page }) => {
-  await ready(page); await hold(page);
+test('screen orientation change while running closes and cannot reconnect automatically', async ({ page }) => {
+  await ready(page); await start(page);
   await page.evaluate(() => { window.phoneAngles.alpha = 10; });
   await expect(page.locator('#requested')).toContainText('wz 0.30');
   await page.evaluate(() => dispatchEvent(new Event('orientationchange')));
-  await expect(page.locator('#phase')).toHaveText('disconnected'); await page.mouse.up();
+  await expect(page.locator('#phase')).toHaveText('disconnected');
   expect(await page.evaluate(() => fake.calls.filter(call => call[0] === 'picker').length)).toBe(1);
 });
 test('a detached sensor callback cannot replace a newly calibrated and armed input', async ({ page }) => {
@@ -129,22 +154,51 @@ test('a detached sensor callback cannot replace a newly calibrated and armed inp
   await page.locator('#sensors-enable').click();
   await expect(page.locator('#physical-reading')).toContainText('α 123.0');
   await page.locator('#arm').click();
-  await expect(page.locator('#local-arm')).toHaveText('Locally armed'); await hold(page);
+  await expect(page.locator('#local-arm')).toHaveText('Locally armed'); await start(page);
   await page.evaluate(() => { window.phoneAngles.alpha = 143; });
   await expect(page.locator('#requested')).toContainText('wz 0.30');
   const actual = await page.evaluate(() => {
     window.orientationCallbacks[0]({ alpha: 103, beta: 0, gamma: 0 });
     return document.getElementById('requested').textContent;
   });
-  expect(actual).toContain('wz 0.30'); await page.mouse.up();
+  expect(actual).toContain('wz 0.30');
 });
-test('a second finger cannot start Physical while the first finger is outside the pad', async ({ page }) => {
-  await ready(page); await page.evaluate(() => { window.phoneAngles.alpha = 10; });
-  const box = await page.locator('#physical-drive').boundingBox();
-  const cdp = await page.context().newCDPSession(page);
-  const outside = { x: 2, y: 2, id: 1 }, inside = { x: box.x + box.width / 2, y: box.y + box.height / 2, id: 2 };
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [outside] });
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [outside, inside] });
+test('keyboard activation explicitly starts and pauses Physical control', async ({ page }) => {
+  await ready(page); await page.locator('#physical-drive').focus();
+  await page.keyboard.press('Space');
+  await expect(page.locator('#physical-drive')).toHaveAttribute('aria-pressed', 'true');
+  await page.evaluate(() => { window.phoneAngles.alpha = 10; });
+  await expect(page.locator('#requested')).toContainText('wz 0.30');
+  await page.keyboard.press('Space');
   await expect(page.locator('#requested')).toHaveText(zero);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(page.locator('#physical-drive')).toHaveAttribute('aria-pressed', 'false');
+});
+test('rotation posture fault names the offset and limit and cannot auto-recover', async ({ page }) => {
+  await ready(page); await start(page);
+  await page.evaluate(() => { window.phoneAngles.alpha = 100; });
+  await expect(page.locator('#phase')).toHaveText('disconnected');
+  await expect(page.locator('#message')).toContainText('Rotation offset 110.0° exceeds ±90°');
+  await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
+  await expect(page.locator('#requested')).toHaveText(zero);
+  await page.evaluate(() => { window.phoneAngles.alpha = 350; });
+  await expect(page.locator('#phase')).toHaveText('disconnected');
+});
+test('Physical blur or hidden page clears running state and cannot replay after return', async ({ page }) => {
+  for (const name of ['blur', 'visibilitychange']) {
+    await ready(page); await start(page);
+    await page.evaluate(() => { window.phoneAngles.alpha = 10; });
+    await expect(page.locator('#requested')).toContainText('wz 0.30');
+    await page.evaluate(event => {
+      if (event === 'visibilitychange') Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+      (event === 'blur' ? window : document).dispatchEvent(new Event(event));
+      if (event === 'visibilitychange') delete document.hidden;
+    }, name);
+    await expect(page.locator('#phase')).toHaveText('disconnected');
+    await page.evaluate(() => dispatchEvent(new Event('focus')));
+    await expect(page.locator('#requested')).toHaveText(zero);
+    await expect(page.locator('#physical-drive')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
+    expect(await page.evaluate(() => fake.calls.filter(call => call[0] === 'picker').length)).toBe(1);
+    await page.reload();
+  }
 });
