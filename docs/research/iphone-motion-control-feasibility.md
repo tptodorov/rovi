@@ -6,7 +6,7 @@ Researched 2026-10-21. The sensor-only diagnostic is published in the existing i
 
 **Go for the selected input design and host implementation; no motion-driving acceptance yet.** The phone report confirms granted permissions, finite three-axis readings at roughly 60 Hz, and user-confirmed signs, held heading and return to zero on iOS 18.7/Bluefy 3.9.3. Expiry occurred only during deliberate interruptions. Quiet drift evidence covers 13.1 s, not a full minute; sensor-plus-BLE and motor checks remain pending. The reusable web session path needs no apparent firmware change. Native app/Mac requirements are not indicated by this scoped result.
 
-The [Physical mode candidate](../../openspec/changes/add-iphone-physical-control/proposal.md) is now implemented with 42 Node and 21 browser tests, including the built site. Its [phone/stand tasks](../../openspec/changes/add-iphone-physical-control/tasks.md#3-phone-and-physical-acceptance) remain open; sensor-only acceptance does not accept the integrated controller.
+The [Physical mode candidate](../../openspec/changes/add-iphone-physical-control/proposal.md) is now implemented with unit and browser coverage, including the built site. A first integrated motor-power-off run confirmed signs/stops but exposed scrolling/calibration UX issues; the host correction combines neutral capture with explicit ARM and retains zero while scrolling with the pad released. Corrected phone behavior remains unverified. Its [phone/stand tasks](../../openspec/changes/add-iphone-physical-control/tasks.md#3-phone-and-physical-acceptance) remain open; sensor-only acceptance does not accept the integrated controller.
 
 ## Primary evidence and limits
 

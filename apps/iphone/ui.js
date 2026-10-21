@@ -40,7 +40,6 @@ export function mount(session) {
       render();
     }
   });
-  byId('physical-calibrate').addEventListener('click', () => session.calibrate());
   byId('connect').addEventListener('click', () => { void session.choose(); });
   byId('disconnect').addEventListener('click', () => { void session.close('Disconnect requested'); });
   byId('arm').addEventListener('click', () => { void session.arm(); });
@@ -85,6 +84,7 @@ export function mount(session) {
     if (session.mode === 'physical' && session.physical.hold.current !== null && !pointers.has(event.pointerId)) session.physical.clear();
   }, true);
   for (const event of ['pointerup', 'pointercancel']) document.addEventListener(event, value => contacts.delete(value.pointerId), true);
+  document.addEventListener('scroll', () => { session.clearInputs(); render(); }, { capture: true, passive: true });
   const inactive = () => { detachSensors(); session.physical.disable(); pointers.clear(); contacts.clear(); void session.inactive(); };
   window.addEventListener('blur', () => { if (session.phase !== 'choosing') inactive(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) inactive(); });
@@ -99,19 +99,20 @@ export function mount(session) {
     byId('control-mode').value = session.mode;
     byId('button-controls').hidden = physicalMode;
     byId('physical-controls').hidden = !physicalMode;
-    byId('hold-hint').textContent = physicalMode ? 'Calibrate disarmed · ARM · new hold to drive · release to zero' : 'Hold to move · release to zero · STOP requires a new ARM';
+    byId('hold-hint').textContent = physicalMode ? 'Hold neutral · Set neutral & ARM · new hold to drive · release to zero' : 'Hold to move · release to zero · STOP requires a new ARM';
     byId('sensors-enable').disabled = permissionPending || session.localArm || Boolean(session.control) || !['disconnected', 'ready'].includes(session.phase);
-    byId('physical-calibrate').disabled = !physicalMode || session.localArm || Boolean(session.control) || !physical.fresh(performance.now()) || !['disconnected', 'ready'].includes(session.phase);
-    byId('physical-status').textContent = physical.problem || (physicalReady ? (session.localArm ? 'Calibrated. Hold to request motion; release to zero.' : 'Neutral calibrated. ARM, then use a new hold.') : 'Enable sensors and calibrate neutral before ARM.');
+    byId('physical-status').textContent = physical.problem || (physicalReady ? (session.localArm ? 'Neutral set. Use a new hold to drive; release to zero.' : 'Hold neutral, then tap Set neutral & ARM.') : 'Drive paused: wait for fresh readings and return to the screen-up operating posture.');
     const sample = physical.sample;
     byId('physical-reading').textContent = sample ? `α ${sample.alpha.toFixed(1)}° · β ${sample.beta.toFixed(1)}° · γ ${sample.gamma.toFixed(1)}° · age ${Math.max(0, performance.now() - sample.at).toFixed(0)} ms` : 'No sensor reading';
     drive.disabled = !physicalMode || !session.localArm || !physicalReady || !['vx', 'vy', 'wz'].some(axis => session.caps?.[`max_${axis}`] > 0);
     drive.dataset.held = String(physical.hold.current !== null);
     byId('phase').textContent = session.phase;
     document.body.dataset.phase = session.phase;
+    document.body.dataset.armed = String(session.localArm);
     byId('connect').disabled = session.phase !== 'disconnected';
     byId('disconnect').disabled = session.phase === 'disconnected' || session.phase === 'closing';
-    byId('arm').disabled = session.phase !== 'ready' || session.localArm || Boolean(session.control) || (physicalMode && !physicalReady);
+    byId('arm').textContent = physicalMode ? 'SET NEUTRAL & ARM' : 'ARM AT ZERO';
+    byId('arm').disabled = session.phase !== 'ready' || session.localArm || Boolean(session.control) || (physicalMode && !physical.canCalibrate(performance.now()));
     byId('stop').disabled = !session.transport?.connected || session.phase === 'closing';
     byId('local-arm').textContent = session.localArm ? 'Locally armed' : 'Locally disarmed';
     byId('message').textContent = session.message;

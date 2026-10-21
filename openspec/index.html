@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>150</b> requirements</div><div><b>250</b> scenarios</div><div><b>56 / 61</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>151</b> requirements</div><div><b>253</b> scenarios</div><div><b>56 / 63</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>iPhone physical control</h2>
       <div class="notice"><p>
 See the proposal for acceptance status.</p>
@@ -493,12 +493,14 @@ interaction; it does not establish sensor-plus-BLE or motor acceptance.</p>
 <li>
 Add a Buttons / Physical selector, defaulting to Buttons without persistence.</li>
 <li>
-In Physical mode, explicitly enable orientation sensors, calibrate neutral while
-disarmed, then ARM and hold a drive pad. Combine forward/back tilt, strafe tilt
+In Physical mode, explicitly enable orientation sensors, then capture neutral
+and ARM in one tap while disarmed, followed by a new drive-pad hold. Combine forward/back tilt, strafe tilt
 and heading offset into gentle vx/vy/wz. Holding a twist sustains rotation.</li>
 <li>
-Invalidate motion on mode changes, stale/invalid sensor input, posture changes
-or interruptions. Preserve existing STOP, stream, cleanup and manual recovery.</li>
+Block motion on unavailable input; sensor/posture loss during a hold ends the
+session. Released-pad sensor gaps or reading posture retain neutral and arm at
+zero. Preserve STOP, stream, cleanup and lifecycle recovery. Keep safety status
+and STOP visible while scrolling.</li>
 <li>
 Keep the isolated diagnostic available and separate phone/radio/motor evidence.</li>
 </ul>
@@ -606,7 +608,7 @@ Buttons SHALL retain six single-axis hold directions; multiple touches yield zer
 <strong>AND</strong> a zero advertised axis stays zero without disabling other permitted components</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-explicit-zero-then-arm"><h3>Explicit zero then ARM</h3><p>
-ARM SHALL require a new user action and, in Physical mode, enabled fresh calibrated sensor input. It SHALL invalidate all touches, stream fresh zero and send ARM once. Local motion permission SHALL require both successful completion of that ARM write and a subsequent fresh Status read reporting Armed/none/none within one second of the action. A notification alone SHALL NOT grant motion. Failure, refusal or timeout SHALL clear intent and end through cleanup; late callbacks SHALL NOT arm locally.</p>
+ARM SHALL require a new user action; Physical ARM SHALL capture neutral from fresh valid sensors in that action. It SHALL invalidate touches, stream fresh zero and send ARM once. Local motion permission SHALL require the ARM write and a subsequent fresh Status read reporting Armed/none/none within one second. A notification alone SHALL NOT grant motion. Failure, refusal or timeout SHALL clear intent and end through cleanup; late callbacks SHALL NOT arm locally.</p>
 <details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-touch-predates-arm"><summary>Touch predates ARM</summary><ul>
 <li>
 <strong>GIVEN</strong> a direction is held while locally disarmed</li>
@@ -621,13 +623,15 @@ ARM SHALL require a new user action and, in Physical mode, enabled fresh calibra
 <li>
 <strong>THEN</strong> the client remains locally disarmed and requires a new connection and explicit ARM before motion</li>
 </ul>
-</details><details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-physical-calibration-cannot-arm"><summary>Physical calibration cannot arm</summary><ul>
+</details><details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-one-explicit-physical-action-captures-neutral-and-arms"><summary>One explicit Physical action captures neutral and arms</summary><ul>
 <li>
-<strong>WHEN</strong> sensors are enabled or neutral is calibrated while disarmed</li>
+<strong>WHEN</strong> sensors are enabled while disarmed</li>
 <li>
 <strong>THEN</strong> no ARM or nonzero setpoint is sent</li>
 <li>
-<strong>AND</strong> an ARM request without valid physical prerequisites is refused locally; successful ARM clears any old hold and requires a new press</li>
+<strong>AND</strong> a subsequent explicit Set neutral &amp; ARM captures the current fresh screen-up pose without a separate calibration tap, sends zero then ARM and requires a new post-arm press</li>
+<li>
+<strong>AND</strong> missing/stale/invalid sensors or an invalid neutral posture refuse ARM locally without an ARM write</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-hold-cancellation-and-input-expiry"><h3>Hold cancellation and input expiry</h3><p>
 Nonzero intent SHALL require one tracked press inside the selected direction control or Physical drive pad while active and locally armed. Release, bounds exit, cancellation, lost tracking or multiple touches SHALL clear intent before the next send. Only UI renewal may extend the 250 ms monotonic hold deadline. Buttons retain arm after hold expiry; Physical expiry revokes calibration and ends an armed/arming session through cleanup. New motion always requires a new press.</p>
@@ -639,7 +643,17 @@ Nonzero intent SHALL require one tracked press inside the selected direction con
 <li>
 <strong>AND</strong> sliding back inside does not resume motion without a new press</li>
 </ul>
-</details></article><h2 id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--added-requirements">ADDED Requirements</h2><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-explicit-physical-sensor-setup"><h3>Explicit physical sensor setup</h3><p>
+</details></article><h2 id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--added-requirements">ADDED Requirements</h2><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-visible-control-status"><h3>Visible control status</h3><p>
+Local arm state, STOP and the latest session message SHALL remain visible while scrolling the connected controller, including after a fault disconnects it. Physical mode SHALL explain when input is temporarily unavailable while released. Scroll SHALL clear any hold before another send, without itself revoking arm or calibration. Real lifecycle and stream failures SHALL retain their existing cleanup behavior.</p>
+<details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-scroll-while-armed-at-zero"><summary>Scroll while armed at zero</summary><ul>
+<li>
+<strong>WHEN</strong> the user scrolls with the Physical drive pad released</li>
+<li>
+<strong>THEN</strong> arm state, STOP and the session reason stay visible, intent remains zero and scrolling alone does not disconnect</li>
+<li>
+<strong>AND</strong> a genuine stream or lifecycle failure still disarms and displays its reason</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-explicit-physical-sensor-setup"><h3>Explicit physical sensor setup</h3><p>
 Physical sensor access SHALL require an active user Enable Sensors action, feature detection and permission handling. Missing/denied/failed permission or missing finite alpha/beta/gamma SHALL prevent physical motion. Late permission results or callbacks from an earlier mode, enable attempt or closed session SHALL NOT change current input. Sensor events SHALL NOT select a device, ARM or write BLE.</p>
 <details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-denial-and-delayed-permission-response"><summary>Denial and delayed permission response</summary><ul>
 <li>
@@ -650,7 +664,7 @@ Physical sensor access SHALL require an active user Enable Sensors action, featu
 <strong>AND</strong> Buttons remain available without sensor permission</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-physical-calibration-and-angle-mapping"><h3>Physical calibration and angle mapping</h3><p>
-Calibration SHALL require fresh finite orientation, local disarm and no pending control. Neutral beta/gamma SHALL be within ±30° with screen up. Signed shortest offsets SHALL map negative beta to forward, negative gamma to left strafe, positive alpha to left rotation, with 3° dead zones, linear scale to 20° and saturation. Held heading offset SHALL sustain rotation; neutral SHALL request zero. No silent recentering is allowed.</p>
+Each explicit Physical ARM SHALL calibrate fresh finite orientation while locally disarmed with no pending control. Neutral beta/gamma SHALL be within ±30° with screen up. Shortest offsets SHALL map negative beta to forward, negative gamma to left strafe, positive alpha to left rotation, with 3° dead zones and linear scale to saturation at 20°. Held heading offset SHALL sustain rotation; neutral SHALL request zero. No silent recentering is allowed.</p>
 <details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-heading-wrap-and-sustained-twist"><summary>Heading wrap and sustained twist</summary><ul>
 <li>
 <strong>WHEN</strong> calibrated alpha is 350° and current alpha is 10° while a valid drive hold is active</li>
@@ -661,14 +675,22 @@ Calibration SHALL require fresh finite orientation, local disarm and no pending 
 </ul>
 </details><details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-neutral-posture-and-operating-envelope"><summary>Neutral posture and operating envelope</summary><ul>
 <li>
-<strong>WHEN</strong> calibration beta or gamma exceeds ±30°, or a current beta/gamma exceeds ±60°, or heading offset exceeds ±90°, or the screen orientation changes</li>
+<strong>WHEN</strong> calibration beta or gamma exceeds ±30°, or a held drive has current beta/gamma beyond ±60° or heading offset beyond ±90°, or the screen orientation changes</li>
 <li>
 <strong>THEN</strong> calibration or motion is rejected with an explanation</li>
 <li>
 <strong>AND</strong> an armed or arming Physical session loses calibration and ends through cleanup, with manual recovery required</li>
 </ul>
+</details><details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-reading-posture-while-released"><summary>Reading posture while released</summary><ul>
+<li>
+<strong>WHEN</strong> the pad is released and the phone leaves the operating envelope</li>
+<li>
+<strong>THEN</strong> intent remains zero and the pad is unavailable, preserving arm and neutral</li>
+<li>
+<strong>AND</strong> returning to valid fresh input permits only a new press; it neither recenters nor replays a rejected press</li>
+</ul>
 </details></article><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-independent-physical-sample-freshness"><h3>Independent physical sample freshness</h3><p>
-Only newly received valid orientation events SHALL renew a 250 ms monotonic sample deadline. Expiry SHALL be checked before replacing an old sample. Stale/invalid input or changed orientation reference SHALL revoke calibration; if locally armed or arming, it SHALL end through cleanup before another nonzero send. UI frames, stream ticks, cached values and declared motion interval SHALL NOT renew sample freshness or silently recover motion.</p>
+Only new valid orientation events SHALL renew a 250 ms monotonic sample deadline. Expiry during a held drive SHALL be checked before replacing a sample and end through cleanup before another nonzero send. A released-pad gap SHALL preserve arm/neutral at zero and reject presses until fresh input returns. Invalid input or changed reference SHALL revoke calibration and end armed/arming sessions. UI frames, stream ticks and cached values SHALL NOT renew sample freshness or recover a lost hold.</p>
 <details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-sensor-stops-while-ui-and-stream-continue"><summary>Sensor stops while UI and stream continue</summary><ul>
 <li>
 <strong>WHEN</strong> no valid orientation arrives for 250 ms while the held pad and transmitter continue running</li>
@@ -676,6 +698,14 @@ Only newly received valid orientation events SHALL renew a 250 ms monotonic samp
 <strong>THEN</strong> requested motion becomes zero, calibration and local arm are revoked, and cleanup begins</li>
 <li>
 <strong>AND</strong> a late sample or resumed UI cannot restore motion without manual recovery</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-sensor-pause-while-released"><summary>Sensor pause while released</summary><ul>
+<li>
+<strong>WHEN</strong> orientation pauses with no drive hold, but the foreground and BLE stream remain healthy</li>
+<li>
+<strong>THEN</strong> no motion is permitted until new valid input returns, while arm and neutral remain</li>
+<li>
+<strong>AND</strong> an attempted press during the pause cannot start motion when readings return; all touches must release before a new press</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-explicit-control-mode-switching"><h3>Explicit control mode switching</h3><p>
 The same client SHALL expose Buttons and Physical modes, default Buttons without persistence. Every actual mode change SHALL clear both inputs and calibration, disable sensor collection and revoke local arm. A ready session SHALL supersede pending ARM with STOP; setup/picker attempts SHALL be cancelled. New mode selection SHALL NOT ARM or restore a hold; fresh prerequisites, ARM and post-arm press are required.</p>
@@ -3002,8 +3032,10 @@ motion.interval, gyroscope integration or sensor fusion is needed. Missing/null/
 non-finite/out-of-range angles fail closed. Track optional absolute-reference
 metadata; a change invalidates calibration rather than silently changing the frame.</p>
 <p>
-Calibrate takes the latest fresh sample while locally disarmed with no pending
-control. Neutral must be screen-up, beta/gamma within ±30°. Current beta/gamma
+Set neutral &amp; ARM takes the latest fresh sample while locally disarmed with no
+pending control, then follows the existing zero/ARM/read sequence. No separate
+calibration tap is required; every explicit ARM captures neutral, never a sensor
+callback. Neutral must be screen-up, beta/gamma within ±30°. Current beta/gamma
 must remain within ±60°, and shortest heading offset within ±90°. These explicit
 software limits keep the selected Euler mapping away from inversion/singular
 postures; they are not measured sensor-accuracy limits. Screen orientation changes
@@ -3021,7 +3053,7 @@ below 0.05° for 13.1 s. Longer drift and mixed-motion physical bounds remain un
 Mode changes clear both inputs and calibration, revoke local arm, supersede ARM
 with STOP while ready, and cancel setup/picker attempts. A fresh ARM and new
 post-arm hold are mandatory. A ready connection can remain open after confirmed
-STOP. Permission/calibration never arm. Connecting starts fresh calibration;
+STOP. Permission alone never arms. Connecting discards earlier calibration;
 ARM completion clears holds but preserves valid calibration.</p>
 <p>
 Physical nonzero requires active foreground, local arm, calibration, one tracked
@@ -3030,12 +3062,21 @@ drive-pad pointer and a fresh orientation sample. UI frames alone renew the hold
 before replacing an old sample, so a late callback cannot hide a missed deadline.
 Cached values and transmitter ticks cannot renew either input deadline.</p>
 <p>
-Release/bounds exit/cancel/multi-touch clears the hold before another send, with
-new press required. Sensor/reference/posture failure or either Physical freshness
-expiry revokes calibration. If armed or arming, end through existing cleanup;
-otherwise remain disarmed and require calibration. Return after lifecycle loss
-requires manual sensor enabling, connection, calibration, ARM and a new hold.
+Release/bounds exit/cancel/multi-touch/scroll clears the hold before another send,
+with new press required. Sensor/posture loss during a held drive or hold expiry
+revokes calibration and ends through cleanup. When released, a sample gap or
+out-of-envelope reading posture blocks new holds at zero but retains neutral and
+arm. Rejected touches stay blocked until release; fresh data cannot replay them.
+Invalid values or changed reference still revoke calibration and close armed or
+arming sessions. Return after lifecycle loss requires manual sensor enabling,
+connection, Set neutral &amp; ARM and a new hold.
 Old permission completions and detached callbacks cannot affect a later mode/session.</p>
+<p>
+Keep a sticky safety panel outside the drive section: local arm state, ARM/STOP
+and the latest session reason stay visible through scrolling and fault cleanup.
+Show temporary sensor/posture unavailability near the physical pad. The phone's
+original scroll trigger was not captured; host tests reproduce released-pad gaps
+and reading posture without weakening stream or lifecycle deadlines.</p>
 <p>
 Keep 50 ms attempted sends, 200 ms scheduler/submission failure, Status validation,
 STOP priority and 500 ms runnable cleanup unchanged. Phone measurements found a
@@ -3468,14 +3509,26 @@ After explicit acceptance, implement/test the static page from Linux, prepare a 
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.3 Add explicit sensor permission, calibration, mode UI and held pad; verify real-page browser tests for permissions, lifecycle, pointer cancellation, switching and no replay (21 Chromium tests pass, including red/green outside-first-touch and detached-callback regressions).</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.4 Update build/docs/evidence map, run complete iPhone/strict reader checks, publish a clean reviewable candidate and verify served assets (build <code>8fb8fd174d30</code>; all 15 live files match; local live-page boot stays disarmed with zero BLE picker calls).</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.5 Correct reported calibration/scroll/status UX with failing reproductions; verify one-tap neutral/ARM, released-pad safety and visible status, then publish a clean candidate and check served assets.</li>
 </ul>
 <h2 id="openspec--changes--add-iphone-physical-control--tasks--3-phone-and-physical-acceptance">3. Phone and physical acceptance</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Record phone model/iOS/Bluefy; confirm 60 s neutral stability, combined sensor/BLE stream timing, signs and UI behavior. Check denial/retry, stale sensor/UI, reference/posture changes, lock/app-switch, release and fresh manual recovery.</li>
+<p>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.0 Retest corrected one-tap neutral/ARM, released-pad scrolling and visible status/STOP on the phone with motor power off; record any fault reason.</p>
+</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Announce a bounded stand batch and obtain fresh go; verify all six signs, blended axes, caps, neutral/release, STOP and mode-switch stop with physical confirmation.</li>
+<p>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Record phone model/iOS/Bluefy; confirm 60 s neutral stability, combined sensor/BLE stream timing, signs and UI behavior. Check denial/retry, stale sensor/UI, reference/posture changes, lock/app-switch, release and fresh manual recovery.</p>
+</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.3 Review actual phone/stand evidence and explicit limits; accept only the demonstrated scope and validate before archive.</li>
+<p>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Announce a bounded stand batch and obtain fresh go; verify all six signs, blended axes, caps, neutral/release, STOP and mode-switch stop with physical confirmation.</p>
+</li>
+<li>
+<p>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.3 Review actual phone/stand evidence and explicit limits; accept only the demonstrated scope and validate before archive.</p>
+</li>
 </ul>
 <h2 id="openspec--changes--add-iphone-physical-control--tasks--workflow-follow-up">Workflow follow-up</h2><p>
 Archive/sync only after tracked acceptance tasks are complete. Keep unmeasured
@@ -3718,11 +3771,19 @@ Phone and separately authorized stand stop</td>
 </tr>
 <tr>
 <td>
-Lifecycle/reference/posture/invalid sample cleanup</td>
+Lifecycle/reference/invalid sample cleanup; held posture failure</td>
 <td>
 Unit/Session/browser tests</td>
 <td>
 Phone lock/app switch/orientation and stand interruption</td>
+</tr>
+<tr>
+<td>
+One-tap neutral/ARM; released-pad gaps/posture; visible status/STOP</td>
+<td>
+Red/green Session and scroll browser regressions</td>
+<td>
+Retest reported scroll/calibration UX on Bluefy</td>
 </tr>
 <tr>
 <td>
@@ -3737,9 +3798,13 @@ Actual sensor-plus-BLE gaps, STOP/readback; physical observation</td>
 <p>
 Pre-implementation sensor-only <a href="../firmware/bench/2026-10-21-iphone-sensors/notes.md">phone result</a>
 supports the selected interaction, not these product acceptance gates. No task 3
-or sensor-driven rover result is claimed yet.</p>
+acceptance or sensor-driven rover result is claimed yet. The first integrated
+<a href="../firmware/bench/2026-10-21-iphone-physical/notes.md">motor-power-off response</a>
+confirmed signs/neutral/release/STOP/mode changes, but reported scrolling disarm,
+hidden messages and the extra calibration tap. Phone model and Stream metrics
+were not supplied. Corrected phone UX and the actual scroll trigger remain open.</p>
 <p>
-Host evidence: 42 Node tests and 21 Chromium tests pass (source and built site). Physical unit tests
+Host evidence before the UX correction: 42 Node tests and 21 Chromium tests passed (source and built site). Physical unit tests
 cover signs/wrap/caps/invalid/reference/posture and separate deadlines. Session
 tests cover confirmed ARM/new hold, all-three wire values, mode/ARM races,
 independent expiry and cleanup. Real-page tests cover permission denial/late
@@ -3761,6 +3826,18 @@ Linux browser loaded that public site, checked its own revision, selected
 Physical while disconnected and remained disarmed with zero BLE picker calls.
 A detached old sensor callback cannot replace a newly calibrated/armed input
 (browser regression). This publication is not phone/BLE or motor acceptance.</p>
+<p>
+UX regression reproduction: targeted Node command selecting <code>captures neutral</code>
+and <code>released Physical</code> failed both tests before the change; browser command
+selecting <code>scrolling while released</code> failed with disconnected rather than ready.
+The browser injects a 350 ms sensor pause during scrolling; this reproduces a
+possible trigger rather than proving what Bluefy did. Corrected tests cover
+neutral capture/new press, rejected stale/invalid/posture ARM, preserved idle
+neutral/arm, rejected-press no replay, scroll cancellation and sticky fault reason.
+Real stream/lifecycle deadlines and held-drive expiry remain covered separately.
+After correction, all 46 Node tests and 23 source-page Chromium scenarios pass.
+The connected Buttons layout still fits the 390×844 viewport; larger text,
+STOP under a held finger and existing lifecycle behavior remain covered.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>
@@ -4871,12 +4948,14 @@ interaction; it does not establish sensor-plus-BLE or motor acceptance.</p>
 <li>
 Add a Buttons / Physical selector, defaulting to Buttons without persistence.</li>
 <li>
-In Physical mode, explicitly enable orientation sensors, calibrate neutral while
-disarmed, then ARM and hold a drive pad. Combine forward/back tilt, strafe tilt
+In Physical mode, explicitly enable orientation sensors, then capture neutral
+and ARM in one tap while disarmed, followed by a new drive-pad hold. Combine forward/back tilt, strafe tilt
 and heading offset into gentle vx/vy/wz. Holding a twist sustains rotation.</li>
 <li>
-Invalidate motion on mode changes, stale/invalid sensor input, posture changes
-or interruptions. Preserve existing STOP, stream, cleanup and manual recovery.</li>
+Block motion on unavailable input; sensor/posture loss during a hold ends the
+session. Released-pad sensor gaps or reading posture retain neutral and arm at
+zero. Preserve STOP, stream, cleanup and lifecycle recovery. Keep safety status
+and STOP visible while scrolling.</li>
 <li>
 Keep the isolated diagnostic available and separate phone/radio/motor evidence.</li>
 </ul>
@@ -4900,6 +4979,12 @@ implementation. <a href="../firmware/bench/2026-10-21-iphone-sensors/notes.md">P
 records the partial export, 13.1 s quiet sample and timing limits. Motor tests
 still require a separately announced batch and fresh go; acceptance/archive are
 not implied by this implementation authorization.</p>
+<p>
+The first motor-power-off integrated test passed directions, neutral/release,
+STOP and switching. Todor then reported unwanted disarming during scrolling,
+hidden status and the unnecessary separate calibration tap. This authorizes the
+one-tap neutral/ARM and released-pad UX correction; the exact Bluefy trigger and
+the corrected phone behavior still require retesting.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/proposal.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--proposal--proposal">Proposal</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--proposal--why">Why</h2><p>

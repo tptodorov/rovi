@@ -18,13 +18,17 @@
       <p class="intro">Open in Bluefy. Choose your car, arm at zero, then hold a direction to move.</p>
       <p class="ownership intro">Connecting claims the car and switches off its Wi-Fi AP.</p>
       <div class="connection-actions"><button id="connect" class="primary">Choose &amp; connect</button><button id="disconnect" disabled>Disconnect</button></div>
-      <p id="message" role="status" aria-live="polite">Not connected. Your car stays disarmed until you choose ARM.</p>
       <p id="device" class="small">No car selected</p>
     </section>
 
-    <section class="drive" aria-label="Motion controls">
-      <div class="section-line mode-line"><label for="control-mode">Control mode</label><select id="control-mode"><option value="buttons">Buttons</option><option value="physical">Physical</option></select><span id="local-arm">Locally disarmed</span></div>
+    <section class="safety-panel" aria-label="Control status and stop">
+      <div class="section-line"><h2>Control status</h2><strong id="local-arm">Locally disarmed</strong></div>
       <div class="safety-actions"><button id="arm" disabled>ARM AT ZERO</button><button id="stop" class="stop" disabled>STOP</button></div>
+      <p id="message" role="status" aria-live="polite">Not connected. Your car stays disarmed until you choose ARM.</p>
+    </section>
+
+    <section class="drive" aria-label="Motion controls">
+      <div class="section-line mode-line"><label for="control-mode">Control mode</label><select id="control-mode"><option value="buttons">Buttons</option><option value="physical">Physical</option></select></div>
       <p class="hint" id="hold-hint">Hold to move · release to zero · STOP requires a new ARM</p>
       <div class="pad" id="button-controls" aria-label="Six press-and-hold directions">
         <button data-direction="ccw" class="direction ccw" aria-label="Hold to rotate counter-clockwise" disabled><span aria-hidden="true">↶</span>Rotate left</button>
@@ -36,8 +40,8 @@
         <button data-direction="backward" class="direction backward" aria-label="Hold to move backward" disabled><span aria-hidden="true">↓</span>Backward</button>
       </div>
       <div id="physical-controls" hidden>
-        <p id="physical-status" class="small" role="status">Enable sensors, connect, calibrate neutral, then ARM.</p>
-        <div class="physical-actions"><button id="sensors-enable">Enable sensors</button><button id="physical-calibrate" disabled>Calibrate neutral</button></div>
+        <p id="physical-status" class="small" role="status">Enable sensors, connect, then Set neutral &amp; ARM.</p>
+        <button id="sensors-enable">Enable sensors</button>
         <p id="physical-reading" class="small">No sensor reading</p>
         <button id="physical-drive" class="direction physical-drive" disabled>Hold to drive with phone</button>
         <p class="small">Portrait, screen up like a tray. Tilt forward/back to drive, sideways to strafe, turn left/right to rotate. Return to neutral or release to zero. Switching modes disarms.</p>

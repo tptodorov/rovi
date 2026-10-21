@@ -32,7 +32,7 @@ async function ready(page) {
   await page.locator('#connect').click(); await expect(page.locator('#phase')).toHaveText('ready');
   await page.locator('#control-mode').selectOption('physical');
   await page.locator('#sensors-enable').click();
-  await expect(page.locator('#physical-calibrate')).toBeEnabled(); await page.locator('#physical-calibrate').click();
+  await expect(page.locator('#arm')).toBeEnabled();
   await page.locator('#arm').click(); await expect(page.locator('#local-arm')).toHaveText('Locally armed');
 }
 async function hold(page) {
@@ -41,6 +41,36 @@ async function hold(page) {
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
 }
 const zero = 'vx 0.00 · vy 0.00 · wz 0.00';
+test('scrolling while released preserves arm and keeps STOP and status visible', async ({ page }) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await ready(page);
+  await page.evaluate(() => { window.emitAngles = false; });
+  await page.mouse.wheel(0, 600); await page.waitForTimeout(350);
+  await expect(page.locator('#phase')).toHaveText('ready');
+  await expect(page.locator('#local-arm')).toHaveText('Locally armed');
+  await expect(page.locator('#requested')).toHaveText(zero);
+  for (const id of ['local-arm', 'stop', 'message']) await expect(page.locator(`#${id}`)).toBeInViewport();
+  await page.evaluate(() => { window.phoneAngles.beta = 75; window.emitAngles = true; });
+  await expect(page.locator('#physical-reading')).toContainText('β 75.0');
+  await expect(page.locator('#physical-drive')).toBeDisabled();
+  await expect(page.locator('#local-arm')).toHaveText('Locally armed');
+  await page.evaluate(() => { window.phoneAngles.beta = 0; });
+  await expect(page.locator('#physical-drive')).toBeEnabled();
+  await expect(page.locator('#requested')).toHaveText(zero);
+  await page.locator('#stop').click(); await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
+  expect(errors).toEqual([]);
+});
+test('scroll cancels a held drive without replay or discarding neutral', async ({ page }) => {
+  await ready(page); await hold(page);
+  await page.evaluate(() => { window.phoneAngles.alpha = 10; });
+  await expect(page.locator('#requested')).toContainText('wz 0.30');
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(page.locator('#requested')).toHaveText(zero);
+  await expect(page.locator('#local-arm')).toHaveText('Locally armed');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page.locator('#requested')).toHaveText(zero); await page.mouse.up();
+  await hold(page); await expect(page.locator('#requested')).toContainText('wz 0.30'); await page.mouse.up();
+});
 test('default Buttons never prompt; Physical combines angles and switching while held stops/disarms', async ({ page }, info) => {
   await expect(page.locator('#control-mode')).toHaveValue('buttons');
   expect(await page.evaluate(() => window.permissionCalls)).toBe(0);
@@ -65,7 +95,7 @@ test('permission denial and late permission after mode switch cannot arm or enab
   await page.locator('#control-mode').selectOption('buttons');
   await page.evaluate(() => window.resolvePermission('granted'));
   await page.locator('#control-mode').selectOption('physical');
-  await expect(page.locator('#physical-calibrate')).toBeDisabled();
+  await expect(page.locator('#arm')).toBeDisabled();
   await expect(page.locator('#physical-reading')).toHaveText('No sensor reading');
   expect(await page.evaluate(() => fake.calls.some(([kind, value]) => kind === 'control' && value === 1))).toBe(false);
 });
@@ -76,8 +106,11 @@ test('sensor or UI renewal loss independently ends Physical; returning data does
     await expect(page.locator('#requested')).toContainText('vx 0.10');
     await page.evaluate(key => { window[key] = false; }, source);
     await expect(page.locator('#phase')).toHaveText('disconnected');
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    for (const id of ['local-arm', 'stop', 'message']) await expect(page.locator(`#${id}`)).toBeInViewport();
+    await expect(page.locator('#message')).toContainText(source === 'emitAngles' ? 'Sensor readings expired' : 'Drive hold expired');
     await page.evaluate(key => { window[key] = true; }, source); await page.mouse.up();
-    await expect(page.locator('#requested')).toHaveText(zero); await expect(page.locator('#physical-calibrate')).toBeDisabled();
+    await expect(page.locator('#requested')).toHaveText(zero); await expect(page.locator('#arm')).toBeDisabled();
     await page.reload();
   }
 });
@@ -95,7 +128,7 @@ test('a detached sensor callback cannot replace a newly calibrated and armed inp
   await page.evaluate(() => { window.phoneAngles = { alpha: 123, beta: 0, gamma: 0 }; });
   await page.locator('#sensors-enable').click();
   await expect(page.locator('#physical-reading')).toContainText('α 123.0');
-  await page.locator('#physical-calibrate').click(); await page.locator('#arm').click();
+  await page.locator('#arm').click();
   await expect(page.locator('#local-arm')).toHaveText('Locally armed'); await hold(page);
   await page.evaluate(() => { window.phoneAngles.alpha = 143; });
   await expect(page.locator('#requested')).toContainText('wz 0.30');

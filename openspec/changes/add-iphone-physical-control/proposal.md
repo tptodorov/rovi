@@ -9,11 +9,13 @@ interaction; it does not establish sensor-plus-BLE or motor acceptance.
 ## What Changes
 
 - Add a Buttons / Physical selector, defaulting to Buttons without persistence.
-- In Physical mode, explicitly enable orientation sensors, calibrate neutral while
-  disarmed, then ARM and hold a drive pad. Combine forward/back tilt, strafe tilt
+- In Physical mode, explicitly enable orientation sensors, then capture neutral
+  and ARM in one tap while disarmed, followed by a new drive-pad hold. Combine forward/back tilt, strafe tilt
   and heading offset into gentle vx/vy/wz. Holding a twist sustains rotation.
-- Invalidate motion on mode changes, stale/invalid sensor input, posture changes
-  or interruptions. Preserve existing STOP, stream, cleanup and manual recovery.
+- Block motion on unavailable input; sensor/posture loss during a hold ends the
+  session. Released-pad sensor gaps or reading posture retain neutral and arm at
+  zero. Preserve STOP, stream, cleanup and lifecycle recovery. Keep safety status
+  and STOP visible while scrolling.
 - Keep the isolated diagnostic available and separate phone/radio/motor evidence.
 
 ## Capabilities
@@ -43,3 +45,9 @@ implementation. [Phone evidence](../../../firmware/bench/2026-10-21-iphone-senso
 records the partial export, 13.1 s quiet sample and timing limits. Motor tests
 still require a separately announced batch and fresh go; acceptance/archive are
 not implied by this implementation authorization.
+
+The first motor-power-off integrated test passed directions, neutral/release,
+STOP and switching. Todor then reported unwanted disarming during scrolling,
+hidden status and the unnecessary separate calibration tap. This authorizes the
+one-tap neutral/ARM and released-pad UX correction; the exact Bluefy trigger and
+the corrected phone behavior still require retesting.

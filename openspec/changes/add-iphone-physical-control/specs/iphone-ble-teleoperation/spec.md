@@ -32,7 +32,7 @@ Buttons SHALL retain six single-axis hold directions; multiple touches yield zer
 
 ### Requirement: Explicit zero then ARM
 
-ARM SHALL require a new user action and, in Physical mode, enabled fresh calibrated sensor input. It SHALL invalidate all touches, stream fresh zero and send ARM once. Local motion permission SHALL require both successful completion of that ARM write and a subsequent fresh Status read reporting Armed/none/none within one second of the action. A notification alone SHALL NOT grant motion. Failure, refusal or timeout SHALL clear intent and end through cleanup; late callbacks SHALL NOT arm locally.
+ARM SHALL require a new user action; Physical ARM SHALL capture neutral from fresh valid sensors in that action. It SHALL invalidate touches, stream fresh zero and send ARM once. Local motion permission SHALL require the ARM write and a subsequent fresh Status read reporting Armed/none/none within one second. A notification alone SHALL NOT grant motion. Failure, refusal or timeout SHALL clear intent and end through cleanup; late callbacks SHALL NOT arm locally.
 
 #### Scenario: Touch predates ARM
 
@@ -45,11 +45,12 @@ ARM SHALL require a new user action and, in Physical mode, enabled fresh calibra
 - **WHEN** ARM returns an ATT error or its write/Status confirmation misses the one-second deadline
 - **THEN** the client remains locally disarmed and requires a new connection and explicit ARM before motion
 
-#### Scenario: Physical calibration cannot arm
+#### Scenario: One explicit Physical action captures neutral and arms
 
-- **WHEN** sensors are enabled or neutral is calibrated while disarmed
+- **WHEN** sensors are enabled while disarmed
 - **THEN** no ARM or nonzero setpoint is sent
-- **AND** an ARM request without valid physical prerequisites is refused locally; successful ARM clears any old hold and requires a new press
+- **AND** a subsequent explicit Set neutral & ARM captures the current fresh screen-up pose without a separate calibration tap, sends zero then ARM and requires a new post-arm press
+- **AND** missing/stale/invalid sensors or an invalid neutral posture refuse ARM locally without an ARM write
 
 ### Requirement: Hold cancellation and input expiry
 
@@ -63,6 +64,17 @@ Nonzero intent SHALL require one tracked press inside the selected direction con
 
 ## ADDED Requirements
 
+### Requirement: Visible control status
+
+Local arm state, STOP and the latest session message SHALL remain visible while scrolling the connected controller, including after a fault disconnects it. Physical mode SHALL explain when input is temporarily unavailable while released. Scroll SHALL clear any hold before another send, without itself revoking arm or calibration. Real lifecycle and stream failures SHALL retain their existing cleanup behavior.
+
+#### Scenario: Scroll while armed at zero
+
+- **WHEN** the user scrolls with the Physical drive pad released
+- **THEN** arm state, STOP and the session reason stay visible, intent remains zero and scrolling alone does not disconnect
+- **AND** a genuine stream or lifecycle failure still disarms and displays its reason
+
+
 ### Requirement: Explicit physical sensor setup
 
 Physical sensor access SHALL require an active user Enable Sensors action, feature detection and permission handling. Missing/denied/failed permission or missing finite alpha/beta/gamma SHALL prevent physical motion. Late permission results or callbacks from an earlier mode, enable attempt or closed session SHALL NOT change current input. Sensor events SHALL NOT select a device, ARM or write BLE.
@@ -75,7 +87,7 @@ Physical sensor access SHALL require an active user Enable Sensors action, featu
 
 ### Requirement: Physical calibration and angle mapping
 
-Calibration SHALL require fresh finite orientation, local disarm and no pending control. Neutral beta/gamma SHALL be within ±30° with screen up. Signed shortest offsets SHALL map negative beta to forward, negative gamma to left strafe, positive alpha to left rotation, with 3° dead zones, linear scale to 20° and saturation. Held heading offset SHALL sustain rotation; neutral SHALL request zero. No silent recentering is allowed.
+Each explicit Physical ARM SHALL calibrate fresh finite orientation while locally disarmed with no pending control. Neutral beta/gamma SHALL be within ±30° with screen up. Shortest offsets SHALL map negative beta to forward, negative gamma to left strafe, positive alpha to left rotation, with 3° dead zones and linear scale to saturation at 20°. Held heading offset SHALL sustain rotation; neutral SHALL request zero. No silent recentering is allowed.
 
 #### Scenario: Heading wrap and sustained twist
 
@@ -85,19 +97,31 @@ Calibration SHALL require fresh finite orientation, local disarm and no pending 
 
 #### Scenario: Neutral posture and operating envelope
 
-- **WHEN** calibration beta or gamma exceeds ±30°, or a current beta/gamma exceeds ±60°, or heading offset exceeds ±90°, or the screen orientation changes
+- **WHEN** calibration beta or gamma exceeds ±30°, or a held drive has current beta/gamma beyond ±60° or heading offset beyond ±90°, or the screen orientation changes
 - **THEN** calibration or motion is rejected with an explanation
 - **AND** an armed or arming Physical session loses calibration and ends through cleanup, with manual recovery required
 
+#### Scenario: Reading posture while released
+
+- **WHEN** the pad is released and the phone leaves the operating envelope
+- **THEN** intent remains zero and the pad is unavailable, preserving arm and neutral
+- **AND** returning to valid fresh input permits only a new press; it neither recenters nor replays a rejected press
+
 ### Requirement: Independent physical sample freshness
 
-Only newly received valid orientation events SHALL renew a 250 ms monotonic sample deadline. Expiry SHALL be checked before replacing an old sample. Stale/invalid input or changed orientation reference SHALL revoke calibration; if locally armed or arming, it SHALL end through cleanup before another nonzero send. UI frames, stream ticks, cached values and declared motion interval SHALL NOT renew sample freshness or silently recover motion.
+Only new valid orientation events SHALL renew a 250 ms monotonic sample deadline. Expiry during a held drive SHALL be checked before replacing a sample and end through cleanup before another nonzero send. A released-pad gap SHALL preserve arm/neutral at zero and reject presses until fresh input returns. Invalid input or changed reference SHALL revoke calibration and end armed/arming sessions. UI frames, stream ticks and cached values SHALL NOT renew sample freshness or recover a lost hold.
 
 #### Scenario: Sensor stops while UI and stream continue
 
 - **WHEN** no valid orientation arrives for 250 ms while the held pad and transmitter continue running
 - **THEN** requested motion becomes zero, calibration and local arm are revoked, and cleanup begins
 - **AND** a late sample or resumed UI cannot restore motion without manual recovery
+
+#### Scenario: Sensor pause while released
+
+- **WHEN** orientation pauses with no drive hold, but the foreground and BLE stream remain healthy
+- **THEN** no motion is permitted until new valid input returns, while arm and neutral remain
+- **AND** an attempted press during the pause cannot start motion when readings return; all touches must release before a new press
 
 ### Requirement: Explicit control mode switching
 

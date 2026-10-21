@@ -6,14 +6,19 @@
 | Three relative angles, wrap, dead zone, per-axis clamps | Physical unit tests | Phone signs, held twist, 60 s neutral drift; stand mixed axes |
 | Independent sample/UI deadlines and no old input replay | Fake-clock input and Session tests, browser stalls | Phone stalls and observed manual recovery |
 | Mode changes supersede ARM, clear/disarm/STOP | Fake-GATT race tests; real page switch while held | Phone and separately authorized stand stop |
-| Lifecycle/reference/posture/invalid sample cleanup | Unit/Session/browser tests | Phone lock/app switch/orientation and stand interruption |
+| Lifecycle/reference/invalid sample cleanup; held posture failure | Unit/Session/browser tests | Phone lock/app switch/orientation and stand interruption |
+| One-tap neutral/ARM; released-pad gaps/posture; visible status/STOP | Red/green Session and scroll browser regressions | Retest reported scroll/calibration UX on Bluefy |
 | Existing stream/Status/cleanup limits | Existing and new Session regressions | Actual sensor-plus-BLE gaps, STOP/readback; physical observation |
 
 Pre-implementation sensor-only [phone result](../../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
 supports the selected interaction, not these product acceptance gates. No task 3
-or sensor-driven rover result is claimed yet.
+acceptance or sensor-driven rover result is claimed yet. The first integrated
+[motor-power-off response](../../../firmware/bench/2026-10-21-iphone-physical/notes.md)
+confirmed signs/neutral/release/STOP/mode changes, but reported scrolling disarm,
+hidden messages and the extra calibration tap. Phone model and Stream metrics
+were not supplied. Corrected phone UX and the actual scroll trigger remain open.
 
-Host evidence: 42 Node tests and 21 Chromium tests pass (source and built site). Physical unit tests
+Host evidence before the UX correction: 42 Node tests and 21 Chromium tests passed (source and built site). Physical unit tests
 cover signs/wrap/caps/invalid/reference/posture and separate deadlines. Session
 tests cover confirmed ARM/new hold, all-three wire values, mode/ARM races,
 independent expiry and cleanup. Real-page tests cover permission denial/late
@@ -35,3 +40,15 @@ Linux browser loaded that public site, checked its own revision, selected
 Physical while disconnected and remained disarmed with zero BLE picker calls.
 A detached old sensor callback cannot replace a newly calibrated/armed input
 (browser regression). This publication is not phone/BLE or motor acceptance.
+
+UX regression reproduction: targeted Node command selecting `captures neutral`
+and `released Physical` failed both tests before the change; browser command
+selecting `scrolling while released` failed with disconnected rather than ready.
+The browser injects a 350 ms sensor pause during scrolling; this reproduces a
+possible trigger rather than proving what Bluefy did. Corrected tests cover
+neutral capture/new press, rejected stale/invalid/posture ARM, preserved idle
+neutral/arm, rejected-press no replay, scroll cancellation and sticky fault reason.
+Real stream/lifecycle deadlines and held-drive expiry remain covered separately.
+After correction, all 46 Node tests and 23 source-page Chromium scenarios pass.
+The connected Buttons layout still fits the 390×844 viewport; larger text,
+STOP under a held finger and existing lifecycle behavior remain covered.

@@ -61,29 +61,40 @@ batch still needs its own announced stand setup and fresh go.
 2. Choose and connect the car. If a permission dialog interrupts an existing
    connection, enable sensors first and then connect manually again.
 3. Hold the phone in portrait, screen up like a tray (within 30° of flat), and tap
-   **Calibrate neutral** while disarmed. Connecting clears any earlier calibration.
-4. Tap **ARM AT ZERO**, then use a **new** hold on **Hold to drive with phone**.
+   **SET NEUTRAL & ARM** while disarmed. That single action captures neutral and
+   arms at zero. Each ARM captures the current neutral; there is no separate
+   calibration tap. Connecting clears any earlier calibration.
+4. Use a **new** hold on **Hold to drive with phone**.
    Tip forward/back to drive; sideways to strafe; turn the whole phone left/right
    to rotate. Holding a twist sustains rotation; all three components can combine.
 5. Return to neutral or release to zero. **STOP** disarms and requires fresh ARM
    and a new hold. Changing modes also clears calibration and disarms; an open
-   connection may remain after confirmed STOP. Sensors must be enabled/calibrated
-   again when selecting Physical.
+   connection may remain after confirmed STOP. Enable sensors again when selecting
+   Physical, then use Set neutral & ARM.
 
 Each axis uses a 3° dead zone and scales to full gentle reference at 20°:
 up to 0.1 m/s per translation axis or 0.3 rad/s rotation, further clipped by the
 car's advertised limits. These are open-loop references, not measured velocities.
 Neutral beta/gamma must be within ±30°; current beta/gamma must remain within
-±60° and heading offset within ±90°. Leaving this posture, changed sensor
-reference, invalid/stale samples or hold expiry closes an armed Physical session.
+±60° and heading offset within ±90° to drive. While the pad is released, sensor
+pauses and reading posture block the pad at zero without discarding neutral or arm;
+returning readings cannot replay a rejected press. Scroll cancels any hold. During
+a held drive, sensor/posture loss or hold expiry closes the session. Changed
+reference or invalid values also close an armed session, including while released.
 No automatic recentering, reconnection or re-arming occurs.
 
 Only fresh orientation callbacks renew the 250 ms sample deadline; only UI frames
 renew the separate 250 ms hold deadline. Cached angles and transmitter ticks
-cannot keep either alive. Lock/app switch/screen rotation require manual Enable,
-connection, calibration, ARM and a new press. Existing stream/Status/cleanup
+cannot keep either alive. A sticky safety panel keeps local arm, STOP and the
+session/fault reason visible while scrolling. Lock/app switch/screen rotation
+require manual Enable, connection, Set neutral & ARM and a new press. Existing stream/Status/cleanup
 deadlines remain unchanged. No compass heading, declared motion interval or
 integrated gyro rate is used for control.
+
+The [first motor-power-off phone run](../../firmware/bench/2026-10-21-iphone-physical/notes.md)
+confirmed directions, neutral/release and STOP/mode changes, but exposed the
+scrolling and calibration UX defects addressed above. Its exact scrolling trigger
+and the corrected phone behavior remain unverified; no stream metrics were supplied.
 
 ## Phone sensor test
 
