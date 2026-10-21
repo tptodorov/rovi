@@ -9,6 +9,10 @@ export class Hold {
 
   press(id, name, allowed, now) {
     if (!DIRECTIONS[name]) return;
+    this.track(id, name, allowed, now);
+  }
+
+  track(id, name, allowed, now) {
     this.pointers.set(id, name);
     if (!allowed || this.blocked || this.pointers.size !== 1) return this.clear();
     this.current = id;

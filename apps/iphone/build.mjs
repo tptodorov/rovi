@@ -5,7 +5,7 @@ const root = new URL('./', import.meta.url), output = new URL('dist/iphone/', ro
 await rm(new URL('dist/', root), { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 for (const name of ['index.html', 'style.css', 'app.js', 'wire.js', 'hold.js', 'ui.js', 'transport.js', 'session.js',
-  'sensor-test.html', 'sensor-test.css', 'sensor-test.js', 'sensor-model.js']) {
+  'sensor-test.html', 'sensor-test.css', 'sensor-test.js', 'sensor-model.js', 'angles.js', 'physical.js']) {
   await copyFile(new URL(name, root), new URL(name, output));
 }
 const revision = execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();

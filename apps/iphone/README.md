@@ -32,6 +32,7 @@ No test touches a BLE device. Runtime assets use no third-party scripts or comma
 | --- | --- |
 | `wire.js` | 72-byte setpoint, capabilities and Status codecs |
 | `hold.js` | Input interpreter: press-and-hold intent with 250 ms expiry |
+| `physical.js`, `angles.js` | Calibrated three-axis input, posture guards and independent sensor/hold deadlines |
 | `transport.js` | Web Bluetooth picker, GATT validation and reads/writes |
 | `session.js` | One owner of claim, zero+ARM, STOP latch, stream, deadlines and cleanup |
 | `ui.js` | Pointer/lifecycle wiring and rendering |
