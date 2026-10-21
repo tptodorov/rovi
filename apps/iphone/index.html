@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Rovi · Car controller</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-phase="disconnected">
+  <main>
+    <header><a class="brand" href="./" aria-label="Rovi home">rovi<span>car controller</span></a><span class="badge" id="phase">Disconnected</span></header>
+    <section class="connection" aria-labelledby="connection-title">
+      <div class="eyebrow">DIRECT BLUETOOTH</div>
+      <h1 id="connection-title">A little room to roam.</h1>
+      <p class="intro">Open in Bluefy. Choose your car, arm at zero, then hold a direction to move.</p>
+      <p class="ownership intro">Connecting claims the car and switches off its Wi-Fi AP.</p>
+      <div class="connection-actions"><button id="connect" class="primary">Choose &amp; connect</button><button id="disconnect" disabled>Disconnect</button></div>
+      <p id="message" role="status" aria-live="polite">Not connected. Your car stays disarmed until you choose ARM.</p>
+      <p id="device" class="small">No car selected</p>
+    </section>
+
+    <section class="drive" aria-label="Motion controls">
+      <div class="section-line"><h2>Your controls</h2><span id="local-arm">Locally disarmed</span></div>
+      <div class="safety-actions"><button id="arm" disabled>ARM AT ZERO</button><button id="stop" class="stop" disabled>STOP</button></div>
+      <p class="hint">Hold to move · release to zero · STOP requires a new ARM</p>
+      <div class="pad" aria-label="Six press-and-hold directions">
+        <button data-direction="ccw" class="direction ccw" aria-label="Hold to rotate counter-clockwise" disabled><span aria-hidden="true">↶</span>Rotate left</button>
+        <button data-direction="forward" class="direction forward" aria-label="Hold to move forward" disabled><span aria-hidden="true">↑</span>Forward</button>
+        <button data-direction="cw" class="direction cw" aria-label="Hold to rotate clockwise" disabled><span aria-hidden="true">↷</span>Rotate right</button>
+        <button data-direction="left" class="direction left" aria-label="Hold to strafe left" disabled><span aria-hidden="true">←</span>Strafe left</button>
+        <div class="pad-center" aria-hidden="true"><span>＋</span><small>ONE DIRECTION<br>AT A TIME</small></div>
+        <button data-direction="right" class="direction right" aria-label="Hold to strafe right" disabled><span aria-hidden="true">→</span>Strafe right</button>
+        <button data-direction="backward" class="direction backward" aria-label="Hold to move backward" disabled><span aria-hidden="true">↓</span>Backward</button>
+      </div>
+      <div class="request"><span>Requested motion</span><output id="requested">vx 0.00 · vy 0.00 · wz 0.00</output><small>Translation m/s · rotation rad/s · approximate open-loop references</small></div>
+    </section>
+
+    <section class="telemetry" aria-labelledby="reported-title">
+      <div class="section-line"><h2 id="reported-title">Last reported by car</h2><span id="status-age">No report</span></div>
+      <p id="reported">State unknown · reason unknown · error unknown</p>
+      <p class="small">Reported state is not measured wheel motion. A write or disconnect does not verify a physical stop.</p>
+      <details><summary>Connection details</summary><p id="limits">Limits unavailable</p><p id="windows">Windows unavailable</p><p id="stream">Stream: no writes</p><p>Setpoint: 72 bytes · MTU / payload capacity: unavailable in this browser</p></details>
+    </section>
+    <footer><span>Supervised use · phone validation pending</span><span id="version">Source checkout</span></footer>
+    <noscript>This controller requires JavaScript and the Bluefy browser.</noscript>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
