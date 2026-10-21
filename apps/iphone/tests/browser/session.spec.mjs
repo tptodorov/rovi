@@ -80,3 +80,20 @@ test('missing Web Bluetooth is explained without claiming a device', async ({ pa
   await page.getByRole('button', { name: 'Choose & connect' }).click();
   await expect(page.locator('#phase')).toHaveText('disconnected');
 });
+
+test('STOP acts on touch while another finger holds a direction', async ({ page }) => {
+  await connect(page); await page.getByRole('button', { name: 'ARM AT ZERO' }).click();
+  await expect(page.locator('#local-arm')).toHaveText('Locally armed');
+  const forward = await page.locator('[data-direction="forward"]').boundingBox();
+  const stop = await page.locator('#stop').boundingBox();
+  const cdp = await page.context().newCDPSession(page);
+  const point = (box, id) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2, id });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(forward, 1)] });
+  await expect(page.locator('#requested')).toContainText('vx 0.10');
+  // iOS synthesizes no click for a second finger, so STOP must act on touch-down alone.
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(forward, 1), point(stop, 2)] });
+  await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
+  await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  expect(await page.evaluate(() => fake.calls.filter(x => x[0] === 'control' && x[1] === 2).length)).toBe(1);
+});
