@@ -1,4 +1,4 @@
-import { ZERO, direction, DIRECTIONS } from './wire.cef9e9bca8fe.js';
+import { ZERO, direction, DIRECTIONS } from './wire.2b5104400362.js';
 
 // Only UI frames renew a tracked hold. Transmission never extends this deadline.
 export class Hold {
