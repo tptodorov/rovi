@@ -12,7 +12,7 @@
 
 - [x] 2.6 Replace the Physical held pad with explicit neutral-gated START/PAUSE, independent frame expiry and precise posture faults; reproduce tap-only failure, verify host/browser safety paths, publish and verify assets (48 Node/26 source and built-page Chromium scenarios pass; clean `cef9e9bca8fe`, 15 live files match; public boot paused/disarmed with zero picker calls).
 
-- [ ] 2.7 Apply UX/design guidelines to both controller modes: document flows/states/accessibility, reproduce compact-layout and extra-enable issues, implement responsive/light/dark controller and mode-triggered sensor setup, verify safety/layout/keyboard/diagnostics and publish a reviewable candidate.
+- [x] 2.7 Apply UX/design guidelines to both controller modes: document flows/states/accessibility, reproduce compact-layout and extra-enable issues, implement responsive/light/dark controller and mode-triggered sensor setup, verify safety/layout/keyboard/diagnostics and publish a reviewable candidate (48 Node/37 source and built browser checks pass; `2b5104400362`, 15 public files match, live boot disarmed with no BLE picker, [PR #104](https://github.com/tptodorov/rovi/pull/104)).
 
 ## 3. Phone and physical acceptance
 

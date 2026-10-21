@@ -101,6 +101,16 @@ Bluefy native-permission or motor acceptance. STOP remains immediate and modes
 remain unpersisted, deliberately following the control contract over generic UI
 recommendations for confirmations or URL state.
 
-Controller-redesign host result: 48 Node tests and 37 source-page Chromium scenarios
-pass. Reviewed screenshots show both modes at 390×844 and compact Buttons at
-320×568, plus landscape and dark 200% text. Packaged/public checks follow.
+Controller-redesign host result: 48 Node tests and 37 source and built-page Chromium
+scenarios pass. Reviewed screenshots show both modes at 390×844 and compact Buttons at
+320×568, plus landscape and dark 200% text.
+
+
+Redesigned controller candidate:
+<https://tptodorov.github.io/rovi/iphone/?v=2b5104400362>, [PR #104](https://github.com/tptodorov/rovi/pull/104)
+stacked on #102. Pages deployment succeeded; all 15 live files match the clean
+build. A live Chromium smoke check confirmed default Buttons with no sensor prompt,
+explicit Physical setup, Retry hidden after fresh readings, local disarm/zero,
+and no BLE picker calls/page errors. A preview tab is open in this workspace.
+Bluefy mode-selection permission and redesigned phone usability remain pending;
+this is publication evidence, with no rover connection or motor run.

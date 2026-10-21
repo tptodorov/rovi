@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>155</b> requirements</div><div><b>261</b> scenarios</div><div><b>59 / 65</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>155</b> requirements</div><div><b>261</b> scenarios</div><div><b>60 / 65</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>iPhone physical control</h2>
       <div class="notice"><p>
 See the proposal for acceptance status.</p>
@@ -3643,7 +3643,7 @@ After explicit acceptance, implement/test the static page from Linux, prepare a 
 </li>
 <li>
 <p>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.7 Apply UX/design guidelines to both controller modes: document flows/states/accessibility, reproduce compact-layout and extra-enable issues, implement responsive/light/dark controller and mode-triggered sensor setup, verify safety/layout/keyboard/diagnostics and publish a reviewable candidate.</p>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.7 Apply UX/design guidelines to both controller modes: document flows/states/accessibility, reproduce compact-layout and extra-enable issues, implement responsive/light/dark controller and mode-triggered sensor setup, verify safety/layout/keyboard/diagnostics and publish a reviewable candidate (48 Node/37 source and built browser checks pass; <code>2b5104400362</code>, 15 public files match, live boot disarmed with no BLE picker, <a href="https://github.com/tptodorov/rovi/pull/104">PR #104</a>).</p>
 </li>
 </ul>
 <h2 id="openspec--changes--add-iphone-physical-control--tasks--3-phone-and-physical-acceptance">3. Phone and physical acceptance</h2><ul>
@@ -4018,9 +4018,18 @@ Bluefy native-permission or motor acceptance. STOP remains immediate and modes
 remain unpersisted, deliberately following the control contract over generic UI
 recommendations for confirmations or URL state.</p>
 <p>
-Controller-redesign host result: 48 Node tests and 37 source-page Chromium scenarios
-pass. Reviewed screenshots show both modes at 390×844 and compact Buttons at
-320×568, plus landscape and dark 200% text. Packaged/public checks follow.</p>
+Controller-redesign host result: 48 Node tests and 37 source and built-page Chromium
+scenarios pass. Reviewed screenshots show both modes at 390×844 and compact Buttons at
+320×568, plus landscape and dark 200% text.</p>
+<p>
+Redesigned controller candidate:
+<a href="https://tptodorov.github.io/rovi/iphone/?v=2b5104400362">https://tptodorov.github.io/rovi/iphone/?v=2b5104400362</a>, <a href="https://github.com/tptodorov/rovi/pull/104">PR #104</a>
+stacked on #102. Pages deployment succeeded; all 15 live files match the clean
+build. A live Chromium smoke check confirmed default Buttons with no sensor prompt,
+explicit Physical setup, Retry hidden after fresh readings, local disarm/zero,
+and no BLE picker calls/page errors. A preview tab is open in this workspace.
+Bluefy mode-selection permission and redesigned phone usability remain pending;
+this is publication evidence, with no rover connection or motor run.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>
