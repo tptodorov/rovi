@@ -27,3 +27,8 @@ presses blocked until input is valid. Scroll cancels holds without recentering.
 Sensor/posture loss during a held drive, invalid values, reference changes and
 existing stream/lifecycle failures retain cleanup. Status/STOP stay visible.
 Corrected phone UX and sensor-driven motor behavior still need acceptance.
+
+Correction published as build `780f65eff594`: 46 Node tests and 23 source/built
+browser tests pass; all 15 public assets match the clean build. The live-page
+smoke check starts disarmed with no picker call. This is host/publication
+evidence, not another phone or motor run.

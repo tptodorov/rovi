@@ -49,6 +49,12 @@ possible trigger rather than proving what Bluefy did. Corrected tests cover
 neutral capture/new press, rejected stale/invalid/posture ARM, preserved idle
 neutral/arm, rejected-press no replay, scroll cancellation and sticky fault reason.
 Real stream/lifecycle deadlines and held-drive expiry remain covered separately.
-After correction, all 46 Node tests and 23 source-page Chromium scenarios pass.
+After correction, all 46 Node tests and 23 source and built-page Chromium scenarios pass.
 The connected Buttons layout still fits the 390×844 viewport; larger text,
 STOP under a held finger and existing lifecycle behavior remain covered.
+
+Corrected candidate: <https://tptodorov.github.io/rovi/iphone/?v=780f65eff594>.
+All 15 public files match clean build `780f65eff594`. A public-page Chromium
+check confirmed Buttons default, the combined Physical ARM label, no separate
+calibration button, disarmed state and zero picker calls/page errors. Pages
+deployment completed successfully. Corrected Bluefy UX remains pending task 3.0.
