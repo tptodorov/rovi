@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Rovi · Phone sensor test</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="sensor-test.css">
+</head>
+<body data-phase="disconnected">
+  <main>
+    <header><a class="brand" href="./">rovi<span>phone sensor test</span></a><span class="badge">No car connection</span></header>
+    <section>
+      <div class="eyebrow">PHYSICAL MODE · SENSOR DIAGNOSTIC</div>
+      <h1>Three axes, phone only.</h1>
+      <p>This page reads phone sensors and previews their meaning. It cannot connect to Rovi or send motor commands. The car can stay switched off.</p>
+      <p>Use Bluefy. Hold the phone in portrait, screen facing up like a tray, with the top edge pointing away. Keep that posture throughout a trial.</p>
+      <label>Phone / iOS / Bluefy versions <input id="versions" placeholder="e.g. iPhone 11 Pro / iOS … / Bluefy …"></label>
+      <div class="connection-actions"><button id="enable" class="primary">Enable sensors</button><button id="disable" disabled>Finish &amp; report</button></div>
+      <p id="permissions">Permissions not requested</p><p id="message" role="status" aria-live="polite">Enable sensors, then calibrate while holding neutral.</p>
+    </section>
+    <section>
+      <h2>Live readings</h2>
+      <div class="connection-actions"><button id="calibrate" disabled>Calibrate neutral</button><button id="hold" disabled>Hold preview</button></div>
+      <output id="preview">Forward 0% · Left 0% · Rotate left 0%</output>
+      <div class="connection-actions"><button id="freeze-sensors" disabled>Pause sensor input in 2s</button><button id="freeze-ui" disabled>Pause hold renewal in 2s</button></div>
+      <p class="small">After 60 s still at neutral, tap <button id="stationary" disabled>Save stationary result</button> before tilting. This preserves the neutral jitter/drift separately.</p>
+      <p id="stationary-age" class="small">Neutral trial: not calibrated</p>
+      <p id="orientation">Orientation: no readings</p><p id="motion">Motion: no readings</p>
+      <p id="cadence">Arrival gaps: no readings</p>
+      <p class="small">α is heading, β forward/back tilt, γ side tilt. Heading is relative to calibration, not a compass. Missing axes or readings older than 250 ms block the preview.</p>
+      <p class="small">Local preview only: 3° dead zone, full scale at 20°. These trial values and Euler-angle mapping are unvalidated. Multiple axes may combine here; nothing is transmitted.</p>
+    </section>
+    <section>
+      <h2>Test sequence</h2>
+      <ol>
+        <li>Enable and calibrate neutral. Stay still for 60 seconds, then save the stationary result to measure jitter and drift.</li>
+        <li>Hold preview. Tip forward/back, then left/right. Return to neutral after each move.</li>
+        <li>Turn the whole phone left/right like a tray. Hold each heading for 10 seconds. The rotation preview should stay steady, then return to zero at neutral.</li>
+        <li>Combine tilt and turning. Check that each preview axis matches your intention and that releasing the pad immediately clears all three.</li>
+        <li>Tap a stall button, then hold preview before its two-second countdown ends. Preview must clear when freshness expires. Resume and recalibrate before testing the other stall.</li>
+        <li>Test app switch, lock/unlock and screen rotation. Preview must clear and require enabling/calibrating again.</li>
+      </ol>
+      <p class="small">Stall simulation continues the 50 ms local consumer. Resuming input never restores an old calibration or hold. These checks do not measure rover stop latency.</p>
+      <label>What you observed <textarea id="observations" rows="3" placeholder="Signs, steady-heading behavior, drift, cross-axis motion, interruptions…"></textarea></label>
+    </section>
+    <section>
+      <h2>Results</h2><p>Finish to freeze the run, then copy the report back to the chat. Reports stay on this phone until you share them.</p>
+      <button id="copy">Copy report</button><textarea id="report" rows="8" readonly aria-label="Sensor test report"></textarea>
+    </section>
+    <footer><span>Diagnostic · actual Bluefy support unverified</span><span id="version">Source checkout</span></footer>
+  </main>
+  <script type="module" src="sensor-test.js"></script>
+</body>
+</html>

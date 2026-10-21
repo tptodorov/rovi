@@ -1,0 +1,7 @@
+input, textarea { display: block; width: 100%; font: inherit; padding: .6rem; margin: .4rem 0 .8rem; border: 1px solid #b8c7ba; border-radius: .5rem; background: white; color: #193b36; }
+label { display: block; font-size: .8rem; }
+ol { padding-left: 1.2rem; font-size: .85rem; line-height: 1.6; }
+#orientation, #motion, #cadence, #report { font-size: .75rem; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+#preview { display: block; margin-top: 1rem; line-height: 1.7; font-variant-numeric: tabular-nums; }
+#hold { min-height: 72px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+#hold[data-held="true"] { background: #205748; color: white; }
