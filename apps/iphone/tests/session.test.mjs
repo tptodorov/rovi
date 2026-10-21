@@ -159,3 +159,55 @@ test('stream stats record writes, largest submission gap and slowest write for P
   assert.ok(session.stats.maxGap >= 60 && session.stats.maxGap < 200, String(session.stats.maxGap));
   assert.equal(session.stats.maxWrite, 7);
 });
+
+const physicalNeutral = { alpha: 350, beta: 0, gamma: 0 };
+const physicalTilt = { alpha: 10, beta: -20, gamma: -20 };
+async function physicalReady() {
+  const state = await ready(); state.session.selectMode('physical'); await flush();
+  state.session.physical.enable(); state.session.sensor(physicalNeutral); state.session.calibrate();
+  return state;
+}
+test('Physical needs calibration and explicit ARM plus a fresh hold; all three axes use the same wire stream', async () => {
+  const { session, fake, advance } = await physicalReady();
+  assert.equal(session.localArm, false); session.pressPhysical(1); session.arm(); await flush();
+  session.sensor(physicalTilt); await advance(50); assert.deepEqual(samples(fake).at(-1), [0, 0, 0]);
+  session.physical.release(1); session.pressPhysical(2); await advance(50);
+  assert.deepEqual(samples(fake).at(-1), [.1, .1, .3]);
+  session.physical.release(2); await advance(50); assert.deepEqual(samples(fake).at(-1), [0, 0, 0]);
+  session.selectMode('buttons'); await flush(); assert.equal(session.localArm, false);
+  assert.equal(session.physical.enabled, false); assert.equal(session.reported.reason, 'Stop');
+  assert.deepEqual(session.requested, ZERO);
+});
+test('mode change supersedes pending Physical ARM and late results cannot arm Buttons', async () => {
+  const { fake, session } = await physicalReady(), gate = pending();
+  const original = fake.chars.control.writeValueWithResponse;
+  fake.chars.control.writeValueWithResponse = bytes => bytes[0] === 1 ? gate.promise.then(() => original(bytes)) : original(bytes);
+  session.arm(); await flush(); session.pressPhysical(1); session.selectMode('buttons');
+  gate.resolve(); await flush();
+  assert.equal(session.mode, 'buttons'); assert.equal(session.localArm, false);
+  assert.equal(session.reported.reason, 'Stop'); assert.equal(session.physical.neutral, null);
+  assert.ok(samples(fake).every(values => values.every(value => value === 0)));
+});
+test('sensor expiry closes while UI and stream continue, and returning samples cannot recover', async () => {
+  const { session, advance } = await physicalReady(); session.arm(); await flush(); session.pressPhysical(1);
+  for (let at = 50; at <= 300; at += 50) { session.physical.renew(at); await advance(50); }
+  assert.equal(session.phase, 'disconnected'); assert.equal(session.localArm, false);
+  session.sensor(physicalTilt); assert.equal(session.physical.enabled, false);
+  assert.deepEqual(session.requested, ZERO);
+});
+test('invalid sensor, posture and hold expiry independently close an armed Physical session', async () => {
+  for (const failure of ['null', 'posture', 'hold']) {
+    const { session, advance, setTime } = await physicalReady(); session.arm(); await flush(); session.pressPhysical(1);
+    if (failure === 'hold') {
+      for (const at of [100, 200, 250]) { setTime(at); session.sensor(physicalTilt); }
+    } else session.sensor({ ...physicalTilt, beta: failure === 'null' ? null : 61 });
+    await advance(0);
+    assert.equal(session.phase, 'disconnected', failure); assert.equal(session.localArm, false, failure);
+    assert.equal(session.physical.neutral, null, failure);
+  }
+});
+test('Physical ARM without sensors/calibration is refused locally without an ARM write', async () => {
+  const { session, fake } = await ready(); session.selectMode('physical'); await flush();
+  session.arm(); await flush(); assert.equal(session.localArm, false);
+  assert.equal(fake.calls.some(([kind, value]) => kind === 'control' && value === 1), false);
+});
