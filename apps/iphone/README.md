@@ -1,6 +1,8 @@
 # iPhone BLE controller
 
-Static HTTPS controller for Bluefy on iPhone: button control plus an isolated phone-sensor diagnostic. Physical driving is not implemented yet.
+Static HTTPS controller for Bluefy on iPhone, with Buttons and Physical modes plus
+an isolated phone-sensor diagnostic. Physical mode is a host-tested candidate;
+combined phone/BLE and stand acceptance remain pending.
 Implementation is authorized by the [proposal acceptance record](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/proposal.md#proposal-acceptance).
 Implementation and scoped phone/stand acceptance completed on 2026-10-21:
 six directions/stops confirmed, ATT MTU 247 on iPhone 11 Pro/Bluefy, and
@@ -37,9 +39,45 @@ No test touches a BLE device. Runtime assets use no third-party scripts or comma
 | `session.js` | One owner of claim, zero+ARM, STOP latch, stream, deadlines and cleanup |
 | `ui.js` | Pointer/lifecycle wiring and rendering |
 
-Physical input will be another interpreter beside `hold.js`, selected by a
-Buttons / Physical switch in this client. It feeds only intent into `session.js`;
-it cannot arm or write GATT. The product change follows the sensor test below.
+Physical input is an interpreter beside `hold.js`, selected by the control-mode
+switch. It supplies intent to the existing Session and cannot arm or write GATT.
+
+## Physical mode candidate
+
+The [accepted implementation scope](../../openspec/changes/add-iphone-physical-control/proposal.md#proposal-acceptance)
+follows the [sensor-only phone result](../../firmware/bench/2026-10-21-iphone-sensors/notes.md).
+Its product [phone/stand acceptance tasks](../../openspec/changes/add-iphone-physical-control/tasks.md#3-phone-and-physical-acceptance)
+remain open. The first combined BLE check should use motor power off; a motor
+batch still needs its own announced stand setup and fresh go.
+
+1. Select **Physical**, tap **Enable sensors** and allow access. Choosing a mode or
+   granting permission does not connect or ARM. Buttons remain the default after reload.
+2. Choose and connect the car. If a permission dialog interrupts an existing
+   connection, enable sensors first and then connect manually again.
+3. Hold the phone in portrait, screen up like a tray (within 30° of flat), and tap
+   **Calibrate neutral** while disarmed. Connecting clears any earlier calibration.
+4. Tap **ARM AT ZERO**, then use a **new** hold on **Hold to drive with phone**.
+   Tip forward/back to drive; sideways to strafe; turn the whole phone left/right
+   to rotate. Holding a twist sustains rotation; all three components can combine.
+5. Return to neutral or release to zero. **STOP** disarms and requires fresh ARM
+   and a new hold. Changing modes also clears calibration and disarms; an open
+   connection may remain after confirmed STOP. Sensors must be enabled/calibrated
+   again when selecting Physical.
+
+Each axis uses a 3° dead zone and scales to full gentle reference at 20°:
+up to 0.1 m/s per translation axis or 0.3 rad/s rotation, further clipped by the
+car's advertised limits. These are open-loop references, not measured velocities.
+Neutral beta/gamma must be within ±30°; current beta/gamma must remain within
+±60° and heading offset within ±90°. Leaving this posture, changed sensor
+reference, invalid/stale samples or hold expiry closes an armed Physical session.
+No automatic recentering, reconnection or re-arming occurs.
+
+Only fresh orientation callbacks renew the 250 ms sample deadline; only UI frames
+renew the separate 250 ms hold deadline. Cached angles and transmitter ticks
+cannot keep either alive. Lock/app switch/screen rotation require manual Enable,
+connection, calibration, ARM and a new press. Existing stream/Status/cleanup
+deadlines remain unchanged. No compass heading, declared motion interval or
+integrated gyro rate is used for control.
 
 ## Phone sensor test
 
@@ -50,8 +88,10 @@ session or command modules. It does not change the button controller.
 Todor selected simultaneous three-axis input: forward/back tilt → forward/back,
 side tilt → left/right strafe, and heading offset from neutral → car rotation.
 Holding a twist keeps the rotation reference nonzero; returning to neutral zeros it.
-The diagnostic previews percentages only, with provisional 3°/20° dead-zone/full-scale
-angles. Signs, mixed-axis coupling and neutral posture still need phone evidence.
+The diagnostic previews percentages only, with 3°/20° dead-zone/full-scale
+angles. The [reported phone run](../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
+confirmed directions, held heading and neutral/release behavior. It contains only
+13.1 s of quiet evidence; full-minute drift and product BLE/stand checks remain open.
 
 1. Enter the actual phone, iOS and Bluefy versions. Tap **Enable sensors** and allow
    motion/orientation access. If a permission dialog interrupts collection, tap
@@ -81,9 +121,9 @@ angles. Signs, mixed-axis coupling and neutral posture still need phone evidence
 
 Host checks cover wrap, all three signs, null fields, independent freshness,
 late-sample recovery, permissions, lifecycle and BLE isolation. They cannot prove
-Bluefy sensor support. The [feasibility note](../../docs/research/iphone-motion-control-feasibility.md)
-records the implementation gate. No sensor-to-car integration or physical acceptance
-is claimed by this diagnostic.
+Bluefy sensor support by themselves. The [feasibility note](../../docs/research/iphone-motion-control-feasibility.md)
+records the scoped phone evidence and remaining gates. This isolated diagnostic
+does not exercise the product Session or establish physical acceptance.
 
 ## Evidence limits
 

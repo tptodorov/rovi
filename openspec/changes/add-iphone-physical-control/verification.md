@@ -12,3 +12,12 @@
 Pre-implementation sensor-only [phone result](../../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
 supports the selected interaction, not these product acceptance gates. No task 3
 or sensor-driven rover result is claimed yet.
+
+Host evidence: 41 Node tests and 20 Chromium tests pass. Physical unit tests
+cover signs/wrap/caps/invalid/reference/posture and separate deadlines. Session
+tests cover confirmed ARM/new hold, all-three wire values, mode/ARM races,
+independent expiry and cleanup. Real-page tests cover permission denial/late
+completion, switching while held, sensor/UI loss, screen rotation and manual
+recovery. An outside-first-touch regression failed with wz=0.30 before the
+primary/contact gate and passes at zero afterward. Original button tests remain
+green, including STOP touch-down and layout with larger text.

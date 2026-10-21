@@ -22,10 +22,10 @@
     </section>
 
     <section class="drive" aria-label="Motion controls">
-      <div class="section-line"><h2>Your controls</h2><span id="local-arm">Locally disarmed</span></div>
+      <div class="section-line mode-line"><label for="control-mode">Control mode</label><select id="control-mode"><option value="buttons">Buttons</option><option value="physical">Physical</option></select><span id="local-arm">Locally disarmed</span></div>
       <div class="safety-actions"><button id="arm" disabled>ARM AT ZERO</button><button id="stop" class="stop" disabled>STOP</button></div>
-      <p class="hint">Hold to move · release to zero · STOP requires a new ARM</p>
-      <div class="pad" aria-label="Six press-and-hold directions">
+      <p class="hint" id="hold-hint">Hold to move · release to zero · STOP requires a new ARM</p>
+      <div class="pad" id="button-controls" aria-label="Six press-and-hold directions">
         <button data-direction="ccw" class="direction ccw" aria-label="Hold to rotate counter-clockwise" disabled><span aria-hidden="true">↶</span>Rotate left</button>
         <button data-direction="forward" class="direction forward" aria-label="Hold to move forward" disabled><span aria-hidden="true">↑</span>Forward</button>
         <button data-direction="cw" class="direction cw" aria-label="Hold to rotate clockwise" disabled><span aria-hidden="true">↷</span>Rotate right</button>
@@ -33,6 +33,13 @@
         <div class="pad-center" aria-hidden="true"><span>＋</span><small>ONE DIRECTION<br>AT A TIME</small></div>
         <button data-direction="right" class="direction right" aria-label="Hold to strafe right" disabled><span aria-hidden="true">→</span>Strafe right</button>
         <button data-direction="backward" class="direction backward" aria-label="Hold to move backward" disabled><span aria-hidden="true">↓</span>Backward</button>
+      </div>
+      <div id="physical-controls" hidden>
+        <p id="physical-status" class="small" role="status">Enable sensors, connect, calibrate neutral, then ARM.</p>
+        <div class="physical-actions"><button id="sensors-enable">Enable sensors</button><button id="physical-calibrate" disabled>Calibrate neutral</button></div>
+        <p id="physical-reading" class="small">No sensor reading</p>
+        <button id="physical-drive" class="direction physical-drive" disabled>Hold to drive with phone</button>
+        <p class="small">Portrait, screen up like a tray. Tilt forward/back to drive, sideways to strafe, turn left/right to rotate. Return to neutral or release to zero. Switching modes disarms.</p>
       </div>
       <div class="request"><span>Requested motion</span><output id="requested">vx 0.00 · vy 0.00 · wz 0.00</output><small>Translation m/s · rotation rad/s · approximate open-loop references</small></div>
     </section>

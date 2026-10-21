@@ -40,7 +40,7 @@ test('zero axes disabled, layout fits a phone and larger text, no external asset
   await page.evaluate(() => { fixture.caps.max_vy = 0; document.documentElement.style.fontSize = '24px'; });
   await expect(page.getByRole('button', { name: 'Hold to strafe left', exact: true })).toBeDisabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  for (const button of await page.locator('.direction').all()) {
+  for (const button of await page.locator('.direction:visible').all()) {
     const box = await button.boundingBox(); expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44);
   }
   const assets = await page.evaluate(() => performance.getEntriesByType('resource').map(x => x.name));

@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>150</b> requirements</div><div><b>250</b> scenarios</div><div><b>54 / 61</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>150</b> requirements</div><div><b>250</b> scenarios</div><div><b>55 / 61</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>iPhone physical control</h2>
       <div class="notice"><p>
 See the proposal for acceptance status.</p>
@@ -3465,7 +3465,7 @@ After explicit acceptance, implement/test the static page from Linux, prepare a 
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.2 Integrate mode switching and invalidation into the single Session; verify fake-GATT tests including ARM/STOP/mode races, cleanup and late callbacks without regressing Buttons (41 Node tests pass).</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Add explicit sensor permission, calibration, mode UI and held pad; verify real-page browser tests for permissions, lifecycle, pointer cancellation, switching and no replay.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.3 Add explicit sensor permission, calibration, mode UI and held pad; verify real-page browser tests for permissions, lifecycle, pointer cancellation, switching and no replay (20 Chromium tests pass, including red/green outside-first-touch regression).</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.4 Update build/docs/evidence map, run complete iPhone/strict reader checks, publish a clean reviewable candidate and verify served assets.</li>
 </ul>
@@ -3738,6 +3738,15 @@ Actual sensor-plus-BLE gaps, STOP/readback; physical observation</td>
 Pre-implementation sensor-only <a href="../firmware/bench/2026-10-21-iphone-sensors/notes.md">phone result</a>
 supports the selected interaction, not these product acceptance gates. No task 3
 or sensor-driven rover result is claimed yet.</p>
+<p>
+Host evidence: 41 Node tests and 20 Chromium tests pass. Physical unit tests
+cover signs/wrap/caps/invalid/reference/posture and separate deadlines. Session
+tests cover confirmed ARM/new hold, all-three wire values, mode/ARM races,
+independent expiry and cleanup. Real-page tests cover permission denial/late
+completion, switching while held, sensor/UI loss, screen rotation and manual
+recovery. An outside-first-touch regression failed with wz=0.30 before the
+primary/contact gate and passes at zero afterward. Original button tests remain
+green, including STOP touch-down and layout with larger text.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>
