@@ -27,6 +27,25 @@ jobs:
       - run: npm run spec:reader:check
       - run: npm run openspec -- validate --archived --strict --no-interactive
 
+  iphone:
+    name: iPhone web controller (Node, Chromium)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/iphone
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/iphone/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - run: npm run test:browser
+      - run: npm run build
+
   host:
     name: host tests (cores, sim car, Python)
     runs-on: ubuntu-latest
