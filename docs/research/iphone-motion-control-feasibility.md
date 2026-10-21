@@ -1,10 +1,10 @@
 # iPhone motion driving feasibility
 
-Researched 2026-10-21. A sensor-only diagnostic is prepared in the existing iPhone client site; phone evidence is pending. No sensor-to-car integration, BLE access or motor commands are part of this diagnostic.
+Researched 2026-10-21. The sensor-only diagnostic is published in the existing iPhone client site, with [scoped phone evidence](../../firmware/bench/2026-10-21-iphone-sensors/notes.md). No sensor-to-car integration, BLE access or motor commands are part of that diagnostic.
 
 ## Decision
 
-**Conditional go for a sensor-only spike; no-go for claiming motion driving is supported today.** The existing web client has a reusable safety/session path. Actual Bluefy permission and usable sensor delivery are gating unknowns. A native app, Mac or firmware change is **not presumed necessary**: a JavaScript input extension is likely sufficient *if* the phone gates below pass; that is an inference, not demonstrated compatibility.
+**Go for the selected input design and host implementation; no motion-driving acceptance yet.** The phone report confirms granted permissions, finite three-axis readings at roughly 60 Hz, and user-confirmed signs, held heading and return to zero on iOS 18.7/Bluefy 3.9.3. Expiry occurred only during deliberate interruptions. Quiet drift evidence covers 13.1 s, not a full minute; sensor-plus-BLE and motor checks remain pending. The reusable web session path needs no apparent firmware change. Native app/Mac requirements are not indicated by this scoped result.
 
 ## Primary evidence and limits
 
@@ -65,4 +65,4 @@ Repository facts: [archived design](../../openspec/changes/archive/2026-10-21-ad
 4. Observe blur, browser UI/tab switch, app switch, hidden/pagehide, lock/unlock, orientation changes and foreground return. Record event ordering and whether callbacks continue; do not assume lock produces a particular event. If no callbacks run during suspension, check elapsed monotonic age before consuming anything on return. Verify manual recovery and rejection of cached/late values.
 5. **Gate:** conditional go only if Bluefy produces useful finite foreground samples with sufficient measured margin below the stale cutoff, usable latency, and fail-closed lifecycle/deadman behavior. Missing/denied/null-only sensors or unsafe inactive renewal means no-go on that host/version; retain buttons. Marginal cadence means review the design, not relax existing safety bounds.
 
-Only after phone evidence: a reviewed input-spec change for the selected three-axis/mode-switch scope, with deterministic mapping/expiry/lifecycle tests, then separately authorized BLE acceptance (full 20 Hz workload plus sensors, ARM/STOP/status), then supervised wheels-off-ground acceptance covering release, sensor loss, orientation, interruption, caps and blended axes. Existing button-controller acceptance does not pass these new gates. The diagnostic is prepared; no phone result or sensor driving is claimed.
+The [phone evidence](../../firmware/bench/2026-10-21-iphone-sensors/notes.md) supports the next stage: a reviewed input-spec change for the selected three-axis/mode-switch scope, with deterministic mapping/expiry/lifecycle tests, then separately authorized BLE acceptance (scheduled 50 ms workload plus sensors, measured actual gaps, ARM/STOP/status), then supervised wheels-off-ground acceptance covering release, sensor loss, orientation, interruption, caps and blended axes. Existing button-controller acceptance does not pass these new gates. Sensor driving and long-term drift are not claimed.

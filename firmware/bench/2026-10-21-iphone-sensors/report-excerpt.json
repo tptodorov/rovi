@@ -1,0 +1,168 @@
+{
+  "source": "Selected complete sections transcribed from Todor's truncated pasted report; this is not the original complete JSON.",
+  "pasteTruncated": true,
+  "revision": "ce853f16ef7d",
+  "secureContext": true,
+  "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Version/3.9.3  Bluefy/3.9.3",
+  "versions": "",
+  "observations": "",
+  "permissions": {
+    "orientation": "granted",
+    "motion": "granted"
+  },
+  "reason": "Orientation expired; recalibrate",
+  "neutral": null,
+  "stationaryResults": [
+    {
+      "startedAtMs": 177553,
+      "lastAtMs": 190679,
+      "count": 788,
+      "minDeltaDegrees": {
+        "alpha": -0.029447509638430347,
+        "beta": -0.041178694526252,
+        "gamma": -0.0074622396987251705
+      },
+      "maxDeltaDegrees": {
+        "alpha": 0.013506779383305911,
+        "beta": 0.028492476204860395,
+        "gamma": 0.04493931080219227
+      },
+      "lastDeltaDegrees": {
+        "alpha": -0.010220735320899621,
+        "beta": 0.027294456942513534,
+        "gamma": -0.0017020610357576516
+      }
+    },
+    {
+      "startedAtMs": 251851,
+      "lastAtMs": 268079,
+      "count": 972,
+      "minDeltaDegrees": {
+        "alpha": -26.278688837754316,
+        "beta": -14.887923013951081,
+        "gamma": -12.662128403985776
+      },
+      "maxDeltaDegrees": {
+        "alpha": 13.314588652259658,
+        "beta": 14.910420865092533,
+        "gamma": 22.86397122375456
+      },
+      "lastDeltaDegrees": {
+        "alpha": 0.23184955101385185,
+        "beta": 0.04408275868433975,
+        "gamma": -0.06820431001403904
+      }
+    }
+  ],
+  "cadences": {
+    "orientation": {
+      "count": 14437,
+      "durationMs": 265719,
+      "ageMs": 22,
+      "maxGapMs": 14998,
+      "recentGapCount": 4096,
+      "medianGapMs": 16.999999999970896,
+      "p95GapMs": 21.999999999941792
+    },
+    "motion": {
+      "count": 14438,
+      "durationMs": 265719,
+      "ageMs": 22,
+      "maxGapMs": 14984,
+      "recentGapCount": 4096,
+      "medianGapMs": 17,
+      "p95GapMs": 21.999999999970896
+    },
+    "ui": {
+      "count": 7502,
+      "durationMs": 265736,
+      "ageMs": 22,
+      "maxGapMs": 15765,
+      "recentGapCount": 4096,
+      "medianGapMs": 33,
+      "p95GapMs": 40
+    },
+    "consumer": {
+      "count": 4180,
+      "durationMs": 265710,
+      "ageMs": 22,
+      "maxGapMs": 15034,
+      "recentGapCount": 4096,
+      "medianGapMs": 60,
+      "p95GapMs": 61
+    }
+  },
+  "fieldValidity": {
+    "orientation.alpha/beta/gamma": {
+      "validEach": 14437,
+      "invalidEach": 0
+    },
+    "motion.ax/ay/az/gx/gy/gz/rotationAlpha/rotationBeta/rotationGamma/interval": {
+      "validEach": 14438,
+      "invalidEach": 0
+    }
+  },
+  "declaredMotionInterval": 0.01666666753590107,
+  "compassAccuracyRange": [
+    -1,
+    23.18721580505371
+  ],
+  "completeEventPrefix": [
+    {
+      "type": "Requesting sensor permissions",
+      "atMs": 7140.000000000001
+    },
+    {
+      "type": "Waiting for fresh orientation; calibrate at neutral",
+      "atMs": 7141
+    },
+    {
+      "type": "calibrated",
+      "atMs": 32249.000000000004
+    },
+    {
+      "type": "Orientation expired; recalibrate",
+      "atMs": 99450
+    },
+    {
+      "type": "blur; enable and calibrate again",
+      "atMs": 99800
+    },
+    {
+      "type": "Page hidden; enable and calibrate again",
+      "atMs": 99805
+    },
+    {
+      "type": "Requesting sensor permissions",
+      "atMs": 114773
+    },
+    {
+      "type": "Waiting for fresh orientation; calibrate at neutral",
+      "atMs": 114777
+    },
+    {
+      "type": "calibrated",
+      "atMs": 155753
+    },
+    {
+      "type": "Orientation expired; recalibrate",
+      "atMs": 168780
+    },
+    {
+      "type": "calibrated",
+      "atMs": 177553
+    },
+    {
+      "type": "Stationary result saved; human stillness unverified",
+      "atMs": 190688.00000000003
+    },
+    {
+      "type": "Orientation expired; recalibrate",
+      "atMs": 234360
+    }
+  ],
+  "humanConfirmation": {
+    "threeAxisDirectionsHeldTwistNeutralAndRelease": "All three matched and behaved as expected",
+    "expiryContext": "Only during deliberate pauses or interruptions"
+  }
+}
