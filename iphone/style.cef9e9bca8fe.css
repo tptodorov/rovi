@@ -19,7 +19,8 @@ button:focus-visible, summary:focus-visible { outline: 3px solid #0d7163; outlin
 select { font: inherit; font-size: .8rem; color: inherit; border: 1px solid #b8c7ba; border-radius: .5rem; padding: .45rem; background: #fffef9; min-height: 44px; }
 .mode-line { margin-top: -.4rem; }
 .mode-line label { font-size: .75rem; font-weight: 650; }
-.physical-drive { width: 100%; min-height: 100px; }
+.physical-drive { width: 100%; min-height: 56px; margin-top: .5rem; }
+.physical-drive[aria-pressed="true"] { background: #205748; color: white; }
 #physical-reading { font-variant-numeric: tabular-nums; min-height: 2.4em; }
 #physical-controls[hidden], #button-controls[hidden] { display: none; }
 button:disabled { color: #687c72; background: #edf0e8; border-color: #d8e0d4; cursor: default; }
@@ -27,6 +28,7 @@ button:disabled { color: #687c72; background: #edf0e8; border-color: #d8e0d4; cu
 .connection-actions .primary { flex: 1; background: #205748; color: white; min-width: 10rem; }
 .connection-actions .primary:disabled { background: #617e70; }
 #message { min-height: 2.6em; font-size: .8rem; margin-bottom: 0; }
+#physical-requested { font-variant-numeric: tabular-nums; margin-bottom: 0; }
 .safety-panel { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; padding: .8rem 1rem; box-shadow: 0 3px 10px #193b3620; }
 #local-arm { font-size: .85rem; color: #94302f; }
 body[data-armed="true"] #local-arm { color: #174e40; background: #e0e7df; border-radius: .3rem; padding: .2rem; }
