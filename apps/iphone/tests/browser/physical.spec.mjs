@@ -9,6 +9,12 @@ test.beforeEach(async ({ page }) => {
       return window.permissionResult === 'pending' ? new Promise(resolve => { window.resolvePermission = resolve; }) : Promise.resolve(window.permissionResult);
     } };
     addEventListener('deviceorientation', event => { if (event.isTrusted) event.stopImmediatePropagation(); }, true);
+    window.orientationCallbacks = [];
+    const add = window.addEventListener.bind(window);
+    window.addEventListener = (name, callback, options) => {
+      if (name === 'deviceorientation') window.orientationCallbacks.push(callback);
+      return add(name, callback, options);
+    };
     window.phoneAngles = { alpha: 350, beta: 0, gamma: 0 };
     setInterval(() => { if (window.emitAngles) dispatchEvent(Object.assign(new Event('deviceorientation'), window.phoneAngles)); }, 20);
     const raf = window.requestAnimationFrame.bind(window);
@@ -82,6 +88,22 @@ test('screen orientation change while held closes and cannot reconnect automatic
   await page.evaluate(() => dispatchEvent(new Event('orientationchange')));
   await expect(page.locator('#phase')).toHaveText('disconnected'); await page.mouse.up();
   expect(await page.evaluate(() => fake.calls.filter(call => call[0] === 'picker').length)).toBe(1);
+});
+test('a detached sensor callback cannot replace a newly calibrated and armed input', async ({ page }) => {
+  await ready(page); await page.locator('#control-mode').selectOption('buttons');
+  await page.locator('#control-mode').selectOption('physical');
+  await page.evaluate(() => { window.phoneAngles = { alpha: 123, beta: 0, gamma: 0 }; });
+  await page.locator('#sensors-enable').click();
+  await expect(page.locator('#physical-reading')).toContainText('α 123.0');
+  await page.locator('#physical-calibrate').click(); await page.locator('#arm').click();
+  await expect(page.locator('#local-arm')).toHaveText('Locally armed'); await hold(page);
+  await page.evaluate(() => { window.phoneAngles.alpha = 143; });
+  await expect(page.locator('#requested')).toContainText('wz 0.30');
+  const actual = await page.evaluate(() => {
+    window.orientationCallbacks[0]({ alpha: 103, beta: 0, gamma: 0 });
+    return document.getElementById('requested').textContent;
+  });
+  expect(actual).toContain('wz 0.30'); await page.mouse.up();
 });
 test('a second finger cannot start Physical while the first finger is outside the pad', async ({ page }) => {
   await ready(page); await page.evaluate(() => { window.phoneAngles.alpha = 10; });

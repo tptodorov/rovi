@@ -13,7 +13,7 @@ Pre-implementation sensor-only [phone result](../../../firmware/bench/2026-10-21
 supports the selected interaction, not these product acceptance gates. No task 3
 or sensor-driven rover result is claimed yet.
 
-Host evidence: 42 Node tests and 20 Chromium tests pass (source and built site). Physical unit tests
+Host evidence: 42 Node tests and 21 Chromium tests pass (source and built site). Physical unit tests
 cover signs/wrap/caps/invalid/reference/posture and separate deadlines. Session
 tests cover confirmed ARM/new hold, all-three wire values, mode/ARM races,
 independent expiry and cleanup. Real-page tests cover permission denial/late
@@ -28,3 +28,10 @@ and records that revision in the loaded HTML. The controller footer and copied
 diagnostic report identify the loaded build, even after a newer deployment.
 CI runs browser scenarios against the built site. These checks do not claim
 phone/BLE scheduling, sensor-driven motors or a physical stopping bound.
+
+Candidate published at <https://tptodorov.github.io/rovi/iphone/?v=8fb8fd174d30>
+from clean build `8fb8fd174d30`. All 15 live files matched the built bytes. A
+Linux browser loaded that public site, checked its own revision, selected
+Physical while disconnected and remained disarmed with zero BLE picker calls.
+A detached old sensor callback cannot replace a newly calibrated/armed input
+(browser regression). This publication is not phone/BLE or motor acceptance.
