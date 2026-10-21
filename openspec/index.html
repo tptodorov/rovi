@@ -3739,7 +3739,7 @@ Pre-implementation sensor-only <a href="../firmware/bench/2026-10-21-iphone-sens
 supports the selected interaction, not these product acceptance gates. No task 3
 or sensor-driven rover result is claimed yet.</p>
 <p>
-Host evidence: 41 Node tests and 20 Chromium tests pass. Physical unit tests
+Host evidence: 42 Node tests and 20 Chromium tests pass (source and built site). Physical unit tests
 cover signs/wrap/caps/invalid/reference/posture and separate deadlines. Session
 tests cover confirmed ARM/new hold, all-three wire values, mode/ARM races,
 independent expiry and cleanup. Real-page tests cover permission denial/late
@@ -3747,6 +3747,13 @@ completion, switching while held, sensor/UI loss, screen rotation and manual
 recovery. An outside-first-touch regression failed with wz=0.30 before the
 primary/contact gate and passes at zero afterward. Original button tests remain
 green, including STOP touch-down and layout with larger text.</p>
+<p>
+The build regression failed on unversioned imports before the publication fix.
+It now checks every HTML/script/style/module edge uses one revisioned filename
+and records that revision in the loaded HTML. The controller footer and copied
+diagnostic report identify the loaded build, even after a newer deployment.
+CI runs browser scenarios against the built site. These checks do not claim
+phone/BLE scheduling, sensor-driven motors or a physical stopping bound.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>
