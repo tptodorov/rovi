@@ -26,9 +26,23 @@ Released-pad sample gaps/reading posture keep arm and neutral at zero, with new
 presses blocked until input is valid. Scroll cancels holds without recentering.
 Sensor/posture loss during a held drive, invalid values, reference changes and
 existing stream/lifecycle failures retain cleanup. Status/STOP stay visible.
-Corrected phone UX and sensor-driven motor behavior still need acceptance.
+At publication, corrected phone UX and sensor-driven motor behavior still needed acceptance.
 
 Correction published as build `780f65eff594`: 46 Node tests and 23 source/built
 browser tests pass; all 15 public assets match the clean build. The live-page
 smoke check starts disarmed with no picker call. This is host/publication
 evidence, not another phone or motor run.
+
+
+## Corrected phone retest
+
+Todor tested build `780f65eff594` in the announced motor-power-off procedure:
+Physical → Enable sensors → connect → Set neutral & ARM; scroll with the pad
+released, tilt to reading posture and return to neutral; check visible status/STOP,
+then STOP and Set neutral & ARM again without separate calibration.
+
+He replied “ok, seems to work wekk”. Record this as an operator-confirmed pass
+for that UX retest (task 3.0), with no fault reported. This is a functional report,
+not a captured event trace or identification of the original Bluefy trigger.
+Phone model, 60 s neutral observations and Stream write count/max gap/slowest
+write were not supplied. Timing/lifecycle task 3.1 and motor-on tasks remain open.

@@ -49,5 +49,7 @@ not implied by this implementation authorization.
 The first motor-power-off integrated test passed directions, neutral/release,
 STOP and switching. Todor then reported unwanted disarming during scrolling,
 hidden status and the unnecessary separate calibration tap. This authorizes the
-one-tap neutral/ARM and released-pad UX correction; the exact Bluefy trigger and
-the corrected phone behavior still require retesting.
+one-tap neutral/ARM and released-pad UX correction. Todor subsequently confirmed
+the announced corrected phone retest on build `780f65eff594` works with motor
+power off. The original Bluefy trigger remains unclassified; timing measurements
+and motor-on acceptance remain open.

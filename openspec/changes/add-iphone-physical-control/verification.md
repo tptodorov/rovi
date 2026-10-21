@@ -7,16 +7,17 @@
 | Independent sample/UI deadlines and no old input replay | Fake-clock input and Session tests, browser stalls | Phone stalls and observed manual recovery |
 | Mode changes supersede ARM, clear/disarm/STOP | Fake-GATT race tests; real page switch while held | Phone and separately authorized stand stop |
 | Lifecycle/reference/invalid sample cleanup; held posture failure | Unit/Session/browser tests | Phone lock/app switch/orientation and stand interruption |
-| One-tap neutral/ARM; released-pad gaps/posture; visible status/STOP | Red/green Session and scroll browser regressions | Retest reported scroll/calibration UX on Bluefy |
+| One-tap neutral/ARM; released-pad gaps/posture; visible status/STOP | Red/green Session and scroll browser regressions | Todor confirmed corrected UX on build `780f65eff594`, motor power off |
 | Existing stream/Status/cleanup limits | Existing and new Session regressions | Actual sensor-plus-BLE gaps, STOP/readback; physical observation |
 
 Pre-implementation sensor-only [phone result](../../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
-supports the selected interaction, not these product acceptance gates. No task 3
-acceptance or sensor-driven rover result is claimed yet. The first integrated
+supports the selected interaction, not full product acceptance. Task 3.0 has a
+scoped phone UX pass; sensor-driven motor acceptance is not claimed. The first integrated
 [motor-power-off response](../../../firmware/bench/2026-10-21-iphone-physical/notes.md)
 confirmed signs/neutral/release/STOP/mode changes, but reported scrolling disarm,
 hidden messages and the extra calibration tap. Phone model and Stream metrics
-were not supplied. Corrected phone UX and the actual scroll trigger remain open.
+were not supplied. Todor subsequently confirmed the corrected phone UX on build
+`780f65eff594`; the original scroll trigger remains unclassified.
 
 Host evidence before the UX correction: 42 Node tests and 21 Chromium tests passed (source and built site). Physical unit tests
 cover signs/wrap/caps/invalid/reference/posture and separate deadlines. Session
@@ -57,4 +58,6 @@ Corrected candidate: <https://tptodorov.github.io/rovi/iphone/?v=780f65eff594>.
 All 15 public files match clean build `780f65eff594`. A public-page Chromium
 check confirmed Buttons default, the combined Physical ARM label, no separate
 calibration button, disarmed state and zero picker calls/page errors. Pages
-deployment completed successfully. Corrected Bluefy UX remains pending task 3.0.
+deployment completed successfully. Todor confirmed the announced motor-power-off
+UX retest works, completing task 3.0. This supplies no Stream metrics, full-minute
+neutral measurement or motor-on result; tasks 3.1–3.3 remain open.

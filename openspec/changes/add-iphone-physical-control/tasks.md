@@ -12,7 +12,7 @@
 
 ## 3. Phone and physical acceptance
 
-- [ ] 3.0 Retest corrected one-tap neutral/ARM, released-pad scrolling and visible status/STOP on the phone with motor power off; record any fault reason.
+- [x] 3.0 Retest corrected one-tap neutral/ARM, released-pad scrolling and visible status/STOP on the phone with motor power off; record any fault reason (Todor confirmed build `780f65eff594` works in the announced retest; no fault reported, [evidence](../../../firmware/bench/2026-10-21-iphone-physical/notes.md#corrected-phone-retest)).
 
 - [ ] 3.1 Record phone model/iOS/Bluefy; confirm 60 s neutral stability, combined sensor/BLE stream timing, signs and UI behavior. Check denial/retry, stale sensor/UI, reference/posture changes, lock/app-switch, release and fresh manual recovery.
 - [ ] 3.2 Announce a bounded stand batch and obtain fresh go; verify all six signs, blended axes, caps, neutral/release, STOP and mode-switch stop with physical confirmation.

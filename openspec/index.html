@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>151</b> requirements</div><div><b>253</b> scenarios</div><div><b>57 / 63</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>151</b> requirements</div><div><b>253</b> scenarios</div><div><b>58 / 63</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>iPhone physical control</h2>
       <div class="notice"><p>
 See the proposal for acceptance status.</p>
@@ -3515,7 +3515,7 @@ After explicit acceptance, implement/test the static page from Linux, prepare a 
 <h2 id="openspec--changes--add-iphone-physical-control--tasks--3-phone-and-physical-acceptance">3. Phone and physical acceptance</h2><ul>
 <li>
 <p>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.0 Retest corrected one-tap neutral/ARM, released-pad scrolling and visible status/STOP on the phone with motor power off; record any fault reason.</p>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.0 Retest corrected one-tap neutral/ARM, released-pad scrolling and visible status/STOP on the phone with motor power off; record any fault reason (Todor confirmed build <code>780f65eff594</code> works in the announced retest; no fault reported, <a href="../firmware/bench/2026-10-21-iphone-physical/notes.md#corrected-phone-retest">evidence</a>).</p>
 </li>
 <li>
 <p>
@@ -3783,7 +3783,7 @@ One-tap neutral/ARM; released-pad gaps/posture; visible status/STOP</td>
 <td>
 Red/green Session and scroll browser regressions</td>
 <td>
-Retest reported scroll/calibration UX on Bluefy</td>
+Todor confirmed corrected UX on build <code>780f65eff594</code>, motor power off</td>
 </tr>
 <tr>
 <td>
@@ -3797,12 +3797,13 @@ Actual sensor-plus-BLE gaps, STOP/readback; physical observation</td>
 </table>
 <p>
 Pre-implementation sensor-only <a href="../firmware/bench/2026-10-21-iphone-sensors/notes.md">phone result</a>
-supports the selected interaction, not these product acceptance gates. No task 3
-acceptance or sensor-driven rover result is claimed yet. The first integrated
+supports the selected interaction, not full product acceptance. Task 3.0 has a
+scoped phone UX pass; sensor-driven motor acceptance is not claimed. The first integrated
 <a href="../firmware/bench/2026-10-21-iphone-physical/notes.md">motor-power-off response</a>
 confirmed signs/neutral/release/STOP/mode changes, but reported scrolling disarm,
 hidden messages and the extra calibration tap. Phone model and Stream metrics
-were not supplied. Corrected phone UX and the actual scroll trigger remain open.</p>
+were not supplied. Todor subsequently confirmed the corrected phone UX on build
+<code>780f65eff594</code>; the original scroll trigger remains unclassified.</p>
 <p>
 Host evidence before the UX correction: 42 Node tests and 21 Chromium tests passed (source and built site). Physical unit tests
 cover signs/wrap/caps/invalid/reference/posture and separate deadlines. Session
@@ -3843,7 +3844,9 @@ Corrected candidate: <a href="https://tptodorov.github.io/rovi/iphone/?v=780f65e
 All 15 public files match clean build <code>780f65eff594</code>. A public-page Chromium
 check confirmed Buttons default, the combined Physical ARM label, no separate
 calibration button, disarmed state and zero picker calls/page errors. Pages
-deployment completed successfully. Corrected Bluefy UX remains pending task 3.0.</p>
+deployment completed successfully. Todor confirmed the announced motor-power-off
+UX retest works, completing task 3.0. This supplies no Stream metrics, full-minute
+neutral measurement or motor-on result; tasks 3.1–3.3 remain open.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>
@@ -4989,8 +4992,10 @@ not implied by this implementation authorization.</p>
 The first motor-power-off integrated test passed directions, neutral/release,
 STOP and switching. Todor then reported unwanted disarming during scrolling,
 hidden status and the unnecessary separate calibration tap. This authorizes the
-one-tap neutral/ARM and released-pad UX correction; the exact Bluefy trigger and
-the corrected phone behavior still require retesting.</p>
+one-tap neutral/ARM and released-pad UX correction. Todor subsequently confirmed
+the announced corrected phone retest on build <code>780f65eff594</code> works with motor
+power off. The original Bluefy trigger remains unclassified; timing measurements
+and motor-on acceptance remain open.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/proposal.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--proposal--proposal">Proposal</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--proposal--why">Why</h2><p>
