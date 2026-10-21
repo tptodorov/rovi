@@ -14,6 +14,7 @@ export class Session {
   reportedAt = 0;
   generation = 0;
   seq = 0;
+  stats = { writes: 0, maxGap: 0, maxWrite: 0 };
   busy = null;
   cleanup = null;
   changed = () => {};
@@ -42,6 +43,7 @@ export class Session {
     const generation = ++this.generation;
     this.phase = 'choosing'; this.localArm = false; this.hold.reset();
     this.caps = null; this.reported = null; this.device = null; this.seq = 0;
+    this.stats = { writes: 0, maxGap: 0, maxWrite: 0 };
     this.message = 'Select the car in Bluefy’s picker. The picker alone does not claim it.'; this.changed();
     try {
       const device = await pickDevice(this.bluetooth, this.protocol);
@@ -152,8 +154,11 @@ export class Session {
   async sendZero(transport = this.transport) { return this.send(ZERO, transport); }
   async send(motion, transport = this.transport) {
     const bytes = setpoint(this.seq, motion); this.seq = (this.seq + 1) >>> 0;
-    this.lastSubmit = this.now(); this.nextSend = this.now() + 50;
+    const started = this.now(), stats = this.stats;
+    if (stats.writes) stats.maxGap = Math.max(stats.maxGap, started - this.lastSubmit);
+    this.lastSubmit = started; this.nextSend = started + 50;
     await transport.send(bytes);
+    stats.writes++; stats.maxWrite = Math.max(stats.maxWrite, this.now() - started);
   }
 
   pump() {

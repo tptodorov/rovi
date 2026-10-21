@@ -56,6 +56,8 @@ export function mount(session) {
       byId('limits').textContent = `Limits: vx ${caps.max_vx} m/s · vy ${caps.max_vy} m/s · wz ${caps.max_wz} rad/s`;
       byId('windows').textContent = `Lease ${caps.lease_ms} ms · claim ${caps.claim_ms} ms · reclaim ${caps.reclaim_ms} ms`;
     }
+    const { writes, maxGap, maxWrite } = session.stats ?? {};
+    if (writes) byId('stream').textContent = `Stream: ${writes} writes · max gap ${maxGap.toFixed(0)} ms · slowest write ${maxWrite.toFixed(0)} ms`;
     for (const button of buttons) {
       const [axis] = DIRECTIONS[button.dataset.direction];
       button.disabled = !session.localArm || !session.caps?.[`max_${axis}`];
