@@ -75,7 +75,15 @@ faults, independent sample/foreground expiry, keyboard START/PAUSE and no restar
 after blur/hidden/screen orientation loss. Previous held-pad phone UX/timing results
 are historical evidence; the new interaction requires a motor-power-off retest.
 
-Current tap-interface host checks: 48 Node tests and 26 source-page Chromium
-scenarios pass, including the original Buttons layout and STOP/lifecycle checks.
+Current tap-interface host checks: 48 Node tests and 26 source and built-page
+Chromium scenarios pass, including the original Buttons layout and STOP/lifecycle checks.
 The sticky Physical panel includes requested motion so scrolling to read it does
-not interfere with a running test. Built-site/publication checks follow.
+not interfere with a running test.
+
+
+Tap-interface candidate: <https://tptodorov.github.io/rovi/iphone/?v=cef9e9bca8fe>.
+Pages deployment succeeded and all 15 live files match that clean build. A public
+Chromium check confirmed default Buttons, Physical START paused/disabled while
+disconnected, requested zero, sticky controls visible, local disarm and zero
+picker calls/page errors. Tap-based phone usability/interruptions and motor-on
+acceptance remain open; no phone result is inferred from this publication.

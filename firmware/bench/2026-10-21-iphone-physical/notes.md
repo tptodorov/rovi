@@ -89,3 +89,10 @@ without a held touch. START requires neutral; frame/sample expiry and STOP remai
 Posture limits stay unchanged and faults will include the angle/value/limit.
 The old build's reported neutral/stream result remains valid for that build;
 tap-based phone UX and motor-on behavior need new acceptance.
+
+
+Tap-interface build `cef9e9bca8fe` is published: 48 Node tests and 26 source/built
+browser scenarios pass, and 15 live files match its clean build. Public-page boot
+stays paused/disarmed without a BLE picker call. START/PAUSE and requested motion
+are in the sticky panel. New phone usability and interruption checks remain pending;
+this work enabled no motor power and ran no motor batch.

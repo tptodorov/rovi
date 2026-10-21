@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>154</b> requirements</div><div><b>258</b> scenarios</div><div><b>58 / 64</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>154</b> requirements</div><div><b>258</b> scenarios</div><div><b>59 / 64</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>iPhone physical control</h2>
       <div class="notice"><p>
 See the proposal for acceptance status.</p>
@@ -3571,7 +3571,7 @@ After explicit acceptance, implement/test the static page from Linux, prepare a 
 </li>
 <li>
 <p>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.6 Replace the Physical held pad with explicit neutral-gated START/PAUSE, independent frame expiry and precise posture faults; reproduce tap-only failure, verify host/browser safety paths, publish and verify assets.</p>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.6 Replace the Physical held pad with explicit neutral-gated START/PAUSE, independent frame expiry and precise posture faults; reproduce tap-only failure, verify host/browser safety paths, publish and verify assets (48 Node/26 source and built-page Chromium scenarios pass; clean <code>cef9e9bca8fe</code>, 15 live files match; public boot paused/disarmed with zero picker calls).</p>
 </li>
 </ul>
 <h2 id="openspec--changes--add-iphone-physical-control--tasks--3-phone-and-physical-acceptance">3. Phone and physical acceptance</h2><ul>
@@ -3922,10 +3922,17 @@ faults, independent sample/foreground expiry, keyboard START/PAUSE and no restar
 after blur/hidden/screen orientation loss. Previous held-pad phone UX/timing results
 are historical evidence; the new interaction requires a motor-power-off retest.</p>
 <p>
-Current tap-interface host checks: 48 Node tests and 26 source-page Chromium
-scenarios pass, including the original Buttons layout and STOP/lifecycle checks.
+Current tap-interface host checks: 48 Node tests and 26 source and built-page
+Chromium scenarios pass, including the original Buttons layout and STOP/lifecycle checks.
 The sticky Physical panel includes requested motion so scrolling to read it does
-not interfere with a running test. Built-site/publication checks follow.</p>
+not interfere with a running test.</p>
+<p>
+Tap-interface candidate: <a href="https://tptodorov.github.io/rovi/iphone/?v=cef9e9bca8fe">https://tptodorov.github.io/rovi/iphone/?v=cef9e9bca8fe</a>.
+Pages deployment succeeded and all 15 live files match that clean build. A public
+Chromium check confirmed default Buttons, Physical START paused/disabled while
+disconnected, requested zero, sticky controls visible, local disarm and zero
+picker calls/page errors. Tap-based phone usability/interruptions and motor-on
+acceptance remain open; no phone result is inferred from this publication.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>

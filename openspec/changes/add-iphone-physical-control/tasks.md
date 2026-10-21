@@ -10,7 +10,7 @@
 - [x] 2.4 Update build/docs/evidence map, run complete iPhone/strict reader checks, publish a clean reviewable candidate and verify served assets (build `8fb8fd174d30`; all 15 live files match; local live-page boot stays disarmed with zero BLE picker calls).
 - [x] 2.5 Correct reported calibration/scroll/status UX with failing reproductions; verify one-tap neutral/ARM, released-pad safety and visible status, then publish a clean candidate and check served assets (46 Node/23 source and built-page Chromium tests pass; build `780f65eff594`, all 15 live files match, public boot stays disarmed with zero picker calls).
 
-- [ ] 2.6 Replace the Physical held pad with explicit neutral-gated START/PAUSE, independent frame expiry and precise posture faults; reproduce tap-only failure, verify host/browser safety paths, publish and verify assets.
+- [x] 2.6 Replace the Physical held pad with explicit neutral-gated START/PAUSE, independent frame expiry and precise posture faults; reproduce tap-only failure, verify host/browser safety paths, publish and verify assets (48 Node/26 source and built-page Chromium scenarios pass; clean `cef9e9bca8fe`, 15 live files match; public boot paused/disarmed with zero picker calls).
 
 ## 3. Phone and physical acceptance
 
