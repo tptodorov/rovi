@@ -1,11 +1,14 @@
-import { capabilities, status, setpoint, ZERO, DIRECTIONS } from './wire.js';
-import { Hold } from './hold.js';
-import { Ble, pickDevice, supportError } from './transport.js';
+import { capabilities, status, setpoint, ZERO, DIRECTIONS } from './wire.8fb8fd174d30.js';
+import { Hold } from './hold.8fb8fd174d30.js';
+import { Physical } from './physical.8fb8fd174d30.js';
+import { Ble, pickDevice, supportError } from './transport.8fb8fd174d30.js';
 
 export class Session {
   phase = 'disconnected';
   localArm = false;
   hold = new Hold();
+  physical = new Physical();
+  mode = 'buttons';
   control = null;
   transport = null;
   device = null;
@@ -26,12 +29,40 @@ export class Session {
   }
 
   get requested() {
-    return this.localArm && this.phase === 'ready' && this.active() ? this.hold.intent(this.caps, this.now()) : ZERO;
+    if (!this.localArm || this.phase !== 'ready' || !this.active()) return ZERO;
+    return (this.mode === 'physical' ? this.physical : this.hold).intent(this.caps, this.now());
+  }
+
+  clearInputs() { this.hold.clear(); this.physical.clear(); }
+  selectMode(mode) {
+    if (!['buttons', 'physical'].includes(mode) || mode === this.mode) return;
+    this.mode = mode; this.localArm = false; this.clearInputs(); this.physical.disable();
+    if (this.phase === 'ready') this.stop();
+    else if (['choosing', 'connecting'].includes(this.phase)) void this.close('Control mode changed; connect again.');
+    this.changed();
+  }
+  sensor(value) {
+    if (this.mode !== 'physical' || !this.active()) return;
+    this.physical.update(value, this.now()); this.checkPhysical(); this.changed();
+  }
+  calibrate() {
+    if (this.mode !== 'physical' || this.localArm || this.control || !this.active() || !['disconnected', 'ready'].includes(this.phase)) return;
+    this.physical.calibrate(this.now()); this.changed();
+  }
+  pressPhysical(id) {
+    this.physical.press(id, this.mode === 'physical' && this.localArm && this.phase === 'ready' && this.active(), this.now());
+    this.changed();
+  }
+  checkPhysical() {
+    if (this.mode === 'physical' && (this.localArm || this.control?.kind === 'arm') && !this.physical.ready(this.now())) {
+      void this.close(this.physical.problem || 'Physical input unavailable; reconnect and calibrate.'); return false;
+    }
+    return true;
   }
 
   press(id, name) {
     const axis = DIRECTIONS[name]?.[0];
-    this.hold.press(id, name, this.localArm && this.active() && this.caps?.[`max_${axis}`] > 0, this.now());
+    this.hold.press(id, name, this.mode === 'buttons' && this.localArm && this.active() && this.caps?.[`max_${axis}`] > 0, this.now());
     this.changed();
   }
   release(id) { this.hold.release(id); this.changed(); }
@@ -42,6 +73,7 @@ export class Session {
     if (unsupported) { this.message = unsupported; this.changed(); return; }
     const generation = ++this.generation;
     this.phase = 'choosing'; this.localArm = false; this.hold.reset();
+    this.physical.hold.reset(); this.physical.invalidate('Connect, then calibrate neutral before ARM.');
     this.caps = null; this.reported = null; this.device = null; this.seq = 0;
     this.stats = { writes: 0, maxGap: 0, maxWrite: 0 };
     this.message = 'Select the car in Bluefy’s picker. The picker alone does not claim it.'; this.changed();
@@ -86,7 +118,7 @@ export class Session {
     if (next.state === 'Open') throw new Error('Car reported ownership open; connect again');
     if (next.state === 'Armed' && !this.localArm && !this.control) throw new Error('Unexpected Armed Status; motion permission revoked');
     if (next.state === 'Stopped') {
-      this.localArm = false; this.hold.clear();
+      this.localArm = false; this.clearInputs();
       if (this.control?.kind === 'arm' && (previous?.state !== 'Stopped' || previous.reason !== next.reason)) {
         throw new Error(`Safety stop during ARM: ${next.reason}`);
       }
@@ -98,14 +130,17 @@ export class Session {
 
   arm() {
     if (this.phase !== 'ready' || this.localArm || this.control || !this.active()) return;
-    this.hold.clear();
+    if (this.mode === 'physical' && !this.physical.ready(this.now())) {
+      this.message = 'Enable sensors and calibrate neutral before ARM.'; this.changed(); return;
+    }
+    this.clearInputs();
     this.control = { kind: 'arm', step: 'zero', deadline: this.now() + 1000 };
     this.message = 'Arming at zero; awaiting the control response and a fresh Status read.';
     this.pump(); this.changed();
   }
 
   stop() {
-    this.localArm = false; this.hold.clear();
+    this.localArm = false; this.clearInputs();
     if (this.phase !== 'ready') { void this.close('STOP requested during connection'); return; }
     if (this.control?.kind === 'stop') return;
     this.control = { kind: 'stop', step: 'write', deadline: this.now() + 1000 };
@@ -128,6 +163,7 @@ export class Session {
     if (this.phase === 'connecting' && now >= this.setupDeadline) { void this.close('Connection setup timed out'); return false; }
     if (!['connecting', 'ready'].includes(this.phase)) return true;
     if (!this.active()) { void this.inactive(); return false; }
+    if (!this.checkPhysical()) return false;
     if (this.phase !== 'ready') return true;
     if (now - this.lastTick >= 200 || now - this.lastSubmit >= 200) { void this.close('Stream delayed by 200 ms; connect and ARM again'); return false; }
     if (this.control && now >= this.control.deadline) { void this.close('Control confirmation timed out'); return false; }
@@ -176,8 +212,8 @@ export class Session {
           if (this.now() >= control.deadline) throw new Error('Late control confirmation');
           const confirmed = report.error === 'none' && (control.kind === 'arm' ? report.state === 'Armed' : report.state === 'Stopped' && report.reason === 'Stop');
           if (!confirmed) throw new Error(`${control.kind.toUpperCase()} was not confirmed by the fresh Status read`);
-          this.control = null; this.localArm = control.kind === 'arm'; this.hold.clear();
-          this.message = this.localArm ? 'Armed at zero. A new direction press is required.' : 'Car reported Stopped/Stop. ARM again before moving.';
+          this.control = null; this.localArm = control.kind === 'arm'; this.clearInputs();
+          this.message = this.localArm ? (this.mode === 'physical' ? 'Armed at zero. A new phone drive-pad hold is required.' : 'Armed at zero. A new direction press is required.') : 'Car reported Stopped/Stop. ARM again before moving.';
         }));
       }
       return;
@@ -192,8 +228,9 @@ export class Session {
 
   close(reason = 'Disconnect requested') {
     if (this.phase === 'closing') return this.closePromise;
+    this.physical.disable('Session ended; enable sensors and calibrate again.');
     if (this.phase === 'disconnected') return Promise.resolve();
-    ++this.generation; this.localArm = false; this.hold.clear(); this.control = null;
+    ++this.generation; this.localArm = false; this.clearInputs(); this.control = null;
     this.phase = 'closing'; this.message = reason;
     this.cleanup = { deadline: this.now() + 500, stopReported: false };
     this.closePromise = new Promise(resolve => { this.closeDone = resolve; });

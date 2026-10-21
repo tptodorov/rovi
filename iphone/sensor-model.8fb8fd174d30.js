@@ -1,11 +1,8 @@
 // Diagnostic only. This module has no session, transport or command encoder.
+import { angleDelta, scaleAngle } from './angles.8fb8fd174d30.js';
+export { angleDelta, scaleAngle };
 export const STALE_MS = 250;
 const finite = value => typeof value === 'number' && Number.isFinite(value);
-export const angleDelta = (value, neutral) => ((value - neutral + 540) % 360 + 360) % 360 - 180;
-export function scaleAngle(degrees) {
-  const magnitude = Math.min(1, Math.max(0, (Math.abs(degrees) - 3) / 17));
-  return Math.sign(degrees) * magnitude || 0;
-}
 const relative = (value, neutral) => Object.fromEntries(['alpha', 'beta', 'gamma'].map(key => [key, angleDelta(value[key], neutral[key])]));
 
 export class Cadence {

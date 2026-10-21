@@ -1,4 +1,4 @@
-import { ZERO, direction, DIRECTIONS } from './wire.js';
+import { ZERO, direction, DIRECTIONS } from './wire.8fb8fd174d30.js';
 
 // Only UI frames renew a tracked hold. Transmission never extends this deadline.
 export class Hold {
@@ -9,6 +9,10 @@ export class Hold {
 
   press(id, name, allowed, now) {
     if (!DIRECTIONS[name]) return;
+    this.track(id, name, allowed, now);
+  }
+
+  track(id, name, allowed, now) {
     this.pointers.set(id, name);
     if (!allowed || this.blocked || this.pointers.size !== 1) return this.clear();
     this.current = id;
