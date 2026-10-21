@@ -149,3 +149,13 @@ test('a hung ARM write or Status read ends the session within one second', async
     assert.notEqual(session.phase, 'ready', hang); assert.equal(session.localArm, false, hang);
   }
 });
+
+test('stream stats record writes, largest submission gap and slowest write for P2 evidence', async () => {
+  const { fake, session, setTime } = await ready(); let t = 0;
+  const original = fake.chars.setpoint.writeValueWithoutResponse;
+  fake.chars.setpoint.writeValueWithoutResponse = async bytes => { setTime(t += 7); return original(bytes); };
+  for (let n = 0; n < 4; n++) { setTime(t += 60); session.tick(); await flush(); }
+  assert.equal(session.stats.writes, samples(fake).length);
+  assert.ok(session.stats.maxGap >= 60 && session.stats.maxGap < 200, String(session.stats.maxGap));
+  assert.equal(session.stats.maxWrite, 7);
+});

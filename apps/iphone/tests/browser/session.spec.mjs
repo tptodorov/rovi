@@ -37,6 +37,7 @@ test('real page and session: connect disarmed, explicit ARM, hold and release, c
   await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');
   await expect(button).toBeDisabled();
   await expect(page.locator('#message')).toContainText('Car reported Stopped/Stop');
+  await expect(page.locator('#stream')).toContainText(/\d+ writes · max gap \d+ ms · slowest write \d+ ms/);
   expect(errors).toEqual([]);
 });
 
