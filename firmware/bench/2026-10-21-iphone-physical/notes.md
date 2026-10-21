@@ -46,3 +46,30 @@ for that UX retest (task 3.0), with no fault reported. This is a functional repo
 not a captured event trace or identification of the original Bluefy trigger.
 Phone model, 60 s neutral observations and Stream write count/max gap/slowest
 write were not supplied. Timing/lifecycle task 3.1 and motor-on tasks remain open.
+
+
+## 60-second neutral and stream check
+
+On the announced motor-power-off check of build `780f65eff594`, Todor reported
+an iPhone 11 and confirmed that requested motion stayed zero throughout the
+60-second neutral hold, with no disconnect or stale-sensor message reported.
+The procedure ended with release and STOP.
+
+| Reported Stream value | Result |
+| --- | --- |
+| Write count | 1,366 |
+| Maximum submission gap | 180 ms |
+| Slowest completed write | 19 ms |
+
+The observed maximum gap is 20 ms below the unchanged 200 ms client cutoff.
+These are client-reported session counters, not a captured 60-second trace;
+setup and other activity may contribute to the write count. No exact send rate,
+radio delivery latency, physical stop time or raw angle-drift bound is inferred.
+This confirms the requested-motion display stayed at zero during the announced
+hold; the display's rounded values do not establish an exact raw-angle bound. The earlier sensor-only report identified iOS 18.7/Bluefy 3.9.3; their
+versions were not re-entered in this response. No motor power was enabled.
+
+Task 3.1's neutral/stream subcheck passes. Permission retry, held-input interruption,
+reference/posture loss, lock/app-switch and fresh manual recovery on the actual
+phone remain to be recorded; task 3.1 as a whole stays open. Motor-on acceptance
+also remains open and needs its own announced batch and fresh go.

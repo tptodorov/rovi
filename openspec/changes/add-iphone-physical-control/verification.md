@@ -3,12 +3,12 @@
 | Contract | Host evidence | Required phone/physical evidence |
 | --- | --- | --- |
 | Default Buttons; permission only on tap; no automatic ARM | Browser and Session regressions | Bluefy mode/permission behavior |
-| Three relative angles, wrap, dead zone, per-axis clamps | Physical unit tests | Phone signs, held twist, 60 s neutral drift; stand mixed axes |
+| Three relative angles, wrap, dead zone, per-axis clamps | Physical unit tests | Phone signs/held twist confirmed; 60 s requested-zero hold confirmed, raw drift unmeasured; stand mixed axes pending |
 | Independent sample/UI deadlines and no old input replay | Fake-clock input and Session tests, browser stalls | Phone stalls and observed manual recovery |
 | Mode changes supersede ARM, clear/disarm/STOP | Fake-GATT race tests; real page switch while held | Phone and separately authorized stand stop |
 | Lifecycle/reference/invalid sample cleanup; held posture failure | Unit/Session/browser tests | Phone lock/app switch/orientation and stand interruption |
 | One-tap neutral/ARM; released-pad gaps/posture; visible status/STOP | Red/green Session and scroll browser regressions | Todor confirmed corrected UX on build `780f65eff594`, motor power off |
-| Existing stream/Status/cleanup limits | Existing and new Session regressions | Actual sensor-plus-BLE gaps, STOP/readback; physical observation |
+| Existing stream/Status/cleanup limits | Existing and new Session regressions | Reported iPhone 11: 1,366 writes, max gap 180 ms, slowest write 19 ms; physical observation pending |
 
 Pre-implementation sensor-only [phone result](../../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
 supports the selected interaction, not full product acceptance. Task 3.0 has a
@@ -59,5 +59,9 @@ All 15 public files match clean build `780f65eff594`. A public-page Chromium
 check confirmed Buttons default, the combined Physical ARM label, no separate
 calibration button, disarmed state and zero picker calls/page errors. Pages
 deployment completed successfully. Todor confirmed the announced motor-power-off
-UX retest works, completing task 3.0. This supplies no Stream metrics, full-minute
-neutral measurement or motor-on result; tasks 3.1–3.3 remain open.
+UX retest works, completing task 3.0. A subsequent 60 s neutral hold on reported
+iPhone 11 stayed at requested zero without disconnect/stale-sensor messages, with
+1,366 writes, max gap 180 ms and slowest write 19 ms. These session counters do
+not define an exact 60 s trace, send rate, delivery timing or raw drift bound.
+The 200 ms client cutoff is unchanged. Task 3.1 remains open for phone
+interruption/recovery checks; tasks 3.2–3.3 still require motor-on evidence/review.

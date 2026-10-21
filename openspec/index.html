@@ -3519,7 +3519,7 @@ After explicit acceptance, implement/test the static page from Linux, prepare a 
 </li>
 <li>
 <p>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Record phone model/iOS/Bluefy; confirm 60 s neutral stability, combined sensor/BLE stream timing, signs and UI behavior. Check denial/retry, stale sensor/UI, reference/posture changes, lock/app-switch, release and fresh manual recovery.</p>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Record phone model/iOS/Bluefy; confirm 60 s neutral stability, combined sensor/BLE stream timing, signs and UI behavior. Check denial/retry, stale sensor/UI, reference/posture changes, lock/app-switch, release and fresh manual recovery. Neutral/stream subcheck passed on reported iPhone 11: zero throughout 60 s, 1,366 writes, max gap 180 ms, slowest write 19 ms (<a href="../firmware/bench/2026-10-21-iphone-physical/notes.md#60-second-neutral-and-stream-check">evidence</a>); remaining phone interruption/recovery checks keep this task open.</p>
 </li>
 <li>
 <p>
@@ -3751,7 +3751,7 @@ Three relative angles, wrap, dead zone, per-axis clamps</td>
 <td>
 Physical unit tests</td>
 <td>
-Phone signs, held twist, 60 s neutral drift; stand mixed axes</td>
+Phone signs/held twist confirmed; 60 s requested-zero hold confirmed, raw drift unmeasured; stand mixed axes pending</td>
 </tr>
 <tr>
 <td>
@@ -3791,7 +3791,7 @@ Existing stream/Status/cleanup limits</td>
 <td>
 Existing and new Session regressions</td>
 <td>
-Actual sensor-plus-BLE gaps, STOP/readback; physical observation</td>
+Reported iPhone 11: 1,366 writes, max gap 180 ms, slowest write 19 ms; physical observation pending</td>
 </tr>
 </tbody>
 </table>
@@ -3845,8 +3845,12 @@ All 15 public files match clean build <code>780f65eff594</code>. A public-page C
 check confirmed Buttons default, the combined Physical ARM label, no separate
 calibration button, disarmed state and zero picker calls/page errors. Pages
 deployment completed successfully. Todor confirmed the announced motor-power-off
-UX retest works, completing task 3.0. This supplies no Stream metrics, full-minute
-neutral measurement or motor-on result; tasks 3.1–3.3 remain open.</p>
+UX retest works, completing task 3.0. A subsequent 60 s neutral hold on reported
+iPhone 11 stayed at requested zero without disconnect/stale-sensor messages, with
+1,366 writes, max gap 180 ms and slowest write 19 ms. These session counters do
+not define an exact 60 s trace, send rate, delivery timing or raw drift bound.
+The 200 ms client cutoff is unchanged. Task 3.1 remains open for phone
+interruption/recovery checks; tasks 3.2–3.3 still require motor-on evidence/review.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>
@@ -4994,8 +4998,10 @@ STOP and switching. Todor then reported unwanted disarming during scrolling,
 hidden status and the unnecessary separate calibration tap. This authorizes the
 one-tap neutral/ARM and released-pad UX correction. Todor subsequently confirmed
 the announced corrected phone retest on build <code>780f65eff594</code> works with motor
-power off. The original Bluefy trigger remains unclassified; timing measurements
-and motor-on acceptance remain open.</p>
+power off. He subsequently confirmed a 60 s neutral hold at requested zero on
+iPhone 11: 1,366 writes, max gap 180 ms, slowest write 19 ms. The original
+Bluefy trigger remains unclassified; remaining phone interruption/recovery and
+motor-on acceptance remain open.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/proposal.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--proposal--proposal">Proposal</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--proposal--why">Why</h2><p>

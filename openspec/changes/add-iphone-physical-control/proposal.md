@@ -51,5 +51,7 @@ STOP and switching. Todor then reported unwanted disarming during scrolling,
 hidden status and the unnecessary separate calibration tap. This authorizes the
 one-tap neutral/ARM and released-pad UX correction. Todor subsequently confirmed
 the announced corrected phone retest on build `780f65eff594` works with motor
-power off. The original Bluefy trigger remains unclassified; timing measurements
-and motor-on acceptance remain open.
+power off. He subsequently confirmed a 60 s neutral hold at requested zero on
+iPhone 11: 1,366 writes, max gap 180 ms, slowest write 19 ms. The original
+Bluefy trigger remains unclassified; remaining phone interruption/recovery and
+motor-on acceptance remain open.

@@ -95,8 +95,11 @@ The [first motor-power-off phone run](../../firmware/bench/2026-10-21-iphone-phy
 confirmed directions, neutral/release and STOP/mode changes, but exposed the
 scrolling and calibration UX defects addressed above. Todor confirmed the corrected
 scrolling/status and one-tap neutral/ARM retest works on build `780f65eff594`, with
-motor power off. The original trigger remains unclassified; no stream metrics or
-motor-on result were supplied.
+motor power off. A subsequent 60 s neutral hold on reported iPhone 11 stayed at
+requested zero: 1,366 writes, max gap 180 ms, slowest write 19 ms. These are
+session counters, not an exact 60 s trace or radio-delivery measurement. The
+original trigger remains unclassified; remaining phone interruption/recovery and
+motor-on acceptance are open.
 
 ## Phone sensor test
 
