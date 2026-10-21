@@ -64,3 +64,10 @@ for START and a separate frame-renewal deadline. Buttons retain press-and-hold.
 Keep the existing posture limits and identify the exact failing angle in messages;
 the reported rotation/drop-of-touch cause is not yet established. This UI change
 requires another motor-power-off retest; earlier held-pad results remain historical.
+
+
+Todor additionally requested a production-quality iPhone controller UI for both
+modes using design skills. This authorizes a compact responsive redesign, native
+segmented mode selection, clear state/feedback, a persistent action/STOP dock,
+collapsible diagnostics and sensor setup on explicit Physical selection. Preserve
+control safety and existing hosting; validate new usability on phone before acceptance.

@@ -10,8 +10,9 @@ close also disables physical input and discards calibration.
 ## Input and permissions
 
 Default Buttons. Selecting Physical does not request permission or claim a car.
-Enable Sensors calls the optional DeviceOrientationEvent permission method directly
-from the tap, then installs generation-guarded orientation callbacks. No compass,
+Selecting Physical or an explicit Retry calls the optional DeviceOrientationEvent
+permission method directly from that gesture, then installs generation-guarded
+orientation callbacks. No compass,
 motion.interval, gyroscope integration or sensor fusion is needed. Missing/null/
 non-finite/out-of-range angles fail closed. Track optional absolute-reference
 metadata; a change invalidates calibration rather than silently changing the frame.
@@ -61,8 +62,9 @@ but retain neutral and arm. Invalid values/reference changes still close armed o
 arming sessions. Lifecycle return requires manual enabling, connection, ARM and
 START. No silent recentering or automatic recovery is introduced.
 
-Keep Physical START/PAUSE alongside arm state, ARM/STOP, requested motion and the latest session
-reason in the sticky safety panel. Give running/paused text and the offending
+Keep requested motion and the applicable ARM/START/PAUSE action with STOP in the
+persistent thumb dock; arm state and the latest reason remain in a sticky status
+area. Give running/paused text and the offending
 angle/value/limit on posture faults. Screen-up tilt limits stay ±60° absolute,
 heading offset ±90°; the interface change does not establish a cause for the
 reported z-axis interruption. Earlier held-pad UX/neutral results are evidence for
@@ -80,3 +82,48 @@ state model; they do not establish phone/BLE or physical stopping. Phone accepta
 must combine sensors and the full BLE workload, exercise all invalidations and
 extend quiet evidence to 60 s. A separate stand batch covers six signs, mixed axes,
 neutral/PAUSE, STOP, mode changes and interruptions. No floor test is included.
+
+
+## Controller screen redesign
+
+Todor requested a production-quality interface for both modes using design skills.
+Apply the local UX Designer and Web Interface Guidelines skills within this
+existing client, with no framework, remote font, runtime asset or hosting change.
+Keep Session, Hold, Physical, wire values and motor limits as the control boundary.
+
+Portrait wireframe (compact, 320–390 px):
+
+```text
+rovi / controller       connection · Connect/Disconnect
+[       Buttons       |       Physical       ]
+Phone arm state · next action / inline fault reason
+[ six held directions OR live tilt/neutral visual ]
+Requested: forward · sideways · turn
+[ Connection & diagnostics (closed) ]
+[ ARM / START / PAUSE              ][ STOP ]  thumb dock
+```
+
+Use system typography, warm neutral surfaces, forest-green identity, amber for
+armed/paused and red for STOP/faults. Support a matching dark palette. Use SVG
+icons/phone input visualization with text equivalents, tabular numerical values,
+44 px minimum targets and visible keyboard focus. Default and connected phone
+screens must show controls and requested motion without scrolling; larger text
+may scroll with safe bottom padding so focus stays above the dock. Keep actual
+fault messages visible. Show technical Status, stream counters and raw angles in
+collapsed native details; opening it pauses input. Never animate motion merely
+for decoration or imply measured wheel feedback.
+
+Choosing Physical from a user-operated native radio prepares orientation sensors
+in that same gesture; it never connects or arms. Allow this while a mode-change
+STOP is pending because local motion is already revoked. Permission denial or
+missing readings expose Retry; the normal path needs no separate Enable button.
+Retain epoch/generation/foreground guards and actual blur/hidden cleanup, including
+if an iOS permission dialog interrupts an existing connection. Native permission
+and Web Bluetooth may still require manual recovery on the phone; no permission
+exception weakens safety or promises a production qualification we have not tested.
+
+Render text only when it changes, so a stable status is not re-announced every
+frame. Keep sensor previews separate from requested velocities; paused previews
+never authorize motion. Test compact/light/dark/200% text states plus permission,
+mode, input cancellation, STOP, diagnostics and lifecycle paths. This redraw needs
+a new motor-power-off Bluefy usability check; earlier phone results are historical.

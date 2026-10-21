@@ -87,3 +87,20 @@ Chromium check confirmed default Buttons, Physical START paused/disabled while
 disconnected, requested zero, sticky controls visible, local disarm and zero
 picker calls/page errors. Tap-based phone usability/interruptions and motor-on
 acceptance remain open; no phone result is inferred from this publication.
+
+
+Controller redesign: the 320×568 layout regression failed before the redraw
+(direction bottom 696 px); mode-triggered setup failed with zero permission calls
+until a separate Enable tap. New tests cover 320×568, 375×667 and 390×844 control
+visibility above the dock, native radio keyboard/focus, dark mode, 200% text,
+landscape, diagnostics pausing and permission interrupted by blur/STOP. Enlarged
+text additionally exposed focused controls hidden behind sticky status; scroll
+padding now keeps focus between status and dock. Representative enabled text
+contrast is checked at 4.5:1 in both palettes. These are host checks, not VoiceOver,
+Bluefy native-permission or motor acceptance. STOP remains immediate and modes
+remain unpersisted, deliberately following the control contract over generic UI
+recommendations for confirmations or URL state.
+
+Controller-redesign host result: 48 Node tests and 37 source-page Chromium scenarios
+pass. Reviewed screenshots show both modes at 390×844 and compact Buttons at
+320×568, plus landscape and dark 200% text. Packaged/public checks follow.

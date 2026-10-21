@@ -56,10 +56,12 @@ Its product [phone/stand acceptance tasks](../../openspec/changes/add-iphone-phy
 remain open. The first combined BLE check should use motor power off; a motor
 batch still needs its own announced stand setup and fresh go.
 
-1. Select **Physical**, tap **Enable sensors** and allow access. Choosing a mode or
-   granting permission does not connect or ARM. Buttons remain the default after reload.
-2. Choose and connect the car. If a permission dialog interrupts an existing
-   connection, enable sensors first and then connect manually again.
+1. Select **Physical** in the segmented control and allow motion access if prompted.
+   That user action prepares sensors; no separate Enable button is needed. Choosing
+   a mode or granting permission does not connect or ARM. Buttons remain the default
+   after reload. Missing/denied readings expose **Retry motion access**.
+2. Tap **Connect** and choose the car. If a permission dialog interrupts an existing
+   connection, use **Retry motion access**, then connect manually again.
 3. Hold the phone in portrait, screen up like a tray (within 30° of flat), and tap
    **SET NEUTRAL & ARM** while disarmed. That single action captures neutral and
    arms at zero. Each ARM captures the current neutral; there is no separate
@@ -71,8 +73,8 @@ batch still needs its own announced stand setup and fresh go.
 5. Return to neutral for zero while control keeps running, or tap **PAUSE TILT
    CONTROL** for zero with driving paused. Restart requires a fresh START at neutral.
    **STOP** disarms and requires fresh ARM then START. Mode changes also clear
-   calibration and disarm; confirmed STOP may leave the connection open. Enable
-   sensors again when selecting Physical, then use Set neutral & ARM and START.
+   calibration and disarm; confirmed STOP may leave the connection open. Selecting Physical
+   prepares sensors again; then use Set neutral & ARM and START.
 
 Each axis uses a 3° dead zone and scales to full gentle reference at 20°:
 up to 0.1 m/s per translation axis or 0.3 rad/s rotation, clipped by advertised
@@ -87,9 +89,11 @@ session while paused. No automatic recentering, reconnection or restart occurs.
 
 Only fresh orientation callbacks renew the 250 ms sample deadline; only UI frames
 renew the separate 250 ms running-input deadline. Cached angles and stream ticks
-cannot keep either alive. The sticky safety panel keeps arm, START/PAUSE, STOP
-and the session/fault reason visible while scrolling. Lock/app switch/screen
-rotation require manual Enable, connect, Set neutral & ARM and START. Existing
+cannot keep either alive. The compact controller keeps requested motion and ARM/START/PAUSE with STOP
+in a persistent thumb dock. A sticky status area keeps the session/fault reason
+visible. Raw sensor angles, Status age, stream counters and limits are in collapsed
+**Connection & diagnostics**; opening it pauses input. Lock/app switch/screen
+rotation require manual motion setup/retry, connect, Set neutral & ARM and START. Existing
 stream/Status/cleanup deadlines are unchanged. No compass heading, declared
 motion interval or integrated gyro rate controls the car.
 
@@ -99,7 +103,8 @@ corrected scrolling/calibration and a 60 s requested-zero hold on reported iPhon
 (1,366 writes, max gap 180 ms, slowest write 19 ms). Those session counters do not
 define an exact 60 s trace or radio-delivery timing. Todor subsequently found
 holding the pad while tilting awkward and reported posture-triggered disarming.
-The new tap START/PAUSE interaction needs its own motor-power-off retest. The
+The redesigned light/dark controller and new tap START/PAUSE interaction need
+their own motor-power-off retest, including native mode-triggered permission. The
 original rotation/drop-of-touch cause and motor-on acceptance remain unverified.
 
 ## Phone sensor test

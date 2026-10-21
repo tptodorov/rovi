@@ -16,9 +16,9 @@ ${await readFile(new URL('../../app.js', import.meta.url), 'utf8')}
 });
 
 async function connect(page) {
-  await page.getByRole('button', { name: 'Choose & connect' }).click();
-  await expect(page.locator('#phase')).toHaveText('ready');
-  await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
+  await page.locator('#connect').click();
+  await expect(page.locator('body')).toHaveAttribute('data-phase', 'ready');
+  await expect(page.locator('#local-arm')).toHaveText('Disarmed');
 }
 
 test('real page and session: connect disarmed, explicit ARM, hold and release, confirmed STOP', async ({ page }) => {
@@ -26,7 +26,7 @@ test('real page and session: connect disarmed, explicit ARM, hold and release, c
   await connect(page);
   expect(await page.evaluate(() => fake.calls.some(([kind]) => kind === 'control'))).toBe(false);
   await page.getByRole('button', { name: 'ARM AT ZERO' }).click();
-  await expect(page.locator('#local-arm')).toHaveText('Locally armed');
+  await expect(page.locator('#local-arm')).toHaveText('Armed');
   const button = page.getByRole('button', { name: 'Hold to move forward', exact: true });
   const box = await button.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
@@ -66,9 +66,9 @@ test('phone-sized preview, real Status age and blur never recover ownership auto
   expect(backward.y + backward.height).toBeLessThanOrEqual(844);
   await page.screenshot({ path: info.outputPath('controller.png'), fullPage: true });
   await page.evaluate(() => dispatchEvent(new Event('blur')));
-  await expect(page.locator('#phase')).toHaveText('disconnected');
+  await expect(page.locator('body')).toHaveAttribute('data-phase', 'disconnected');
   await page.evaluate(() => dispatchEvent(new Event('focus')));
-  await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
+  await expect(page.locator('#local-arm')).toHaveText('Disarmed');
   expect(await page.evaluate(() => fake.calls.filter(x => x[0] === 'picker').length)).toBe(1);
 });
 
@@ -77,13 +77,13 @@ test('missing Web Bluetooth is explained without claiming a device', async ({ pa
   await page.addInitScript(() => Object.defineProperty(navigator, 'bluetooth', { value: undefined }));
   await page.reload();
   await expect(page.locator('#message')).toContainText('Open this page in Bluefy');
-  await page.getByRole('button', { name: 'Choose & connect' }).click();
-  await expect(page.locator('#phase')).toHaveText('disconnected');
+  await page.locator('#connect').click();
+  await expect(page.locator('body')).toHaveAttribute('data-phase', 'disconnected');
 });
 
 test('STOP acts on touch while another finger holds a direction', async ({ page }) => {
   await connect(page); await page.getByRole('button', { name: 'ARM AT ZERO' }).click();
-  await expect(page.locator('#local-arm')).toHaveText('Locally armed');
+  await expect(page.locator('#local-arm')).toHaveText('Armed');
   const forward = await page.locator('[data-direction="forward"]').boundingBox();
   const stop = await page.locator('#stop').boundingBox();
   const cdp = await page.context().newCDPSession(page);
@@ -92,7 +92,7 @@ test('STOP acts on touch while another finger holds a direction', async ({ page 
   await expect(page.locator('#requested')).toContainText('vx 0.10');
   // iOS synthesizes no click for a second finger, so STOP must act on touch-down alone.
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(forward, 1), point(stop, 2)] });
-  await expect(page.locator('#local-arm')).toHaveText('Locally disarmed');
+  await expect(page.locator('#local-arm')).toHaveText('Disarmed');
   await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   expect(await page.evaluate(() => fake.calls.filter(x => x[0] === 'control' && x[1] === 2).length)).toBe(1);

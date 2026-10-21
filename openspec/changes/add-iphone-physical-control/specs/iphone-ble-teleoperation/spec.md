@@ -7,7 +7,7 @@
 
 ### Requirement: Supported web delivery
 
-The controller SHALL run as an HTTPS page with Bluefy as its supported iPhone BLE host. It SHALL check the picker API before selection and required GATT read/notify and explicit write modes before writes; missing support SHALL disable control with an explanation. Buttons SHALL be the default; only an explicit Enable Sensors action in Physical mode may request sensor permission. Published assets SHALL contain no secrets or third-party runtime scripts.
+The controller SHALL run as an HTTPS page with Bluefy as its supported iPhone BLE host. It SHALL check the picker API before selection and required GATT read/notify and explicit write modes before writes; missing support SHALL disable control with an explanation. Buttons SHALL be the default; only a user selection of Physical mode or explicit sensor retry may request sensor permission. Published assets SHALL contain no secrets or third-party runtime scripts.
 
 #### Scenario: Unsupported host
 
@@ -97,7 +97,7 @@ Local arm state, STOP, Physical START/PAUSE, requested motion and the latest ses
 
 ### Requirement: Explicit physical sensor setup
 
-Physical sensor access SHALL require an active user Enable Sensors action, feature detection and permission handling. Missing/denied/failed permission or missing finite alpha/beta/gamma SHALL prevent physical motion. Late permission results or callbacks from an earlier mode, enable attempt or closed session SHALL NOT change current input. Sensor events SHALL NOT select a device, ARM or write BLE.
+Physical sensor setup SHALL begin only from an active user selection of Physical mode or explicit Retry action, with feature detection and permission handling. Missing/denied/failed permission or missing finite alpha/beta/gamma SHALL prevent physical motion. Late permission results or callbacks from an earlier mode, enable attempt or closed session SHALL NOT change current input. Sensor events SHALL NOT select a device, ARM or write BLE.
 
 #### Scenario: Denial and delayed permission response
 
@@ -174,3 +174,25 @@ Physical control SHALL stay paused after ARM. START SHALL require active foregro
 - **WHEN** Physical control is running and no UI frame renews its deadline for 250 ms while fresh sensors and the stream continue
 - **THEN** intent becomes zero and local arm/calibration are revoked through cleanup
 - **AND** resumed frames and samples cannot restart driving or reconnect
+
+### Requirement: Mobile controller layout
+
+The controller SHALL present labelled Buttons/Physical segmented radios, requested motion and connection/arm/driving states. At 320×568 through 390×844 CSS pixels, six Buttons directions and requested motion SHALL fit above a persistent thumb-reachable ARM/START/PAUSE and STOP dock. Sensor setup SHALL be implicit in choosing Physical; Retry appears only when needed. Protocol/raw sensor details SHALL be collapsed by default; opening diagnostics SHALL clear input without ARM or restart.
+
+#### Scenario: Drive without scrolling through setup details
+
+- **WHEN** the connected controller is viewed in either mode on the supported portrait sizes
+- **THEN** the current primary action and STOP remain visible, and requested motion is readable without opening diagnostics
+- **AND** Buttons keeps held directions while Physical keeps explicit neutral-gated START/PAUSE; choosing modes still disarms
+
+#### Scenario: Larger text and keyboard access
+
+- **WHEN** text is enlarged to 200%, a keyboard selects modes, or a narrow/landscape viewport is used
+- **THEN** controls remain labelled, targets at least 44×44 CSS pixels, content can scroll without horizontal overflow and focus is not covered by the dock
+- **AND** light/dark themes have readable text, motion is reduced when requested and no sensor or Bluetooth permission is requested by initial page load
+
+#### Scenario: Diagnostics while Physical is running
+
+- **WHEN** connection diagnostics are opened during Physical driving
+- **THEN** input becomes zero and stays paused without losing neutral/arm or disconnecting solely because details opened
+- **AND** closing details or returning readings cannot resume driving; a new explicit START at neutral is needed

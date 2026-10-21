@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>154</b> requirements</div><div><b>258</b> scenarios</div><div><b>59 / 64</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>155</b> requirements</div><div><b>261</b> scenarios</div><div><b>59 / 65</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>iPhone physical control</h2>
       <div class="notice"><p>
 See the proposal for acceptance status.</p>
@@ -582,7 +582,7 @@ FROM: <code>### Requirement: Gentle single-axis directions</code></li>
 TO: <code>### Requirement: Gentle input modes</code></li>
 </ul>
 <h2 id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--modified-requirements">MODIFIED Requirements</h2><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-supported-web-delivery"><h3>Supported web delivery</h3><p>
-The controller SHALL run as an HTTPS page with Bluefy as its supported iPhone BLE host. It SHALL check the picker API before selection and required GATT read/notify and explicit write modes before writes; missing support SHALL disable control with an explanation. Buttons SHALL be the default; only an explicit Enable Sensors action in Physical mode may request sensor permission. Published assets SHALL contain no secrets or third-party runtime scripts.</p>
+The controller SHALL run as an HTTPS page with Bluefy as its supported iPhone BLE host. It SHALL check the picker API before selection and required GATT read/notify and explicit write modes before writes; missing support SHALL disable control with an explanation. Buttons SHALL be the default; only a user selection of Physical mode or explicit sensor retry may request sensor permission. Published assets SHALL contain no secrets or third-party runtime scripts.</p>
 <details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-unsupported-host"><summary>Unsupported host</summary><ul>
 <li>
 <strong>WHEN</strong> the page opens without required Web Bluetooth APIs, including in an unsupported Safari session, or without HTTPS</li>
@@ -674,7 +674,7 @@ Local arm state, STOP, Physical START/PAUSE, requested motion and the latest ses
 <strong>AND</strong> a genuine stream or lifecycle failure still disarms and displays its reason</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-explicit-physical-sensor-setup"><h3>Explicit physical sensor setup</h3><p>
-Physical sensor access SHALL require an active user Enable Sensors action, feature detection and permission handling. Missing/denied/failed permission or missing finite alpha/beta/gamma SHALL prevent physical motion. Late permission results or callbacks from an earlier mode, enable attempt or closed session SHALL NOT change current input. Sensor events SHALL NOT select a device, ARM or write BLE.</p>
+Physical sensor setup SHALL begin only from an active user selection of Physical mode or explicit Retry action, with feature detection and permission handling. Missing/denied/failed permission or missing finite alpha/beta/gamma SHALL prevent physical motion. Late permission results or callbacks from an earlier mode, enable attempt or closed session SHALL NOT change current input. Sensor events SHALL NOT select a device, ARM or write BLE.</p>
 <details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-denial-and-delayed-permission-response"><summary>Denial and delayed permission response</summary><ul>
 <li>
 <strong>WHEN</strong> permission is denied or resolves after switching to Buttons or leaving the page</li>
@@ -762,6 +762,32 @@ Physical control SHALL stay paused after ARM. START SHALL require active foregro
 <strong>THEN</strong> intent becomes zero and local arm/calibration are revoked through cleanup</li>
 <li>
 <strong>AND</strong> resumed frames and samples cannot restart driving or reconnect</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--requirement-mobile-controller-layout"><h3>Mobile controller layout</h3><p>
+The controller SHALL present labelled Buttons/Physical segmented radios, requested motion and connection/arm/driving states. At 320×568 through 390×844 CSS pixels, six Buttons directions and requested motion SHALL fit above a persistent thumb-reachable ARM/START/PAUSE and STOP dock. Sensor setup SHALL be implicit in choosing Physical; Retry appears only when needed. Protocol/raw sensor details SHALL be collapsed by default; opening diagnostics SHALL clear input without ARM or restart.</p>
+<details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-drive-without-scrolling-through-setup-details"><summary>Drive without scrolling through setup details</summary><ul>
+<li>
+<strong>WHEN</strong> the connected controller is viewed in either mode on the supported portrait sizes</li>
+<li>
+<strong>THEN</strong> the current primary action and STOP remain visible, and requested motion is readable without opening diagnostics</li>
+<li>
+<strong>AND</strong> Buttons keeps held directions while Physical keeps explicit neutral-gated START/PAUSE; choosing modes still disarms</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-larger-text-and-keyboard-access"><summary>Larger text and keyboard access</summary><ul>
+<li>
+<strong>WHEN</strong> text is enlarged to 200%, a keyboard selects modes, or a narrow/landscape viewport is used</li>
+<li>
+<strong>THEN</strong> controls remain labelled, targets at least 44×44 CSS pixels, content can scroll without horizontal overflow and focus is not covered by the dock</li>
+<li>
+<strong>AND</strong> light/dark themes have readable text, motion is reduced when requested and no sensor or Bluetooth permission is requested by initial page load</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-iphone-physical-control--specs--iphone-ble-teleoperation--spec--scenario-diagnostics-while-physical-is-running"><summary>Diagnostics while Physical is running</summary><ul>
+<li>
+<strong>WHEN</strong> connection diagnostics are opened during Physical driving</li>
+<li>
+<strong>THEN</strong> input becomes zero and stays paused without losing neutral/arm or disconnecting solely because details opened</li>
+<li>
+<strong>AND</strong> closing details or returning readings cannot resume driving; a new explicit START at neutral is needed</li>
 </ul>
 </details></article></section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--specs--laptop-teleoperation--spec" aria-label="laptop teleoperation">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/specs/laptop-teleoperation/spec.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/specs/laptop-teleoperation/spec.md</div></header>
@@ -3072,8 +3098,9 @@ button Hold behavior intact. All Session invalidation paths clear button holds a
 close also disables physical input and discards calibration.</p>
 <h2 id="openspec--changes--add-iphone-physical-control--design--input-and-permissions">Input and permissions</h2><p>
 Default Buttons. Selecting Physical does not request permission or claim a car.
-Enable Sensors calls the optional DeviceOrientationEvent permission method directly
-from the tap, then installs generation-guarded orientation callbacks. No compass,
+Selecting Physical or an explicit Retry calls the optional DeviceOrientationEvent
+permission method directly from that gesture, then installs generation-guarded
+orientation callbacks. No compass,
 motion.interval, gyroscope integration or sensor fusion is needed. Missing/null/
 non-finite/out-of-range angles fail closed. Track optional absolute-reference
 metadata; a change invalidates calibration rather than silently changing the frame.</p>
@@ -3119,8 +3146,9 @@ but retain neutral and arm. Invalid values/reference changes still close armed o
 arming sessions. Lifecycle return requires manual enabling, connection, ARM and
 START. No silent recentering or automatic recovery is introduced.</p>
 <p>
-Keep Physical START/PAUSE alongside arm state, ARM/STOP, requested motion and the latest session
-reason in the sticky safety panel. Give running/paused text and the offending
+Keep requested motion and the applicable ARM/START/PAUSE action with STOP in the
+persistent thumb dock; arm state and the latest reason remain in a sticky status
+area. Give running/paused text and the offending
 angle/value/limit on posture faults. Screen-up tilt limits stay ±60° absolute,
 heading offset ±90°; the interface change does not establish a cause for the
 reported z-axis interruption. Earlier held-pad UX/neutral results are evidence for
@@ -3136,6 +3164,46 @@ state model; they do not establish phone/BLE or physical stopping. Phone accepta
 must combine sensors and the full BLE workload, exercise all invalidations and
 extend quiet evidence to 60 s. A separate stand batch covers six signs, mixed axes,
 neutral/PAUSE, STOP, mode changes and interruptions. No floor test is included.</p>
+<h2 id="openspec--changes--add-iphone-physical-control--design--controller-screen-redesign">Controller screen redesign</h2><p>
+Todor requested a production-quality interface for both modes using design skills.
+Apply the local UX Designer and Web Interface Guidelines skills within this
+existing client, with no framework, remote font, runtime asset or hosting change.
+Keep Session, Hold, Physical, wire values and motor limits as the control boundary.</p>
+<p>
+Portrait wireframe (compact, 320–390 px):</p>
+<pre><code class="language-text">rovi / controller       connection · Connect/Disconnect
+[       Buttons       |       Physical       ]
+Phone arm state · next action / inline fault reason
+[ six held directions OR live tilt/neutral visual ]
+Requested: forward · sideways · turn
+[ Connection &amp; diagnostics (closed) ]
+[ ARM / START / PAUSE              ][ STOP ]  thumb dock
+</code></pre>
+<p>
+Use system typography, warm neutral surfaces, forest-green identity, amber for
+armed/paused and red for STOP/faults. Support a matching dark palette. Use SVG
+icons/phone input visualization with text equivalents, tabular numerical values,
+44 px minimum targets and visible keyboard focus. Default and connected phone
+screens must show controls and requested motion without scrolling; larger text
+may scroll with safe bottom padding so focus stays above the dock. Keep actual
+fault messages visible. Show technical Status, stream counters and raw angles in
+collapsed native details; opening it pauses input. Never animate motion merely
+for decoration or imply measured wheel feedback.</p>
+<p>
+Choosing Physical from a user-operated native radio prepares orientation sensors
+in that same gesture; it never connects or arms. Allow this while a mode-change
+STOP is pending because local motion is already revoked. Permission denial or
+missing readings expose Retry; the normal path needs no separate Enable button.
+Retain epoch/generation/foreground guards and actual blur/hidden cleanup, including
+if an iOS permission dialog interrupts an existing connection. Native permission
+and Web Bluetooth may still require manual recovery on the phone; no permission
+exception weakens safety or promises a production qualification we have not tested.</p>
+<p>
+Render text only when it changes, so a stable status is not re-announced every
+frame. Keep sensor previews separate from requested velocities; paused previews
+never authorize motion. Test compact/light/dark/200% text states plus permission,
+mode, input cancellation, STOP, diagnostics and lifecycle paths. This redraw needs
+a new motor-power-off Bluefy usability check; earlier phone results are historical.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--design" aria-label="design">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/design.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/design.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--design--design">Design</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--design--context">Context</h2><p>
@@ -3573,6 +3641,10 @@ After explicit acceptance, implement/test the static page from Linux, prepare a 
 <p>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.6 Replace the Physical held pad with explicit neutral-gated START/PAUSE, independent frame expiry and precise posture faults; reproduce tap-only failure, verify host/browser safety paths, publish and verify assets (48 Node/26 source and built-page Chromium scenarios pass; clean <code>cef9e9bca8fe</code>, 15 live files match; public boot paused/disarmed with zero picker calls).</p>
 </li>
+<li>
+<p>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.7 Apply UX/design guidelines to both controller modes: document flows/states/accessibility, reproduce compact-layout and extra-enable issues, implement responsive/light/dark controller and mode-triggered sensor setup, verify safety/layout/keyboard/diagnostics and publish a reviewable candidate.</p>
+</li>
 </ul>
 <h2 id="openspec--changes--add-iphone-physical-control--tasks--3-phone-and-physical-acceptance">3. Phone and physical acceptance</h2><ul>
 <li>
@@ -3933,6 +4005,22 @@ Chromium check confirmed default Buttons, Physical START paused/disabled while
 disconnected, requested zero, sticky controls visible, local disarm and zero
 picker calls/page errors. Tap-based phone usability/interruptions and motor-on
 acceptance remain open; no phone result is inferred from this publication.</p>
+<p>
+Controller redesign: the 320×568 layout regression failed before the redraw
+(direction bottom 696 px); mode-triggered setup failed with zero permission calls
+until a separate Enable tap. New tests cover 320×568, 375×667 and 390×844 control
+visibility above the dock, native radio keyboard/focus, dark mode, 200% text,
+landscape, diagnostics pausing and permission interrupted by blur/STOP. Enlarged
+text additionally exposed focused controls hidden behind sticky status; scroll
+padding now keeps focus between status and dock. Representative enabled text
+contrast is checked at 4.5:1 in both palettes. These are host checks, not VoiceOver,
+Bluefy native-permission or motor acceptance. STOP remains immediate and modes
+remain unpersisted, deliberately following the control contract over generic UI
+recommendations for confirmations or URL state.</p>
+<p>
+Controller-redesign host result: 48 Node tests and 37 source-page Chromium scenarios
+pass. Reviewed screenshots show both modes at 390×844 and compact Buttons at
+320×568, plus landscape and dark 200% text. Packaged/public checks follow.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>
@@ -5092,6 +5180,12 @@ for START and a separate frame-renewal deadline. Buttons retain press-and-hold.
 Keep the existing posture limits and identify the exact failing angle in messages;
 the reported rotation/drop-of-touch cause is not yet established. This UI change
 requires another motor-power-off retest; earlier held-pad results remain historical.</p>
+<p>
+Todor additionally requested a production-quality iPhone controller UI for both
+modes using design skills. This authorizes a compact responsive redesign, native
+segmented mode selection, clear state/feedback, a persistent action/STOP dock,
+collapsible diagnostics and sensor setup on explicit Physical selection. Preserve
+control safety and existing hosting; validate new usability on phone before acceptance.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/proposal.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--proposal--proposal">Proposal</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--proposal--why">Why</h2><p>

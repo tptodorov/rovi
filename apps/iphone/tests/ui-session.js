@@ -9,6 +9,7 @@ const session = {
   caps: { max_vx: 0.05, max_vy: 0.1, max_wz: 0.2, lease_ms: 1000, claim_ms: 10000, reclaim_ms: 5000 },
   hold: new Hold(),
   physical: new Physical(), mode: 'buttons',
+  selectMode(mode) { this.mode = mode; this.localArm = false; this.clearInputs(); this.physical.disable(); this.changed(); },
   clearInputs() { this.hold.clear(); this.physical.clear(); },
   get requested() { return this.localArm ? this.hold.intent(this.caps, performance.now()) : ZERO; },
   arm() { this.hold.clear(); this.localArm = true; this.changed(); },
