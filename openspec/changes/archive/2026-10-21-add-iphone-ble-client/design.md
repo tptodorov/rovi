@@ -2,7 +2,7 @@
 
 ## Context
 
-See [proposal](proposal.md) for the selected scope and acceptance gate. The accepted [car API](../../specs/car-control-api/spec.md) remains unchanged. The [laptop client](../../specs/laptop-teleoperation/spec.md) supplies the gentle-direction/explicit-arm precedent; UDP handshake/correlation does not apply to BLE. [Q9/Q18/Q19/Q21](../../../docs/PLAN.md#open-questions-and-decisions) remain the roadmap's home.
+See [proposal](proposal.md) for the selected scope and acceptance gate. The accepted [car API](../../../specs/car-control-api/spec.md) remains unchanged. The [laptop client](../../../specs/laptop-teleoperation/spec.md) supplies the gentle-direction/explicit-arm precedent; UDP handshake/correlation does not apply to BLE. [Q9/Q18/Q19/Q21](../../../../docs/PLAN.md#open-questions-and-decisions) remain the roadmap's home.
 
 ### Recorded user decisions (2026-10-20)
 
@@ -17,13 +17,13 @@ Inspected at main `1be50b3`; no protocol change is proposed.
 
 | Concern | Existing evidence and client consequence |
 | --- | --- |
-| Advertisement/claim | [Firmware BLE loop](../../../firmware/src/fw.rs#L365): flags and `Rovi M8` in scan response, no service UUID. Use a name filter plus optional service access, then validate GATT. Connecting claims immediately and switches off the AP. Name/device ID is not authentication. |
-| GATT | [RoviService](../../../firmware/src/fw.rs#L67): service `d47a0010-45b2-4d19-8db0-6bd87e9c0001`; same suffix with `0011` Setpoint (write without response), `0012` Control (write with response), `0013` Capabilities (read), `0014` Status (read/notify), `0015` Echo (write without response/notify). Require the first four characteristics/properties; Echo is unused. |
-| Setpoint | [Python wire reference](../../../experiments/rovi-m8-setpoint-ros/sim/wire.py#L14) and [Rust decoder](../../../crates/rovi-core/src/device.rs): u32 LE sequence + 68-byte little-endian TwistStamped CDR = 72 bytes. Empty frame means base_link; zero timestamp is valid; only vx/vy/wz vary. No UDP header, BLE numeric session, HELLO or BYE. |
-| Capabilities | [Encoder](../../../crates/rovi-core/src/capabilities.rs#L42): u8 version, five f32 LE (radius, centre projection sum, max_vx/max_vy/max_wz), three u16 LE (lease/claim/reclaim ms), 27 bytes. Widen f32 values exactly; never round limits upward. |
-| Status/control | [Encoder](../../../crates/rovi-core/src/status.rs#L35): states 0 Open/1 Claimed/2 Armed/3 Stopped; reasons 0 none/1 Stop/2 LeaseExpired/3 OwnerLost/4 OutOfLimits; errors 0 none/1 Busy/2 NotOwner/3 NotReady/4 Invalid. Require reason=0 except Stopped, whose reason must be nonzero. ARM=1/STOP=2; refused writes use ATT Value Not Allowed. |
-| Windows | [Defaults](../../../crates/rovi-core/src/arbiter.rs#L32): lease 1000, claim 10000, reclaim 5000 ms. Read advertised values. Disarmed zero setpoints retain ownership; STOP retains it; disconnect releases it. Firmware disconnects on ownership expiry. |
-| Prior evidence | [Bleak client](../../../experiments/rovi-m8-setpoint-ros/sim/ble_client.py), [product Status/Echo probe](../../../firmware/bench/ble_status_echo.py) and [BLE lease results](../../../firmware/bench/2026-10-19-ble-device-lease-timing/notes.md) inform the wire contract, not Bluefy performance. |
+| Advertisement/claim | [Firmware BLE loop](../../../../firmware/src/fw.rs#L365): flags and `Rovi M8` in scan response, no service UUID. Use a name filter plus optional service access, then validate GATT. Connecting claims immediately and switches off the AP. Name/device ID is not authentication. |
+| GATT | [RoviService](../../../../firmware/src/fw.rs#L67): service `d47a0010-45b2-4d19-8db0-6bd87e9c0001`; same suffix with `0011` Setpoint (write without response), `0012` Control (write with response), `0013` Capabilities (read), `0014` Status (read/notify), `0015` Echo (write without response/notify). Require the first four characteristics/properties; Echo is unused. |
+| Setpoint | [Python wire reference](../../../../experiments/rovi-m8-setpoint-ros/sim/wire.py#L14) and [Rust decoder](../../../../crates/rovi-core/src/device.rs): u32 LE sequence + 68-byte little-endian TwistStamped CDR = 72 bytes. Empty frame means base_link; zero timestamp is valid; only vx/vy/wz vary. No UDP header, BLE numeric session, HELLO or BYE. |
+| Capabilities | [Encoder](../../../../crates/rovi-core/src/capabilities.rs#L42): u8 version, five f32 LE (radius, centre projection sum, max_vx/max_vy/max_wz), three u16 LE (lease/claim/reclaim ms), 27 bytes. Widen f32 values exactly; never round limits upward. |
+| Status/control | [Encoder](../../../../crates/rovi-core/src/status.rs#L35): states 0 Open/1 Claimed/2 Armed/3 Stopped; reasons 0 none/1 Stop/2 LeaseExpired/3 OwnerLost/4 OutOfLimits; errors 0 none/1 Busy/2 NotOwner/3 NotReady/4 Invalid. Require reason=0 except Stopped, whose reason must be nonzero. ARM=1/STOP=2; refused writes use ATT Value Not Allowed. |
+| Windows | [Defaults](../../../../crates/rovi-core/src/arbiter.rs#L32): lease 1000, claim 10000, reclaim 5000 ms. Read advertised values. Disarmed zero setpoints retain ownership; STOP retains it; disconnect releases it. Firmware disconnects on ownership expiry. |
+| Prior evidence | [Bleak client](../../../../experiments/rovi-m8-setpoint-ros/sim/ble_client.py), [product Status/Echo probe](../../../../firmware/bench/ble_status_echo.py) and [BLE lease results](../../../../firmware/bench/2026-10-19-ble-device-lease-timing/notes.md) inform the wire contract, not Bluefy performance. |
 
 ## Goals / Non-Goals
 

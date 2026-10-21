@@ -2,7 +2,7 @@
 
 ## Why
 
-Rovi's [vision](../../../docs/VISION.md) includes an iPhone controller, but the accepted product has only laptop clients. Todor has Linux, no Mac or Apple Developer Program membership, and prefers no subscription. A browser controller can use the existing BLE API without building or signing a new iOS app; see [roadmap Q9/Q18/Q19](../../../docs/PLAN.md#open-questions-and-decisions).
+Rovi's [vision](../../../../docs/VISION.md) includes an iPhone controller, but the accepted product has only laptop clients. Todor has Linux, no Mac or Apple Developer Program membership, and prefers no subscription. A browser controller can use the existing BLE API without building or signing a new iOS app; see [roadmap Q9/Q18/Q19](../../../../docs/PLAN.md#open-questions-and-decisions).
 
 ## What Changes
 
@@ -20,7 +20,7 @@ Rovi's [vision](../../../docs/VISION.md) includes an iPhone controller, but the 
 
 ### Modified Capabilities
 
-None. [Car control API](../../specs/car-control-api/spec.md), [motor control](../../specs/motor-control/spec.md) and [laptop teleoperation](../../specs/laptop-teleoperation/spec.md) retain their accepted contracts.
+None. [Car control API](../../../specs/car-control-api/spec.md), [motor control](../../../specs/motor-control/spec.md) and [laptop teleoperation](../../../specs/laptop-teleoperation/spec.md) retain their accepted contracts.
 
 ## Impact
 

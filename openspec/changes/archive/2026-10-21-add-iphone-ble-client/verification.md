@@ -1,12 +1,12 @@
 # iPhone BLE web controller verification map
 
-**Linux evidence recorded (2026-10-20); phone evidence pending.** H1–H5 pass on Linux under [`apps/iphone`](../../../apps/iphone/README.md) and in CI. No Bluefy/phone, deployment or wheel check has run. Todor's phone 72-byte confirmation is user evidence, not a measurement. [Tasks](tasks.md) record which gates are closed.
+**Linux evidence recorded (2026-10-20); phone evidence pending.** H1–H5 pass on Linux under [`apps/iphone`](../../../../apps/iphone/README.md) and in CI. No Bluefy/phone, deployment or wheel check has run. Todor's phone 72-byte confirmation is user evidence, not a measurement. [Tasks](tasks.md) record which gates are closed.
 
 ## Linux host and browser evidence
 
 | ID | Test boundary and completion evidence |
 | --- | --- |
-| H1 | Codec tests: 72-byte zero/six-direction vectors, endian/CDR layout, u32 wrap, 27-byte capabilities/f32 limits, finite/geometry/window/version/length checks and all valid/invalid Status combinations. Compare [wire vectors](../../../experiments/rovi-m8-setpoint-ros/sim/test_wire.py) and [product encoder](../../../crates/rovi-core/src/capabilities.rs). |
+| H1 | Codec tests: 72-byte zero/six-direction vectors, endian/CDR layout, u32 wrap, 27-byte capabilities/f32 limits, finite/geometry/window/version/length checks and all valid/invalid Status combinations. Compare [wire vectors](../../../../experiments/rovi-m8-setpoint-ros/sim/test_wire.py) and [product encoder](../../../../crates/rovi-core/src/capabilities.rs). |
 | H2 | Fake Web Bluetooth and Linux browser: HTTPS/API gates, explicit user picker/name filter/service access, cancelled/no/late selection, no remembered auto-connect, GATT properties, zero-write rejection, setup/claim timeouts and late connect results. No ARM/nonzero on setup failure; no invented picker cancellation/MTU/readiness methods. |
 | H3 | Fake clock/promise/event traces: fresh zero before one ARM; only current successful write plus subsequent read promise confirms; notifications/cached value cannot grant motion. STOP over pending ARM, safety-stop latch, malformed/stale results, read/control deadlines, serial GATT work, one pending setpoint and no backlog. Inject 199/200 ms gaps and pending-write completion after release. |
 | H4 | Linux browser/pointer tests: six signs/capped values, zero axes, multi-touch, release/outside/re-entry/cancel/lost capture; 249/250 ms expiry; UI frame renewal stalls while transmitter continues; pre-arm/post-STOP touches never replay. No sensor input or motion permission in v1. |
@@ -43,7 +43,7 @@ These are proposed checks, **not authorization to run them**. No hosted page, ph
 * **P3 — host lifecycle and usability (I1/I4):** motor power disabled, separately authorized batch. Verify real pointer/hold/cancel/multi-touch, accessibility/text sizing, Bluefy browser controls, blur/page visibility, app switch/Home, lock/unlock, interruptions, Bluetooth off/on, permission changes, navigation, force termination/reload and unavailable peer. Record detected events, UI renewal expiry, last nonzero submission, cleanup attempts and device-reported state. P3 fails if an inactive host keeps renewing nonzero intent/streaming it; unsupported signals must not silently become a safety promise. Distinguish observed expiry/firmware fallback from runnable cleanup. Record non-inducible cases as unverified.
 * **P4 — supervised wheel acceptance:** only after P1–P3 and a separately announced batch with Todor's go, wheels off ground. Observe six directions briefly, release-to-zero, STOP during hold, new ARM/new press, lock/background and link loss. Record Todor's physical observations separately from browser/protocol/firmware logs. Confirm independent lease fallback; app deadlines are not physical stop bounds. No electrical/coast limits, floor speed accuracy, range or unattended-safety claim.
 
-Record date, exact steps, hardware/browser/web/firmware identities, logs, observations and failures. [Hardware policy](../../../README.md#hardware-validation-policy) and [acceptance gates](../../../docs/SPECIFICATION.md#workflow-and-gates) apply. Missing/failed evidence leaves its task unchecked; revised behavior returns to proposal review.
+Record date, exact steps, hardware/browser/web/firmware identities, logs, observations and failures. [Hardware policy](../../../../README.md#hardware-validation-policy) and [acceptance gates](../../../../docs/SPECIFICATION.md#workflow-and-gates) apply. Missing/failed evidence leaves its task unchecked; revised behavior returns to proposal review.
 
 ## Draft checks
 

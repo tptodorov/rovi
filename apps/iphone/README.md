@@ -1,7 +1,7 @@
 # iPhone BLE controller
 
 Static HTTPS controller for Bluefy on iPhone; button control first, sensors deferred.
-Implementation is authorized by the [proposal acceptance record](../../openspec/changes/add-iphone-ble-client/proposal.md#proposal-acceptance).
+Implementation is authorized by the [proposal acceptance record](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/proposal.md#proposal-acceptance).
 Phone/radio/wheel acceptance is separate and remains pending.
 
 ## Commands
@@ -40,7 +40,7 @@ only intent into `session.js`; it cannot arm or write GATT. It needs its own pro
 
 Linux browser and fake-clock tests prove software decisions only. They do not prove
 Bluefy behaviour, iOS scheduling, radio delivery, MTU or physical stopping. Those are
-the phone checks P1–P4 in the [verification map](../../openspec/changes/add-iphone-ble-client/verification.md).
+the phone checks P1–P4 in the [verification map](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/verification.md).
 
 If the page is suspended or killed, cleanup may never run. The firmware's lease and
 claim windows remain the stop fallback. A resolved write or local disconnect does not
