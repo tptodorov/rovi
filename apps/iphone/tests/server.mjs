@@ -7,7 +7,8 @@ import { execFileSync } from 'node:child_process';
 const temp = await mkdtemp(join(tmpdir(), 'rovi-https-'));
 execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
   '-keyout', join(temp, 'key'), '-out', join(temp, 'cert'), '-subj', '/CN=localhost'], { stdio: 'ignore' });
-const assets = new Set(['index.html', 'style.css', 'wire.js', 'hold.js', 'ui.js', 'app.js', 'session.js', 'transport.js', 'version.txt']);
+const assets = new Set(['index.html', 'style.css', 'wire.js', 'hold.js', 'ui.js', 'app.js', 'session.js', 'transport.js', 'version.txt',
+  'sensor-test.html', 'sensor-test.css', 'sensor-test.js', 'sensor-model.js']);
 const server = https.createServer({ key: await readFile(join(temp, 'key')), cert: await readFile(join(temp, 'cert')) }, async (req, res) => {
   const name = new URL(req.url, 'https://localhost').pathname.slice(1) || 'index.html';
   if (!assets.has(name)) { res.writeHead(404); res.end(); return; }

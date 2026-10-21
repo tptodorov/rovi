@@ -1,6 +1,6 @@
 # iPhone motion driving feasibility
 
-Researched 2026-10-21. Research only: no implementation, deployment, phone test, BLE access or motor commands.
+Researched 2026-10-21. A sensor-only diagnostic is prepared in the existing iPhone client site; phone evidence is pending. No sensor-to-car integration, BLE access or motor commands are part of this diagnostic.
 
 ## Decision
 
@@ -27,7 +27,7 @@ Do not integrate raw acceleration into velocity/position: bias, gravity-removal 
 
 The [W3C event model](https://www.w3.org/TR/orientation-event/#deviceorientation) allows orientation updates on significant change, while motion events use an implementation-defined interval. A steady held tilt therefore needs testing: an orientation API that stops emitting cannot prove sample freshness. Evaluate periodic `devicemotion` readings directly; never keep a cached orientation alive with timer ticks.
 
-Suggested initial interaction: fixed portrait posture, pitch for forward/back and roll for left/right strafe; yaw remains zero. A steering-style roll-to-wz mapping is an alternative needing an explicit user choice, not an implicit blend. Start with one axis to keep the spike small.
+**Selected by Todor (2026-10-21):** one iPhone client with a Buttons / Physical mode switch. Physical mode combines forward/back tilt → vx, side tilt → vy (strafe), and phone heading offset from a calibrated neutral → wz. Holding a twist keeps the rotation request nonzero until returning to neutral; rotation-rate control was explicitly declined. The first stage tests all three axes locally, with no car connection. The [diagnostic and phone procedure](../../apps/iphone/README.md#phone-sensor-test) show provisional Euler-angle deltas so signs, yaw drift, steady-angle cadence, mixed-axis coupling and comfortable posture can be evaluated before selecting the product mapping.
 
 - Calibrate neutral only while disarmed and approximately still; show the neutral posture and signs. Never silently recenter during a hold.
 - Apply a symmetric dead zone, continuous scaling outside it, then saturation. Tune angles from phone jitter/usability measurements, not guessed sensor precision.
@@ -65,4 +65,4 @@ Repository facts: [archived design](../../openspec/changes/archive/2026-10-21-ad
 4. Observe blur, browser UI/tab switch, app switch, hidden/pagehide, lock/unlock, orientation changes and foreground return. Record event ordering and whether callbacks continue; do not assume lock produces a particular event. If no callbacks run during suspension, check elapsed monotonic age before consuming anything on return. Verify manual recovery and rejection of cached/late values.
 5. **Gate:** conditional go only if Bluefy produces useful finite foreground samples with sufficient measured margin below the stale cutoff, usable latency, and fail-closed lifecycle/deadman behavior. Missing/denied/null-only sensors or unsafe inactive renewal means no-go on that host/version; retain buttons. Marginal cadence means review the design, not relax existing safety bounds.
 
-Only after that evidence: a separately reviewed/authorized input change with deterministic mapping/expiry/lifecycle tests, then separately authorized BLE acceptance (full 20 Hz workload plus sensors, ARM/STOP/status), then supervised wheels-off-ground acceptance covering release, sensor loss, orientation, interruption, caps and any blended axes. Existing button-controller acceptance does not pass these new gates. No such experiment or implementation was performed here.
+Only after phone evidence: a reviewed input-spec change for the selected three-axis/mode-switch scope, with deterministic mapping/expiry/lifecycle tests, then separately authorized BLE acceptance (full 20 Hz workload plus sensors, ARM/STOP/status), then supervised wheels-off-ground acceptance covering release, sensor loss, orientation, interruption, caps and blended axes. Existing button-controller acceptance does not pass these new gates. The diagnostic is prepared; no phone result or sensor driving is claimed.
