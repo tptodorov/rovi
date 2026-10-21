@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
     window.requestAnimationFrame = callback => raf(function next(time) { if (window.holdFrames) callback(time); else raf(next); });
   });
   await page.route('**/fake-ble.js', async route => route.fulfill({ contentType: 'text/javascript', body: await readFile(new URL('../fake-ble.js', import.meta.url), 'utf8') }));
-  await page.route('**/app.js', async route => route.fulfill({ contentType: 'text/javascript', body: `
+  await page.route('**/app*.js*', async route => route.fulfill({ contentType: 'text/javascript', body: `
 import { fakeBle } from './fake-ble.js';
 window.fake = fakeBle();
 Object.defineProperty(navigator, 'bluetooth', { value: fake.bluetooth, configurable: true });
@@ -39,6 +39,8 @@ test('default Buttons never prompt; Physical combines angles and switching while
   await expect(page.locator('#control-mode')).toHaveValue('buttons');
   expect(await page.evaluate(() => window.permissionCalls)).toBe(0);
   await ready(page); await hold(page);
+  const revision = await page.locator('meta[name="rovi-build"]').getAttribute('content');
+  if (revision !== 'source-checkout') await expect(page.locator('#version')).toHaveText(`Build ${revision}`);
   await page.evaluate(() => { window.phoneAngles = { alpha: 10, beta: -20, gamma: -20 }; });
   await expect(page.locator('#requested')).toHaveText('vx 0.10 · vy 0.10 · wz 0.30');
   await page.waitForTimeout(350); await expect(page.locator('#requested')).toContainText('wz 0.30');

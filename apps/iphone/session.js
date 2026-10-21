@@ -213,7 +213,7 @@ export class Session {
           const confirmed = report.error === 'none' && (control.kind === 'arm' ? report.state === 'Armed' : report.state === 'Stopped' && report.reason === 'Stop');
           if (!confirmed) throw new Error(`${control.kind.toUpperCase()} was not confirmed by the fresh Status read`);
           this.control = null; this.localArm = control.kind === 'arm'; this.clearInputs();
-          this.message = this.localArm ? 'Armed at zero. A new direction press is required.' : 'Car reported Stopped/Stop. ARM again before moving.';
+          this.message = this.localArm ? (this.mode === 'physical' ? 'Armed at zero. A new phone drive-pad hold is required.' : 'Armed at zero. A new direction press is required.') : 'Car reported Stopped/Stop. ARM again before moving.';
         }));
       }
       return;

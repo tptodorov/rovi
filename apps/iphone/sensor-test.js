@@ -119,6 +119,6 @@ setInterval(() => {
   if (probe.enabled && !active()) stop('Inactive; enable and calibrate again');
   preview = probe.consume(now()); render();
 }, 50);
-fetch('version.txt', { cache: 'no-store' }).then(response => response.ok ? response.text() : 'Source checkout')
-  .then(text => { revision = text.trim(); byId('version').textContent = revision; }).catch(() => {});
+const build = document.querySelector('meta[name="rovi-build"]')?.content;
+if (build && build !== 'source-checkout') { revision = build; byId('version').textContent = build; }
 render();

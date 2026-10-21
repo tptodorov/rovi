@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/app.js', async route => route.fulfill({
+  await page.route('**/app*.js*', async route => route.fulfill({
     contentType: 'text/javascript', body: await readFile(new URL('../ui-session.js', import.meta.url), 'utf8'),
   }));
   await page.goto('/');

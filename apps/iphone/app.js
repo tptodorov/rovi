@@ -4,6 +4,5 @@ import { mount } from './ui.js';
 const session = new Session({ bluetooth: navigator.bluetooth, protocol: location.protocol });
 mount(session);
 setInterval(() => session.tick(), 25);
-fetch('./version.txt').then(async response => {
-  if (response.ok) document.getElementById('version').textContent = `Build ${(await response.text()).trim()}`;
-}).catch(() => {}); // Source previews have no generated revision file.
+const revision = document.querySelector('meta[name="rovi-build"]')?.content;
+if (revision && revision !== 'source-checkout') document.getElementById('version').textContent = `Build ${revision}`;

@@ -102,7 +102,7 @@ export function mount(session) {
     byId('hold-hint').textContent = physicalMode ? 'Calibrate disarmed · ARM · new hold to drive · release to zero' : 'Hold to move · release to zero · STOP requires a new ARM';
     byId('sensors-enable').disabled = permissionPending || session.localArm || Boolean(session.control) || !['disconnected', 'ready'].includes(session.phase);
     byId('physical-calibrate').disabled = !physicalMode || session.localArm || Boolean(session.control) || !physical.fresh(performance.now()) || !['disconnected', 'ready'].includes(session.phase);
-    byId('physical-status').textContent = physical.problem || (physicalReady ? 'Neutral calibrated. ARM, then use a new hold.' : 'Enable sensors and calibrate neutral before ARM.');
+    byId('physical-status').textContent = physical.problem || (physicalReady ? (session.localArm ? 'Calibrated. Hold to request motion; release to zero.' : 'Neutral calibrated. ARM, then use a new hold.') : 'Enable sensors and calibrate neutral before ARM.');
     const sample = physical.sample;
     byId('physical-reading').textContent = sample ? `α ${sample.alpha.toFixed(1)}° · β ${sample.beta.toFixed(1)}° · γ ${sample.gamma.toFixed(1)}° · age ${Math.max(0, performance.now() - sample.at).toFixed(0)} ms` : 'No sensor reading';
     drive.disabled = !physicalMode || !session.localArm || !physicalReady || !['vx', 'vy', 'wz'].some(axis => session.caps?.[`max_${axis}`] > 0);

@@ -34,7 +34,7 @@ test('denied permissions fail closed and diagnostic imports no controller module
   await expect(page.locator('#calibrate')).toBeDisabled(); await expect(page.locator('#hold')).toBeDisabled();
   expect(await page.evaluate(() => window.bleAccesses)).toBe(0);
   const assets = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => new URL(entry.name).pathname));
-  expect(assets.some(path => /\/(app|session|transport|wire|hold|ui)\.js$/.test(path))).toBe(false);
+  expect(assets.some(path => /\/(app|session|transport|wire|hold|ui)(?:\.[^/]+)?\.js$/.test(path))).toBe(false);
 });
 test('three-axis preview holds a steady heading, releases to zero, and reports version and fields', async ({ page }) => {
   await setup(page); await calibrated(page); await hold(page);
@@ -45,6 +45,8 @@ test('three-axis preview holds a steady heading, releases to zero, and reports v
   await page.mouse.up(); await expect(page.locator('#preview')).toHaveText(zeros);
   await page.locator('#disable').click();
   const report = JSON.parse(await page.locator('#report').inputValue());
+  const revision = await page.locator('meta[name="rovi-build"]').getAttribute('content');
+  if (revision !== 'source-checkout') expect(report.revision).toBe(revision);
   expect(report.diagnosticOnly).toBe(true); expect(report.fields['motion.rotationAlpha'].valid).toBeGreaterThan(0);
   expect(await page.evaluate(() => window.bleAccesses)).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

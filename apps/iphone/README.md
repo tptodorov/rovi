@@ -4,7 +4,7 @@ Static HTTPS controller for Bluefy on iPhone, with Buttons and Physical modes pl
 an isolated phone-sensor diagnostic. Physical mode is a host-tested candidate;
 combined phone/BLE and stand acceptance remain pending.
 Implementation is authorized by the [proposal acceptance record](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/proposal.md#proposal-acceptance).
-Implementation and scoped phone/stand acceptance completed on 2026-10-21:
+Buttons implementation and scoped phone/stand acceptance completed on 2026-10-21:
 six directions/stops confirmed, ATT MTU 247 on iPhone 11 Pro/Bluefy, and
 STOP-while-holding fixed and rechecked. [Acceptance and limits](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/tasks.md#4-phone-and-physical-acceptance)
 retain the unexplained early drops, P2 closure decision and skipped VoiceOver check.
@@ -19,10 +19,16 @@ From this directory:
   Web Bluetooth peer. Needs `openssl`; on NixOS:
   `rtk nix shell nixpkgs#openssl --command env ROVI_CHROMIUM=/run/current-system/sw/bin/chromium npm run test:browser`.
 * `rtk npm run build` — copies runtime assets and `version.txt` into `dist/iphone/`.
-  It deploys nothing.
+  It gives entry assets and every imported module revisioned filenames to avoid
+  mixing cached releases. The loaded HTML records its own build revision; it does
+  not infer that from a newer server deployment. It deploys nothing.
+  Add `ROVI_IPHONE_DIST=1` to the browser-test
+  environment to test the built site after building it.
 * `./publish.sh` — builds a clean commit and pushes it to the `gh-pages` branch, served at
   <https://tptodorov.github.io/rovi/iphone/>. The page footer and `version.txt` show the
   revision. Rollback: `git push --force-with-lease origin <older-gh-pages-commit>:gh-pages`.
+  For candidate validation, open the client URL with `?v=<revision>` to fetch fresh
+  HTML. Existing tabs keep their loaded code; they do not migrate live sessions.
 
 Open the URL in **Bluefy**, not Safari: Safari has no Web Bluetooth.
 

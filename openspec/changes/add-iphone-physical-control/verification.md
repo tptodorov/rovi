@@ -13,7 +13,7 @@ Pre-implementation sensor-only [phone result](../../../firmware/bench/2026-10-21
 supports the selected interaction, not these product acceptance gates. No task 3
 or sensor-driven rover result is claimed yet.
 
-Host evidence: 41 Node tests and 20 Chromium tests pass. Physical unit tests
+Host evidence: 42 Node tests and 20 Chromium tests pass (source and built site). Physical unit tests
 cover signs/wrap/caps/invalid/reference/posture and separate deadlines. Session
 tests cover confirmed ARM/new hold, all-three wire values, mode/ARM races,
 independent expiry and cleanup. Real-page tests cover permission denial/late
@@ -21,3 +21,10 @@ completion, switching while held, sensor/UI loss, screen rotation and manual
 recovery. An outside-first-touch regression failed with wz=0.30 before the
 primary/contact gate and passes at zero afterward. Original button tests remain
 green, including STOP touch-down and layout with larger text.
+
+The build regression failed on unversioned imports before the publication fix.
+It now checks every HTML/script/style/module edge uses one revisioned filename
+and records that revision in the loaded HTML. The controller footer and copied
+diagnostic report identify the loaded build, even after a newer deployment.
+CI runs browser scenarios against the built site. These checks do not claim
+phone/BLE scheduling, sensor-driven motors or a physical stopping bound.

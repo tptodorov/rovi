@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/fake-ble.js', async route => route.fulfill({
     contentType: 'text/javascript', body: await readFile(new URL('../fake-ble.js', import.meta.url), 'utf8'),
   }));
-  await page.route('**/app.js', async route => route.fulfill({ contentType: 'text/javascript', body: `
+  await page.route('**/app*.js*', async route => route.fulfill({ contentType: 'text/javascript', body: `
 import { fakeBle } from './fake-ble.js';
 const fake = fakeBle();
 Object.defineProperty(navigator, 'bluetooth', { value: fake.bluetooth, configurable: true });
@@ -73,7 +73,7 @@ test('phone-sized preview, real Status age and blur never recover ownership auto
 });
 
 test('missing Web Bluetooth is explained without claiming a device', async ({ page }) => {
-  await page.unroute('**/app.js');
+  await page.unroute('**/app*.js*');
   await page.addInitScript(() => Object.defineProperty(navigator, 'bluetooth', { value: undefined }));
   await page.reload();
   await expect(page.locator('#message')).toContainText('Open this page in Bluefy');
