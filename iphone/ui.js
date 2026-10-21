@@ -9,7 +9,13 @@ export function mount(session) {
   byId('connect').addEventListener('click', () => { void session.choose(); });
   byId('disconnect').addEventListener('click', () => { void session.close('Disconnect requested'); });
   byId('arm').addEventListener('click', () => { void session.arm(); });
-  byId('stop').addEventListener('click', () => { void session.stop(); });
+  // iOS sends no click for a second finger, so STOP acts on touch-down; its later click is ignored.
+  let stopTouchedAt = -Infinity;
+  byId('stop').addEventListener('pointerdown', event => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    stopTouchedAt = performance.now(); void session.stop();
+  });
+  byId('stop').addEventListener('click', () => { if (performance.now() - stopTouchedAt > 1000) void session.stop(); });
   for (const button of buttons) {
     button.addEventListener('contextmenu', event => event.preventDefault());
     button.addEventListener('click', event => event.preventDefault()); // Click/accessibility activation cannot latch motion.
