@@ -19,7 +19,6 @@ button:focus-visible, summary:focus-visible { outline: 3px solid #0d7163; outlin
 select { font: inherit; font-size: .8rem; color: inherit; border: 1px solid #b8c7ba; border-radius: .5rem; padding: .45rem; background: #fffef9; min-height: 44px; }
 .mode-line { margin-top: -.4rem; }
 .mode-line label { font-size: .75rem; font-weight: 650; }
-.physical-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
 .physical-drive { width: 100%; min-height: 100px; }
 #physical-reading { font-variant-numeric: tabular-nums; min-height: 2.4em; }
 #physical-controls[hidden], #button-controls[hidden] { display: none; }
@@ -27,7 +26,10 @@ button:disabled { color: #687c72; background: #edf0e8; border-color: #d8e0d4; cu
 .connection-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
 .connection-actions .primary { flex: 1; background: #205748; color: white; min-width: 10rem; }
 .connection-actions .primary:disabled { background: #617e70; }
-#message { min-height: 2.6em; font-size: .8rem; }
+#message { min-height: 2.6em; font-size: .8rem; margin-bottom: 0; }
+.safety-panel { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; padding: .8rem 1rem; box-shadow: 0 3px 10px #193b3620; }
+#local-arm { font-size: .85rem; color: #94302f; }
+body[data-armed="true"] #local-arm { color: #174e40; background: #e0e7df; border-radius: .3rem; padding: .2rem; }
 #device { overflow-wrap: anywhere; }
 .section-line > span { font-size: .7rem; text-align: right; }
 .safety-actions { display: grid; grid-template-columns: 1fr 1.35fr; gap: .6rem; margin-top: .9rem; }
@@ -52,7 +54,7 @@ summary { cursor: pointer; min-height: 32px; }
 details p { font-size: .76rem; overflow-wrap: anywhere; }
 footer { font-size: .6rem; color: #536e60; padding: .4rem .1rem; flex-wrap: wrap; }
 body:not([data-phase="disconnected"]) .intro { display: none; }
-body:not([data-phase="disconnected"]) h1 { font-size: 1.2rem; margin: .4rem 0; }
+body:not([data-phase="disconnected"]) .connection h1, body:not([data-phase="disconnected"]) .connection .eyebrow { display: none; }
 body:not([data-phase="disconnected"]) header { margin-bottom: .8rem; }
 @media (min-width: 500px) { main { padding-top: 2rem; } section { padding: 1.5rem; } .direction { min-height: 110px; } }
 @media (prefers-reduced-motion: no-preference) { button { transition: background-color .1s; } }

@@ -1,5 +1,5 @@
-import { Session } from './session.8fb8fd174d30.js';
-import { mount } from './ui.8fb8fd174d30.js';
+import { Session } from './session.780f65eff594.js';
+import { mount } from './ui.780f65eff594.js';
 
 const session = new Session({ bluetooth: navigator.bluetooth, protocol: location.protocol });
 mount(session);

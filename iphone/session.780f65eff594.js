@@ -1,7 +1,7 @@
-import { capabilities, status, setpoint, ZERO, DIRECTIONS } from './wire.8fb8fd174d30.js';
-import { Hold } from './hold.8fb8fd174d30.js';
-import { Physical } from './physical.8fb8fd174d30.js';
-import { Ble, pickDevice, supportError } from './transport.8fb8fd174d30.js';
+import { capabilities, status, setpoint, ZERO, DIRECTIONS } from './wire.780f65eff594.js';
+import { Hold } from './hold.780f65eff594.js';
+import { Physical } from './physical.780f65eff594.js';
+import { Ble, pickDevice, supportError } from './transport.780f65eff594.js';
 
 export class Session {
   phase = 'disconnected';
@@ -45,16 +45,13 @@ export class Session {
     if (this.mode !== 'physical' || !this.active()) return;
     this.physical.update(value, this.now()); this.checkPhysical(); this.changed();
   }
-  calibrate() {
-    if (this.mode !== 'physical' || this.localArm || this.control || !this.active() || !['disconnected', 'ready'].includes(this.phase)) return;
-    this.physical.calibrate(this.now()); this.changed();
-  }
   pressPhysical(id) {
     this.physical.press(id, this.mode === 'physical' && this.localArm && this.phase === 'ready' && this.active(), this.now());
     this.changed();
   }
   checkPhysical() {
-    if (this.mode === 'physical' && (this.localArm || this.control?.kind === 'arm') && !this.physical.ready(this.now())) {
+    if (this.mode === 'physical' && (this.localArm || this.control?.kind === 'arm') && !this.physical.ready(this.now()) &&
+        (this.physical.problem || this.control?.kind === 'arm')) {
       void this.close(this.physical.problem || 'Physical input unavailable; reconnect and calibrate.'); return false;
     }
     return true;
@@ -73,7 +70,7 @@ export class Session {
     if (unsupported) { this.message = unsupported; this.changed(); return; }
     const generation = ++this.generation;
     this.phase = 'choosing'; this.localArm = false; this.hold.reset();
-    this.physical.hold.reset(); this.physical.invalidate('Connect, then calibrate neutral before ARM.');
+    this.physical.hold.reset(); this.physical.invalidate('Hold neutral, then tap Set neutral & ARM.');
     this.caps = null; this.reported = null; this.device = null; this.seq = 0;
     this.stats = { writes: 0, maxGap: 0, maxWrite: 0 };
     this.message = 'Select the car in Bluefy’s picker. The picker alone does not claim it.'; this.changed();
@@ -130,8 +127,8 @@ export class Session {
 
   arm() {
     if (this.phase !== 'ready' || this.localArm || this.control || !this.active()) return;
-    if (this.mode === 'physical' && !this.physical.ready(this.now())) {
-      this.message = 'Enable sensors and calibrate neutral before ARM.'; this.changed(); return;
+    if (this.mode === 'physical' && !this.physical.calibrate(this.now())) {
+      this.message = this.physical.problem; this.changed(); return;
     }
     this.clearInputs();
     this.control = { kind: 'arm', step: 'zero', deadline: this.now() + 1000 };
