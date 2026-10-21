@@ -24,3 +24,10 @@ the wheels stopped.
   Control Center opened, which itself stops motion. The manual STOP-while-moving and the
   STOP→re-ARM latch on the car are therefore user-observed only (P3 and Linux tests cover
   the page side).
+
+## Acceptance
+
+Todor accepted P4 as passed (2026-10-21). Known UI limits, accepted: STOP cannot be
+pressed while a direction is held, and Bluetooth cannot be switched off while holding a
+direction. In both cases releasing the direction already returns the command to zero
+(step 2), so the stop paths were exercised at zero.
