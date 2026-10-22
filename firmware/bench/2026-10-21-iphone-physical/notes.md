@@ -118,3 +118,26 @@ Todor subsequently stated “i accept the UI” on 2026-10-22, explicitly accept
 the redesigned Buttons and Physical interface in build `2b5104400362`. This closes
 the UI design review; phone interruption/recovery and motor-on acceptance remain
 separate, open checks.
+
+
+## Interruption and recovery phone check — 2026-10-22
+
+The five-step procedure for build `2b5104400362` was delivered through Telegram.
+Todor replied “works as expected” to the combined result question, confirming
+the following with motor power off and the ESP32 powered over USB:
+
+| Check | Operator-reported result |
+| --- | --- |
+| PAUSE, reading posture and neutral-only explicit restart | Zero while paused, arm retained, no delayed START replay |
+| Lock for 5 s during running input, then unlock | Disarmed/zero on return, no automatic reconnect or restart |
+| Switch apps for 5 s during running input, then return | Disarmed/zero on return, manual recovery required |
+| Slowly leave the running operating posture, then return flat | Zero and fault cleanup; no automatic restart |
+| Recover manually, run at neutral for 60 s, then PAUSE and STOP | Requested motion stayed zero; no issue reported |
+
+This is a combined functional confirmation, without an event trace or exact
+posture-fault wording. No new Stream write count, maximum gap, slowest write or
+phone/version details were supplied. The earlier `780f65eff594` counters are not
+reused as timing evidence for this build. Independent sensor/UI stalls, invalid
+samples/reference changes, screen-orientation changes and permission denial/retry
+were not separately exercised by this procedure; their phone checks remain open.
+No motor-on result or measured stopping bound is inferred.

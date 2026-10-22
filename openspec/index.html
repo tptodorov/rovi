@@ -3653,7 +3653,7 @@ After explicit acceptance, implement/test the static page from Linux, prepare a 
 </li>
 <li>
 <p>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Record phone model/iOS/Bluefy; confirm 60 s neutral stability, combined sensor/BLE stream timing, signs and UI behavior. Check denial/retry, stale sensor/UI, reference/posture changes, lock/app-switch, release and fresh manual recovery. Neutral/stream subcheck passed on reported iPhone 11: zero throughout 60 s, 1,366 writes, max gap 180 ms, slowest write 19 ms (<a href="../firmware/bench/2026-10-21-iphone-physical/notes.md#60-second-neutral-and-stream-check">evidence</a>); redesigned Buttons/Physical UI, tap START/PAUSE and mode-triggered setup passed the operator-reported motor-power-off retest on <code>2b5104400362</code> (<a href="../firmware/bench/2026-10-21-iphone-physical/notes.md#redesigned-controller-phone-retest--2026-10-22">evidence</a>). Todor explicitly accepted the redesigned UI on 2026-10-22 (“i accept the UI”). Remaining phone interruption/recovery checks are open; the 60 s timing result covers the earlier held-pad build.</p>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Record phone model/iOS/Bluefy; confirm 60 s neutral stability, combined sensor/BLE stream timing, signs and UI behavior. Check denial/retry, stale sensor/UI, reference/posture changes, lock/app-switch, release and fresh manual recovery. Neutral/stream subcheck passed on reported iPhone 11: zero throughout 60 s, 1,366 writes, max gap 180 ms, slowest write 19 ms (<a href="../firmware/bench/2026-10-21-iphone-physical/notes.md#60-second-neutral-and-stream-check">evidence</a>); redesigned Buttons/Physical UI, tap START/PAUSE and mode-triggered setup passed the operator-reported motor-power-off retest on <code>2b5104400362</code> (<a href="../firmware/bench/2026-10-21-iphone-physical/notes.md#redesigned-controller-phone-retest--2026-10-22">evidence</a>). Todor explicitly accepted the redesigned UI on 2026-10-22 (“i accept the UI”). The five-step <code>2b5104400362</code> PAUSE/restart, lock, app-switch, posture cleanup/manual recovery and 60 s neutral procedure also passed by operator report (<a href="../firmware/bench/2026-10-21-iphone-physical/notes.md#interruption-and-recovery-phone-check--2026-10-22">evidence</a>). Current-build Stream numbers, independent sensor/UI stalls, invalid/reference and screen-orientation changes, and permission denial/retry remain unrecorded on the phone; this task stays open.</p>
 </li>
 <li>
 <p>
@@ -4039,6 +4039,39 @@ UI acceptance: Todor explicitly stated “i accept the UI” on 2026-10-22 for t
 published redesigned Buttons/Physical interface (<code>2b5104400362</code>). The UI design
 review is complete. This does not close task 3.1's remaining interruption/recovery
 checks or tasks 3.2–3.3's stand evidence and overall acceptance review.</p>
+<p>
+Phone interruption/recovery update (2026-10-22): Todor reported “works as expected”
+for the five-step motor-power-off procedure on <code>2b5104400362</code>: PAUSE/neutral-only
+restart, lock, app switching, running posture failure/manual recovery and a 60 s
+neutral run ending in PAUSE/STOP. See the <a href="../firmware/bench/2026-10-21-iphone-physical/notes.md#interruption-and-recovery-phone-check--2026-10-22">recorded procedure and limits</a>.
+Current-build Stream counters were not supplied. Independent sensor/UI stalls,
+invalid/reference changes, screen-orientation changes and permission denial/retry
+still have host coverage only; task 3.1 remains partial. Motor-on tasks 3.2–3.3
+remain open.</p>
+<h2 id="openspec--changes--add-iphone-physical-control--verification--next-stand-batch">Next stand batch</h2><p>
+Pending a fresh go: rover on its stand, all wheels clear, motor bank awake and
+USB connected; use the same published <code>2b5104400362</code> build. No flash is needed.
+Capture serial output before enabling motor power. In Physical mode, capture
+neutral with Set neutral &amp; ARM and use explicit START at neutral for each move.</p>
+<ul>
+<li>
+Six single-axis moves: forward, backward, strafe left/right, rotate left/right.</li>
+<li>
+Two blended moves: forward + left strafe; then forward + left strafe + left turn.</li>
+<li>
+One forward move ending with STOP; verify a new ARM stays paused until START.</li>
+<li>
+One forward move ending by switching to Buttons; verify disarm and stillness.</li>
+</ul>
+<p>
+Each move lasts at most 2 s, with at least 3 s at zero between moves (at most 20 s
+of requested motion in total). For the first eight moves return to neutral,
+observe zero, then PAUSE. Use offsets up to 20° to check the displayed gentle caps
+of 0.1 m/s per translation axis and 0.3 rad/s rotation, subject to advertised limits.
+The final two moves exercise STOP and mode-change stopping while tilted. Finish
+with STOP/disconnect and motor power off. Any unexpected motion or failure to
+stop aborts the batch. Record serial commands separately from Todor's physical
+wheel confirmation; do not infer measured velocity or stopping time.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>

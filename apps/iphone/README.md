@@ -106,8 +106,11 @@ holding the pad while tilting awkward and reported posture-triggered disarming.
 Todor reported the redesigned controller and tap START/PAUSE procedure worked
 in the motor-power-off Bluefy retest of build `2b5104400362` on 2026-10-22
 ([evidence](../../firmware/bench/2026-10-21-iphone-physical/notes.md#redesigned-controller-phone-retest--2026-10-22)).
-Full phone interruption/recovery, the original rotation/drop-of-touch cause and
-motor-on acceptance remain unverified.
+Todor also confirmed the five-step motor-power-off PAUSE/restart, lock,
+app-switch, posture cleanup/manual recovery and 60 s neutral procedure on that
+build ([results and remaining limits](../../firmware/bench/2026-10-21-iphone-physical/notes.md#interruption-and-recovery-phone-check--2026-10-22)).
+Current-build Stream counters and additional phone fault cases remain unrecorded;
+the original rotation/drop-of-touch cause and motor-on acceptance remain unverified.
 
 ## Phone test delivery
 

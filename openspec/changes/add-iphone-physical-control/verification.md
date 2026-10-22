@@ -124,3 +124,34 @@ UI acceptance: Todor explicitly stated “i accept the UI” on 2026-10-22 for t
 published redesigned Buttons/Physical interface (`2b5104400362`). The UI design
 review is complete. This does not close task 3.1's remaining interruption/recovery
 checks or tasks 3.2–3.3's stand evidence and overall acceptance review.
+
+
+Phone interruption/recovery update (2026-10-22): Todor reported “works as expected”
+for the five-step motor-power-off procedure on `2b5104400362`: PAUSE/neutral-only
+restart, lock, app switching, running posture failure/manual recovery and a 60 s
+neutral run ending in PAUSE/STOP. See the [recorded procedure and limits](../../../firmware/bench/2026-10-21-iphone-physical/notes.md#interruption-and-recovery-phone-check--2026-10-22).
+Current-build Stream counters were not supplied. Independent sensor/UI stalls,
+invalid/reference changes, screen-orientation changes and permission denial/retry
+still have host coverage only; task 3.1 remains partial. Motor-on tasks 3.2–3.3
+remain open.
+
+## Next stand batch
+
+Pending a fresh go: rover on its stand, all wheels clear, motor bank awake and
+USB connected; use the same published `2b5104400362` build. No flash is needed.
+Capture serial output before enabling motor power. In Physical mode, capture
+neutral with Set neutral & ARM and use explicit START at neutral for each move.
+
+- Six single-axis moves: forward, backward, strafe left/right, rotate left/right.
+- Two blended moves: forward + left strafe; then forward + left strafe + left turn.
+- One forward move ending with STOP; verify a new ARM stays paused until START.
+- One forward move ending by switching to Buttons; verify disarm and stillness.
+
+Each move lasts at most 2 s, with at least 3 s at zero between moves (at most 20 s
+of requested motion in total). For the first eight moves return to neutral,
+observe zero, then PAUSE. Use offsets up to 20° to check the displayed gentle caps
+of 0.1 m/s per translation axis and 0.3 rad/s rotation, subject to advertised limits.
+The final two moves exercise STOP and mode-change stopping while tilted. Finish
+with STOP/disconnect and motor power off. Any unexpected motion or failure to
+stop aborts the batch. Record serial commands separately from Todor's physical
+wheel confirmation; do not infer measured velocity or stopping time.
