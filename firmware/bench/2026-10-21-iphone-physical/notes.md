@@ -157,6 +157,7 @@ or case-specific pass is inferred from “completed”.
 
 The product contract and `ui.js` intentionally pause Physical control on scroll,
 zeroing input and preserving arm/neutral. The existing browser regression checks
-zero, retained Armed state and explicit restart at neutral. Clarification was
-requested whether the observed phone behavior is that pause or a disarm/disconnect.
+zero, retained Armed state and explicit restart at neutral. Todor clarified:
+“Pauses; stays Armed and connected”. The current-build scroll-to-pause behavior
+therefore passes by operator confirmation; it is not a disarm/disconnect fault.
 No runtime change, motor run or firmware operation was performed for this report.

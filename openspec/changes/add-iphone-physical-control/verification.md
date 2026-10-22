@@ -178,8 +178,8 @@ mode-switch checks are confirmed. No new drive is authorized.
 Latest motor-power-off response: Todor reported the remaining phone procedure
 “completed” and that scrolling stops tilt control ([record](../../../firmware/bench/2026-10-21-iphone-physical/notes.md#remaining-phone-check-response--2026-10-22)).
 Scroll-to-pause at zero with arm/neutral retained is intentional and covered by
-an existing browser regression; whether the phone only paused or also disarmed/
-disconnected is awaiting clarification. Requested cap values, Stream counters,
+an existing browser regression. Todor clarified “Pauses; stays Armed and
+connected”, confirming that intended behavior on the phone. Requested cap values, Stream counters,
 versions, rotation message and permission-prompt outcome were not supplied.
-Tasks 3.1–3.3 remain open for their outstanding evidence; this report is not a
-confirmed new fault and does not change the control contract.
+Tasks 3.1–3.3 remain open for their outstanding evidence; the scroll observation
+matches the control contract and requires no runtime fix.
