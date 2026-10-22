@@ -159,3 +159,118 @@ test('stream stats record writes, largest submission gap and slowest write for P
   assert.ok(session.stats.maxGap >= 60 && session.stats.maxGap < 200, String(session.stats.maxGap));
   assert.equal(session.stats.maxWrite, 7);
 });
+
+const physicalNeutral = { alpha: 350, beta: 0, gamma: 0 };
+const physicalTilt = { alpha: 10, beta: -20, gamma: -20 };
+async function physicalReady() {
+  const state = await ready(); state.session.selectMode('physical'); await flush();
+  state.session.physical.enable(); state.session.sensor(physicalNeutral);
+  return state;
+}
+test('Physical needs neutral/ARM and explicit START; all three axes use the same wire stream', async () => {
+  const { session, fake, advance } = await physicalReady();
+  assert.equal(session.localArm, false); session.togglePhysical(); session.arm(); await flush();
+  session.sensor(physicalTilt); await advance(50); assert.deepEqual(samples(fake).at(-1), [0, 0, 0]);
+  session.togglePhysical(); await advance(50); assert.deepEqual(samples(fake).at(-1), [0, 0, 0]);
+  session.sensor(physicalNeutral); session.togglePhysical(); session.sensor(physicalTilt); await advance(50);
+  assert.deepEqual(samples(fake).at(-1), [.1, .1, .3]);
+  session.togglePhysical(); await advance(50); assert.deepEqual(samples(fake).at(-1), [0, 0, 0]);
+  session.selectMode('buttons'); await flush(); assert.equal(session.localArm, false);
+  assert.equal(session.physical.enabled, false); assert.equal(session.reported.reason, 'Stop');
+  assert.deepEqual(session.requested, ZERO);
+});
+test('mode change supersedes pending Physical ARM and late results cannot arm Buttons', async () => {
+  const { fake, session } = await physicalReady(), gate = pending();
+  const original = fake.chars.control.writeValueWithResponse;
+  fake.chars.control.writeValueWithResponse = bytes => bytes[0] === 1 ? gate.promise.then(() => original(bytes)) : original(bytes);
+  session.arm(); await flush(); session.togglePhysical(); session.selectMode('buttons');
+  gate.resolve(); await flush();
+  assert.equal(session.mode, 'buttons'); assert.equal(session.localArm, false);
+  assert.equal(session.reported.reason, 'Stop'); assert.equal(session.physical.neutral, null);
+  assert.ok(samples(fake).every(values => values.every(value => value === 0)));
+});
+test('START during pending ARM is discarded rather than replayed after confirmation', async () => {
+  const { fake, session } = await physicalReady(), gate = pending();
+  const original = fake.chars.control.writeValueWithResponse;
+  fake.chars.control.writeValueWithResponse = bytes => bytes[0] === 1 ? gate.promise.then(() => original(bytes)) : original(bytes);
+  session.arm(); await flush(); session.togglePhysical();
+  gate.resolve(); await flush(); session.sensor(physicalTilt);
+  assert.equal(session.localArm, true); assert.equal(session.physical.driving, false);
+  assert.deepEqual(session.requested, ZERO);
+});
+test('sensor expiry closes while UI and stream continue, and returning samples cannot recover', async () => {
+  const { session, advance } = await physicalReady(); session.arm(); await flush(); session.togglePhysical();
+  for (let at = 50; at <= 300; at += 50) { session.physical.renew(at); await advance(50); }
+  assert.equal(session.phase, 'disconnected'); assert.equal(session.localArm, false);
+  session.sensor(physicalTilt); assert.equal(session.physical.enabled, false);
+  assert.deepEqual(session.requested, ZERO);
+});
+test('invalid sensor, posture and foreground expiry independently close an armed Physical session', async () => {
+  for (const failure of ['null', 'posture', 'frame']) {
+    const { session, advance, setTime } = await physicalReady(); session.arm(); await flush(); session.togglePhysical();
+    if (failure === 'frame') {
+      for (const at of [100, 200, 250]) { setTime(at); session.sensor(physicalTilt); }
+    } else session.sensor({ ...physicalTilt, beta: failure === 'null' ? null : 61 });
+    await advance(0);
+    assert.equal(session.phase, 'disconnected', failure); assert.equal(session.localArm, false, failure);
+    assert.equal(session.physical.neutral, null, failure);
+  }
+});
+test('Physical ARM without sensors is refused locally without an ARM write', async () => {
+  const { session, fake } = await ready(); session.selectMode('physical'); await flush();
+  session.arm(); await flush(); assert.equal(session.localArm, false);
+  assert.equal(fake.calls.some(([kind, value]) => kind === 'control' && value === 1), false);
+});
+
+test('one-tap Physical ARM rejects stale, invalid or unsafe neutral and each fresh ARM recenters', async () => {
+  for (const bad of ['stale', 'invalid', 'posture']) {
+    const { session, fake, setTime } = await ready(); session.selectMode('physical'); await flush();
+    session.physical.enable(); session.sensor({ ...physicalNeutral, beta: bad === 'posture' ? 31 : bad === 'invalid' ? null : 0 });
+    if (bad === 'stale') setTime(250);
+    session.arm(); await flush(); assert.equal(session.localArm, false, bad);
+    assert.equal(fake.calls.some(([kind, value]) => kind === 'control' && value === 1), false, bad);
+  }
+  const { session } = await physicalReady(); session.arm(); await flush();
+  session.stop(); await flush(); session.sensor(physicalTilt); session.arm(); await flush();
+  assert.equal(session.localArm, true); session.togglePhysical();
+  assert.deepEqual(session.requested, ZERO);
+});
+
+test('invalid values or a reference change still close Physical while released', async () => {
+  for (const sample of [{ ...physicalNeutral, alpha: null }, { ...physicalNeutral, absolute: true }]) {
+    const { session } = await physicalReady(); session.arm(); await flush();
+    session.sensor(sample); await flush();
+    assert.equal(session.localArm, false); assert.equal(session.phase, 'disconnected');
+    assert.deepEqual(session.requested, ZERO);
+  }
+});
+
+test('Physical ARM captures neutral in one explicit action and never replays an early START', async () => {
+  const { session, fake, advance } = await ready(); session.selectMode('physical'); await flush();
+  session.physical.enable(); session.sensor(physicalTilt); session.togglePhysical();
+  session.arm(); await flush();
+  assert.equal(session.localArm, true);
+  assert.deepEqual(session.physical.neutral, { ...physicalTilt, reference: null, at: 0 });
+  assert.deepEqual(session.requested, ZERO);
+  session.sensor({ ...physicalTilt, beta: -30 }); await advance(50);
+  assert.deepEqual(samples(fake).at(-1), [0, 0, 0]);
+  session.sensor(physicalTilt); session.togglePhysical();
+  session.sensor({ ...physicalTilt, beta: -30 }); await advance(50);
+  assert.ok(samples(fake).at(-1)[0] > 0);
+});
+
+test('paused Physical input tolerates idle sensor gaps and reading posture without disarming', async () => {
+  const { session, advance } = await physicalReady(); session.arm(); await flush();
+  const neutral = session.physical.neutral;
+  // Scrolling may interrupt sensors or tilt the phone while the tilt control is paused.
+  for (let at = 50; at <= 350; at += 50) await advance(50);
+  assert.equal(session.localArm, true); assert.equal(session.phase, 'ready');
+  assert.deepEqual(session.requested, ZERO); assert.equal(session.physical.neutral, neutral);
+  session.togglePhysical(); session.sensor({ ...physicalNeutral, beta: 75 }); await advance(50);
+  assert.equal(session.localArm, true); assert.deepEqual(session.requested, ZERO);
+  session.sensor(physicalTilt); await advance(50);
+  assert.deepEqual(session.requested, ZERO); // The rejected START cannot become driving later.
+  session.togglePhysical(); assert.deepEqual(session.requested, ZERO);
+  session.sensor(physicalNeutral); session.togglePhysical(); session.sensor(physicalTilt); await advance(50);
+  assert.ok(session.requested.vx > 0);
+});

@@ -43,8 +43,8 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm test
-      - run: npm run test:browser
       - run: npm run build
+      - run: ROVI_IPHONE_DIST=1 npm run test:browser
 
   host:
     name: host tests (cores, sim car, Python)

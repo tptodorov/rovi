@@ -3,49 +3,85 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f3f5ef">
+  <meta name="rovi-build" content="source-checkout">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Rovi · Car controller</title>
+  <title>Rovi · Controller</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body data-phase="disconnected">
+<body data-phase="disconnected" data-armed="false">
+  <a class="skip-link" href="#controls">Skip to driving controls</a>
   <main>
-    <header><a class="brand" href="./" aria-label="Rovi home">rovi<span>car controller</span></a><span class="badge" id="phase">Disconnected</span></header>
-    <section class="connection" aria-labelledby="connection-title">
-      <div class="eyebrow">DIRECT BLUETOOTH</div>
-      <h1 id="connection-title">A little room to roam.</h1>
-      <p class="intro">Open in Bluefy. Choose your car, arm at zero, then hold a direction to move.</p>
-      <p class="ownership intro">Connecting claims the car and switches off its Wi-Fi AP.</p>
-      <div class="connection-actions"><button id="connect" class="primary">Choose &amp; connect</button><button id="disconnect" disabled>Disconnect</button></div>
-      <p id="message" role="status" aria-live="polite">Not connected. Your car stays disarmed until you choose ARM.</p>
-      <p id="device" class="small">No car selected</p>
+    <header class="app-header">
+      <div class="identity"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="9" y="5" width="14" height="22" rx="5"/><path d="M12 10h8M13 23h6M5 7v6m0 6v6M27 7v6m0 6v6"/></svg><div><h1 translate="no">rovi</h1><p>CAR CONTROLLER</p></div></div>
+      <div class="connection-actions"><button id="connect" class="connect-button" type="button">Connect <span aria-hidden="true">↗</span></button><button id="disconnect" class="quiet-button" type="button" hidden disabled>Disconnect</button></div>
+    </header>
+
+    <fieldset class="mode-switch" id="control-mode">
+      <legend class="sr-only">Control mode</legend>
+      <input type="radio" id="mode-buttons" name="control-mode" value="buttons" checked>
+      <label for="mode-buttons"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>Buttons</label>
+      <input type="radio" id="mode-physical" name="control-mode" value="physical">
+      <label for="mode-physical"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg>Physical</label>
+    </fieldset>
+
+    <section class="state-panel" aria-labelledby="stage-title">
+      <div class="state-meta"><span class="connection-state"><i aria-hidden="true"></i><span id="phase">Not connected</span></span><strong id="local-arm">Disarmed</strong></div>
+      <h2 id="stage-title">Connect your Rovi</h2>
+      <p id="message" role="status" aria-live="polite">Open in Bluefy, connect your car, then arm at zero.</p>
     </section>
 
-    <section class="drive" aria-label="Motion controls">
-      <div class="section-line"><h2>Your controls</h2><span id="local-arm">Locally disarmed</span></div>
-      <div class="safety-actions"><button id="arm" disabled>ARM AT ZERO</button><button id="stop" class="stop" disabled>STOP</button></div>
-      <p class="hint">Hold to move · release to zero · STOP requires a new ARM</p>
-      <div class="pad" aria-label="Six press-and-hold directions">
-        <button data-direction="ccw" class="direction ccw" aria-label="Hold to rotate counter-clockwise" disabled><span aria-hidden="true">↶</span>Rotate left</button>
-        <button data-direction="forward" class="direction forward" aria-label="Hold to move forward" disabled><span aria-hidden="true">↑</span>Forward</button>
-        <button data-direction="cw" class="direction cw" aria-label="Hold to rotate clockwise" disabled><span aria-hidden="true">↷</span>Rotate right</button>
-        <button data-direction="left" class="direction left" aria-label="Hold to strafe left" disabled><span aria-hidden="true">←</span>Strafe left</button>
-        <div class="pad-center" aria-hidden="true"><span>＋</span><small>ONE DIRECTION<br>AT A TIME</small></div>
-        <button data-direction="right" class="direction right" aria-label="Hold to strafe right" disabled><span aria-hidden="true">→</span>Strafe right</button>
-        <button data-direction="backward" class="direction backward" aria-label="Hold to move backward" disabled><span aria-hidden="true">↓</span>Backward</button>
+    <section class="control-surface" id="controls" aria-label="Driving controls" tabindex="-1">
+      <div class="surface-heading"><h2 id="surface-title">Your move.</h2><span class="surface-tag" id="input-state">HOLD TO DRIVE</span></div>
+      <div id="button-controls" class="pad" aria-label="Six press-and-hold directions">
+        <button type="button" data-direction="ccw" class="direction" aria-label="Hold to rotate counter-clockwise" disabled><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 15a9 9 0 1 1 2 10M8 7v8h8"/></svg><span>Turn left</span></button>
+        <button type="button" data-direction="forward" class="direction" aria-label="Hold to move forward" disabled><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 26V6M8 14l8-8 8 8"/></svg><span>Forward</span></button>
+        <button type="button" data-direction="cw" class="direction" aria-label="Hold to rotate clockwise" disabled><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M24 15a9 9 0 1 0-2 10M24 7v8h-8"/></svg><span>Turn right</span></button>
+        <button type="button" data-direction="left" class="direction" aria-label="Hold to strafe left" disabled><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M26 16H6M14 8l-8 8 8 8"/></svg><span>Strafe left</span></button>
+        <button type="button" data-direction="backward" class="direction" aria-label="Hold to move backward" disabled><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 6v20M8 18l8 8 8-8"/></svg><span>Backward</span></button>
+        <button type="button" data-direction="right" class="direction" aria-label="Hold to strafe right" disabled><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 16h20M18 8l8 8-8 8"/></svg><span>Strafe right</span></button>
       </div>
-      <div class="request"><span>Requested motion</span><output id="requested">vx 0.00 · vy 0.00 · wz 0.00</output><small>Translation m/s · rotation rad/s · approximate open-loop references</small></div>
+      <div id="physical-controls" hidden>
+        <div class="tilt-visual" aria-hidden="true"><svg viewBox="0 0 300 150"><ellipse class="tilt-orbit" cx="150" cy="75" rx="115" ry="55"/><path class="tilt-guide" d="M20 75h260M150 10v130"/><circle class="neutral-ring" cx="150" cy="75" r="26"/><g id="phone-pose" transform="translate(150 75)"><rect class="phone-body" x="-21" y="-34" width="42" height="68" rx="10"/><path class="phone-mark" d="M-8-24H8M-6 24H6"/><circle class="phone-dot" cy="-2" r="4"/></g><path class="tilt-ticks" d="M36 71v8M264 71v8M146 20h8M146 130h8"/></svg><span id="tilt-neutral">Waiting for sensors</span></div>
+        <p id="physical-status" class="sensor-status" role="status">Choose Physical to prepare phone sensors.</p>
+        <button id="sensors-enable" type="button" class="retry-button" hidden>Retry motion access</button>
+      </div>
+      <p id="hold-hint" class="control-hint">Hold a direction to move. Release for zero.</p>
     </section>
 
-    <section class="telemetry" aria-labelledby="reported-title">
-      <div class="section-line"><h2 id="reported-title">Last reported by car</h2><span id="status-age">No report</span></div>
-      <p id="reported">State unknown · reason unknown · error unknown</p>
-      <p class="small">Reported state is not measured wheel motion. A write or disconnect does not verify a physical stop.</p>
-      <details><summary>Connection details</summary><p id="limits">Limits unavailable</p><p id="windows">Windows unavailable</p><p id="stream">Stream: no writes</p><p>Setpoint: 72 bytes · MTU / payload capacity: unavailable in this browser</p></details>
-    </section>
-    <footer><span>Supervised use · phone validation pending</span><span id="version">Source checkout</span></footer>
+
+    <details id="diagnostics" class="diagnostics">
+      <summary><span>Connection &amp; diagnostics</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <div class="diagnostics-body">
+        <p id="device">No car selected</p>
+        <div class="detail-heading"><h2>Last reported by car</h2><span id="status-age">No report</span></div>
+        <p id="reported">State unknown · reason unknown · error unknown</p>
+        <p id="limits">Limits unavailable</p><p id="windows">Windows unavailable</p><p id="stream">Stream: no writes</p>
+        <p id="physical-reading">No sensor reading</p>
+        <p>Setpoint: 72 bytes · MTU / payload capacity: unavailable in this browser</p>
+        <p>Reported state and requested speeds are not measured wheel motion. A write or disconnect does not verify a physical stop.</p>
+        <p>Portrait, screen up like a tray. Neutral must be within 30° of flat. Driving limits: 60° forward/side tilt and 90° rotation from neutral. Switching modes disarms.</p>
+        <p id="version">Source checkout</p>
+      </div>
+    </details>
+    <p class="footnote">Supervised control · approximate speed references</p>
     <noscript>This controller requires JavaScript and the Bluefy browser.</noscript>
   </main>
+  <footer class="control-dock" aria-label="Requested motion, arming and stop controls">
+    <section class="motion-panel" aria-label="Requested motion">
+      <div class="surface-heading"><h2>Requested motion</h2><span class="surface-tag">OPEN-LOOP</span></div>
+      <div class="motion-values" id="motion-values">
+        <div><span>Forward</span><strong id="value-vx">0.00</strong><small>m/s</small></div>
+        <div><span>Strafe</span><strong id="value-vy">0.00</strong><small>m/s</small></div>
+        <div><span>Turn</span><strong id="value-wz">0.00</strong><small>rad/s</small></div>
+      </div>
+      <output id="requested" class="sr-only" aria-hidden="true" aria-live="off">vx 0.00 · vy 0.00 · wz 0.00</output>
+    </section>
+
+    <div class="primary-slot"><button id="arm" class="primary-action" type="button" disabled>ARM AT ZERO</button><button id="physical-drive" class="primary-action" type="button" aria-pressed="false" hidden disabled>START TILT CONTROL</button></div>
+    <button id="stop" class="stop" type="button" aria-label="STOP" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 5v8l5 5h8l5-5V8l-5-5z"/><path d="M9 9h6v6H9z"/></svg><span>STOP<small>Disarm car</small></span></button>
+  </footer>
   <script type="module" src="app.js"></script>
 </body>
 </html>
