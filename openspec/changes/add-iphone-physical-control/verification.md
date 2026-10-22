@@ -137,7 +137,7 @@ remain open.
 
 ## Next stand batch
 
-Pending a fresh go: rover on its stand, all wheels clear, motor bank awake and
+Announced procedure (Todor subsequently gave “go”): rover on its stand, all wheels clear, motor bank awake and
 USB connected; use the same published `2b5104400362` build. No flash is needed.
 Capture serial output before enabling motor power. In Physical mode, capture
 neutral with Set neutral & ARM and use explicit START at neutral for each move.
@@ -155,3 +155,17 @@ The final two moves exercise STOP and mode-change stopping while tilted. Finish
 with STOP/disconnect and motor power off. Any unexpected motion or failure to
 stop aborts the batch. Record serial commands separately from Todor's physical
 wheel confirmation; do not infer measured velocity or stopping time.
+
+
+## Stand result — partial
+
+Todor reported “done. all moves performewd” for the authorized `2b5104400362`
+procedure. The [capture and operator record](../../../firmware/bench/2026-10-22-iphone-physical-stand/notes.md)
+show eight nonzero-command periods returning to zero, final STOP, release and
+Open at zero. No re-ARM or subsequent nonzero period appears; final STOP occurred
+after the last period had already reached zero. The final STOP/re-ARM and mode
+switch while moving need clarification. No Stream counters or raw twists were
+supplied; client caps and measured stopping are not inferred. Command periods
+include 5.281 s and 8.132 s, totaling 24.605 s, so the announced 2 s/20 s bounds
+are not recorded as passed. Capture is stopped; no firmware was flashed.
+Task 3.2 remains partial and no new drive is authorized.

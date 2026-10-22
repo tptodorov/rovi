@@ -3657,7 +3657,7 @@ After explicit acceptance, implement/test the static page from Linux, prepare a 
 </li>
 <li>
 <p>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Announce a bounded stand batch and obtain fresh go; verify all six signs, blended axes, caps, neutral/release, STOP and mode-switch stop with physical confirmation.</p>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Announce a bounded stand batch and obtain fresh go; verify all six signs, blended axes, caps, neutral/release, STOP and mode-switch stop with physical confirmation. Todor authorized and reported the moves performed on <code>2b5104400362</code>; the capture has eight nonzero periods ending at zero and final STOP/release/Open, but no re-ARM or subsequent move. Final STOP/re-ARM/mode-switch checks and caps remain unconfirmed (<a href="../firmware/bench/2026-10-22-iphone-physical-stand/notes.md">evidence and duration limits</a>); retain partial status.</p>
 </li>
 <li>
 <p>
@@ -4049,7 +4049,7 @@ invalid/reference changes, screen-orientation changes and permission denial/retr
 still have host coverage only; task 3.1 remains partial. Motor-on tasks 3.2–3.3
 remain open.</p>
 <h2 id="openspec--changes--add-iphone-physical-control--verification--next-stand-batch">Next stand batch</h2><p>
-Pending a fresh go: rover on its stand, all wheels clear, motor bank awake and
+Announced procedure (Todor subsequently gave “go”): rover on its stand, all wheels clear, motor bank awake and
 USB connected; use the same published <code>2b5104400362</code> build. No flash is needed.
 Capture serial output before enabling motor power. In Physical mode, capture
 neutral with Set neutral &amp; ARM and use explicit START at neutral for each move.</p>
@@ -4072,6 +4072,17 @@ The final two moves exercise STOP and mode-change stopping while tilted. Finish
 with STOP/disconnect and motor power off. Any unexpected motion or failure to
 stop aborts the batch. Record serial commands separately from Todor's physical
 wheel confirmation; do not infer measured velocity or stopping time.</p>
+<h2 id="openspec--changes--add-iphone-physical-control--verification--stand-result--partial">Stand result — partial</h2><p>
+Todor reported “done. all moves performewd” for the authorized <code>2b5104400362</code>
+procedure. The <a href="../firmware/bench/2026-10-22-iphone-physical-stand/notes.md">capture and operator record</a>
+show eight nonzero-command periods returning to zero, final STOP, release and
+Open at zero. No re-ARM or subsequent nonzero period appears; final STOP occurred
+after the last period had already reached zero. The final STOP/re-ARM and mode
+switch while moving need clarification. No Stream counters or raw twists were
+supplied; client caps and measured stopping are not inferred. Command periods
+include 5.281 s and 8.132 s, totaling 24.605 s, so the announced 2 s/20 s bounds
+are not recorded as passed. Capture is stopped; no firmware was flashed.
+Task 3.2 remains partial and no new drive is authorized.</p>
 </section><section class="document" id="openspec--changes--add-laptop-ble-teleoperation--verification" aria-label="verification">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-laptop-ble-teleoperation/verification.md">Markdown source ↗</a><div class="path">openspec/changes/add-laptop-ble-teleoperation/verification.md</div></header>
     <h1 id="openspec--changes--add-laptop-ble-teleoperation--verification--ble-keyboard-verification">BLE keyboard verification</h1><h2 id="openspec--changes--add-laptop-ble-teleoperation--verification--host-evidence">Host evidence</h2><p>

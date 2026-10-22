@@ -110,7 +110,10 @@ Todor also confirmed the five-step motor-power-off PAUSE/restart, lock,
 app-switch, posture cleanup/manual recovery and 60 s neutral procedure on that
 build ([results and remaining limits](../../firmware/bench/2026-10-21-iphone-physical/notes.md#interruption-and-recovery-phone-check--2026-10-22)).
 Current-build Stream counters and additional phone fault cases remain unrecorded;
-the original rotation/drop-of-touch cause and motor-on acceptance remain unverified.
+the original rotation/drop-of-touch cause remains unverified. The subsequent
+[stand record](../../firmware/bench/2026-10-22-iphone-physical-stand/notes.md) contains
+reported direction/blend exercise and eight command periods returning to zero;
+final moving STOP/re-ARM/mode-switch checks and overall acceptance remain open.
 
 ## Phone test delivery
 
