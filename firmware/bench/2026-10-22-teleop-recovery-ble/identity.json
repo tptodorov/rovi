@@ -1,0 +1,8 @@
+{
+  "started": "2026-10-22T15:55:40.204952+00:00",
+  "source": "1edf59548df92ec4baddd69549bab3879b029017",
+  "prior_wifi_uuid": "855b50c6-388f-428e-99f6-d6d07db30aa8",
+  "route_before": "1.1.1.1 via 192.168.1.1 dev enp0s20f0u2u3 src 192.168.1.148 uid 1000 \n    cache",
+  "authorization": "Todor: go for announced batches A (UDP reconnect) and B (BLE keyboard)",
+  "firmware": "already-flashed normal image; no flash in this batch"
+}

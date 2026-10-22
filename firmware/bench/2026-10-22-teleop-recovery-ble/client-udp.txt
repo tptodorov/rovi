@@ -1,0 +1,77 @@
+R arm | WASD translate | QE rotate | Space STOP | Esc/Ctrl-C quit
+Motion expires after 250 ms without another direction key; key repeat renews it.
+Connected disarmed session=2223871184 capabilities={'version': 1, 'wheels_radius': 0.029999999329447746, 'center_projection_sum': 0.1274999976158142, 'max_vx': 1.0, 'max_vy': 1.0, 'max_wz': 3.0, 'lease_ms': 1000, 'claim_ms': 10000, 'reclaim_ms': 5000}
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=none requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=243 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=262 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=262 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=257 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=262 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=262 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=none status_age_ms=none echo_age_ms=262 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=223 echo_age_ms=250 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=490 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=756 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=1025 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=1294 echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=1561 echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=1828 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=2095 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=2365 echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=2632 echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=2899 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=3150 echo_age_ms=243 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=3418 echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=3685 echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=3935 echo_age_ms=244 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=4202 echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=4467 echo_age_ms=262 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=4732 echo_age_ms=261 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=4998 echo_age_ms=262 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=5263 echo_age_ms=261 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=5528 echo_age_ms=261 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=5794 echo_age_ms=260 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=6059 echo_age_ms=261 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=6324 echo_age_ms=261 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=6591 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=6858 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=7125 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871184 last_reported=Armed/None/None status_age_ms=7393 echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871184 last_reported=Armed/None/None status_age_ms=7646 echo_age_ms=517 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+Connection lost: Echo reply timeout; motion cleared; reconnecting disarmed
+Cleanup: STOP unconfirmed; BYE requested (release unconfirmed)
+R arm | WASD translate | QE rotate | Space STOP | Esc/Ctrl-C quit
+Motion expires after 250 ms without another direction key; key repeat renews it.
+Connection lost: HELLO reply timeout; motion cleared; reconnecting disarmed
+Cleanup: STOP unconfirmed; BYE requested (release unconfirmed)
+R arm | WASD translate | QE rotate | Space STOP | Esc/Ctrl-C quit
+Motion expires after 250 ms without another direction key; key repeat renews it.
+Connection lost: HELLO reply timeout; motion cleared; reconnecting disarmed
+Cleanup: STOP unconfirmed; BYE requested (release unconfirmed)
+R arm | WASD translate | QE rotate | Space STOP | Esc/Ctrl-C quit
+Motion expires after 250 ms without another direction key; key repeat renews it.
+Claimed disarmed session=2223871185 capabilities={'version': 1, 'wheels_radius': 0.029999999329447746, 'center_projection_sum': 0.1274999976158142, 'max_vx': 1.0, 'max_vy': 1.0, 'max_wz': 3.0, 'lease_ms': 1000, 'claim_ms': 10000, 'reclaim_ms': 5000}; verifying Echo
+connection=reconnecting local=disarmed session=2223871185 last_reported=none status_age_ms=none echo_age_ms=none requested_vx/vy/wz=(0.0, 0.0, 0.0)
+Reconnected disarmed session=2223871185; press R to arm
+connection=connected local=disarmed session=2223871185 last_reported=none status_age_ms=none echo_age_ms=247 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871185 last_reported=none status_age_ms=none echo_age_ms=262 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871185 last_reported=none status_age_ms=none echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=disarmed session=2223871185 last_reported=none status_age_ms=none echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871185 last_reported=Armed/None/None status_age_ms=202 echo_age_ms=256 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871185 last_reported=Armed/None/None status_age_ms=470 echo_age_ms=264 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871185 last_reported=Armed/None/None status_age_ms=737 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871185 last_reported=Armed/None/None status_age_ms=1004 echo_age_ms=263 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected local=armed session=2223871185 last_reported=Armed/None/None status_age_ms=1271 echo_age_ms=263 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871185 last_reported=Armed/None/None status_age_ms=1539 echo_age_ms=264 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871185 last_reported=Armed/None/None status_age_ms=1805 echo_age_ms=262 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected local=armed session=2223871185 last_reported=Armed/None/None status_age_ms=2070 echo_age_ms=257 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+STOP acknowledged
+Cleanup: STOP acknowledged; BYE requested (release unconfirmed)

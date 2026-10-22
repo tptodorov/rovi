@@ -16,7 +16,7 @@
 
 ## 4. Board acceptance
 
-- [ ] 4.1 Announce a separate gentle stand/reconnect/audio check and obtain Todor's go; verify wheel stillness through loss/reclaim, fresh R after recovery, audible alert, operator quit and network cleanup. Host passes do not complete this task.
+- [x] 4.1 Announce a separate gentle stand/reconnect/audio check and obtain Todor's go; verify wheel stillness through loss/reclaim, fresh R after recovery, audible alert, operator quit and network cleanup. Host passes do not complete this task. **Done 2026-10-22:** Todor's go and confirmation; [evidence](../../../../firmware/bench/2026-10-22-teleop-recovery-ble/notes.md).
 
 ## Workflow follow-up
 

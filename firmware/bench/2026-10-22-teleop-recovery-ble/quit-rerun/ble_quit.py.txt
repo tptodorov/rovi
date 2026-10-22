@@ -1,0 +1,28 @@
+"""Short BLE quit re-run through the real client: R, 1 s forward, Space, Ctrl-D."""
+import json,sys,time
+from pathlib import Path
+sys.path.insert(0,'/home/todor/tptodorov/rovi')
+from apps.teleop.tests.test_terminal import Terminal
+from apps.simcar.scenarios.carlog import events,check
+log=Path(sys.argv[1]);out=Path(sys.argv[2]);res={}
+t=Terminal(None,['nix-shell','--run','python3 -u -m apps.teleop --ble'])
+try:
+    t.expect('Connected disarmed',timeout=60)
+    t.key(b'r');t.expect('local=armed',timeout=5);end=time.monotonic()+3
+    while time.monotonic()<end:t.read()
+    end=time.monotonic()+1
+    while time.monotonic()<end:t.key(b'w');t.read();time.sleep(.08)
+    at=len(t.output);t.key(b' ');end=time.monotonic()+3
+    while b'STOP acknowledged' not in t.output[at:]:
+        assert time.monotonic()<end;t.read()
+    off=log.stat().st_size;quit_at=time.monotonic();t.key(b'\x04');t.proc.wait(timeout=10);t.finish(None)
+    res['exit']=t.proc.returncode;res['quit_s']=round(time.monotonic()-quit_at,3)
+    res['cleanup_line']=[l for l in t.output.decode(errors='replace').splitlines() if l.startswith('Cleanup')]
+    end=time.monotonic()+6
+    while not any(e.get('ev')=='wifi' and e.get('ap')=='on' for e in events(log,off)) and time.monotonic()<end:time.sleep(.05)
+    res['after_quit']=[e for e in events(log,off)];res['after_quit_wait_s']=round(time.monotonic()-quit_at,3)
+    res['check']=check(log)[0]
+finally:
+    if t.proc.poll() is None:t.key(b'\x04');t.proc.wait(timeout=10)
+    (out/'client.txt').write_bytes(t.output);t.close()
+    (out/'result.json').write_text(json.dumps(res,indent=2)+'\n');print(json.dumps(res,indent=1))

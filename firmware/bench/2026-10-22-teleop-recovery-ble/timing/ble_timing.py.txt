@@ -1,0 +1,31 @@
+"""No-motion BLE timing probe: never sends ARM; times cleanup-shaped GATT operations and disconnect."""
+import asyncio,json,sys,time
+sys.path.insert(0,'/home/todor/tptodorov/rovi')
+from bleak import BleakClient,BleakScanner
+from apps.teleop.ble import SERVICE,SETPOINT,CONTROL,STATUS,ECHO,NAME
+from apps.client.wire import Status,ble_setpoint
+async def timed(coro):
+    t=time.perf_counter();r=await coro;return (time.perf_counter()-t)*1000,r
+async def cycle(dev,results):
+    c=BleakClient(dev,timeout=10)
+    ms,_=await timed(c.connect());rec={'connect_ms':round(ms)}
+    for u in (STATUS,ECHO):await c.start_notify(u,lambda *_:None)
+    w=[];r=[];z=[]
+    for i in range(10):
+        ms,_=await timed(c.write_gatt_char(SETPOINT,ble_setpoint(i+1),response=False));z.append(round(ms,1))
+        ms,_=await timed(c.write_gatt_char(CONTROL,b'\x02',response=True));w.append(round(ms,1))
+        ms,data=await timed(c.read_gatt_char(STATUS));r.append(round(ms,1))
+        await asyncio.sleep(.1)
+    rec.update(setpoint_ms=z,stop_write_ms=w,status_read_ms=r,status=str(Status.decode(data)))
+    ms,_=await timed(c.disconnect());rec['disconnect_ms']=round(ms);rec['still_connected']=c.is_connected
+    results.append(rec);print(json.dumps(rec),flush=True)
+async def main():
+    seen=await BleakScanner.discover(timeout=5,return_adv=True)
+    dev=[d for d,a in seen.values() if a.local_name==NAME or d.name==NAME];assert len(dev)==1,dev
+    results=[]
+    for _ in range(3):
+        await cycle(dev[0],results);await asyncio.sleep(3)
+        seen=await BleakScanner.discover(timeout=5,return_adv=True)
+        dev=[d for d,a in seen.values() if a.local_name==NAME or d.name==NAME];assert len(dev)==1,dev
+    json.dump(results,open(sys.argv[1],'w'),indent=2)
+asyncio.run(main())

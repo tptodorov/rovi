@@ -1,0 +1,6 @@
+{
+  "batch_udp_exit": 0,
+  "batch_ble_exit": 1,
+  "wifi_restored": true,
+  "route_unchanged": true
+}

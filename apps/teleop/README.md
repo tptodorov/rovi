@@ -86,8 +86,11 @@ errors give a nonzero exit. Terminal settings are restored on ordinary exit and
 handled errors/signals; the device watchdog remains independent of the client.
 
 BLE cleanup instead attempts zero, STOP/readback and disconnect within 500 ms
-total. An earlier failed write does not skip disconnect. The display reports
-unconfirmed STOP/disconnect honestly; neither proves physical wheel stillness.
+total. An earlier failed write does not skip disconnect. On the rover a STOP
+write or Status read takes ~80–125 ms and BlueZ needs ~2 s to finish a
+disconnect, so quit usually reports `BLE disconnect requested (unconfirmed)`;
+the car releases and turns its AP back on shortly after. That label does not
+fail the exit; an unacknowledged STOP does. Neither proves physical wheel stillness.
 
 ## Laptop validation
 
@@ -102,15 +105,16 @@ passed on 2026-10-20 with Todor’s physical confirmation: six directions,
 input-expiry/Space/quit stops, explicit re-arm and startup/unarmed stillness.
 This accepts the original client on the stand; loaded/floor use and electrical
 or physical timing measurements remain outside this evidence. Automatic
-recovery and audio are the [follow-up](../../openspec/changes/add-teleop-reconnect/proposal.md):
-host tests include dropped Echo/ARM replies, initial unavailable/BUSY targets,
-stale replies, simulator restart, buffered keys, retry quit and audio failures.
-Its separate board/audio acceptance is pending; it does not establish a Wi-Fi fix.
-BLE keyboard transport is the [next follow-up](../../openspec/changes/add-laptop-ble-teleoperation/proposal.md).
-Fake GATT and actual CLI/PTY tests cover validation, directions, expiry, control
-races, loss/recovery and bounded cleanup; its separate radio/motor acceptance
-is pending. These tests do not connect to a Bluetooth device.
+recovery/audio and the BLE transport passed a second
+[stand batch](../../firmware/bench/2026-10-22-teleop-recovery-ble/notes.md) on
+2026-10-22: Wi-Fi and Bluetooth outages with no motion, one beep, disarmed
+recovery, MTU 247 and all six BLE directions. Neither establishes a Wi-Fi #23 fix.
+Host tests include dropped Echo/ARM replies, unavailable/BUSY targets, stale
+replies, simulator restart, buffered keys, retry quit, audio failures and fake
+GATT with measured rover latencies; they do not contact the rover.
 
 The [accepted requirements](../../openspec/specs/laptop-teleoperation/spec.md)
-and [archived verification map](../../openspec/changes/archive/2026-10-20-add-laptop-teleoperation/verification.md)
+and archived verification maps ([client](../../openspec/changes/archive/2026-10-20-add-laptop-teleoperation/verification.md),
+[reconnect](../../openspec/changes/archive/2026-10-22-add-teleop-reconnect/verification.md),
+[BLE](../../openspec/changes/archive/2026-10-22-add-laptop-ble-teleoperation/verification.md))
 record the host tests and scoped physical acceptance.

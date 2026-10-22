@@ -1,0 +1,23 @@
+R arm | WASD translate | QE rotate | Space STOP | Esc/Ctrl-C quit; BLE starts disarmed
+BLE target pinned to FE:E4:05:1A:9F:FF
+BLE claimed disarmed generation=1 mtu=247 capabilities={'version': 1, 'wheels_radius': 0.029999999329447746, 'center_projection_sum': 0.1274999976158142, 'max_vx': 1.0, 'max_vy': 1.0, 'max_wz': 3.0, 'lease_ms': 1000, 'claim_ms': 10000, 'reclaim_ms': 5000}
+connection=verifying transport=BLE local=disarmed generation=1 last_reported=Status(state='Claimed', reason=None, error=None) status_age_ms=182 echo_age_ms=none requested_vx/vy/wz=(0.0, 0.0, 0.0)
+Connected disarmed BLE generation=1; press R to arm
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=2 echo_age_ms=182 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=254 echo_age_ms=164 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=508 echo_age_ms=193 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=763 echo_age_ms=179 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=1016 echo_age_ms=160 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=1269 echo_age_ms=188 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=1521 echo_age_ms=172 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=1775 echo_age_ms=201 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=2026 echo_age_ms=182 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=2278 echo_age_ms=164 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=2530 echo_age_ms=190 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=2781 echo_age_ms=169 requested_vx/vy/wz=(0.0, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=3034 echo_age_ms=199 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=3288 echo_age_ms=184 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=3541 echo_age_ms=167 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+connection=connected transport=BLE local=armed generation=1 last_reported=Status(state='Armed', reason=None, error=None) status_age_ms=3794 echo_age_ms=195 requested_vx/vy/wz=(0.1, 0.0, 0.0)
+STOP acknowledged
+Cleanup: STOP acknowledged; BLE disconnect requested (unconfirmed); physical stop unverified

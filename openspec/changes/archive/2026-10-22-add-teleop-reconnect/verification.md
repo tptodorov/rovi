@@ -23,13 +23,15 @@ The full client suite has 39 tests including the real simulator and PTYs.
 The local `beep()` invocation completed successfully through PipeWire on
 2026-10-20; this proves playback success, not that Todor heard it.
 
-## Physical acceptance — pending
+## Physical acceptance — passed 2026-10-22
 
-The original client's [stand acceptance](../../../firmware/bench/2026-10-20-laptop-teleop/notes.md)
-does not accept this new recovery behavior. Proposed separate test: gentle stand
-motion, a brief laptop Wi-Fi disconnect, no wheel motion during reconnect,
-audible loss alert, recovered disarmed state, fresh R/direction, Space/quit and
-network restoration. A motor batch requires its announced setup and Todor's go.
+Todor authorized the announced stand batch and confirmed **“yes, all good”**
+([evidence](../../../../firmware/bench/2026-10-22-teleop-recovery-ble/notes.md)). The laptop Wi-Fi was dropped for ~5 s during an armed
+session: the car stopped on lease expiry and released, R/W typed during the
+outage were discarded, the client reported `Reconnected disarmed`, one second
+of W produced no motion, and only a fresh R plus W moved the wheels. One beep
+played; Space and quit stopped and released the car (exit 0); laptop Wi-Fi and
+route were restored.
 
-No firmware change or flash is needed. Wi-Fi issue #23, floor/loaded operation,
+No firmware change or flash was needed. Wi-Fi issue #23, floor/loaded operation,
 electrical measurements and physical stopping bounds remain outside this change.
