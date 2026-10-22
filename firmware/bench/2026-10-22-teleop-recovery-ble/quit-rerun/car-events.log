@@ -1,0 +1,13 @@
+ev=claimed source=Ble at_ms=308587
+ev=ble link=up id=1 mtu=23 at_ms=308587
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=308591
+ev=wifi ap=off at_ms=308599
+ev=mtu id=1 mtu=247 at_ms=308787
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=310387
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=313577
+ev=stop reason=Stop at_ms=314565
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=314569
+ev=released at_ms=316858
+ev=ble link=down id=1 at_ms=316858
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=316862
+ev=wifi ap=on at_ms=316885

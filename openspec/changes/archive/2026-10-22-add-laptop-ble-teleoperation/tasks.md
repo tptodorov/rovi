@@ -15,7 +15,7 @@
 
 ## 4. Board acceptance
 
-- [ ] 4.1 Prepare and announce a gentle stand BLE keyboard/reconnect/audio batch; await Todor's go. Record real MTU, radio exclusion, wheel observations, stops and cleanup separately from host tests.
+- [x] 4.1 Prepare and announce a gentle stand BLE keyboard/reconnect/audio batch; await Todor's go. Record real MTU, radio exclusion, wheel observations, stops and cleanup separately from host tests. **Done 2026-10-22:** MTU 247, AP exclusion, six directions, outage recovery and Todor's confirmation; the cleanup deadline defect was fixed test-first and re-run ([evidence](../../../../firmware/bench/2026-10-22-teleop-recovery-ble/notes.md)).
 
 ## Workflow follow-up
 

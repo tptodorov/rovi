@@ -1,0 +1,14 @@
+{"stage": "startup-idle-3s", "elapsed_s": 0.081, "serial_offset": 2034}
+{"stage": "unarmed-W-1s", "elapsed_s": 3.082, "serial_offset": 2121}
+{"stage": "arm-at-zero", "elapsed_s": 4.083, "serial_offset": 2121}
+{"stage": "countdown-3s", "elapsed_s": 5.343, "serial_offset": 2173}
+{"stage": "forward-2s", "elapsed_s": 8.356, "serial_offset": 2173}
+{"stage": "forward-input-expiry-1s", "elapsed_s": 10.357, "serial_offset": 2229}
+{"stage": "link-drop", "elapsed_s": 11.361, "serial_offset": 2281}
+{"stage": "link-restore", "elapsed_s": 16.779, "serial_offset": 2412}
+{"stage": "unarmed-W-after-reconnect-1s", "elapsed_s": 17.9, "serial_offset": 2577}
+{"stage": "arm-at-zero", "elapsed_s": 18.905, "serial_offset": 2577}
+{"stage": "fresh-forward-1s", "elapsed_s": 20.16, "serial_offset": 2629}
+{"stage": "Space-stop-final", "elapsed_s": 21.164, "serial_offset": 2685}
+{"stage": "Ctrl-D-cleanup", "elapsed_s": 21.211, "serial_offset": 2784}
+{"mode": "udp", "result": "passed-command-and-client-checks", "physical_observation": "pending", "stages": [{"stage": "startup-idle-3s", "elapsed_s": 0.081, "serial_offset": 2034}, {"stage": "unarmed-W-1s", "elapsed_s": 3.082, "serial_offset": 2121}, {"stage": "arm-at-zero", "elapsed_s": 4.083, "serial_offset": 2121}, {"stage": "countdown-3s", "elapsed_s": 5.343, "serial_offset": 2173}, {"stage": "forward-2s", "elapsed_s": 8.356, "serial_offset": 2173}, {"stage": "forward-input-expiry-1s", "elapsed_s": 10.357, "serial_offset": 2229}, {"stage": "link-drop", "elapsed_s": 11.361, "serial_offset": 2281}, {"command": ["nmcli", "device", "disconnect", "wlp1s0f0"], "exit": 0, "output": "Device 'wlp1s0f0' successfully disconnected."}, {"stage": "link-restore", "elapsed_s": 16.779, "serial_offset": 2412}, {"command": ["nmcli", "connection", "up", "id", "rovi-m8"], "exit": 0, "output": "Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/171)"}, {"stage": "unarmed-W-after-reconnect-1s", "elapsed_s": 17.9, "serial_offset": 2577}, {"stage": "arm-at-zero", "elapsed_s": 18.905, "serial_offset": 2577}, {"stage": "fresh-forward-1s", "elapsed_s": 20.16, "serial_offset": 2629}, {"stage": "Space-stop-final", "elapsed_s": 21.164, "serial_offset": 2685}, {"stage": "Ctrl-D-cleanup", "elapsed_s": 21.211, "serial_offset": 2784}], "loss_messages": 3, "audio_fallback": false, "client_exit": 0, "boots": 1, "event_counts": {"boot": 1, "claimed": 2, "state": 11, "stop": 2, "released": 2}}

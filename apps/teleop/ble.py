@@ -233,28 +233,33 @@ class BleClient:
         writes_ok = True
         stop_written = False
         if peer is not None:
+            # 500 ms budget minus scheduling margin. Rover GATT round trips take ~80-125 ms;
+            # BlueZ disconnect takes ~2 s and completes after the client stops waiting.
+            end = asyncio.get_running_loop().time()+.45
+            def limit(op):
+                return max(0,min(op,end-asyncio.get_running_loop().time()))
             if peer.is_connected and self.policy:
                 self.seq = (self.seq+1) & 0xffffffff
                 for uuid,data in ((SETPOINT,ble_setpoint(self.seq)),(CONTROL,b'\x02')):
                     try:
-                        await self.io(peer.write_gatt_char(uuid,data,response=uuid==CONTROL),.08)
+                        await self.io(peer.write_gatt_char(uuid,data,response=uuid==CONTROL),limit(.05 if uuid==SETPOINT else .17))
                         if uuid==CONTROL:
                             stop_written = True
                     except LinkError:
                         writes_ok = False
                 try:
-                    status = Status.decode(await self.io(peer.read_gatt_char(STATUS),.08))
+                    status = Status.decode(await self.io(peer.read_gatt_char(STATUS),limit(.15)))
                     confirmed = stop_written and status==Status('Stopped','Stop',None)
                 except (LinkError,ValueError):
                     pass
             try:
-                await self.io(peer.disconnect(),.25)
+                await self.io(peer.disconnect(),limit(.45))
             except LinkError:
-                pass
+                pass  # The request is sent; BlueZ completes it after the budget.
             disconnected = not peer.is_connected
             self.emit(f'Cleanup: STOP {"acknowledged" if confirmed else "unconfirmed"}; '
-                      f'BLE disconnect {"confirmed" if disconnected else "unconfirmed"}; physical stop unverified')
-            return confirmed and disconnected and writes_ok
+                      f'BLE disconnect {"confirmed" if disconnected else "requested (unconfirmed)"}; physical stop unverified')
+            return confirmed and writes_ok
         return False
 
     async def run(self):

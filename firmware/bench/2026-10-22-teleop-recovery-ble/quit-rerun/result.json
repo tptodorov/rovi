@@ -1,0 +1,10 @@
+{
+  "exit": 0,
+  "quit_s": 0.566,
+  "cleanup_line": [
+    "Cleanup: STOP acknowledged; BLE disconnect requested (unconfirmed); physical stop unverified"
+  ],
+  "after_quit": [],
+  "after_quit_wait_s": 6.603,
+  "check": []
+}

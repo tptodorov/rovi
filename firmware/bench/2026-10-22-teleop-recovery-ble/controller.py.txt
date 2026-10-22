@@ -1,0 +1,49 @@
+import datetime,json,os,shutil,signal,subprocess,sys,time
+from pathlib import Path
+root=Path('/home/todor/tptodorov/rovi');sys.path.insert(0,str(root))
+from apps.simcar.scenarios.carlog import events
+out=root/'firmware/bench/2026-10-22-teleop-recovery-ble';out.mkdir(exist_ok=False)
+serial='/dev/serial/by-id/usb-1a86_USB_Single_Serial_5C85037678-if00'
+def command(a):return subprocess.check_output(a,text=True).strip()
+prior=command(['nmcli','-g','GENERAL.CON-UUID','device','show','wlp1s0f0']);assert prior and prior!='--'
+route=command(['ip','route','get','1.1.1.1'])
+identity={'started':datetime.datetime.now(datetime.timezone.utc).isoformat(),'source':command(['git','-C',str(root),'rev-parse','HEAD']),'prior_wifi_uuid':prior,'route_before':route,'authorization':'Todor: go for announced batches A (UDP reconnect) and B (BLE keyboard)','firmware':'already-flashed normal image; no flash in this batch'}
+(out/'identity.json').write_text(json.dumps(identity,indent=2)+'\n')
+shutil.copyfile('/tmp/rovi-teleop-recovery-batch.py',out/'driver.py.txt')
+shutil.copyfile(__file__,out/'controller.py.txt')
+log=out/'car.log';monitor=None;cleanup={}
+def batch(mode):
+ with (out/f'probe-{mode}.txt').open('wb') as probe:
+  rc=subprocess.run(['python3','/tmp/rovi-teleop-recovery-batch.py','--mode',mode,'--log',str(log),'--dir',str(out)],stdout=probe,stderr=subprocess.STDOUT,timeout=400).returncode
+ cleanup[f'batch_{mode}_exit']=rc;print('batch',mode,'exit',rc,flush=True);return rc
+try:
+ with log.open('wb') as capture:
+  monitor=subprocess.Popen(['espflash','monitor','--port',serial,'--non-interactive','--skip-update-check'],stdout=capture,stderr=subprocess.STDOUT,start_new_session=True)
+  end=time.monotonic()+20
+  while not any(e.get('ev')=='boot' for e in events(log)):
+   assert monitor.poll() is None,'serial monitor exited';assert time.monotonic()<end,'missing boot';time.sleep(.1)
+  time.sleep(2)
+  assert 'MOTOR BENCH' not in log.read_text(errors='replace').upper(),'bench image banner'
+  assert not any(e.get('ev') in ('claimed','error','dropped') for e in events(log))
+  print('clean boot; joining AP',flush=True)
+  subprocess.run(['nmcli','connection','up','id','rovi-m8'],check=True,timeout=40)
+  if batch('udp')==0:
+   subprocess.run(['nmcli','connection','up','uuid',prior],timeout=40)
+   time.sleep(3)
+   batch('ble')
+  time.sleep(1)
+except BaseException as exc:
+ cleanup['failure']=repr(exc);print('controller failure',repr(exc),flush=True)
+finally:
+ if monitor and monitor.poll() is None:
+  os.killpg(monitor.pid,signal.SIGINT)
+  try:monitor.wait(timeout=4)
+  except subprocess.TimeoutExpired:os.killpg(monitor.pid,signal.SIGTERM);monitor.wait(timeout=3)
+ subprocess.run(['bluetoothctl','power','on'],capture_output=True,timeout=20)
+ try:
+  if command(['nmcli','-g','GENERAL.CON-UUID','device','show','wlp1s0f0'])!=prior:
+   cleanup['wifi_restore_exit']=subprocess.run(['nmcli','connection','up','uuid',prior],timeout=40).returncode
+  cleanup['wifi_restored']=command(['nmcli','-g','GENERAL.CON-UUID','device','show','wlp1s0f0'])==prior
+  cleanup['route_unchanged']=command(['ip','route','get','1.1.1.1'])==route
+ except Exception as exc:cleanup['network_cleanup_error']=repr(exc)
+ (out/'cleanup.json').write_text(json.dumps(cleanup,indent=2)+'\n');print(json.dumps(cleanup),flush=True)

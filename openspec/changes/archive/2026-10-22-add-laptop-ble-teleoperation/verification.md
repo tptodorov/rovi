@@ -19,6 +19,7 @@ plus actual CLI subprocesses with pseudo-terminals. No Bluetooth device is used.
 | Malformed/unsolicited Status cannot arm | `test_malformed_or_unsolicited_status_never_arms` |
 | Quit cancels discovery/connect and disconnects | `test_quit_during_discovery_cancels_and_returns`, `test_quit_during_connect_still_attempts_disconnect` |
 | Failed/hung writes still allow bounded disconnect | `test_failed_or_stalled_cleanup_still_disconnects_within_budget` |
+| Measured rover GATT/disconnect latencies still confirm STOP within 500 ms | `test_measured_rover_latencies_confirm_stop_within_budget` |
 | Ambiguous discovery versus pinned MAC | `test_ambiguous_name_fails_and_mac_selects_exactly_one_device` |
 | Retries cannot roam after name discovery | `test_name_discovery_pins_the_first_address_for_retries` |
 | Optional dependency error explains Nix shell | `test_missing_bleak_has_actionable_error` |
@@ -36,12 +37,22 @@ Final host results: **59 client tests pass** (29.236 s), including all 20 BLE
 tests; the same **20 BLE tests pass with Bleak 2.1.1** in Nix shell (9.581 s).
 Strict active/baseline specs and all six generated-reader checks pass.
 
-## Physical evidence — pending
+## Physical acceptance — passed 2026-10-22
 
-No BLE connection or motor run was performed for this change. Existing BLE
-firmware bench results do not accept this application. A separately announced
-stand batch must check actual discovery/MTU, initial zero, keys/directions,
-Space/quit, loss beep, reconnect disarmed and new R/direction, old input
-rejection and disconnect/AP recovery, with Todor's wheel observations.
-No flash is required. Floor use, electrical/thermal measurements and physical
-stop timing remain outside scope. Do not archive until that scoped acceptance.
+Todor authorized the announced stand batch and confirmed **“yes, all good”**
+([evidence](../../../../firmware/bench/2026-10-22-teleop-recovery-ble/notes.md)): ATT MTU 247, car AP off while connected and back on after
+release, no motion before R, all six directions followed by zero on expiry,
+Space/no-motion without R, a ~5 s laptop Bluetooth outage with no motion,
+one beep, `Reconnected disarmed`, discarded outage input and a fresh R/direction.
+
+The first quit failed: cleanup reported STOP and disconnect unconfirmed (exit 1).
+A no-motion probe measured STOP write 75–124 ms, Status read 89–93 ms and BlueZ
+disconnect 2.1–2.6 s against 80/80/250 ms deadlines. The new latency test failed
+first; cleanup now shares one 500 ms budget and labels an unfinished disconnect
+`requested (unconfirmed)`, which no longer fails the exit. The authorized quit
+re-run acknowledged STOP, exited 0 in 0.57 s, and serial showed release, link
+down and AP on ~2.3 s after STOP. Final host results: **60 client tests pass**,
+including 21 BLE tests with Bleak 2.1.1.
+
+Floor use, electrical/thermal measurements, physical stop timing and a bound on
+BLE recovery time (~13 s observed) remain outside scope.

@@ -1,0 +1,157 @@
+"""One authorized stand batch through the real terminal client: UDP or BLE, with one forced link drop."""
+import argparse
+import json
+from pathlib import Path
+import subprocess
+import sys
+import time
+sys.path.insert(0, '/home/todor/tptodorov/rovi')
+from apps.teleop.tests.test_terminal import Terminal
+from apps.simcar.scenarios.carlog import events, check
+
+p=argparse.ArgumentParser()
+p.add_argument('--mode',choices=['udp','ble'],required=True)
+p.add_argument('--log',required=True)
+p.add_argument('--dir',required=True)
+a=p.parse_args()
+out=Path(a.dir);out.mkdir(parents=True,exist_ok=True)
+log=Path(a.log)
+t=None
+stages=[]
+result={'mode':a.mode,'result':'aborted','physical_observation':'pending','stages':stages}
+started=time.monotonic()
+base=log.stat().st_size
+
+def mark(name):
+ record={'stage':name,'elapsed_s':round(time.monotonic()-started,3),'serial_offset':log.stat().st_size}
+ stages.append(record)
+ print(json.dumps(record),flush=True)
+ return record['serial_offset']
+
+def signs(e):return tuple((v>0)-(v<0) for v in e.get('wheels_pm',[]))
+def zero(e):return e.get('ev')=='state' and e.get('wheels_pm')==[0,0,0,0]
+
+def pump(seconds):
+ end=time.monotonic()+seconds
+ while time.monotonic()<end:
+  t.read()
+  assert t.proc.poll() is None, f'client exited {t.proc.returncode}: {t.output[-1500:]!r}'
+  assert not any(e.get('ev') in ('error','dropped') for e in events(log,base)), 'serial fault/drop'
+
+def fresh(pred,offset,timeout=1.5):
+ end=time.monotonic()+timeout
+ while True:
+  found=[e for e in events(log,offset) if pred(e)]
+  if found:return found[-1]
+  assert time.monotonic()<end, f'missing fresh serial event after {offset}: {events(log,offset)[-6:]}'
+  pump(.03)
+
+def text_since(text,offset,timeout=1.5):
+ end=time.monotonic()+timeout
+ while text.encode() not in t.output[offset:]:
+  assert time.monotonic()<end,f'missing fresh client text {text}: {t.output[offset:][-1000:]!r}'
+  pump(.03)
+
+def repeat(key,seconds):
+ end=time.monotonic()+seconds
+ while time.monotonic()<end:
+  t.key(key)
+  pump(min(.1,max(0,end-time.monotonic())))
+
+def assert_still(offset):
+ assert not any(any(e.get('wheels_pm',[])) for e in events(log,offset)), 'nonzero during still phase'
+
+def arm():
+ offset=mark('arm-at-zero');client_at=len(t.output);t.key(b'r')
+ fresh(lambda e:e.get('ev')=='state' and e.get('state')=='Armed' and zero(e),offset,3)
+ text_since('local=armed',client_at,3);pump(1);assert_still(offset)
+
+def run(cmd):
+ r=subprocess.run(cmd,capture_output=True,text=True,timeout=40)
+ stages.append({'command':cmd,'exit':r.returncode,'output':(r.stdout+r.stderr).strip()[-400:]})
+ return r.returncode
+
+def drop_link():
+ if a.mode=='udp':return run(['nmcli','device','disconnect','wlp1s0f0'])
+ return run(['bluetoothctl','power','off'])
+
+def restore_link():
+ if a.mode=='udp':return run(['nmcli','connection','up','id','rovi-m8'])
+ return run(['bluetoothctl','power','on'])
+
+def drop_and_recover():
+ offset=mark('link-drop');client_at=len(t.output)
+ assert drop_link()==0,'link drop command failed'
+ end=time.monotonic()+5
+ while time.monotonic()<end:
+  t.key(b'r');pump(.15);t.key(b'w');pump(.15)
+ assert_still(offset)
+ mark('link-restore');assert restore_link()==0,'link restore command failed'
+ end=time.monotonic()+60
+ while b'Reconnected disarmed' not in t.output[client_at:]:
+  assert time.monotonic()<end,f'no reconnect: {t.output[client_at:][-1500:]!r}'
+  pump(.1)
+ assert_still(offset)
+ lost=t.output[client_at:]
+ result['loss_messages']=lost.count(b'reconnecting disarmed')
+ result['audio_fallback']=b'Audio alert unavailable' in lost
+ offset=mark('unarmed-W-after-reconnect-1s');repeat(b'w',1);assert_still(offset)
+
+try:
+ if a.mode=='udp':cmd=None;peer=('192.168.4.1',7777)
+ else:cmd=['nix-shell','--run','python3 -u -m apps.teleop --ble'];peer=None
+ t=Terminal(peer,cmd) if cmd else Terminal(peer)
+ t.expect('Connected disarmed',timeout=60 if a.mode=='ble' else 5)
+ if a.mode=='ble':
+  ap=fresh(lambda e:e.get('ev')=='wifi' and e.get('ap')=='off',base,5)
+  mtu=[e for e in events(log,base) if e.get('ev')=='mtu']
+  result['serial_mtu']=mtu[-1].get('mtu') if mtu else None
+ offset=mark('startup-idle-3s');pump(3);assert_still(base)
+ offset=mark('unarmed-W-1s');repeat(b'w',1);assert_still(offset)
+ arm()
+ mark('countdown-3s');pump(3)
+ if a.mode=='udp':moves=[(b'w','forward',(1,1,1,1))]
+ else:moves=[(b'w','forward',(1,1,1,1)),(b's','backward',(-1,-1,-1,-1)),(b'a','strafe-left',(-1,1,-1,1)),(b'd','strafe-right',(1,-1,1,-1)),(b'q','rotate-left',(-1,1,1,-1)),(b'e','rotate-right',(1,-1,-1,1))]
+ for key,name,want in moves:
+  offset=mark(name+'-2s');repeat(key,2)
+  fresh(lambda e:e.get('ev')=='state' and signs(e)==want,offset)
+  offset=mark(name+'-input-expiry-1s');pump(1);fresh(zero,offset)
+ if a.mode=='ble':
+  offset=mark('forward-before-Space-1s');repeat(b'w',1);fresh(lambda e:signs(e)==(1,1,1,1),offset)
+  offset=mark('Space-stop');client_at=len(t.output);t.key(b' ')
+  text_since('STOP acknowledged',client_at,3);fresh(zero,offset)
+  offset=mark('unarmed-W-after-Space-1s');repeat(b'w',1);assert_still(offset)
+  arm()
+  offset=mark('forward-1s');repeat(b'w',1);fresh(lambda e:signs(e)==(1,1,1,1),offset)
+  pump(1)
+ drop_and_recover()
+ arm()
+ offset=mark('fresh-forward-1s');repeat(b'w',1);fresh(lambda e:signs(e)==(1,1,1,1),offset)
+ offset=mark('Space-stop-final');client_at=len(t.output);t.key(b' ')
+ text_since('STOP acknowledged',client_at,3);fresh(zero,offset)
+ offset=mark('Ctrl-D-cleanup');client_at=len(t.output)
+ t.key(b'\x04');t.proc.wait(timeout=10);t.finish(None)
+ result['client_exit']=t.proc.returncode
+ assert t.proc.returncode==0, t.output[-1500:]
+ deadline=time.monotonic()+5
+ while not any(e.get('ev')=='released' for e in events(log,offset)):
+  assert time.monotonic()<deadline,'missing serial release'
+  time.sleep(.05)
+ if a.mode=='ble':fresh(lambda e:e.get('ev')=='wifi' and e.get('ap')=='on',offset,5)
+ problems,boots,counts=check(log);assert not problems,problems
+ result.update(result='passed-command-and-client-checks',boots=boots,event_counts=dict(counts))
+except BaseException as exc:
+ result['failure']=repr(exc)
+ raise
+finally:
+ if t:
+  if t.proc.poll() is None:
+   try:t.key(b'\x04');t.proc.wait(timeout=10)
+   except Exception as exc:result['cleanup_exception']=repr(exc)
+  try:t.read()
+  except Exception:pass
+  (out/f'client-{a.mode}.txt').write_bytes(t.output)
+  result['client_exit']=t.proc.poll()
+  t.close()
+ (out/f'result-{a.mode}.json').write_text(json.dumps(result,indent=2)+'\n')
+ print(json.dumps(result),flush=True)
