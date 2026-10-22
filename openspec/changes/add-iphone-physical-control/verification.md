@@ -183,3 +183,35 @@ connected”, confirming that intended behavior on the phone. Requested cap valu
 versions, rotation message and permission-prompt outcome were not supplied.
 Tasks 3.1–3.3 remain open for their outstanding evidence; the scroll observation
 matches the control contract and requires no runtime fix.
+
+
+## Proposed scoped acceptance review
+
+Status: review prepared; Todor has not yet accepted these deferrals. Tasks
+3.1–3.3 remain open until that decision or the missing evidence is recorded.
+This proposal does not change the runtime requirements or claim untested results.
+
+Proposed release scope: supervised use of Buttons and Physical on the reported
+iPhone 11 setup, with Physical calibrated in portrait/screen-up posture, gentle
+per-axis references and explicit ARM/START/PAUSE/STOP. UI acceptance, all three
+input mappings, held twist, neutral, scroll pause, lock/app-switch and posture
+cleanup/manual recovery have operator evidence. The stand exercise and final
+STOP/re-ARM/mode-switch behavior are operator-confirmed. The capture independently
+shows eight nonzero-command periods ending at zero and final STOP/release/Open;
+it does not show the separately confirmed final re-ARM/mode-switch sequence.
+
+| Evidence boundary | Proposed treatment |
+| --- | --- |
+| Per-axis clamps, zero/lower advertised limits and combined input | Retain host evidence: Physical tests check ±0.1/±0.1/±0.3 and 0.05/0/0.2 clipping. Phone procedure was reported completed, but no cap numbers were supplied; explicitly defer the numeric phone record. |
+| Current-build 60 s neutral/stream check | Retain functional requested-zero confirmation. Defer missing write count/max-gap/slowest-write numbers; earlier build's counters remain historical. No radio latency or raw drift bound. |
+| Phone/browser qualification | Reported iPhone 11; earlier sensor report identifies iOS 18.7/Bluefy 3.9.3, not freshly reconfirmed. No wider-device, range or long-term qualification. |
+| Native permission denial/retry and screen rotation | Procedure reported completed without individual outcomes, prompt status or fault message. Retain host regression coverage; explicitly defer native case-specific qualification. |
+| Independent sensor/UI stalls and invalid/reference changes | Host fault-injection coverage only; explicitly defer phone fault injection. Lock/app-switch evidence does not independently prove these deadlines. |
+| Physical motion and stopping | Retain scoped operator confirmation and commanded wheel log. No measured velocity, numeric stop-time guarantee or floor-use qualification. The announced 2 s/20 s batch-duration targets were exceeded in the command record and are not passed checks. |
+| Accessibility | Host layout/keyboard/contrast checks only; full VoiceOver qualification remains outside the demonstrated scope. |
+
+If Todor accepts this scope and these deferrals, record that decision, close the
+acceptance tasks for the demonstrated scope without marking deferred measurements
+passed, then archive/sync using the pinned workflow. Otherwise keep the change
+active and collect only the selected missing evidence with motor power off.
+No additional motor run is needed for this decision.
