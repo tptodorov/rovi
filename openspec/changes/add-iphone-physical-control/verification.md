@@ -118,3 +118,9 @@ requested motion/dock controls, PAUSE and STOP. Record this as a scoped usabilit
 pass with no issue reported ([phone evidence](../../../firmware/bench/2026-10-21-iphone-physical/notes.md#redesigned-controller-phone-retest--2026-10-22)).
 No new timing trace or motor-on result is inferred. Full phone interruption/recovery,
 VoiceOver and motor-on acceptance remain open.
+
+
+UI acceptance: Todor explicitly stated “i accept the UI” on 2026-10-22 for the
+published redesigned Buttons/Physical interface (`2b5104400362`). The UI design
+review is complete. This does not close task 3.1's remaining interruption/recovery
+checks or tasks 3.2–3.3's stand evidence and overall acceptance review.

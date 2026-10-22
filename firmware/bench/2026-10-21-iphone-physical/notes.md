@@ -112,3 +112,9 @@ or motor-on evidence were supplied. Full interruption/recovery checks, VoiceOver
 and motor-on acceptance remain open. Future iPhone test requests must also send
 the exact versioned build link through Todor's Telegram destination, as documented
 in the [client testing workflow](../../../apps/iphone/README.md#phone-test-delivery).
+
+
+Todor subsequently stated “i accept the UI” on 2026-10-22, explicitly accepting
+the redesigned Buttons and Physical interface in build `2b5104400362`. This closes
+the UI design review; phone interruption/recovery and motor-on acceptance remain
+separate, open checks.
