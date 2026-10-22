@@ -27,18 +27,22 @@ class Peer:
         self.callbacks={};self.writes=[];self.disconnected=False
         self.drop_echo=False;self.refuse_arm=False;self.fail_writes=False;self.hang_writes=False
         self.arm_hook=None;self.caps=CAPS_VALUE
+        self.write_delay=self.read_delay=self.disconnect_delay=0
         self.chars={u:SimpleNamespace(properties=p,max_write_without_response_size=244) for u,p in {
             SETPOINT:['write-without-response'],CONTROL:['write'],CAPS:['read'],
             STATUS:['read','notify'],ECHO:['write-without-response','notify']}.items()}
         self.services=SimpleNamespace(get_service=lambda u:object() if u==SERVICE else None,
                                       get_characteristic=lambda u:self.chars.get(u))
     async def connect(self):self.is_connected=True
-    async def disconnect(self):self.is_connected=False;self.disconnected=True
-    async def read_gatt_char(self,uuid):return self.caps if uuid==CAPS else self.status
+    async def disconnect(self):
+        self.disconnected=True;await asyncio.sleep(self.disconnect_delay);self.is_connected=False
+    async def read_gatt_char(self,uuid):
+        await asyncio.sleep(self.read_delay);return self.caps if uuid==CAPS else self.status
     async def start_notify(self,uuid,callback):self.callbacks[uuid]=callback
     async def write_gatt_char(self,uuid,data,response):
         if self.hang_writes:await asyncio.sleep(10)
         if self.fail_writes:raise BleakError('injected write failure')
+        if response:await asyncio.sleep(self.write_delay)
         self.writes.append((uuid,bytes(data),response))
         if uuid==CONTROL:
             if data==b'\x01':
@@ -203,6 +207,19 @@ class BleTests(unittest.IsolatedAsyncioTestCase):
             self.assertLess(time.monotonic()-started,.5)
             self.assertTrue(self.peer.disconnected)
             self.assertIn('STOP unconfirmed',self.output[-1])
+
+    async def test_measured_rover_latencies_confirm_stop_within_budget(self):
+        # 2026-10-22 rover timing: STOP write 75-124 ms, Status read 89-93 ms, BlueZ disconnect 2.1-2.6 s.
+        self.peer=Peer();self.client.peer=self.peer;await self.peer.connect()
+        from apps.teleop.policy import Policy
+        from apps.teleop.protocol import capabilities
+        self.client.policy=Policy(capabilities(CAPS_VALUE))
+        self.peer.write_delay=.12;self.peer.read_delay=.095;self.peer.disconnect_delay=2.3
+        started=time.monotonic();self.assertTrue(await self.client.cleanup())
+        self.assertLess(time.monotonic()-started,.5)
+        self.assertTrue(self.peer.disconnected)
+        self.assertIn('STOP acknowledged',self.output[-1])
+        self.assertIn('BLE disconnect requested (unconfirmed)',self.output[-1])
 
     async def test_malformed_or_unsolicited_status_never_arms(self):
         await self.start()
