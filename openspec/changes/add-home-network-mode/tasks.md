@@ -4,7 +4,7 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 
 ## 1. Acceptance
 
-- [ ] 1.1 Todor accepts this proposal and [ADR-0016](../../../docs/adr/0016-home-network-mode-with-ble-override.md) for implementation (ADR status → accepted). Record the date and wording here; strict `openspec validate` and `spec:reader:check` pass.
+- [x] 1.1 Todor accepts this proposal and [ADR-0016](../../../docs/adr/0016-home-network-mode-with-ble-override.md) for implementation (ADR status → accepted). Record the date and wording here; strict `openspec validate` and `spec:reader:check` pass. **Done 2026-10-22:** Todor: “merge them and continue with next steps” on PR #107 after reviewing the aligned proposal; strict validation and reader check pass. No flash or motor run is authorized by this.
 
 ## 2. Core state machine (host)
 

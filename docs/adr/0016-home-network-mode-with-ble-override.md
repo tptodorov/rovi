@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Home network mode with a BLE override; the car AP becomes the fallback
