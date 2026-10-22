@@ -4,9 +4,17 @@ Researched 2026-10-21. The sensor-only diagnostic is published in the existing i
 
 ## Decision
 
-**Go for the selected input design and host implementation; no motion-driving acceptance yet.** The phone report confirms granted permissions, finite three-axis readings at roughly 60 Hz, and user-confirmed signs, held heading and return to zero on iOS 18.7/Bluefy 3.9.3. Expiry occurred only during deliberate interruptions. Quiet drift evidence covers 13.1 s, not a full minute; an integrated 60 s requested-zero/stream check is recorded below, while remaining phone interruption/recovery and motor acceptance are pending. The reusable web session path needs no apparent firmware change. Native app/Mac requirements are not indicated by this scoped result.
-
-The [Physical mode candidate](../../openspec/changes/add-iphone-physical-control/proposal.md) is now implemented with unit and browser coverage, including the built site. A first integrated motor-power-off run confirmed signs/stops but exposed scrolling/calibration UX issues; the host correction combines neutral capture with explicit ARM and retains zero while scrolling with the pad released. Todor confirmed the corrected scrolling/status and neutral/ARM UX retest on build `780f65eff594` works with motor power off; a subsequent 60 s requested-zero hold on reported iPhone 11 had 1,366 writes, max gap 180 ms and slowest write 19 ms. Todor then requested a different interface because holding the pad while tilting was difficult. Physical is being changed to neutral-gated tap START/PAUSE; that interaction, remaining phone interruption/recovery and motor acceptance are open. Its [phone/stand tasks](../../openspec/changes/add-iphone-physical-control/tasks.md#3-phone-and-physical-acceptance) remain open; sensor-only acceptance does not accept the integrated controller.
+**Feasible; integrated supervised scope accepted on 2026-10-22.** The sensor-only
+report confirmed three-axis readings, signs, held heading and neutral behavior on
+iOS 18.7/Bluefy 3.9.3. The same web client now implements combined tilt/strafe and
+heading-offset rotation with explicit neutral/ARM and tap START/PAUSE, without a
+firmware change. The redesigned UI and phone/stand functional checks were accepted
+by Todor. The [archived review](../../openspec/changes/archive/2026-10-22-add-iphone-physical-control/verification.md#scoped-acceptance-review)
+explicitly defers missing current-build cap/Stream numbers, native rotation/
+permission outcomes and phone fault injection; it does not claim wider-device,
+raw drift or numeric stopping qualification. [Tasks and scope](../../openspec/changes/archive/2026-10-22-add-iphone-physical-control/tasks.md#3-phone-and-physical-acceptance)
+are closed for that demonstrated scope. Sensor-only results remain separate from
+the integrated controller's evidence.
 
 ## Primary evidence and limits
 
@@ -19,7 +27,7 @@ The [Physical mode candidate](../../openspec/changes/add-iphone-physical-control
 | [Bluefy guide](https://bluefy.app/guide.html), [official site](https://bluefy.app/), [PNN Soft product article](https://pnnsoft.com/blog/detail/bluefy-the-web-ble-browser-for-ios) | Document web BLE use, with HTTPS required by the guide. References to sensor readings concern connected peripherals, not proof of phone accelerometer access. No explicit phone motion API support was found. |
 | [Developer's App Store description/release notes](https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055) | Advertise BLE and `BLENative.notifyAppState`, background peripheral access and screen-dimming controls. They do not establish motion API support or exact hook registration/lifecycle reliability. Do not enable background driving or suppress locking. |
 
-**Implementation recommendation:** feature-detect each DOM event API and its optional `requestPermission`; invoke permission directly from a dedicated Enable Sensors tap, before unrelated asynchronous work. Handle rejection, denial, missing APIs and null/non-finite fields visibly and fail closed. Permission granted is insufficient without valid events. Use a top-level HTTPS page; do not rely on iframe delegation or Safari permission settings carrying over. Enabling sensors and calibrating must never ARM or connect BLE.
+**Implementation recommendation:** feature-detect each DOM event API and its optional `requestPermission`; invoke permission directly from an explicit user gesture, before unrelated asynchronous work. The controller now uses Physical-mode selection; the isolated diagnostic retains Enable Sensors. Handle rejection, denial, missing APIs and null/non-finite fields visibly and fail closed. Permission granted is insufficient without valid events. Use a top-level HTTPS page; do not rely on iframe delegation or Safari permission settings carrying over. Sensor permission must never ARM or connect BLE; the integrated client captures neutral only within the explicit Set neutral & ARM action.
 
 ## Useful input: tilt, not inertial navigation
 

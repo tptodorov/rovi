@@ -1,0 +1,3 @@
+[2026-10-22T14:31:25Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-22T14:31:25Z INFO ] Connecting...
+[2026-10-22T14:31:25Z INFO ] Using flash stub

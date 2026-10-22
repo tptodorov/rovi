@@ -1,0 +1,389 @@
+[2026-10-22T14:33:18Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-22T14:33:18Z INFO ] Connecting...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x14d0
+load:0x403c8700,len:0xdcc
+load:0x403cb700,len:0x2f54
+entry 0x403c8900
+I (29) boot: ESP-IDF v6.1-beta1-497-g14f663f003e 2nd stage bootloader
+I (30) boot: Multicore bootloader
+I (30) boot: chip revision: v0.2
+I (30) boot: efuse block revision: v1.4
+I (34) boot.esp32s3: Boot SPI Speed : 40MHz
+I (38) boot.esp32s3: SPI Mode       : DIO
+I (42) boot.esp32s3: SPI Flash Size : 16MB
+I (45) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (52) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (72) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (78) boot: End of partition table
+I (82) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=00100h (   256) map
+I (89) esp_image: segment 1: paddr=00010128 vaddr=3fc97960 size=00010h (    16) load
+I (97) esp_image: segment 2: paddr=00010140 vaddr=3c000140 size=1b714h (112404) map
+I (132) esp_image: segment 3: paddr=0002b85c vaddr=3fc97970 size=047bch ( 18364) load
+I (138) esp_image: segment 4: paddr=00030020 vaddr=42020020 size=a68f4h (682228) map
+I (309) esp_image: segment 5: paddr=000d691c vaddr=3fc9c12c size=00414h (  1044) load
+I (310) esp_image: segment 6: paddr=000d6d38 vaddr=40378000 size=0f95ch ( 63836) load
+I (339) boot: Loaded app from partition at offset 0x10000
+I (339) boot: Disabling RNG early entropy source...
+E (340) boot: Image contains multiple DROM segments. Only the last one will be mapped.
+M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 WPA2 channel=1 lease_ms=1000
+ev=boot ver=0.1.0 reset=ChipPowerOn at_ms=1007
+ev=claimed source=Ble at_ms=198525
+ev=ble link=up id=1 mtu=23 at_ms=198525
+ev=state state=Claimed wheels_pm=0,0,0,0 at_ms=198528
+ev=wifi ap=off at_ms=198544
+ev=mtu id=1 mtu=247 at_ms=199026
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=208286
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=219951
+ev=state state=Armed wheels_pm=5,5,5,5 at_ms=220013
+ev=state state=Armed wheels_pm=10,10,10,10 at_ms=220044
+ev=state state=Armed wheels_pm=19,19,19,19 at_ms=220105
+ev=state state=Armed wheels_pm=27,27,27,27 at_ms=220166
+ev=state state=Armed wheels_pm=35,35,35,35 at_ms=220219
+ev=state state=Armed wheels_pm=45,45,45,45 at_ms=220280
+ev=state state=Armed wheels_pm=52,52,52,52 at_ms=220342
+ev=state state=Armed wheels_pm=54,54,54,54 at_ms=220403
+ev=state state=Armed wheels_pm=52,52,52,52 at_ms=220434
+ev=state state=Armed wheels_pm=51,51,51,51 at_ms=220495
+ev=state state=Armed wheels_pm=50,50,50,50 at_ms=220557
+ev=state state=Armed wheels_pm=49,49,49,49 at_ms=220609
+ev=state state=Armed wheels_pm=47,47,47,47 at_ms=220671
+ev=state state=Armed wheels_pm=46,46,46,46 at_ms=220763
+ev=state state=Armed wheels_pm=46,46,46,46 at_ms=220824
+ev=state state=Armed wheels_pm=45,45,45,45 at_ms=220885
+ev=state state=Armed wheels_pm=44,44,44,44 at_ms=220916
+ev=state state=Armed wheels_pm=43,43,43,43 at_ms=220969
+ev=state state=Armed wheels_pm=42,42,42,42 at_ms=221030
+ev=state state=Armed wheels_pm=41,41,41,41 at_ms=221092
+ev=state state=Armed wheels_pm=37,37,37,37 at_ms=221153
+ev=state state=Armed wheels_pm=24,24,24,24 at_ms=221214
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=221276
+ev=state state=Armed wheels_pm=-3,-3,-3,-3 at_ms=239872
+ev=state state=Armed wheels_pm=-2,-2,-2,-2 at_ms=239934
+ev=state state=Armed wheels_pm=-3,-3,-3,-3 at_ms=239995
+ev=state state=Armed wheels_pm=-5,-5,-5,-5 at_ms=240057
+ev=state state=Armed wheels_pm=-8,-8,-8,-8 at_ms=240109
+ev=state state=Armed wheels_pm=-13,-13,-13,-13 at_ms=240141
+ev=state state=Armed wheels_pm=-17,-17,-17,-17 at_ms=240202
+ev=state state=Armed wheels_pm=-28,-28,-28,-28 at_ms=240294
+ev=state state=Armed wheels_pm=-47,-47,-47,-47 at_ms=240355
+ev=state state=Armed wheels_pm=-70,-70,-70,-70 at_ms=240417
+ev=state state=Armed wheels_pm=-83,-83,-83,-83 at_ms=240470
+ev=state state=Armed wheels_pm=-82,-82,-82,-82 at_ms=241163
+ev=state state=Armed wheels_pm=-77,-77,-77,-77 at_ms=241224
+ev=state state=Armed wheels_pm=-63,-63,-63,-63 at_ms=241285
+ev=state state=Armed wheels_pm=-53,-53,-53,-53 at_ms=241347
+ev=state state=Armed wheels_pm=-42,-42,-42,-42 at_ms=241400
+ev=state state=Armed wheels_pm=-15,-15,-15,-15 at_ms=241461
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=241492
+ev=state state=Armed wheels_pm=-3,3,-3,3 at_ms=252981
+ev=state state=Armed wheels_pm=-12,12,-12,12 at_ms=253042
+ev=state state=Armed wheels_pm=-28,28,-28,28 at_ms=253103
+ev=state state=Armed wheels_pm=-43,43,-43,43 at_ms=253165
+ev=state state=Armed wheels_pm=-58,58,-58,58 at_ms=253226
+ev=state state=Armed wheels_pm=-80,80,-80,80 at_ms=253257
+ev=state state=Armed wheels_pm=-83,83,-83,83 at_ms=253310
+ev=state state=Armed wheels_pm=-83,83,-83,83 at_ms=253768
+ev=state state=Armed wheels_pm=-82,82,-82,82 at_ms=253820
+ev=state state=Armed wheels_pm=-80,80,-80,80 at_ms=253881
+ev=state state=Armed wheels_pm=-79,79,-79,79 at_ms=253942
+ev=state state=Armed wheels_pm=-79,79,-79,79 at_ms=254004
+ev=state state=Armed wheels_pm=-76,76,-76,76 at_ms=254065
+ev=state state=Armed wheels_pm=-75,75,-75,75 at_ms=254127
+ev=state state=Armed wheels_pm=-74,74,-74,74 at_ms=254180
+ev=state state=Armed wheels_pm=-74,74,-74,74 at_ms=254241
+ev=state state=Armed wheels_pm=-74,74,-74,74 at_ms=254302
+ev=state state=Armed wheels_pm=-73,73,-73,73 at_ms=254364
+ev=state state=Armed wheels_pm=-72,72,-72,72 at_ms=254425
+ev=state state=Armed wheels_pm=-71,71,-71,71 at_ms=254487
+ev=state state=Armed wheels_pm=-70,70,-70,70 at_ms=254570
+ev=state state=Armed wheels_pm=-69,69,-69,69 at_ms=254632
+ev=state state=Armed wheels_pm=-68,68,-68,68 at_ms=254693
+ev=state state=Armed wheels_pm=-66,66,-66,66 at_ms=254754
+ev=state state=Armed wheels_pm=-63,63,-63,63 at_ms=254816
+ev=state state=Armed wheels_pm=-56,56,-56,56 at_ms=254877
+ev=state state=Armed wheels_pm=-47,47,-47,47 at_ms=254930
+ev=state state=Armed wheels_pm=-24,24,-24,24 at_ms=254961
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=255053
+ev=state state=Armed wheels_pm=19,-19,19,-19 at_ms=263394
+ev=state state=Armed wheels_pm=45,-45,45,-45 at_ms=263455
+ev=state state=Armed wheels_pm=61,-61,61,-61 at_ms=263517
+ev=state state=Armed wheels_pm=71,-71,71,-71 at_ms=263570
+ev=state state=Armed wheels_pm=68,-68,68,-68 at_ms=263632
+ev=state state=Armed wheels_pm=62,-62,62,-62 at_ms=263693
+ev=state state=Armed wheels_pm=59,-59,59,-59 at_ms=263754
+ev=state state=Armed wheels_pm=54,-54,54,-54 at_ms=263816
+ev=state state=Armed wheels_pm=53,-53,53,-53 at_ms=263877
+ev=state state=Armed wheels_pm=53,-53,53,-53 at_ms=263930
+ev=state state=Armed wheels_pm=51,-51,51,-51 at_ms=263991
+ev=state state=Armed wheels_pm=49,-49,49,-49 at_ms=264053
+ev=state state=Armed wheels_pm=49,-49,49,-49 at_ms=264114
+ev=state state=Armed wheels_pm=48,-48,48,-48 at_ms=264206
+ev=state state=Armed wheels_pm=46,-46,46,-46 at_ms=264267
+ev=state state=Armed wheels_pm=45,-45,45,-45 at_ms=264320
+ev=state state=Armed wheels_pm=45,-45,45,-45 at_ms=264381
+ev=state state=Armed wheels_pm=43,-43,43,-43 at_ms=264442
+ev=state state=Armed wheels_pm=43,-43,43,-43 at_ms=264504
+ev=state state=Armed wheels_pm=42,-42,42,-42 at_ms=264565
+ev=state state=Armed wheels_pm=40,-40,40,-40 at_ms=264626
+ev=state state=Armed wheels_pm=38,-38,38,-38 at_ms=264688
+ev=state state=Armed wheels_pm=29,-29,29,-29 at_ms=264740
+ev=state state=Armed wheels_pm=17,-17,17,-17 at_ms=264801
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=264862
+ev=state state=Armed wheels_pm=2,-2,-2,2 at_ms=274288
+ev=state state=Armed wheels_pm=6,-6,-6,6 at_ms=274340
+ev=state state=Armed wheels_pm=11,-11,-11,11 at_ms=274402
+ev=state state=Armed wheels_pm=17,-17,-17,17 at_ms=274463
+ev=state state=Armed wheels_pm=21,-21,-21,21 at_ms=274525
+ev=state state=Armed wheels_pm=27,-27,-27,27 at_ms=274617
+ev=state state=Armed wheels_pm=32,-32,-32,32 at_ms=274648
+ev=state state=Armed wheels_pm=22,-22,-22,22 at_ms=276838
+ev=state state=Armed wheels_pm=12,-12,-12,12 at_ms=276860
+ev=state state=Armed wheels_pm=4,-4,-4,4 at_ms=276922
+ev=state state=Armed wheels_pm=1,-1,-1,1 at_ms=276983
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=277045
+ev=state state=Armed wheels_pm=-4,4,4,-4 at_ms=281516
+ev=state state=Armed wheels_pm=-12,12,12,-12 at_ms=281577
+ev=state state=Armed wheels_pm=-22,22,22,-22 at_ms=281630
+ev=state state=Armed wheels_pm=-30,30,30,-30 at_ms=281692
+ev=state state=Armed wheels_pm=-32,32,32,-32 at_ms=281753
+ev=state state=Armed wheels_pm=-26,26,26,-26 at_ms=283374
+ev=state state=Armed wheels_pm=-18,18,18,-18 at_ms=283436
+ev=state state=Armed wheels_pm=-6,6,6,-6 at_ms=283467
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=283528
+ev=state state=Armed wheels_pm=16,-12,16,-12 at_ms=293363
+ev=state state=Armed wheels_pm=29,-11,29,-11 at_ms=293424
+ev=state state=Armed wheels_pm=39,0,39,0 at_ms=293486
+ev=state state=Armed wheels_pm=52,1,52,1 at_ms=293547
+ev=state state=Armed wheels_pm=68,-5,68,-5 at_ms=293578
+ev=state state=Armed wheels_pm=89,-21,89,-21 at_ms=293630
+ev=state state=Armed wheels_pm=98,-25,98,-25 at_ms=293691
+ev=state state=Armed wheels_pm=102,-27,102,-27 at_ms=293753
+ev=state state=Armed wheels_pm=105,-27,105,-27 at_ms=293814
+ev=state state=Armed wheels_pm=106,-22,106,-22 at_ms=293875
+ev=state state=Armed wheels_pm=107,-21,107,-21 at_ms=293937
+ev=state state=Armed wheels_pm=119,-25,120,-26 at_ms=294020
+ev=state state=Armed wheels_pm=129,-32,131,-33 at_ms=294081
+ev=state state=Armed wheels_pm=133,-33,134,-34 at_ms=294143
+ev=state state=Armed wheels_pm=133,-32,135,-33 at_ms=294204
+ev=state state=Armed wheels_pm=133,-31,135,-33 at_ms=294265
+ev=state state=Armed wheels_pm=133,-31,135,-33 at_ms=294327
+ev=state state=Armed wheels_pm=133,-32,135,-34 at_ms=294388
+ev=state state=Armed wheels_pm=133,-31,135,-34 at_ms=294440
+ev=state state=Armed wheels_pm=133,-32,135,-34 at_ms=294502
+ev=state state=Armed wheels_pm=132,-32,135,-34 at_ms=294563
+ev=state state=Armed wheels_pm=132,-32,134,-35 at_ms=294625
+ev=state state=Armed wheels_pm=132,-32,134,-34 at_ms=294686
+ev=state state=Armed wheels_pm=133,-32,135,-34 at_ms=294748
+ev=state state=Armed wheels_pm=133,-32,134,-34 at_ms=294800
+ev=state state=Armed wheels_pm=133,-32,134,-34 at_ms=294862
+ev=state state=Armed wheels_pm=134,-32,135,-33 at_ms=294893
+ev=state state=Armed wheels_pm=135,-31,136,-32 at_ms=294954
+ev=state state=Armed wheels_pm=135,-31,136,-32 at_ms=295015
+ev=state state=Armed wheels_pm=136,-30,136,-31 at_ms=295076
+ev=state state=Armed wheels_pm=137,-29,137,-30 at_ms=295138
+ev=state state=Armed wheels_pm=137,-28,138,-29 at_ms=295190
+ev=state state=Armed wheels_pm=138,-28,139,-29 at_ms=295221
+ev=state state=Armed wheels_pm=139,-26,140,-28 at_ms=295283
+ev=state state=Armed wheels_pm=139,-26,141,-28 at_ms=295344
+ev=state state=Armed wheels_pm=138,-27,140,-28 at_ms=295405
+ev=state state=Armed wheels_pm=138,-27,140,-29 at_ms=295467
+ev=state state=Armed wheels_pm=137,-28,139,-30 at_ms=295528
+ev=state state=Armed wheels_pm=136,-29,138,-31 at_ms=295580
+ev=state state=Armed wheels_pm=135,-29,137,-32 at_ms=295642
+ev=state state=Armed wheels_pm=135,-30,137,-32 at_ms=295673
+ev=state state=Armed wheels_pm=134,-30,136,-32 at_ms=295734
+ev=state state=Armed wheels_pm=134,-31,136,-32 at_ms=295795
+ev=state state=Armed wheels_pm=134,-31,136,-32 at_ms=295857
+ev=state state=Armed wheels_pm=134,-31,135,-32 at_ms=295918
+ev=state state=Armed wheels_pm=134,-32,135,-33 at_ms=295970
+ev=state state=Armed wheels_pm=135,-31,135,-32 at_ms=296032
+ev=state state=Armed wheels_pm=134,-32,135,-32 at_ms=296093
+ev=state state=Armed wheels_pm=135,-32,135,-32 at_ms=296155
+ev=state state=Armed wheels_pm=134,-32,134,-32 at_ms=296216
+ev=state state=Armed wheels_pm=132,-34,132,-34 at_ms=296277
+ev=state state=Armed wheels_pm=131,-36,131,-36 at_ms=296330
+ev=state state=Armed wheels_pm=130,-36,130,-36 at_ms=296391
+ev=state state=Armed wheels_pm=128,-39,128,-39 at_ms=296453
+ev=state state=Armed wheels_pm=127,-39,127,-39 at_ms=296514
+ev=state state=Armed wheels_pm=126,-41,126,-41 at_ms=296636
+ev=state state=Armed wheels_pm=125,-41,125,-41 at_ms=296667
+ev=state state=Armed wheels_pm=126,-40,126,-40 at_ms=296720
+ev=state state=Armed wheels_pm=129,-38,129,-38 at_ms=296781
+ev=state state=Armed wheels_pm=131,-34,131,-34 at_ms=296843
+ev=state state=Armed wheels_pm=118,-13,118,-13 at_ms=296904
+ev=state state=Armed wheels_pm=108,7,108,7 at_ms=296966
+ev=state state=Armed wheels_pm=102,20,102,20 at_ms=296997
+ev=state state=Armed wheels_pm=99,26,99,26 at_ms=297050
+ev=state state=Armed wheels_pm=100,25,100,25 at_ms=297111
+ev=state state=Armed wheels_pm=101,23,102,22 at_ms=297173
+ev=state state=Armed wheels_pm=105,17,105,17 at_ms=297234
+ev=state state=Armed wheels_pm=110,6,110,6 at_ms=297295
+ev=state state=Armed wheels_pm=117,-6,117,-6 at_ms=297357
+ev=state state=Armed wheels_pm=126,-23,126,-23 at_ms=297388
+ev=state state=Armed wheels_pm=133,-34,133,-34 at_ms=297440
+ev=state state=Armed wheels_pm=129,-38,129,-38 at_ms=297502
+ev=state state=Armed wheels_pm=127,-39,127,-39 at_ms=297563
+ev=state state=Armed wheels_pm=128,-39,128,-39 at_ms=297625
+ev=state state=Armed wheels_pm=128,-39,128,-39 at_ms=297686
+ev=state state=Armed wheels_pm=128,-39,128,-39 at_ms=297747
+ev=state state=Armed wheels_pm=128,-38,128,-38 at_ms=297770
+ev=state state=Armed wheels_pm=128,-39,128,-39 at_ms=297831
+ev=state state=Armed wheels_pm=128,-38,128,-38 at_ms=297893
+ev=state state=Armed wheels_pm=128,-38,128,-38 at_ms=297954
+ev=state state=Armed wheels_pm=128,-38,128,-38 at_ms=298016
+ev=state state=Armed wheels_pm=128,-38,128,-38 at_ms=298077
+ev=state state=Armed wheels_pm=128,-38,128,-38 at_ms=298130
+ev=state state=Armed wheels_pm=128,-39,128,-39 at_ms=298161
+ev=state state=Armed wheels_pm=128,-39,128,-39 at_ms=298253
+ev=state state=Armed wheels_pm=128,-39,128,-39 at_ms=298283
+ev=state state=Armed wheels_pm=128,-39,128,-39 at_ms=298345
+ev=state state=Armed wheels_pm=122,-35,122,-35 at_ms=298406
+ev=state state=Armed wheels_pm=96,-23,96,-23 at_ms=298467
+ev=state state=Armed wheels_pm=60,-3,60,-3 at_ms=298521
+ev=state state=Armed wheels_pm=15,15,15,15 at_ms=298582
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=298644
+ev=state state=Armed wheels_pm=14,14,14,14 at_ms=307196
+ev=state state=Armed wheels_pm=20,36,20,36 at_ms=307257
+ev=state state=Armed wheels_pm=2,80,2,80 at_ms=307310
+ev=state state=Armed wheels_pm=-30,136,-30,136 at_ms=307372
+ev=state state=Armed wheels_pm=-16,150,-16,150 at_ms=307434
+ev=state state=Armed wheels_pm=-5,161,-5,161 at_ms=307495
+ev=state state=Armed wheels_pm=-2,165,-2,165 at_ms=307557
+ev=state state=Armed wheels_pm=0,167,0,167 at_ms=307618
+ev=state state=Armed wheels_pm=0,167,0,167 at_ms=307822
+ev=state state=Armed wheels_pm=0,166,0,167 at_ms=307944
+ev=state state=Armed wheels_pm=1,166,-1,167 at_ms=308006
+ev=state state=Armed wheels_pm=1,166,-1,168 at_ms=308068
+ev=state state=Armed wheels_pm=2,165,-2,169 at_ms=308150
+ev=state state=Armed wheels_pm=3,164,-3,170 at_ms=308181
+ev=state state=Armed wheels_pm=5,162,-5,171 at_ms=308243
+ev=state state=Armed wheels_pm=6,161,-6,173 at_ms=308274
+ev=state state=Armed wheels_pm=8,159,-8,174 at_ms=308335
+ev=state state=Armed wheels_pm=9,157,-9,176 at_ms=308427
+ev=state state=Armed wheels_pm=11,156,-11,177 at_ms=308480
+ev=state state=Armed wheels_pm=11,155,-11,178 at_ms=308542
+ev=state state=Armed wheels_pm=12,155,-12,178 at_ms=308603
+ev=state state=Armed wheels_pm=11,156,-11,178 at_ms=308664
+ev=state state=Armed wheels_pm=11,156,-11,178 at_ms=308695
+ev=state state=Armed wheels_pm=10,156,-10,177 at_ms=308757
+ev=state state=Armed wheels_pm=12,154,-6,173 at_ms=308818
+ev=state state=Armed wheels_pm=41,126,26,141 at_ms=308871
+ev=state state=Armed wheels_pm=88,79,79,88 at_ms=308932
+ev=state state=Armed wheels_pm=86,81,81,86 at_ms=308994
+ev=state state=Armed wheels_pm=86,80,80,86 at_ms=309055
+ev=state state=Armed wheels_pm=86,81,81,86 at_ms=309116
+ev=state state=Armed wheels_pm=85,81,81,85 at_ms=309147
+ev=state state=Armed wheels_pm=85,82,82,85 at_ms=309200
+ev=state state=Armed wheels_pm=84,82,82,84 at_ms=309262
+ev=state state=Armed wheels_pm=84,83,83,84 at_ms=309323
+ev=state state=Armed wheels_pm=84,83,83,84 at_ms=309385
+ev=state state=Armed wheels_pm=84,83,83,84 at_ms=309446
+ev=state state=Armed wheels_pm=84,82,82,84 at_ms=309538
+ev=state state=Armed wheels_pm=82,85,78,88 at_ms=309560
+ev=state state=Armed wheels_pm=61,106,55,112 at_ms=309622
+ev=state state=Armed wheels_pm=46,120,38,128 at_ms=309713
+ev=state state=Armed wheels_pm=28,139,17,149 at_ms=309744
+ev=state state=Armed wheels_pm=16,151,3,164 at_ms=309805
+ev=state state=Armed wheels_pm=8,159,-8,174 at_ms=309867
+ev=state state=Armed wheels_pm=9,157,-9,176 at_ms=309950
+ev=state state=Armed wheels_pm=10,156,-10,177 at_ms=310011
+ev=state state=Armed wheels_pm=10,156,-10,177 at_ms=310073
+ev=state state=Armed wheels_pm=11,156,-11,177 at_ms=310134
+ev=state state=Armed wheels_pm=11,156,-11,177 at_ms=310196
+ev=state state=Armed wheels_pm=10,156,-10,177 at_ms=310257
+ev=state state=Armed wheels_pm=10,156,-10,177 at_ms=310310
+ev=state state=Armed wheels_pm=10,157,-10,177 at_ms=310341
+ev=state state=Armed wheels_pm=10,157,-10,176 at_ms=310433
+ev=state state=Armed wheels_pm=9,158,-9,175 at_ms=310494
+ev=state state=Armed wheels_pm=13,154,-2,168 at_ms=310556
+ev=state state=Armed wheels_pm=40,127,30,136 at_ms=310617
+ev=state state=Armed wheels_pm=66,101,60,106 at_ms=310670
+ev=state state=Armed wheels_pm=84,83,83,84 at_ms=310732
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=310762
+ev=state state=Armed wheels_pm=75,75,75,75 at_ms=311242
+ev=state state=Armed wheels_pm=56,56,56,56 at_ms=311273
+ev=state state=Armed wheels_pm=38,38,38,38 at_ms=311334
+ev=state state=Armed wheels_pm=25,25,25,25 at_ms=311396
+ev=state state=Armed wheels_pm=24,24,24,24 at_ms=311457
+ev=state state=Armed wheels_pm=24,25,24,25 at_ms=311519
+ev=state state=Armed wheels_pm=-14,53,-14,53 at_ms=311570
+ev=state state=Armed wheels_pm=-47,75,-47,75 at_ms=311601
+ev=state state=Armed wheels_pm=-74,92,-74,92 at_ms=311663
+ev=state state=Armed wheels_pm=-78,89,-78,89 at_ms=311724
+ev=state state=Armed wheels_pm=-79,88,-79,88 at_ms=311785
+ev=state state=Armed wheels_pm=-81,86,-81,86 at_ms=311847
+ev=state state=Armed wheels_pm=-81,86,-81,86 at_ms=311908
+ev=state state=Armed wheels_pm=-81,86,-81,86 at_ms=311960
+ev=state state=Armed wheels_pm=-80,86,-80,86 at_ms=312021
+ev=state state=Armed wheels_pm=-81,86,-81,86 at_ms=312083
+ev=state state=Armed wheels_pm=-80,86,-80,86 at_ms=312144
+ev=state state=Armed wheels_pm=-80,87,-80,87 at_ms=312206
+ev=state state=Armed wheels_pm=-80,87,-80,87 at_ms=312267
+ev=state state=Armed wheels_pm=-80,87,-80,87 at_ms=312328
+ev=state state=Armed wheels_pm=-79,88,-79,88 at_ms=312380
+ev=state state=Armed wheels_pm=-78,88,-78,88 at_ms=312442
+ev=state state=Armed wheels_pm=-78,89,-78,89 at_ms=312504
+ev=state state=Armed wheels_pm=-75,91,-75,91 at_ms=312565
+ev=state state=Armed wheels_pm=-68,98,-68,98 at_ms=312626
+ev=state state=Armed wheels_pm=-56,111,-56,111 at_ms=312688
+ev=state state=Armed wheels_pm=-37,129,-37,129 at_ms=312740
+ev=state state=Armed wheels_pm=2,152,0,154 at_ms=312802
+ev=state state=Armed wheels_pm=21,145,18,149 at_ms=312863
+ev=state state=Armed wheels_pm=33,133,29,138 at_ms=312894
+ev=state state=Armed wheels_pm=40,126,36,130 at_ms=312955
+ev=state state=Armed wheels_pm=40,126,36,131 at_ms=313017
+ev=state state=Armed wheels_pm=38,129,32,135 at_ms=313078
+ev=state state=Armed wheels_pm=34,133,26,141 at_ms=313130
+ev=state state=Armed wheels_pm=31,136,22,144 at_ms=313192
+ev=state state=Armed wheels_pm=29,138,19,147 at_ms=313253
+ev=state state=Armed wheels_pm=29,138,19,148 at_ms=313284
+ev=state state=Armed wheels_pm=28,139,18,149 at_ms=313345
+ev=state state=Armed wheels_pm=26,140,16,151 at_ms=313406
+ev=state state=Armed wheels_pm=26,141,15,151 at_ms=313468
+ev=state state=Armed wheels_pm=25,142,14,152 at_ms=313520
+ev=state state=Armed wheels_pm=23,144,12,155 at_ms=313582
+ev=state state=Armed wheels_pm=23,144,12,155 at_ms=313643
+ev=state state=Armed wheels_pm=22,144,11,156 at_ms=313704
+ev=state state=Armed wheels_pm=22,145,10,157 at_ms=313735
+ev=state state=Armed wheels_pm=21,145,9,157 at_ms=313796
+ev=state state=Armed wheels_pm=20,147,7,160 at_ms=313858
+ev=state state=Armed wheels_pm=15,151,2,165 at_ms=313910
+ev=state state=Armed wheels_pm=10,156,-4,170 at_ms=313972
+ev=state state=Armed wheels_pm=8,159,-8,174 at_ms=314034
+ev=state state=Armed wheels_pm=8,159,-8,175 at_ms=314095
+ev=state state=Armed wheels_pm=8,158,-8,175 at_ms=314126
+ev=state state=Armed wheels_pm=9,158,-9,175 at_ms=314188
+ev=state state=Armed wheels_pm=9,158,-9,176 at_ms=314240
+ev=state state=Armed wheels_pm=9,158,-9,176 at_ms=314302
+ev=state state=Armed wheels_pm=9,158,-9,176 at_ms=314363
+ev=state state=Armed wheels_pm=9,158,-9,176 at_ms=314424
+ev=state state=Armed wheels_pm=9,158,-9,175 at_ms=314486
+ev=state state=Armed wheels_pm=8,158,-8,175 at_ms=314547
+ev=state state=Armed wheels_pm=8,159,-5,172 at_ms=314630
+ev=state state=Armed wheels_pm=15,152,4,162 at_ms=314661
+ev=state state=Armed wheels_pm=24,142,17,150 at_ms=314722
+ev=state state=Armed wheels_pm=32,134,28,139 at_ms=314784
+ev=state state=Armed wheels_pm=44,123,43,124 at_ms=314845
+ev=state state=Armed wheels_pm=68,99,68,99 at_ms=314906
+ev=state state=Armed wheels_pm=83,83,83,83 at_ms=314968
+ev=state state=Armed wheels_pm=82,82,82,82 at_ms=314990
+ev=state state=Armed wheels_pm=49,49,49,49 at_ms=315082
+ev=state state=Armed wheels_pm=32,32,32,32 at_ms=315144
+ev=state state=Armed wheels_pm=21,21,21,21 at_ms=315205
+ev=state state=Armed wheels_pm=2,2,2,2 at_ms=315266
+ev=state state=Armed wheels_pm=0,0,0,0 at_ms=315328
+ev=stop reason=Stop at_ms=327139
+ev=state state=Stopped reason=Stop wheels_pm=0,0,0,0 at_ms=327144
+ev=released at_ms=334669
+ev=ble link=down id=1 at_ms=334669
+ev=wifi ap=on at_ms=334681
+ev=state state=Open wheels_pm=0,0,0,0 at_ms=334684
+[rtk] timeout: process terminated by signal 2

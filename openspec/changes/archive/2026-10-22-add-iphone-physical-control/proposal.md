@@ -41,7 +41,7 @@ Todor explicitly requested the same-client mode switch and all three mappings,
 then chose angle-from-neutral rotation on 2026-10-21. After the sensor-only run,
 he confirmed the three previews, held twist and neutral/release behavior, with
 expiry only during deliberate interruptions. This authorizes the selected host
-implementation. [Phone evidence](../../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
+implementation. [Phone evidence](../../../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
 records the partial export, 13.1 s quiet sample and timing limits. Motor tests
 still require a separately announced batch and fresh go; acceptance/archive are
 not implied by this implementation authorization.
@@ -71,3 +71,15 @@ modes using design skills. This authorizes a compact responsive redesign, native
 segmented mode selection, clear state/feedback, a persistent action/STOP dock,
 collapsible diagnostics and sensor setup on explicit Physical selection. Preserve
 control safety and existing hosting; validate new usability on phone before acceptance.
+
+
+## Product acceptance — 2026-10-22
+
+After accepting the redesigned UI and confirming phone/stand behavior, Todor
+explicitly selected “Accept tested scope; defer remaining checks”. Physical mode
+is accepted for supervised use on the reported iPhone setup, calibrated in the
+tested portrait/screen-up posture. The [acceptance review](verification.md#scoped-acceptance-review)
+records completed functional checks and deferred phone cap/Stream numbers, native
+rotation/permission outcomes and phone-only fault injection. Historical timing,
+capture discrepancies, duration overruns and unmeasured stopping remain explicit;
+this does not claim wider device, floor-use or measured stopping qualification.

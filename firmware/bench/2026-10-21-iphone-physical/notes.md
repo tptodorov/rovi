@@ -118,3 +118,58 @@ Todor subsequently stated “i accept the UI” on 2026-10-22, explicitly accept
 the redesigned Buttons and Physical interface in build `2b5104400362`. This closes
 the UI design review; phone interruption/recovery and motor-on acceptance remain
 separate, open checks.
+
+
+## Interruption and recovery phone check — 2026-10-22
+
+The five-step procedure for build `2b5104400362` was delivered through Telegram.
+Todor replied “works as expected” to the combined result question, confirming
+the following with motor power off and the ESP32 powered over USB:
+
+| Check | Operator-reported result |
+| --- | --- |
+| PAUSE, reading posture and neutral-only explicit restart | Zero while paused, arm retained, no delayed START replay |
+| Lock for 5 s during running input, then unlock | Disarmed/zero on return, no automatic reconnect or restart |
+| Switch apps for 5 s during running input, then return | Disarmed/zero on return, manual recovery required |
+| Slowly leave the running operating posture, then return flat | Zero and fault cleanup; no automatic restart |
+| Recover manually, run at neutral for 60 s, then PAUSE and STOP | Requested motion stayed zero; no issue reported |
+
+This is a combined functional confirmation, without an event trace or exact
+posture-fault wording. No new Stream write count, maximum gap, slowest write or
+phone/version details were supplied. The earlier `780f65eff594` counters are not
+reused as timing evidence for this build. Independent sensor/UI stalls, invalid
+samples/reference changes, screen-orientation changes and permission denial/retry
+were not separately exercised by this procedure; their phone checks remain open.
+No motor-on result or measured stopping bound is inferred.
+
+
+## Remaining phone-check response — 2026-10-22
+
+For build `2b5104400362`, the next motor-power-off procedure requested displayed
+per-axis caps (including combined input), current Stream counters, phone/browser
+versions, screen-rotation recovery, and permission denial/retry if prompted.
+Todor replied “completed. when the page scrolls it stops the tilt control”.
+
+Record the procedure as reported completed and scrolling as reported to stop
+running tilt input. Exact caps, Stream counters, updated versions, rotation-fault
+text and whether a fresh permission prompt appeared were not supplied; no numeric
+or case-specific pass is inferred from “completed”.
+
+The product contract and `ui.js` intentionally pause Physical control on scroll,
+zeroing input and preserving arm/neutral. The existing browser regression checks
+zero, retained Armed state and explicit restart at neutral. Todor clarified:
+“Pauses; stays Armed and connected”. The current-build scroll-to-pause behavior
+therefore passes by operator confirmation; it is not a disarm/disconnect fault.
+No runtime change, motor run or firmware operation was performed for this report.
+
+
+## Scoped acceptance — 2026-10-22
+
+Todor explicitly selected “Accept tested scope; defer remaining checks” after
+reviewing the consolidated phone/stand evidence. The controller is accepted for
+supervised use on the tested iPhone setup. Current-build cap/Stream numbers,
+native rotation/permission outcomes and phone-only fault injection are deferred,
+not passed. Exact version reconfirmation, wider-device/VoiceOver qualification,
+raw drift and numeric physical stopping bounds are not claimed. The
+[accepted review](../../../openspec/changes/archive/2026-10-22-add-iphone-physical-control/verification.md#scoped-acceptance-review)
+retains the full evidence boundary. No additional motor run was performed.
