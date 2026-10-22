@@ -10,7 +10,7 @@ Todor's constraint: extend the current protocols and implementation minimally so
 
 **Goals:** the boot/override state machine in the specs; one network stack per mode; a per-mode ROS endpoint; BLE preemption only in home mode; host tests for every transition before any board run.
 
-**Non-Goals:** AP+STA; changes to setpoint, Status, Echo, lease, claim or arming rules; ROS router discovery; WPA3; retry from fallback without reboot.
+**Non-Goals:** AP+STA; changes to setpoint, Status, Echo, lease or claim-window rules; BLE preemption in fallback; ROS router discovery; WPA3; retry from fallback without reboot.
 
 ## Decisions
 
@@ -22,21 +22,29 @@ A firmware task runs `attempt home → serve → (BLE override | link loss) → 
 
 Station mode uses `wifi::Interface::station()` with DHCPv4; fallback uses the existing AP interface and static address. A mode change stops the radio interface, tears down the stack-dependent tasks (UDP, ROS) and restarts them on the new stack. Alternative: AP+STA with channel sharing — rejected by Todor (AP only as fallback). Turning the station off for a BLE takeover must work without a reset (it happens with a BLE link up). If `esp-radio` 1.0.0-beta.1 cannot switch between station and AP at runtime, the home→fallback switch may use a software reset into a forced-fallback flag held in RTC memory, but only when no BLE connection exists; the extra `boot` event must be logged (builder's call).
 
-### D3. BLE preemption is an arbiter rule gated on mode
+### D3. Preemption is one arbiter rule: BLE > UDP > ROS
 
-`Device` gains a `mode` (Home/Fallback). In Home, `radio_allowed(Ble)` is always true and `on_ble_connect` with a Wi-Fi owner raises `StopReason::OwnerLost` for that owner, releases it and claims for BLE disarmed. No new stop reason or Status code, so clients and the wire format are unchanged. Alternative: a new `Preempted` reason — rejected, it changes the Status encoding on all three transports for little information gain; the log's mode/claim events already show what happened.
+`Device` gains a `mode` (Home/Fallback/Attempting). A claim from a higher-priority source preempts a lower one: UDP over ROS in both modes (same radio, no radio change); BLE over UDP/ROS in home mode only (in fallback BLE is not advertising while Wi-Fi owns, as today). The old owner gets `StopReason::OwnerLost` and is released; the new owner starts disarmed. No new stop reason or Status code. Alternative: a new `Preempted` reason, rejected because it changes Status on all three transports; the log shows it.
 
-### D4. Any BLE disconnect in home mode returns to step 1 (decided by Todor)
+### D4. Hand-back latch (decided by Todor: safe-by-default hand-back)
 
-This includes an accidental drop. Consequence: a ROS controller that is still streaming drives again within the join budget, with no operator step (ADR-0011 auto-arm). Recorded in the new ADR as an accepted risk; the mitigation is that the operator disarms and the controller should stop streaming when not wanted.
+Preempting a ROS owner sets a latch in `Device`. When the preempting owner is released with Home pending, the latch clears and ROS auto-arms as today; otherwise the latch stays and the next ROS owner is claimed disarmed until it publishes `/rovi/arm` true (the existing STOP-latch path). This reverses the earlier "any BLE drop hands back immediately" for accidental drops only.
 
 ### D5. Home settings are build variables (decided by Todor: option 3)
 
 `ROVI_HOME_SSID`, `ROVI_HOME_PASSWORD` and `ROVI_HOME_ROUTER` are read with `option_env!` like `ROVI_WIFI_PASSWORD`; a `const` check (or `build.rs`) fails the build when the set is partial or invalid. The fallback-mode router endpoint stays `ROVI_ZENOH_ROUTER` / `tcp/192.168.4.2:7447`. Changing networks means rebuilding and flashing over USB. Todor's home settings live in gopass entry `env/rovi/home` (`ROVI_HOME_SSID`, `ROVI_HOME_PASSWORD`, `ROVI_HOME_ROUTER`); load them per shell with `secenv env/rovi/home` before building. Alternatives rejected: BLE provisioning (passphrase over unencrypted BLE, ADR-0008), BLE with pairing (more work on car and clients), a USB serial settings command with flash storage (new storage and protocol for a rare operation).
 
-### D6. UDP stays available in home mode
+### D6. Mode command and network information on every transport
 
-The UDP task binds to whichever stack is active, so a UDP controller on the home network works with no extra code; BLE preempts it like ROS. Trust is the home network ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) superseded for station mode). This is the builder-side reading of "everyone on the private network may access the car".
+Same rule everywhere (owner, disarmed, pending until release), parsed in `rovi-core`:
+
+| | Mode command | Network information |
+| --- | --- | --- |
+| BLE | Control codes 3 (Home), 4 (Car network) | New `Network` characteristic `d47a0016-…`, read + notify |
+| UDP | Kind 10, payload `1`/`2`, reply `STATUS` | Kind 11, any peer, like Echo |
+| ROS | `/rovi/mode` `std_msgs/UInt8` from the owner node | `/rovi/network` `std_msgs/String` logfmt, ≥1 Hz and on change |
+
+Network information is `mode=… pending=… fallback=… ip=…` (BLE/UDP: a fixed 8-byte binary form: mode, pending, reason, reserved, IPv4). UDP is available in home mode with no extra code because the UDP task binds to whichever stack is active; trust is the home network ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) superseded for station mode).
 
 ### D7. Budgets
 
@@ -45,7 +53,8 @@ Scan ≤1500 ms (spec); join + DHCP + router ≤5000 ms after the network is fou
 ## Risks / Trade-offs
 
 * [BLE advertising while ROS streams over Wi-Fi adds coexistence jitter] → board check of ROS round trip and Echo loss with advertising on, compared with the 2026-10-20 ROS soak baseline.
-* [Accidental BLE drop hands control back to an auto-arming ROS stream] → accepted by Todor; documented in the ADR, README and the BLE client's quit message.
+* [A manual takeover ends by accident while ROS still streams] → hand-back latch (D4): ROS needs `/rovi/arm` true. Stock tools without an arm publisher cannot resume after an accidental drop; a deliberate Home hand-back keeps them working.
+* [Any home-network UDP client can take the car from a ROS controller] → accepted: the home network is trusted, and the preempted car stops disarmed.
 * [Anyone in BLE range can preempt the car in home mode] → unchanged ADR-0008 BLE risk; the home passphrase never goes over the air.
 * [Runtime stack switch unsupported by the beta radio driver] → D2's reset fallback.
 * [DHCP address of the router host changes] → the endpoint is built in by IP; give the router host a DHCP reservation or rebuild. Discovery is out of scope.
@@ -57,7 +66,11 @@ Without home settings the build behaves exactly as today, so existing images, cl
 
 ### D8. BLE release ends the connection
 
-As today (`fw.rs` disconnects a BLE central that lost ownership), a BLE owner released by its claim or reclaim window is disconnected; in home mode that disconnect starts a home-mode attempt. So Wi-Fi never comes back while a BLE central stays connected.
+As today (`fw.rs` disconnects a BLE central that lost ownership), a BLE owner released by its claim or reclaim window is disconnected; in home mode that disconnect starts a home-mode attempt unless Car network is pending. So Wi-Fi never comes back while a BLE central stays connected.
+
+### D9. Leaving fallback
+
+Fallback has no automatic retry (it would blink the AP off every scan). A Home command from any owner, applied at release, is the only way back without a reboot.
 
 ## Open Questions
 
