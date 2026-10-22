@@ -113,7 +113,9 @@ Current-build Stream counters and additional phone fault cases remain unrecorded
 the original rotation/drop-of-touch cause remains unverified. The subsequent
 [stand record](../../firmware/bench/2026-10-22-iphone-physical-stand/notes.md) contains
 reported direction/blend exercise and eight command periods returning to zero;
-final moving STOP/re-ARM/mode-switch checks and overall acceptance remain open.
+Todor separately confirmed STOP while tilted, re-ARM stillness until START and
+mode-switch stopping. Those final checks are operator evidence; the capture does
+not independently show them. Client cap evidence and overall acceptance remain open.
 
 ## Phone test delivery
 

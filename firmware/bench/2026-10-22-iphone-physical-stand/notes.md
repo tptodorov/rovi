@@ -1,6 +1,6 @@
 # 2026-10-22: iPhone Physical stand batch
 
-Status: direction/blend exercise reported performed; final STOP/re-ARM/mode-switch checks need clarification. Capture stopped.
+Status: direction/blend exercise and final STOP/re-ARM/mode-switch behavior operator-confirmed. Capture stopped; client cap evidence remains open.
 
 Todor authorized the ten-move, at-most-20-second batch with “go”. The
 [procedure](../../../openspec/changes/add-iphone-physical-control/verification.md#next-stand-batch)
@@ -32,7 +32,11 @@ procedure. Record the direction/blend exercise as reported performed, with no
 mismatch or fault reported. The response did not separately identify each move,
 STOP/re-ARM, mode-switch stopping, startup stillness or final motor-power state.
 Clarification of the final two checks was requested because they do not appear
-in the capture. No additional drive is requested or authorized by this record.
+in the capture. Todor explicitly selected “Also completed STOP/re-ARM and mode
+switching”, confirming STOP while tilted, stillness after re-ARM until a fresh
+START, and stopping/disarming when switching to Buttons during a forward move.
+These functional checks are operator-confirmed; their absence from the captured
+state sequence remains unexplained. No rerun was requested or performed.
 
 No Stream write count, maximum gap or slowest write was supplied. Approximate
 requested velocities, physical stopping times and measured speed are not proved.
@@ -77,5 +81,7 @@ does not establish the intended STOP-while-moving/re-ARM or mode-switch-while-mo
 checks, and the final STOP occurred after commands had already returned to zero.
 Raw requested twists, phone mode and PAUSE actions are not logged, so the capture
 cannot independently map periods to all named moves or prove client per-axis caps.
-Task 3.2 remains partial pending clarification and remaining evidence.
+Task 3.2 remains partial only for its remaining client cap evidence. The final
+STOP/re-ARM/mode-switch functional checks are operator-confirmed, rather than
+independently demonstrated by this capture. No new motor run is authorized.
 

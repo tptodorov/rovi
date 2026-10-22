@@ -164,8 +164,12 @@ procedure. The [capture and operator record](../../../firmware/bench/2026-10-22-
 show eight nonzero-command periods returning to zero, final STOP, release and
 Open at zero. No re-ARM or subsequent nonzero period appears; final STOP occurred
 after the last period had already reached zero. The final STOP/re-ARM and mode
-switch while moving need clarification. No Stream counters or raw twists were
+switch while moving were subsequently explicitly confirmed by Todor (“Also
+completed STOP/re-ARM and mode switching”). Record them as operator-confirmed
+functional behavior; the captured sequence does not independently show them,
+and the discrepancy remains unexplained. No Stream counters or raw twists were
 supplied; client caps and measured stopping are not inferred. Command periods
 include 5.281 s and 8.132 s, totaling 24.605 s, so the announced 2 s/20 s bounds
 are not recorded as passed. Capture is stopped; no firmware was flashed.
-Task 3.2 remains partial and no new drive is authorized.
+Task 3.2 remains partial for client cap evidence; the final functional stop/re-ARM/
+mode-switch checks are confirmed. No new drive is authorized.
