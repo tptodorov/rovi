@@ -32,7 +32,7 @@ This includes an accidental drop. Consequence: a ROS controller that is still st
 
 ### D5. Home settings are build variables (decided by Todor: option 3)
 
-`ROVI_HOME_SSID`, `ROVI_HOME_PASSWORD` and `ROVI_HOME_ROUTER` are read with `option_env!` like `ROVI_WIFI_PASSWORD`; a `const` check (or `build.rs`) fails the build when the set is partial or invalid. The fallback-mode router endpoint stays `ROVI_ZENOH_ROUTER` / `tcp/192.168.4.2:7447`. Changing networks means rebuilding and flashing over USB. Alternatives rejected: BLE provisioning (passphrase over unencrypted BLE, ADR-0008), BLE with pairing (more work on car and clients), a USB serial settings command with flash storage (new storage and protocol for a rare operation).
+`ROVI_HOME_SSID`, `ROVI_HOME_PASSWORD` and `ROVI_HOME_ROUTER` are read with `option_env!` like `ROVI_WIFI_PASSWORD`; a `const` check (or `build.rs`) fails the build when the set is partial or invalid. The fallback-mode router endpoint stays `ROVI_ZENOH_ROUTER` / `tcp/192.168.4.2:7447`. Changing networks means rebuilding and flashing over USB. Todor's home settings live in gopass entry `env/rovi/home` (`ROVI_HOME_SSID`, `ROVI_HOME_PASSWORD`, `ROVI_HOME_ROUTER`); load them per shell with `secenv env/rovi/home` before building. Alternatives rejected: BLE provisioning (passphrase over unencrypted BLE, ADR-0008), BLE with pairing (more work on car and clients), a USB serial settings command with flash storage (new storage and protocol for a rare operation).
 
 ### D6. UDP stays available in home mode
 
