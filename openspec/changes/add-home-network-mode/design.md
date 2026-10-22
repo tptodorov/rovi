@@ -50,7 +50,26 @@ Network information is `mode=… pending=… fallback=… ip=…` (BLE/UDP: a fi
 
 Scan ≤1500 ms (spec); join + DHCP + router ≤5000 ms after the network is found. Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the `ros` feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.
 
+### D10. BLE claims on the first command; two connection slots
+
+`HostResources` grows to two connections. A connection is unclaimed until its first Setpoint or Control write, which calls the existing claim path (so preemption, BUSY and the claim window apply then). Reads, notifications and Echo never claim. Losing ownership still disconnects that central (D8); the other stays. Existing clients write ARM or a setpoint right after connecting, so they claim as before. Alternative: one slot with an idle timeout, rejected because a watcher would block the rescue controller.
+
+### D11. One UDP observer query
+
+UDP kind 11 `INFO` is answered to any peer, like Echo, with capabilities (the `HELLO_ACK` payload), Status and network information in one datagram. One query instead of three keeps the UDP surface small and lets a watcher poll everything it needs.
+
+### D12. ROS release and takeover notice
+
+`/rovi/release` (`std_msgs/Empty`, owner node only) calls the same release path as UDP BYE. On preemption the arbiter emits a final Status for the old owner before switching: firmware sends it as a UDP `STATUS` to the old endpoint or publishes `/rovi/status`; BLE, the highest rank, is never preempted.
+
+### D13. One conformance suite for all transports
+
+The shared rules (claim, arm, stop, lease, preemption, mode command, hand-back, observation, release, errors) are written once as transport-independent scenarios and run against the simulator through three adapters: UDP, ROS and a BLE GATT adapter. New rules are added once and proven on all three. Board acceptance stays separate (ADR-0002).
+
 ## Risks / Trade-offs
+
+* [Two BLE connections plus Wi-Fi traffic raise coexistence load and RAM use] → measured in 6.3; watchers are read-only and notifications are small.
+* [Clients that relied on "connect = claim" to see `claimed` at once] → the laptop and iPhone clients write first; their tests are rerun (task 5.1).
 
 * [BLE advertising while ROS streams over Wi-Fi adds coexistence jitter] → board check of ROS round trip and Echo loss with advertising on, compared with the 2026-10-20 ROS soak baseline.
 * [A manual takeover ends by accident while ROS still streams] → hand-back latch (D4): ROS needs `/rovi/arm` true. Stock tools without an arm publisher cannot resume after an accidental drop; a deliberate Home hand-back keeps them working.

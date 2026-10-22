@@ -11,6 +11,7 @@ A ROS 2 controller running as a service on the home network should drive the car
 * **Safe hand-back.** A takeover that ends without a Home command (e.g. an accidental BLE drop) leaves ROS needing `/rovi/arm` true once; with Home sent first, ROS resumes and auto-arms.
 * **Mode command and network information on every transport,** so each mode is reachable from BLE alone or Wi-Fi alone, without reflashing or touching the car.
 * **The home network is trusted.** Any device on it may control the car, with no new authentication. This supersedes [ADR-0008](0008-local-link-security-baseline.md)'s "no station mode".
+* **Aligned protocols.** BLE claims on its first command (two connections, so a watcher never blocks a rescue); capabilities, Status and network information are readable before claiming everywhere; ROS gets an explicit release; a preempted owner gets a final owner-lost Status. One conformance suite runs the shared rules over all three transports.
 * **Home settings are baked in at build time** (SSID, passphrase, router endpoint) and flashed over USB, like the AP password. Nothing about the home network goes over the air.
 
 Details: [`add-home-network-mode`](../../openspec/changes/add-home-network-mode/design.md).

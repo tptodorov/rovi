@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>180</b> requirements</div><div><b>328</b> scenarios</div><div><b>65 / 78</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>65 / 80</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> draft for review (2026-10-22). Behaviour decided by Todor in conversation on 2026-10-22; no implementation, flash or motor run is authorized yet.</p>
@@ -501,6 +501,20 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 <li>
 <strong>Safe hand-back.</strong> When a manual takeover ends without a Home command (e.g. an accidental BLE drop), the next ROS owner must publish <code>/rovi/arm</code> true once before moving. With Home sent first, ROS takes over and auto-arms as today.</li>
 <li>
+<strong>Protocol alignment.</strong> Every transport gets the same operations (todor, 2026-10-22):<ul>
+<li>
+BLE claims on its first Setpoint/Control write, not on connect, with up to two connections, so a BLE central can watch without claiming.</li>
+<li>
+Capabilities, Status and network information are readable before claiming everywhere (UDP <code>INFO</code>, kind 11).</li>
+<li>
+ROS gets an explicit release (<code>/rovi/release</code>) like UDP BYE and BLE disconnect.</li>
+<li>
+A preempted owner receives a final Status (stopped, owner-lost) on its own transport.</li>
+<li>
+One transport-independent scenario suite runs the shared rules over BLE, UDP and ROS in the simulator.</li>
+</ul>
+</li>
+<li>
 <strong>Settings at build time.</strong> SSID, passphrase and the home ROS router endpoint are build variables, like today's <code>ROVI_WIFI_PASSWORD</code>, flashed over USB. Nothing about the home network is sent over the air.</li>
 <li>
 <strong>Trust.</strong> Any device on the home network may control the car, with no new authentication (<a href="../docs/adr/0008-local-link-security-baseline.md">ADR-0008</a> station-mode exclusion superseded).</li>
@@ -508,7 +522,7 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 <strong>Observability.</strong> New log events report mode changes, mode commands and each join step with its duration.</li>
 </ul>
 <p>
-Out of scope: running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.</p>
+Deferred: a shared Rust client crate for all clients (<a href="https://github.com/tptodorov/rovi/issues/108">#108</a>) and the iPhone mode/network UI (<a href="https://github.com/tptodorov/rovi/issues/109">#109</a>). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.</p>
 
       <a class="button" href="#openspec--changes--add-home-network-mode--proposal">Open decisions &amp; evidence →</a></div>
 <section id="reading" class="reading"><h2>A small reading key</h2>
@@ -553,7 +567,7 @@ The first controller to claim SHALL own the car; other claims SHALL be refused a
 <li>
 <strong>GIVEN</strong> the car is open in fallback mode</li>
 <li>
-<strong>WHEN</strong> a BLE controller connects</li>
+<strong>WHEN</strong> a BLE controller connects and writes its first setpoint or control command</li>
 <li>
 <strong>THEN</strong> it becomes the owner and the car AP goes off</li>
 <li>
@@ -677,6 +691,142 @@ New owners SHALL start disarmed. BLE/UDP SHALL require the owner's explicit arm 
 <li>
 <strong>AND</strong> after one valid setpoint, the next arm succeeds</li>
 </ul>
+</details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--requirement-capabilities"><h3>Capabilities</h3><p>
+The car SHALL give its capabilities on every source, to owners and non-owners, before any claim: protocol version, <code>wheels_radius</code>, <code>sum_of_robot_center_projection_on_X_Y_axis</code>, maximum <code>linear.x</code>, <code>linear.y</code> and <code>angular.z</code>, lease length, claim window and reclaim window. BLE: Capabilities characteristic; UDP: <code>INFO</code> to any peer and <code>HELLO_ACK</code>; ROS 2: as below. Each value SHALL be the one the car enforces.</p>
+<details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-limits-match-enforcement"><summary>Limits match enforcement</summary><ul>
+<li>
+<strong>GIVEN</strong> a controller has read the capabilities</li>
+<li>
+<strong>WHEN</strong> it sends a setpoint at exactly the maximum <code>linear.x</code></li>
+<li>
+<strong>THEN</strong> the setpoint is applied</li>
+<li>
+<strong>AND</strong> a setpoint above it raises a safety stop</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-same-capabilities-on-every-source"><summary>Same capabilities on every source</summary><ul>
+<li>
+<strong>GIVEN</strong> the same car</li>
+<li>
+<strong>WHEN</strong> a BLE, a UDP and a ROS 2 controller each read the capabilities</li>
+<li>
+<strong>THEN</strong> every value is identical</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-capabilities-before-claiming"><summary>Capabilities before claiming</summary><ul>
+<li>
+<strong>GIVEN</strong> another controller owns the car</li>
+<li>
+<strong>WHEN</strong> a connected unclaimed BLE central reads Capabilities, or a UDP peer sends <code>INFO</code></li>
+<li>
+<strong>THEN</strong> it gets the capabilities and the owner, state and deadlines are unchanged</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--requirement-status"><h3>Status</h3><p>
+The car SHALL report its status on every source to owners and non-owners (BLE Status characteristic, UDP <code>STATUS</code> to the owner and <code>INFO</code> to any peer, ROS 2 <code>/rovi/status</code>): state (open, claimed, armed or stopped), stop reason (none, stop, lease-expired, owner-lost or out-of-limits) and last owner control error (none, not-ready or invalid). Every status read or notification SHALL report the state at that moment.</p>
+<details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-status-follows-a-stop"><summary>Status follows a stop</summary><ul>
+<li>
+<strong>GIVEN</strong> the car is armed and the owner reads status</li>
+<li>
+<strong>WHEN</strong> the lease expires</li>
+<li>
+<strong>THEN</strong> the next status reports safety stop with reason lease-expired</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-readable-right-after-the-claim"><summary>Readable right after the claim</summary><ul>
+<li>
+<strong>GIVEN</strong> a BLE central has just connected to an open car</li>
+<li>
+<strong>WHEN</strong> it reads Status before any write, then writes a setpoint and reads Status again</li>
+<li>
+<strong>THEN</strong> the first read reports open and the second reports claimed with no error</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--requirement-echo-is-observational"><h3>Echo is observational</h3><p>
+UDP Echo and the BLE Echo characteristic SHALL return payloads of at most 32 bytes unchanged and discard larger ones. Echo SHALL NOT claim, arm, change wheel commands, renew deadlines, consume setpoint sequences or clear errors. Echo SHALL be available to non-owners: any UDP peer and any connected BLE central, claimed or not.</p>
+<details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-echo-does-not-keep-an-owner-alive"><summary>Echo does not keep an owner alive</summary><ul>
+<li>
+<strong>GIVEN</strong> an owner stops sending setpoints but continues echo probes</li>
+<li>
+<strong>WHEN</strong> the lease expires</li>
+<li>
+<strong>THEN</strong> the normal lease stop occurs and ownership eventually expires without ARM</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-echo-does-not-claim-over-ble"><summary>Echo does not claim over BLE</summary><ul>
+<li>
+<strong>GIVEN</strong> an open car and a connected BLE central that has written nothing else</li>
+<li>
+<strong>WHEN</strong> it writes Echo probes</li>
+<li>
+<strong>THEN</strong> each is returned and the car stays open</li>
+</ul>
+</details></article><h2 id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--added-requirements">ADDED Requirements</h2><article class="requirement" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--requirement-ble-claim-on-first-command"><h3>BLE claim on first command</h3><p>
+The car SHALL accept up to two BLE connections. A connection SHALL claim on its first Setpoint or Control write, not on connect; reads, notifications and Echo SHALL NOT claim. A non-owner's Setpoint or Control write that cannot claim SHALL be rejected with an ATT error and change nothing. When BLE ownership ends, the car SHALL disconnect that central; other BLE connections stay.</p>
+<details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-watching-without-claiming"><summary>Watching without claiming</summary><ul>
+<li>
+<strong>GIVEN</strong> a UDP owner driving in home mode</li>
+<li>
+<strong>WHEN</strong> a BLE central connects, subscribes to Status and Network and reads Capabilities</li>
+<li>
+<strong>THEN</strong> it receives them, the UDP owner keeps driving and the station stays up</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-second-central-cannot-claim-while-ble-owns"><summary>Second central cannot claim while BLE owns</summary><ul>
+<li>
+<strong>GIVEN</strong> a BLE owner and a second connected BLE central</li>
+<li>
+<strong>WHEN</strong> the second central writes a setpoint or ARM</li>
+<li>
+<strong>THEN</strong> the write is rejected with an ATT error and the owner, state and lease are unchanged</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-owner-released-watcher-stays"><summary>Owner released, watcher stays</summary><ul>
+<li>
+<strong>GIVEN</strong> a BLE owner and a second, unclaimed BLE central</li>
+<li>
+<strong>WHEN</strong> the owner's claim window expires</li>
+<li>
+<strong>THEN</strong> the owner is disconnected and the second central stays connected and unclaimed</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--requirement-observation-without-ownership"><h3>Observation without ownership</h3><p>
+Any client SHALL be able to read capabilities, Status and network information without claiming: a connected BLE central through its characteristics, any UDP peer through one <code>INFO</code> request (kind 11) answered with all three, and any ROS node through the topics. Observation SHALL NOT claim, renew deadlines, change state or clear errors.</p>
+<details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-udp-info-from-a-non-owner"><summary>UDP INFO from a non-owner</summary><ul>
+<li>
+<strong>GIVEN</strong> a ROS owner and a UDP peer that has never sent HELLO</li>
+<li>
+<strong>WHEN</strong> the peer sends <code>INFO</code></li>
+<li>
+<strong>THEN</strong> it receives capabilities, Status (claimed or armed) and network information, and the ROS owner is unchanged</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--requirement-ros-release"><h3>ROS release</h3><p>
+A ROS owner node SHALL be able to release the car by publishing on <code>/rovi/release</code> (<code>std_msgs/Empty</code>), with the same effects as a UDP BYE: an owner-lost stop if armed, release at once, and any pending mode command taking effect. Publications from non-owner nodes SHALL be ignored.</p>
+<details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-release-applies-a-pending-mode-at-once"><summary>Release applies a pending mode at once</summary><ul>
+<li>
+<strong>GIVEN</strong> a disarmed ROS owner that published Home on <code>/rovi/mode</code> in fallback mode</li>
+<li>
+<strong>WHEN</strong> it publishes on <code>/rovi/release</code></li>
+<li>
+<strong>THEN</strong> the car is released and starts a home-mode attempt without waiting for the lease or reclaim window</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-non-owner-release-is-ignored"><summary>Non-owner release is ignored</summary><ul>
+<li>
+<strong>GIVEN</strong> a ROS node owns the car</li>
+<li>
+<strong>WHEN</strong> another node publishes on <code>/rovi/release</code></li>
+<li>
+<strong>THEN</strong> the owner and state are unchanged</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--requirement-takeover-notice"><h3>Takeover notice</h3><p>
+When a controller is preempted, the car SHALL first send it a final Status (stopped, owner-lost) on its own transport: a UDP <code>STATUS</code> to the old session's endpoint, or <code>/rovi/status</code> for ROS. Later input from the preempted session SHALL be ignored; its HELLO SHALL receive <code>BUSY</code> while the new owner holds the car.</p>
+<details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-udp-owner-learns-it-was-overridden"><summary>UDP owner learns it was overridden</summary><ul>
+<li>
+<strong>GIVEN</strong> home mode and a UDP owner</li>
+<li>
+<strong>WHEN</strong> a BLE central claims the car</li>
+<li>
+<strong>THEN</strong> the UDP owner's endpoint receives a <code>STATUS</code> with stopped and owner-lost before the station goes off</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-ros-owner-learns-it-was-overridden"><summary>ROS owner learns it was overridden</summary><ul>
+<li>
+<strong>GIVEN</strong> a ROS owner</li>
+<li>
+<strong>WHEN</strong> a UDP controller sends HELLO</li>
+<li>
+<strong>THEN</strong> <code>/rovi/status</code> publishes stopped with owner-lost before the UDP <code>HELLO_ACK</code></li>
+</ul>
 </details></article></section><section class="document" id="openspec--changes--add-home-network-mode--specs--network-mode--spec" aria-label="network mode">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-home-network-mode/specs/network-mode/spec.md">Markdown source ↗</a><div class="path">openspec/changes/add-home-network-mode/specs/network-mode/spec.md</div></header>
     <h2>network mode</h2>
@@ -737,7 +887,7 @@ Fallback mode SHALL last until reboot or until a Home mode command takes effect.
 <strong>THEN</strong> the car stays in fallback mode</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--requirement-mode-command"><h3>Mode command</h3><p>
-Every transport SHALL accept a mode command, Home or Car network, from the owner while disarmed: BLE Control codes 3 and 4, UDP kind 10 with payload 1 or 2, ROS <code>/rovi/mode</code> (<code>std_msgs/UInt8</code>, 1 or 2). It SHALL become pending and take effect when that ownership ends. Home SHALL start a home-mode attempt; Car network SHALL enter fallback with reason requested. A later command SHALL replace a pending one.</p>
+Every transport SHALL accept a mode command, Home or Car network, from the owner while disarmed: BLE Control codes 3 and 4, UDP kind 10 with payload 1 or 2, ROS <code>/rovi/mode</code> (<code>std_msgs/UInt8</code>, 1 or 2). It SHALL be pending until that ownership ends (BLE disconnect, UDP BYE, ROS <code>/rovi/release</code> or a window). Home SHALL start a home-mode attempt; Car network SHALL enter fallback with reason requested. A later command SHALL replace a pending one.</p>
 <details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-back-home-from-fallback-over-ble"><summary>Back home from fallback over BLE</summary><ul>
 <li>
 <strong>GIVEN</strong> fallback mode and a disarmed BLE owner</li>
@@ -805,7 +955,7 @@ A mode command SHALL change nothing and SHALL be refused: with not-ready when th
 <strong>THEN</strong> it is ignored and nothing is pending</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--requirement-network-information"><h3>Network information</h3><p>
-The car SHALL report network information on every transport, to owners and non-owners: mode (home, fallback, attempting), pending command (none, home, car network), last fallback reason (none, no-settings, scan, join, dhcp, router, link-lost, requested) and station IPv4 (0.0.0.0 if none). BLE: a readable, notifying Network characteristic. UDP: kind 11, answered to any peer. ROS: <code>/rovi/network</code>, republished at least every second and on change.</p>
+The car SHALL report network information on every transport, to owners and non-owners: mode (home, fallback, attempting), pending command (none, home, car network), last fallback reason (none, no-settings, scan, join, dhcp, router, link-lost, requested) and station IPv4 (0.0.0.0 if none). BLE: a readable, notifying Network characteristic. UDP: in <code>INFO</code> (kind 11), to any peer. ROS: <code>/rovi/network</code>, republished at least every second and on change.</p>
 <details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-finding-the-cars-home-address"><summary>Finding the car's home address</summary><ul>
 <li>
 <strong>GIVEN</strong> home mode</li>
@@ -849,7 +999,7 @@ When a BLE or UDP owner that preempted a ROS owner loses ownership, ROS auto-arm
 <strong>THEN</strong> the next ROS owner needs <code>/rovi/arm</code> true before moving</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--requirement-ble-availability-in-home-mode"><h3>BLE availability in home mode</h3><p>
-In home mode the car SHALL advertise BLE whenever no BLE controller is connected. When a BLE owner's connection ends for any reason in home mode, the car SHALL start a home-mode attempt, unless Car network is pending.</p>
+In home mode the car SHALL advertise BLE whenever a BLE connection slot is free. When BLE ownership ends for any reason in home mode (disconnect, link loss or window expiry), the car SHALL start a home-mode attempt, unless Car network is pending.</p>
 <details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-ble-advertises-while-a-wi-fi-controller-drives"><summary>BLE advertises while a Wi-Fi controller drives</summary><ul>
 <li>
 <strong>GIVEN</strong> home mode and an armed ROS or UDP owner</li>
@@ -3721,21 +3871,51 @@ ROS</td>
 Network information is <code>mode=… pending=… fallback=… ip=…</code> (BLE/UDP: a fixed 8-byte binary form: mode, pending, reason, reserved, IPv4). UDP is available in home mode with no extra code because the UDP task binds to whichever stack is active; trust is the home network (<a href="../docs/adr/0008-local-link-security-baseline.md">ADR-0008</a> superseded for station mode).</p>
 <h3 id="openspec--changes--add-home-network-mode--design--d7-budgets">D7. Budgets</h3><p>
 Scan ≤1500 ms (spec); join + DHCP + router ≤5000 ms after the network is found. Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the <code>ros</code> feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.</p>
+<h3 id="openspec--changes--add-home-network-mode--design--d10-ble-claims-on-the-first-command-two-connection-slots">D10. BLE claims on the first command; two connection slots</h3><p>
+<code>HostResources</code> grows to two connections. A connection is unclaimed until its first Setpoint or Control write, which calls the existing claim path (so preemption, BUSY and the claim window apply then). Reads, notifications and Echo never claim. Losing ownership still disconnects that central (D8); the other stays. Existing clients write ARM or a setpoint right after connecting, so they claim as before. Alternative: one slot with an idle timeout, rejected because a watcher would block the rescue controller.</p>
+<h3 id="openspec--changes--add-home-network-mode--design--d11-one-udp-observer-query">D11. One UDP observer query</h3><p>
+UDP kind 11 <code>INFO</code> is answered to any peer, like Echo, with capabilities (the <code>HELLO_ACK</code> payload), Status and network information in one datagram. One query instead of three keeps the UDP surface small and lets a watcher poll everything it needs.</p>
+<h3 id="openspec--changes--add-home-network-mode--design--d12-ros-release-and-takeover-notice">D12. ROS release and takeover notice</h3><p>
+<code>/rovi/release</code> (<code>std_msgs/Empty</code>, owner node only) calls the same release path as UDP BYE. On preemption the arbiter emits a final Status for the old owner before switching: firmware sends it as a UDP <code>STATUS</code> to the old endpoint or publishes <code>/rovi/status</code>; BLE, the highest rank, is never preempted.</p>
+<h3 id="openspec--changes--add-home-network-mode--design--d13-one-conformance-suite-for-all-transports">D13. One conformance suite for all transports</h3><p>
+The shared rules (claim, arm, stop, lease, preemption, mode command, hand-back, observation, release, errors) are written once as transport-independent scenarios and run against the simulator through three adapters: UDP, ROS and a BLE GATT adapter. New rules are added once and proven on all three. Board acceptance stays separate (ADR-0002).</p>
 <h2 id="openspec--changes--add-home-network-mode--design--risks--trade-offs">Risks / Trade-offs</h2><ul>
 <li>
-[BLE advertising while ROS streams over Wi-Fi adds coexistence jitter] → board check of ROS round trip and Echo loss with advertising on, compared with the 2026-10-20 ROS soak baseline.</li>
+<p>
+[Two BLE connections plus Wi-Fi traffic raise coexistence load and RAM use] → measured in 6.3; watchers are read-only and notifications are small.</p>
+</li>
 <li>
-[A manual takeover ends by accident while ROS still streams] → hand-back latch (D4): ROS needs <code>/rovi/arm</code> true. Stock tools without an arm publisher cannot resume after an accidental drop; a deliberate Home hand-back keeps them working.</li>
+<p>
+[Clients that relied on &quot;connect = claim&quot; to see <code>claimed</code> at once] → the laptop and iPhone clients write first; their tests are rerun (task 5.1).</p>
+</li>
 <li>
-[Any home-network UDP client can take the car from a ROS controller] → accepted: the home network is trusted, and the preempted car stops disarmed.</li>
+<p>
+[BLE advertising while ROS streams over Wi-Fi adds coexistence jitter] → board check of ROS round trip and Echo loss with advertising on, compared with the 2026-10-20 ROS soak baseline.</p>
+</li>
 <li>
-[Anyone in BLE range can preempt the car in home mode] → unchanged ADR-0008 BLE risk; the home passphrase never goes over the air.</li>
+<p>
+[A manual takeover ends by accident while ROS still streams] → hand-back latch (D4): ROS needs <code>/rovi/arm</code> true. Stock tools without an arm publisher cannot resume after an accidental drop; a deliberate Home hand-back keeps them working.</p>
+</li>
 <li>
-[Runtime stack switch unsupported by the beta radio driver] → D2's reset fallback.</li>
+<p>
+[Any home-network UDP client can take the car from a ROS controller] → accepted: the home network is trusted, and the preempted car stops disarmed.</p>
+</li>
 <li>
-[DHCP address of the router host changes] → the endpoint is built in by IP; give the router host a DHCP reservation or rebuild. Discovery is out of scope.</li>
+<p>
+[Anyone in BLE range can preempt the car in home mode] → unchanged ADR-0008 BLE risk; the home passphrase never goes over the air.</p>
+</li>
 <li>
-[Passphrase in the firmware image] → the image is local and flashed over USB; it is not published. Like <code>ROVI_WIFI_PASSWORD</code>, the variables come from the shell environment (e.g. gopass), never from a committed file such as the tracked <code>.envrc</code>.</li>
+<p>
+[Runtime stack switch unsupported by the beta radio driver] → D2's reset fallback.</p>
+</li>
+<li>
+<p>
+[DHCP address of the router host changes] → the endpoint is built in by IP; give the router host a DHCP reservation or rebuild. Discovery is out of scope.</p>
+</li>
+<li>
+<p>
+[Passphrase in the firmware image] → the image is local and flashed over USB; it is not published. Like <code>ROVI_WIFI_PASSWORD</code>, the variables come from the shell environment (e.g. gopass), never from a committed file such as the tracked <code>.envrc</code>.</p>
+</li>
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--design--migration-plan">Migration Plan</h2><p>
 Without home settings the build behaves exactly as today, so existing images, clients and bench procedures need no change. Rollback is reflashing the previous image.</p>
@@ -4282,13 +4462,17 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Add BLE &gt; UDP &gt; ROS preemption and the hand-back latch to the arbiter/<code>Device</code> test-first: UDP over ROS in both modes, BLE over Wi-Fi in home mode only, owner-lost stop, disarmed new owner, latch set/cleared per D4. Existing <code>rovi-core</code> tests pass; the ones whose behaviour changes are updated with a note.</li>
 <li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Add mode and step events to the catalog (<code>events.rs</code>, <code>carlog.py</code>, <code>docs/LOGGING.md</code>) with tests; <code>test_carlog.py</code> passes.</li>
+<li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.4 Add the mode command (BLE codes 3/4, UDP kind 10, ROS <code>/rovi/mode</code>) and network information (BLE characteristic, UDP kind 11, ROS <code>/rovi/network</code>) codecs test-first, with every error case in <em>Mode command errors</em>.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Add mode and step events to the catalog (<code>events.rs</code>, <code>carlog.py</code>, <code>docs/LOGGING.md</code>) with tests; <code>test_carlog.py</code> passes.</li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.5 Add BLE claim-on-first-command (two connections, reads/Echo never claim), UDP <code>INFO</code> for any peer, ROS <code>/rovi/release</code> and the takeover-notice Status to <code>rovi-core</code> test-first, covering every scenario of those requirements.</li>
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--3-simulator">3. Simulator</h2><ul>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Model the mode in the sim car (network steps injected by the scenario) and add scenarios: deliberate and accidental hand-back, UDP takeover from ROS, mode commands from each transport, router restart in home mode, link loss → fallback, Home from fallback. All existing sim scenarios pass.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Build the transport-independent conformance suite (D13) with UDP, ROS and BLE GATT adapters against the simulator; port the shared existing scenarios into it and add every new car-control-api and network-mode scenario. CI runs it on every PR.</li>
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--4-firmware">4. Firmware</h2><ul>
 <li>
@@ -4298,9 +4482,9 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--5-client-and-docs">5. Client and docs</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 5.0 Laptop teleop <code>--mode home|car</code> and network-information display for UDP and BLE; fake-peer/GATT tests for success, refusal (armed, invalid) and display.</li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Laptop teleop: <code>--mode home|car</code>, network-information display, takeover notice shown as &quot;overridden&quot;, BLE claim on first write; rerun the iPhone client tests against the new claim timing; fake-peer/GATT tests for success, refusal (armed, invalid) and display.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Mark ADR-0004 and ADR-0008 as partly superseded by ADR-0016; README build command with the home variables, PLAN/GLOSSARY updates; reader regenerated.</li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 5.2 Write <code>docs/reference/protocol.md</code>: one row per operation, one column per transport (BLE, UDP, ROS), linked from the specs and client READMEs. Mark ADR-0004 and ADR-0008 as partly superseded by ADR-0016; README build command with the home variables, PLAN/GLOSSARY updates; reader regenerated.</li>
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--6-board-acceptance-each-step-separately-announced-motor-steps-need-todors-go">6. Board acceptance (each step separately announced; motor steps need Todor's go)</h2><ul>
 <li>
@@ -6023,6 +6207,20 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 <li>
 <strong>Safe hand-back.</strong> When a manual takeover ends without a Home command (e.g. an accidental BLE drop), the next ROS owner must publish <code>/rovi/arm</code> true once before moving. With Home sent first, ROS takes over and auto-arms as today.</li>
 <li>
+<strong>Protocol alignment.</strong> Every transport gets the same operations (todor, 2026-10-22):<ul>
+<li>
+BLE claims on its first Setpoint/Control write, not on connect, with up to two connections, so a BLE central can watch without claiming.</li>
+<li>
+Capabilities, Status and network information are readable before claiming everywhere (UDP <code>INFO</code>, kind 11).</li>
+<li>
+ROS gets an explicit release (<code>/rovi/release</code>) like UDP BYE and BLE disconnect.</li>
+<li>
+A preempted owner receives a final Status (stopped, owner-lost) on its own transport.</li>
+<li>
+One transport-independent scenario suite runs the shared rules over BLE, UDP and ROS in the simulator.</li>
+</ul>
+</li>
+<li>
 <strong>Settings at build time.</strong> SSID, passphrase and the home ROS router endpoint are build variables, like today's <code>ROVI_WIFI_PASSWORD</code>, flashed over USB. Nothing about the home network is sent over the air.</li>
 <li>
 <strong>Trust.</strong> Any device on the home network may control the car, with no new authentication (<a href="../docs/adr/0008-local-link-security-baseline.md">ADR-0008</a> station-mode exclusion superseded).</li>
@@ -6030,14 +6228,14 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 <strong>Observability.</strong> New log events report mode changes, mode commands and each join step with its duration.</li>
 </ul>
 <p>
-Out of scope: running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.</p>
+Deferred: a shared Rust client crate for all clients (<a href="https://github.com/tptodorov/rovi/issues/108">#108</a>) and the iPhone mode/network UI (<a href="https://github.com/tptodorov/rovi/issues/109">#109</a>). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.</p>
 <h2 id="openspec--changes--add-home-network-mode--proposal--capabilities">Capabilities</h2><h3 id="openspec--changes--add-home-network-mode--proposal--new-capabilities">New Capabilities</h3><ul>
 <li>
 <code>network-mode</code>: home/fallback selection, join budget, mode command and its errors on all transports, network information, hand-back latch, BLE availability in home mode, link loss, build-time settings and mode events.</li>
 </ul>
 <h3 id="openspec--changes--add-home-network-mode--proposal--modified-capabilities">Modified Capabilities</h3><ul>
 <li>
-<code>car-control-api</code>: <em>Single owner</em> gains the BLE &gt; UDP &gt; ROS preemption; <em>Explicit arming</em> respects the hand-back latch. Claim, reclaim, lease, stop and Status encodings are unchanged.</li>
+<code>car-control-api</code>: modified <em>Single owner</em> (BLE &gt; UDP &gt; ROS preemption), <em>Explicit arming</em> (hand-back latch), <em>Capabilities</em> and <em>Status</em> (readable before claiming), <em>Echo is observational</em> (BLE echo without claiming); added <em>BLE claim on first command</em>, <em>Observation without ownership</em>, <em>ROS release</em> and <em>Takeover notice</em>. Claim/reclaim windows, lease, stop rules and existing message encodings are unchanged.</li>
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--proposal--impact">Impact</h2><ul>
 <li>
