@@ -1,19 +1,23 @@
 # Verification map
 
+Current status: **scoped acceptance recorded, 2026-10-22**. See the
+[accepted scope and explicit deferrals](#scoped-acceptance-review). Historical
+observations below do not promote deferred measurements to passed checks.
+
 | Contract | Host evidence | Required phone/physical evidence |
 | --- | --- | --- |
 | Default Buttons; permission only on tap; no automatic ARM | Browser and Session regressions | Bluefy mode/permission behavior |
-| Three relative angles, wrap, dead zone, per-axis clamps | Physical unit tests | Phone signs/held twist confirmed; 60 s requested-zero hold confirmed, raw drift unmeasured; stand mixed axes pending |
-| Independent sample/foreground deadlines and no input replay | Fake-clock input and Session tests, browser stalls | Phone stalls and observed manual recovery |
-| Mode changes supersede ARM, clear/disarm/STOP | Fake-GATT race tests; real page switch while held | Phone and separately authorized stand stop |
-| Lifecycle/reference/invalid sample cleanup; running posture failure | Unit/Session/browser tests | Phone lock/app switch/orientation and stand interruption |
+| Three relative angles, wrap, dead zone, per-axis clamps | Physical unit tests | Phone signs/held twist confirmed; 60 s requested-zero hold confirmed, raw drift unmeasured; stand directions/blends operator-confirmed, numeric phone caps deferred |
+| Independent sample/foreground deadlines and no input replay | Fake-clock input and Session tests, browser stalls | Lock/app-switch manual recovery confirmed; independent stalls deferred on phone |
+| Mode changes supersede ARM, clear/disarm/STOP | Fake-GATT race tests; real page switch while held | Operator-confirmed phone/stand stop; final re-ARM/mode-switch absent from capture |
+| Lifecycle/reference/invalid sample cleanup; running posture failure | Unit/Session/browser tests | Lock/app-switch/posture cleanup operator-confirmed; native rotation and phone invalid/reference cases deferred |
 | One-tap neutral/ARM; released-pad gaps/posture; visible status/STOP | Red/green Session and scroll browser regressions | Todor confirmed corrected UX on build `780f65eff594`, motor power off |
 | Existing stream/Status/cleanup limits | Existing and new Session regressions | Reported iPhone 11: 1,366 writes, max gap 180 ms, slowest write 19 ms; physical observation pending |
 
-Pre-implementation sensor-only [phone result](../../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
+Pre-implementation sensor-only [phone result](../../../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
 supports the selected interaction, not full product acceptance. Task 3.0 has a
 scoped phone UX pass; sensor-driven motor acceptance is not claimed. The first integrated
-[motor-power-off response](../../../firmware/bench/2026-10-21-iphone-physical/notes.md)
+[motor-power-off response](../../../../firmware/bench/2026-10-21-iphone-physical/notes.md)
 confirmed signs/neutral/release/STOP/mode changes, but reported scrolling disarm,
 hidden messages and the extra calibration tap. Phone model and Stream metrics
 were not supplied. Todor subsequently confirmed the corrected phone UX on build
@@ -115,7 +119,7 @@ and no BLE picker calls/page errors. A preview tab is open in this workspace.
 On 2026-10-22, Todor replied “seems ok” to the announced motor-power-off,
 USB-powered Bluefy retest of both modes, mode-triggered sensor setup, visible
 requested motion/dock controls, PAUSE and STOP. Record this as a scoped usability
-pass with no issue reported ([phone evidence](../../../firmware/bench/2026-10-21-iphone-physical/notes.md#redesigned-controller-phone-retest--2026-10-22)).
+pass with no issue reported ([phone evidence](../../../../firmware/bench/2026-10-21-iphone-physical/notes.md#redesigned-controller-phone-retest--2026-10-22)).
 No new timing trace or motor-on result is inferred. Full phone interruption/recovery,
 VoiceOver and motor-on acceptance remain open.
 
@@ -129,7 +133,7 @@ checks or tasks 3.2–3.3's stand evidence and overall acceptance review.
 Phone interruption/recovery update (2026-10-22): Todor reported “works as expected”
 for the five-step motor-power-off procedure on `2b5104400362`: PAUSE/neutral-only
 restart, lock, app switching, running posture failure/manual recovery and a 60 s
-neutral run ending in PAUSE/STOP. See the [recorded procedure and limits](../../../firmware/bench/2026-10-21-iphone-physical/notes.md#interruption-and-recovery-phone-check--2026-10-22).
+neutral run ending in PAUSE/STOP. See the [recorded procedure and limits](../../../../firmware/bench/2026-10-21-iphone-physical/notes.md#interruption-and-recovery-phone-check--2026-10-22).
 Current-build Stream counters were not supplied. Independent sensor/UI stalls,
 invalid/reference changes, screen-orientation changes and permission denial/retry
 still have host coverage only; task 3.1 remains partial. Motor-on tasks 3.2–3.3
@@ -160,7 +164,7 @@ wheel confirmation; do not infer measured velocity or stopping time.
 ## Stand result — partial
 
 Todor reported “done. all moves performewd” for the authorized `2b5104400362`
-procedure. The [capture and operator record](../../../firmware/bench/2026-10-22-iphone-physical-stand/notes.md)
+procedure. The [capture and operator record](../../../../firmware/bench/2026-10-22-iphone-physical-stand/notes.md)
 show eight nonzero-command periods returning to zero, final STOP, release and
 Open at zero. No re-ARM or subsequent nonzero period appears; final STOP occurred
 after the last period had already reached zero. The final STOP/re-ARM and mode
@@ -176,7 +180,7 @@ mode-switch checks are confirmed. No new drive is authorized.
 
 
 Latest motor-power-off response: Todor reported the remaining phone procedure
-“completed” and that scrolling stops tilt control ([record](../../../firmware/bench/2026-10-21-iphone-physical/notes.md#remaining-phone-check-response--2026-10-22)).
+“completed” and that scrolling stops tilt control ([record](../../../../firmware/bench/2026-10-21-iphone-physical/notes.md#remaining-phone-check-response--2026-10-22)).
 Scroll-to-pause at zero with arm/neutral retained is intentional and covered by
 an existing browser regression. Todor clarified “Pauses; stays Armed and
 connected”, confirming that intended behavior on the phone. Requested cap values, Stream counters,
@@ -185,13 +189,14 @@ Tasks 3.1–3.3 remain open for their outstanding evidence; the scroll observati
 matches the control contract and requires no runtime fix.
 
 
-## Proposed scoped acceptance review
+## Scoped acceptance review
 
-Status: review prepared; Todor has not yet accepted these deferrals. Tasks
-3.1–3.3 remain open until that decision or the missing evidence is recorded.
-This proposal does not change the runtime requirements or claim untested results.
+Status: accepted by Todor on 2026-10-22. He explicitly selected “Accept tested
+scope; defer remaining checks” in response to this review. The missing phone
+cap/Stream numbers, native rotation/permission outcomes and phone fault injection
+below are deferred, not passed. Runtime requirements remain unchanged.
 
-Proposed release scope: supervised use of Buttons and Physical on the reported
+Accepted release scope: supervised use of Buttons and Physical on the reported
 iPhone 11 setup, with Physical calibrated in portrait/screen-up posture, gentle
 per-axis references and explicit ARM/START/PAUSE/STOP. UI acceptance, all three
 input mappings, held twist, neutral, scroll pause, lock/app-switch and posture
@@ -200,7 +205,7 @@ STOP/re-ARM/mode-switch behavior are operator-confirmed. The capture independent
 shows eight nonzero-command periods ending at zero and final STOP/release/Open;
 it does not show the separately confirmed final re-ARM/mode-switch sequence.
 
-| Evidence boundary | Proposed treatment |
+| Evidence boundary | Accepted treatment |
 | --- | --- |
 | Per-axis clamps, zero/lower advertised limits and combined input | Retain host evidence: Physical tests check ±0.1/±0.1/±0.3 and 0.05/0/0.2 clipping. Phone procedure was reported completed, but no cap numbers were supplied; explicitly defer the numeric phone record. |
 | Current-build 60 s neutral/stream check | Retain functional requested-zero confirmation. Defer missing write count/max-gap/slowest-write numbers; earlier build's counters remain historical. No radio latency or raw drift bound. |
@@ -210,8 +215,18 @@ it does not show the separately confirmed final re-ARM/mode-switch sequence.
 | Physical motion and stopping | Retain scoped operator confirmation and commanded wheel log. No measured velocity, numeric stop-time guarantee or floor-use qualification. The announced 2 s/20 s batch-duration targets were exceeded in the command record and are not passed checks. |
 | Accessibility | Host layout/keyboard/contrast checks only; full VoiceOver qualification remains outside the demonstrated scope. |
 
-If Todor accepts this scope and these deferrals, record that decision, close the
-acceptance tasks for the demonstrated scope without marking deferred measurements
-passed, then archive/sync using the pinned workflow. Otherwise keep the change
-active and collect only the selected missing evidence with motor power off.
-No additional motor run is needed for this decision.
+Todor's decision closes the phone and stand acceptance tasks for this demonstrated
+scope, with the listed deferrals retained. Archive/sync after strict validation;
+no additional motor run, runtime change or redeployment is required. Historical
+partial-status notes above describe the evidence before this acceptance decision.
+
+
+## Archive validation
+
+The pinned CLI archived this change as `2026-10-22-add-iphone-physical-control`
+and synced 7 added, 6 modified and 1 renamed requirement. The baseline has 20
+unique requirements; all 13 delta bodies match and all 7 unrelated requirement
+bodies are preserved. Strict validation passes for 6 active/baseline items and
+all 4 archived changes. Reader tests (6), generated freshness and diff checks
+pass; all 93 audited relative Markdown link targets resolve. No runtime asset,
+firmware image or deployed client was changed by this acceptance/archive work.

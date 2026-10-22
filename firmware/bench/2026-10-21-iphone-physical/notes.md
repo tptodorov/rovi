@@ -161,3 +161,15 @@ zero, retained Armed state and explicit restart at neutral. Todor clarified:
 “Pauses; stays Armed and connected”. The current-build scroll-to-pause behavior
 therefore passes by operator confirmation; it is not a disarm/disconnect fault.
 No runtime change, motor run or firmware operation was performed for this report.
+
+
+## Scoped acceptance — 2026-10-22
+
+Todor explicitly selected “Accept tested scope; defer remaining checks” after
+reviewing the consolidated phone/stand evidence. The controller is accepted for
+supervised use on the tested iPhone setup. Current-build cap/Stream numbers,
+native rotation/permission outcomes and phone-only fault injection are deferred,
+not passed. Exact version reconfirmation, wider-device/VoiceOver qualification,
+raw drift and numeric physical stopping bounds are not claimed. The
+[accepted review](../../../openspec/changes/archive/2026-10-22-add-iphone-physical-control/verification.md#scoped-acceptance-review)
+retains the full evidence boundary. No additional motor run was performed.

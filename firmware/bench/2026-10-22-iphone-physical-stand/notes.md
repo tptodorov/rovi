@@ -1,9 +1,9 @@
 # 2026-10-22: iPhone Physical stand batch
 
-Status: direction/blend exercise and final STOP/re-ARM/mode-switch behavior operator-confirmed. Capture stopped; client cap evidence remains open.
+Status: direction/blend exercise and final STOP/re-ARM/mode-switch behavior operator-confirmed. Capture stopped; numeric phone cap evidence explicitly deferred by Todor at scoped acceptance.
 
 Todor authorized the ten-move, at-most-20-second batch with “go”. The
-[procedure](../../../openspec/changes/add-iphone-physical-control/verification.md#next-stand-batch)
+[procedure](../../../openspec/changes/archive/2026-10-22-add-iphone-physical-control/verification.md#next-stand-batch)
 uses published UI build `2b5104400362` and the existing firmware without flashing.
 Drive instructions were delivered via Telegram. The operator controls the phone;
 no host ARM or nonzero setpoint was sent.
@@ -81,7 +81,9 @@ does not establish the intended STOP-while-moving/re-ARM or mode-switch-while-mo
 checks, and the final STOP occurred after commands had already returned to zero.
 Raw requested twists, phone mode and PAUSE actions are not logged, so the capture
 cannot independently map periods to all named moves or prove client per-axis caps.
-Task 3.2 remains partial only for its remaining client cap evidence. The final
-STOP/re-ARM/mode-switch functional checks are operator-confirmed, rather than
-independently demonstrated by this capture. No new motor run is authorized.
+Task 3.2 closes for the accepted supervised scope: Todor explicitly selected
+“Accept tested scope; defer remaining checks”, including numeric phone cap
+evidence. The final STOP/re-ARM/mode-switch functional checks are operator-confirmed,
+rather than independently demonstrated by this capture. The duration and capture
+limits above remain unchanged. No new motor run is authorized.
 

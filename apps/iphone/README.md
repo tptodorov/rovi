@@ -1,8 +1,9 @@
 # iPhone BLE controller
 
 Static HTTPS controller for Bluefy on iPhone, with Buttons and Physical modes plus
-an isolated phone-sensor diagnostic. Physical mode is a host-tested candidate;
-combined phone/BLE and stand acceptance remain pending.
+an isolated phone-sensor diagnostic. Physical mode is accepted for supervised
+use on the reported iPhone setup, with explicit qualification deferrals in the
+[scoped acceptance review](../../openspec/changes/archive/2026-10-22-add-iphone-physical-control/verification.md#scoped-acceptance-review).
 Implementation is authorized by the [proposal acceptance record](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/proposal.md#proposal-acceptance).
 Buttons implementation and scoped phone/stand acceptance completed on 2026-10-21:
 six directions/stops confirmed, ATT MTU 247 on iPhone 11 Pro/Bluefy, and
@@ -48,13 +49,15 @@ No test touches a BLE device. Runtime assets use no third-party scripts or comma
 Physical input is an interpreter beside `hold.js`, selected by the control-mode
 switch. It supplies intent to the existing Session and cannot arm or write GATT.
 
-## Physical mode candidate
+## Physical mode
 
-The [accepted implementation scope](../../openspec/changes/add-iphone-physical-control/proposal.md#proposal-acceptance)
+The [accepted implementation scope](../../openspec/changes/archive/2026-10-22-add-iphone-physical-control/proposal.md#proposal-acceptance)
 follows the [sensor-only phone result](../../firmware/bench/2026-10-21-iphone-sensors/notes.md).
-Its product [phone/stand acceptance tasks](../../openspec/changes/add-iphone-physical-control/tasks.md#3-phone-and-physical-acceptance)
-remain open. The first combined BLE check should use motor power off; a motor
-batch still needs its own announced stand setup and fresh go.
+Its [phone/stand acceptance tasks](../../openspec/changes/archive/2026-10-22-add-iphone-physical-control/tasks.md#3-phone-and-physical-acceptance)
+closed for the supervised scope on 2026-10-22; requirements are
+[synced](../../openspec/specs/iphone-ble-teleoperation/spec.md). For a new setup,
+check requested motion with motor power off first. Each new motor batch still
+needs its own announced stand setup and fresh go.
 
 1. Select **Physical** in the segmented control and allow motion access if prompted.
    That user action prepares sensors; no separate Enable button is needed. Choosing
@@ -115,7 +118,9 @@ the original rotation/drop-of-touch cause remains unverified. The subsequent
 reported direction/blend exercise and eight command periods returning to zero;
 Todor separately confirmed STOP while tilted, re-ARM stillness until START and
 mode-switch stopping. Those final checks are operator evidence; the capture does
-not independently show them. Client cap evidence and overall acceptance remain open.
+not independently show them. Todor accepted the tested supervised scope and
+explicitly deferred numeric phone cap/Stream records, native rotation/permission outcomes and phone fault injection.
+Those measurements and broader qualification remain unverified, not passed checks.
 
 ## Phone test delivery
 
@@ -138,7 +143,8 @@ Holding a twist keeps the rotation reference nonzero; returning to neutral zeros
 The diagnostic previews percentages only, with 3°/20° dead-zone/full-scale
 angles. The [reported phone run](../../firmware/bench/2026-10-21-iphone-sensors/notes.md)
 confirmed directions, held heading and neutral/release behavior. It contains only
-13.1 s of quiet evidence; full-minute drift and product BLE/stand checks remain open.
+13.1 s of quiet evidence; raw full-minute drift remains unmeasured. Product
+phone/stand acceptance is separate and limited by the review linked above.
 
 1. Enter the actual phone, iOS and Bluefy versions. Tap **Enable sensors** and allow
    motion/orientation access. If a permission dialog interrupts collection, tap
