@@ -8,29 +8,32 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 
 ## What Changes
 
-* **Home mode.** At boot, if the firmware was built with home Wi-Fi settings, the car joins the home Wi-Fi as a station (DHCP) and connects to the configured ROS router. When both succeed it serves ROS 2 commands there as today ([ADR-0011](../../../docs/adr/0011-ros-auto-arm.md) auto-arm unchanged).
-* **Fallback.** If no settings were built in, the network is not seen in a ~1 s scan, or join + address + ROS router do not succeed within ~5 s, the car runs exactly today's behaviour: its own AP with UDP, ROS and BLE, first claim wins. Fallback lasts until reboot. AP and station never run at the same time.
-* **BLE override.** In home mode BLE keeps advertising. A BLE connection takes ownership from any Wi-Fi owner (safety stop, then a disarmed BLE owner using today's BLE protocol, including explicit ARM) and turns Wi-Fi off. When that BLE connection ends, for any reason, the car restarts the home-mode attempt; a streaming ROS controller then drives again without an operator step. **BREAKING** for [ADR-0004](../../../docs/adr/0004-single-owner-latest-setpoint.md)'s first-claim rule, in home mode only.
+* **Home mode.** At boot, if the firmware was built with home Wi-Fi settings, the car joins the home Wi-Fi as a station (DHCP) and connects to the configured ROS router. When both succeed it serves ROS 2 (and UDP) there ([ADR-0011](../../../docs/adr/0011-ros-auto-arm.md) auto-arm unchanged).
+* **Fallback.** If no settings were built in, the network is not seen in a ~1.5 s scan, or join + address + ROS router do not succeed within ~5 s, the car runs exactly today's AP behaviour. It stays there until reboot or a Home mode command. AP and station never run at the same time.
+* **Mode command on every transport.** A disarmed owner on BLE, UDP or ROS can choose Home or Car network; it takes effect when that ownership ends. So every mode is reachable from any one type of client, without reflashing or touching the car.
+* **Network information on every transport.** Mode, pending command, last fallback reason and the car's home IP, readable by owners and non-owners (BLE characteristic, UDP kind, ROS topic).
+* **Takeover priority: BLE > UDP > ROS.** UDP preempts a ROS owner in both modes; in home mode BLE (which keeps advertising) preempts UDP or ROS. Preemption stops the car and leaves the new owner disarmed. **BREAKING** for [ADR-0004](../../../docs/adr/0004-single-owner-latest-setpoint.md)'s first-claim rule.
+* **Safe hand-back.** When a manual takeover ends without a Home command (e.g. an accidental BLE drop), the next ROS owner must publish `/rovi/arm` true once before moving. With Home sent first, ROS takes over and auto-arms as today.
 * **Settings at build time.** SSID, passphrase and the home ROS router endpoint are build variables, like today's `ROVI_WIFI_PASSWORD`, flashed over USB. Nothing about the home network is sent over the air.
-* **Trust.** Any device on the home network may control the car, with no new authentication ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) station-mode exclusion superseded by a new ADR).
-* **Observability.** New log events report the network mode and each join step with its duration.
+* **Trust.** Any device on the home network may control the car, with no new authentication ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) station-mode exclusion superseded).
+* **Observability.** New log events report mode changes, mode commands and each join step with its duration.
 
-Out of scope: running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, retrying home Wi-Fi from fallback without a reboot, client changes.
+Out of scope: running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.
 
 ## Capabilities
 
 ### New Capabilities
 
-* `network-mode`: choosing home or fallback networking at boot and after a BLE override, the join budget, home-mode link loss, build-time home settings and the mode events.
+* `network-mode`: home/fallback selection, join budget, mode command and its errors on all transports, network information, hand-back latch, BLE availability in home mode, link loss, build-time settings and mode events.
 
 ### Modified Capabilities
 
-* `car-control-api`: the *Single owner* requirement gains home-mode BLE advertising and preemption; fallback mode keeps today's rules. Claim, reclaim, arming, lease and stop rules are unchanged.
+* `car-control-api`: *Single owner* gains the BLE > UDP > ROS preemption; *Explicit arming* respects the hand-back latch. Claim, reclaim, lease, stop and Status encodings are unchanged.
 
 ## Impact
 
-* Firmware: Wi-Fi station configuration and DHCP (embassy-net `dhcpv4`), a mode supervisor, build variables `ROVI_HOME_SSID`, `ROVI_HOME_PASSWORD` and `ROVI_HOME_ROUTER`, and a per-mode ROS router endpoint. No new dependency, GATT characteristic or flash storage.
-* `rovi-core`: an arbiter preemption path for BLE in home mode and new log events; simulator and host tests.
-* Clients: unchanged.
+* Firmware: Wi-Fi station and DHCP (embassy-net `dhcpv4`), build variables `ROVI_HOME_SSID`, `ROVI_HOME_PASSWORD`, `ROVI_HOME_ROUTER`, a per-mode ROS router endpoint, one new GATT characteristic (Network), ROS topics `/rovi/mode` and `/rovi/network`. No new dependency or flash storage.
+* `rovi-core`: mode supervisor, arbiter preemption, hand-back latch, mode command and network-information codecs on all three transports, new log events; simulator and host tests.
+* Clients: laptop teleop gains `--mode home|car` and shows network information; the iPhone client keeps working unchanged (mode UI optional later).
 * Docs: new ADR superseding parts of ADR-0004 and ADR-0008; `PLAN.md` Q21 closed; glossary STA entry updated.
 * Acceptance needs board checks on a real home network, including BLE/Wi-Fi coexistence while ROS drives; each motor batch needs its own announced go.
