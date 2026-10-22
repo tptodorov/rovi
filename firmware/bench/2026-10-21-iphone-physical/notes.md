@@ -96,3 +96,19 @@ browser scenarios pass, and 15 live files match its clean build. Public-page boo
 stays paused/disarmed without a BLE picker call. START/PAUSE and requested motion
 are in the sticky panel. New phone usability and interruption checks remain pending;
 this work enabled no motor power and ran no motor batch.
+
+
+## Redesigned controller phone retest — 2026-10-22
+
+Todor tested build `2b5104400362` in Bluefy using the announced motor-power-off,
+USB-powered procedure: both Buttons and Physical, direction/phone visualization,
+requested motion, visible bottom ARM/START/PAUSE/STOP controls, mode-triggered
+sensor setup without a separate Enable tap, PAUSE and STOP.
+
+He replied “seems ok”. Record this as an operator-reported usability pass for
+that procedure, with no permission error, disconnect, clipping or awkward
+interaction reported. No new stream counters, sensor trace, phone/version details
+or motor-on evidence were supplied. Full interruption/recovery checks, VoiceOver
+and motor-on acceptance remain open. Future iPhone test requests must also send
+the exact versioned build link through Todor's Telegram destination, as documented
+in the [client testing workflow](../../../apps/iphone/README.md#phone-test-delivery).

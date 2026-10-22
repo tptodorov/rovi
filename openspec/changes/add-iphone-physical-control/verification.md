@@ -112,5 +112,9 @@ stacked on #102. Pages deployment succeeded; all 15 live files match the clean
 build. A live Chromium smoke check confirmed default Buttons with no sensor prompt,
 explicit Physical setup, Retry hidden after fresh readings, local disarm/zero,
 and no BLE picker calls/page errors. A preview tab is open in this workspace.
-Bluefy mode-selection permission and redesigned phone usability remain pending;
-this is publication evidence, with no rover connection or motor run.
+On 2026-10-22, Todor replied “seems ok” to the announced motor-power-off,
+USB-powered Bluefy retest of both modes, mode-triggered sensor setup, visible
+requested motion/dock controls, PAUSE and STOP. Record this as a scoped usability
+pass with no issue reported ([phone evidence](../../../firmware/bench/2026-10-21-iphone-physical/notes.md#redesigned-controller-phone-retest--2026-10-22)).
+No new timing trace or motor-on result is inferred. Full phone interruption/recovery,
+VoiceOver and motor-on acceptance remain open.

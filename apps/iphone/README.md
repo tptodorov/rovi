@@ -103,9 +103,20 @@ corrected scrolling/calibration and a 60 s requested-zero hold on reported iPhon
 (1,366 writes, max gap 180 ms, slowest write 19 ms). Those session counters do not
 define an exact 60 s trace or radio-delivery timing. Todor subsequently found
 holding the pad while tilting awkward and reported posture-triggered disarming.
-The redesigned light/dark controller and new tap START/PAUSE interaction need
-their own motor-power-off retest, including native mode-triggered permission. The
-original rotation/drop-of-touch cause and motor-on acceptance remain unverified.
+Todor reported the redesigned controller and tap START/PAUSE procedure worked
+in the motor-power-off Bluefy retest of build `2b5104400362` on 2026-10-22
+([evidence](../../firmware/bench/2026-10-21-iphone-physical/notes.md#redesigned-controller-phone-retest--2026-10-22)).
+Full phone interruption/recovery, the original rotation/drop-of-touch cause and
+motor-on acceptance remain unverified.
+
+## Phone test delivery
+
+When requesting a new iPhone client test from Todor, also send the exact versioned
+build URL and concise setup/test instructions to his Telegram destination so he
+can open it on the phone. Confirm delivery; if the destination is unavailable or
+ambiguous, resolve that before relying on Telegram delivery. Keep credentials and
+private destination identifiers out of the repository. A test link does not
+authorize a motor run; announce each motor batch and obtain a fresh go.
 
 ## Phone sensor test
 
