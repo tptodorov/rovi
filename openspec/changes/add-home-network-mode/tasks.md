@@ -10,12 +10,14 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 
 - [ ] 2.1 Add the network mode and supervisor transitions to `rovi-core` test-first: no settings → fallback; scan/join/DHCP/router failures → fallback; success → home; BLE disconnect in home → attempt; station loss → attempt; fallback terminal until reboot. Verify with unit tests covering every spec scenario in `network-mode`.
 - [ ] 2.2 Add BLE > UDP > ROS preemption and the hand-back latch to the arbiter/`Device` test-first: UDP over ROS in both modes, BLE over Wi-Fi in home mode only, owner-lost stop, disarmed new owner, latch set/cleared per D4. Existing `rovi-core` tests pass; the ones whose behaviour changes are updated with a note.
-- [ ] 2.4 Add the mode command (BLE codes 3/4, UDP kind 10, ROS `/rovi/mode`) and network information (BLE characteristic, UDP kind 11, ROS `/rovi/network`) codecs test-first, with every error case in *Mode command errors*.
 - [ ] 2.3 Add mode and step events to the catalog (`events.rs`, `carlog.py`, `docs/LOGGING.md`) with tests; `test_carlog.py` passes.
+- [ ] 2.4 Add the mode command (BLE codes 3/4, UDP kind 10, ROS `/rovi/mode`) and network information (BLE characteristic, UDP kind 11, ROS `/rovi/network`) codecs test-first, with every error case in *Mode command errors*.
+- [ ] 2.5 Add BLE claim-on-first-command (two connections, reads/Echo never claim), UDP `INFO` for any peer, ROS `/rovi/release` and the takeover-notice Status to `rovi-core` test-first, covering every scenario of those requirements.
 
 ## 3. Simulator
 
 - [ ] 3.1 Model the mode in the sim car (network steps injected by the scenario) and add scenarios: deliberate and accidental hand-back, UDP takeover from ROS, mode commands from each transport, router restart in home mode, link loss → fallback, Home from fallback. All existing sim scenarios pass.
+- [ ] 3.2 Build the transport-independent conformance suite (D13) with UDP, ROS and BLE GATT adapters against the simulator; port the shared existing scenarios into it and add every new car-control-api and network-mode scenario. CI runs it on every PR.
 
 ## 4. Firmware
 
@@ -24,8 +26,8 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 
 ## 5. Client and docs
 
-- [ ] 5.0 Laptop teleop `--mode home|car` and network-information display for UDP and BLE; fake-peer/GATT tests for success, refusal (armed, invalid) and display.
-- [ ] 5.1 Mark ADR-0004 and ADR-0008 as partly superseded by ADR-0016; README build command with the home variables, PLAN/GLOSSARY updates; reader regenerated.
+- [ ] 5.1 Laptop teleop: `--mode home|car`, network-information display, takeover notice shown as "overridden", BLE claim on first write; rerun the iPhone client tests against the new claim timing; fake-peer/GATT tests for success, refusal (armed, invalid) and display.
+- [ ] 5.2 Write `docs/reference/protocol.md`: one row per operation, one column per transport (BLE, UDP, ROS), linked from the specs and client READMEs. Mark ADR-0004 and ADR-0008 as partly superseded by ADR-0016; README build command with the home variables, PLAN/GLOSSARY updates; reader regenerated.
 
 ## 6. Board acceptance (each step separately announced; motor steps need Todor's go)
 

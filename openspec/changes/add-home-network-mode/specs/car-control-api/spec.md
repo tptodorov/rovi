@@ -14,7 +14,7 @@ The first controller to claim SHALL own the car; other claims SHALL be refused a
 #### Scenario: Other radio is off while owned
 
 - **GIVEN** the car is open in fallback mode
-- **WHEN** a BLE controller connects
+- **WHEN** a BLE controller connects and writes its first setpoint or control command
 - **THEN** it becomes the owner and the car AP goes off
 - **AND** when ownership is released with no Home command pending, BLE advertising and the car AP are both up
 
@@ -105,3 +105,124 @@ New owners SHALL start disarmed. BLE/UDP SHALL require the owner's explicit arm 
 - **WHEN** it sends arm before any new setpoint
 - **THEN** arm is refused with not-ready and the car stays in safety stop
 - **AND** after one valid setpoint, the next arm succeeds
+
+### Requirement: Capabilities
+
+The car SHALL give its capabilities on every source, to owners and non-owners, before any claim: protocol version, `wheels_radius`, `sum_of_robot_center_projection_on_X_Y_axis`, maximum `linear.x`, `linear.y` and `angular.z`, lease length, claim window and reclaim window. BLE: Capabilities characteristic; UDP: `INFO` to any peer and `HELLO_ACK`; ROS 2: as below. Each value SHALL be the one the car enforces.
+
+#### Scenario: Limits match enforcement
+
+- **GIVEN** a controller has read the capabilities
+- **WHEN** it sends a setpoint at exactly the maximum `linear.x`
+- **THEN** the setpoint is applied
+- **AND** a setpoint above it raises a safety stop
+
+#### Scenario: Same capabilities on every source
+
+- **GIVEN** the same car
+- **WHEN** a BLE, a UDP and a ROS 2 controller each read the capabilities
+- **THEN** every value is identical
+
+#### Scenario: Capabilities before claiming
+
+- **GIVEN** another controller owns the car
+- **WHEN** a connected unclaimed BLE central reads Capabilities, or a UDP peer sends `INFO`
+- **THEN** it gets the capabilities and the owner, state and deadlines are unchanged
+
+### Requirement: Status
+
+The car SHALL report its status on every source to owners and non-owners (BLE Status characteristic, UDP `STATUS` to the owner and `INFO` to any peer, ROS 2 `/rovi/status`): state (open, claimed, armed or stopped), stop reason (none, stop, lease-expired, owner-lost or out-of-limits) and last owner control error (none, not-ready or invalid). Every status read or notification SHALL report the state at that moment.
+
+#### Scenario: Status follows a stop
+
+- **GIVEN** the car is armed and the owner reads status
+- **WHEN** the lease expires
+- **THEN** the next status reports safety stop with reason lease-expired
+
+#### Scenario: Readable right after the claim
+
+- **GIVEN** a BLE central has just connected to an open car
+- **WHEN** it reads Status before any write, then writes a setpoint and reads Status again
+- **THEN** the first read reports open and the second reports claimed with no error
+
+### Requirement: Echo is observational
+
+UDP Echo and the BLE Echo characteristic SHALL return payloads of at most 32 bytes unchanged and discard larger ones. Echo SHALL NOT claim, arm, change wheel commands, renew deadlines, consume setpoint sequences or clear errors. Echo SHALL be available to non-owners: any UDP peer and any connected BLE central, claimed or not.
+
+#### Scenario: Echo does not keep an owner alive
+
+- **GIVEN** an owner stops sending setpoints but continues echo probes
+- **WHEN** the lease expires
+- **THEN** the normal lease stop occurs and ownership eventually expires without ARM
+
+#### Scenario: Echo does not claim over BLE
+
+- **GIVEN** an open car and a connected BLE central that has written nothing else
+- **WHEN** it writes Echo probes
+- **THEN** each is returned and the car stays open
+
+## ADDED Requirements
+
+### Requirement: BLE claim on first command
+
+The car SHALL accept up to two BLE connections. A connection SHALL claim on its first Setpoint or Control write, not on connect; reads, notifications and Echo SHALL NOT claim. A non-owner's Setpoint or Control write that cannot claim SHALL be rejected with an ATT error and change nothing. When BLE ownership ends, the car SHALL disconnect that central; other BLE connections stay.
+
+#### Scenario: Watching without claiming
+
+- **GIVEN** a UDP owner driving in home mode
+- **WHEN** a BLE central connects, subscribes to Status and Network and reads Capabilities
+- **THEN** it receives them, the UDP owner keeps driving and the station stays up
+
+#### Scenario: Second central cannot claim while BLE owns
+
+- **GIVEN** a BLE owner and a second connected BLE central
+- **WHEN** the second central writes a setpoint or ARM
+- **THEN** the write is rejected with an ATT error and the owner, state and lease are unchanged
+
+#### Scenario: Owner released, watcher stays
+
+- **GIVEN** a BLE owner and a second, unclaimed BLE central
+- **WHEN** the owner's claim window expires
+- **THEN** the owner is disconnected and the second central stays connected and unclaimed
+
+### Requirement: Observation without ownership
+
+Any client SHALL be able to read capabilities, Status and network information without claiming: a connected BLE central through its characteristics, any UDP peer through one `INFO` request (kind 11) answered with all three, and any ROS node through the topics. Observation SHALL NOT claim, renew deadlines, change state or clear errors.
+
+#### Scenario: UDP INFO from a non-owner
+
+- **GIVEN** a ROS owner and a UDP peer that has never sent HELLO
+- **WHEN** the peer sends `INFO`
+- **THEN** it receives capabilities, Status (claimed or armed) and network information, and the ROS owner is unchanged
+
+### Requirement: ROS release
+
+A ROS owner node SHALL be able to release the car by publishing on `/rovi/release` (`std_msgs/Empty`), with the same effects as a UDP BYE: an owner-lost stop if armed, release at once, and any pending mode command taking effect. Publications from non-owner nodes SHALL be ignored.
+
+#### Scenario: Release applies a pending mode at once
+
+- **GIVEN** a disarmed ROS owner that published Home on `/rovi/mode` in fallback mode
+- **WHEN** it publishes on `/rovi/release`
+- **THEN** the car is released and starts a home-mode attempt without waiting for the lease or reclaim window
+
+#### Scenario: Non-owner release is ignored
+
+- **GIVEN** a ROS node owns the car
+- **WHEN** another node publishes on `/rovi/release`
+- **THEN** the owner and state are unchanged
+
+### Requirement: Takeover notice
+
+When a controller is preempted, the car SHALL first send it a final Status (stopped, owner-lost) on its own transport: a UDP `STATUS` to the old session's endpoint, or `/rovi/status` for ROS. Later input from the preempted session SHALL be ignored; its HELLO SHALL receive `BUSY` while the new owner holds the car.
+
+#### Scenario: UDP owner learns it was overridden
+
+- **GIVEN** home mode and a UDP owner
+- **WHEN** a BLE central claims the car
+- **THEN** the UDP owner's endpoint receives a `STATUS` with stopped and owner-lost before the station goes off
+
+#### Scenario: ROS owner learns it was overridden
+
+- **GIVEN** a ROS owner
+- **WHEN** a UDP controller sends HELLO
+- **THEN** `/rovi/status` publishes stopped with owner-lost before the UDP `HELLO_ACK`

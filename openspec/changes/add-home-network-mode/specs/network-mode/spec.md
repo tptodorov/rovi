@@ -54,7 +54,7 @@ Fallback mode SHALL last until reboot or until a Home mode command takes effect.
 
 ### Requirement: Mode command
 
-Every transport SHALL accept a mode command, Home or Car network, from the owner while disarmed: BLE Control codes 3 and 4, UDP kind 10 with payload 1 or 2, ROS `/rovi/mode` (`std_msgs/UInt8`, 1 or 2). It SHALL become pending and take effect when that ownership ends. Home SHALL start a home-mode attempt; Car network SHALL enter fallback with reason requested. A later command SHALL replace a pending one.
+Every transport SHALL accept a mode command, Home or Car network, from the owner while disarmed: BLE Control codes 3 and 4, UDP kind 10 with payload 1 or 2, ROS `/rovi/mode` (`std_msgs/UInt8`, 1 or 2). It SHALL be pending until that ownership ends (BLE disconnect, UDP BYE, ROS `/rovi/release` or a window). Home SHALL start a home-mode attempt; Car network SHALL enter fallback with reason requested. A later command SHALL replace a pending one.
 
 #### Scenario: Back home from fallback over BLE
 
@@ -110,7 +110,7 @@ A mode command SHALL change nothing and SHALL be refused: with not-ready when th
 
 ### Requirement: Network information
 
-The car SHALL report network information on every transport, to owners and non-owners: mode (home, fallback, attempting), pending command (none, home, car network), last fallback reason (none, no-settings, scan, join, dhcp, router, link-lost, requested) and station IPv4 (0.0.0.0 if none). BLE: a readable, notifying Network characteristic. UDP: kind 11, answered to any peer. ROS: `/rovi/network`, republished at least every second and on change.
+The car SHALL report network information on every transport, to owners and non-owners: mode (home, fallback, attempting), pending command (none, home, car network), last fallback reason (none, no-settings, scan, join, dhcp, router, link-lost, requested) and station IPv4 (0.0.0.0 if none). BLE: a readable, notifying Network characteristic. UDP: in `INFO` (kind 11), to any peer. ROS: `/rovi/network`, republished at least every second and on change.
 
 #### Scenario: Finding the car's home address
 
@@ -148,7 +148,7 @@ When a BLE or UDP owner that preempted a ROS owner loses ownership, ROS auto-arm
 
 ### Requirement: BLE availability in home mode
 
-In home mode the car SHALL advertise BLE whenever no BLE controller is connected. When a BLE owner's connection ends for any reason in home mode, the car SHALL start a home-mode attempt, unless Car network is pending.
+In home mode the car SHALL advertise BLE whenever a BLE connection slot is free. When BLE ownership ends for any reason in home mode (disconnect, link loss or window expiry), the car SHALL start a home-mode attempt, unless Car network is pending.
 
 #### Scenario: BLE advertises while a Wi-Fi controller drives
 

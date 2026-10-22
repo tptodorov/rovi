@@ -14,11 +14,17 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 * **Network information on every transport.** Mode, pending command, last fallback reason and the car's home IP, readable by owners and non-owners (BLE characteristic, UDP kind, ROS topic).
 * **Takeover priority: BLE > UDP > ROS.** UDP preempts a ROS owner in both modes; in home mode BLE (which keeps advertising) preempts UDP or ROS. Preemption stops the car and leaves the new owner disarmed. **BREAKING** for [ADR-0004](../../../docs/adr/0004-single-owner-latest-setpoint.md)'s first-claim rule.
 * **Safe hand-back.** When a manual takeover ends without a Home command (e.g. an accidental BLE drop), the next ROS owner must publish `/rovi/arm` true once before moving. With Home sent first, ROS takes over and auto-arms as today.
+* **Protocol alignment.** Every transport gets the same operations (todor, 2026-10-22):
+  * BLE claims on its first Setpoint/Control write, not on connect, with up to two connections, so a BLE central can watch without claiming.
+  * Capabilities, Status and network information are readable before claiming everywhere (UDP `INFO`, kind 11).
+  * ROS gets an explicit release (`/rovi/release`) like UDP BYE and BLE disconnect.
+  * A preempted owner receives a final Status (stopped, owner-lost) on its own transport.
+  * One transport-independent scenario suite runs the shared rules over BLE, UDP and ROS in the simulator.
 * **Settings at build time.** SSID, passphrase and the home ROS router endpoint are build variables, like today's `ROVI_WIFI_PASSWORD`, flashed over USB. Nothing about the home network is sent over the air.
 * **Trust.** Any device on the home network may control the car, with no new authentication ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) station-mode exclusion superseded).
 * **Observability.** New log events report mode changes, mode commands and each join step with its duration.
 
-Out of scope: running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.
+Deferred: a shared Rust client crate for all clients ([#108](https://github.com/tptodorov/rovi/issues/108)) and the iPhone mode/network UI ([#109](https://github.com/tptodorov/rovi/issues/109)). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.
 
 ## Capabilities
 
@@ -28,7 +34,7 @@ Out of scope: running AP and station together, UDP authentication, mDNS/zenoh sc
 
 ### Modified Capabilities
 
-* `car-control-api`: *Single owner* gains the BLE > UDP > ROS preemption; *Explicit arming* respects the hand-back latch. Claim, reclaim, lease, stop and Status encodings are unchanged.
+* `car-control-api`: modified *Single owner* (BLE > UDP > ROS preemption), *Explicit arming* (hand-back latch), *Capabilities* and *Status* (readable before claiming), *Echo is observational* (BLE echo without claiming); added *BLE claim on first command*, *Observation without ownership*, *ROS release* and *Takeover notice*. Claim/reclaim windows, lease, stop rules and existing message encodings are unchanged.
 
 ## Impact
 
