@@ -479,10 +479,10 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>65 / 80</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>66 / 80</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
-<strong>Status:</strong> draft for review (2026-10-22). Behaviour decided by Todor in conversation on 2026-10-22; no implementation, flash or motor run is authorized yet.</p>
+<strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
 </div>
       <h3>Why this matters</h3><p>
 Rovi can only be driven from a device on its own access point (AP) or over BLE, so a ROS 2 controller must run on a laptop that has given up its normal Wi-Fi. Todor wants a controller running as a service on the home network to drive the car around the house and take part in the other ROS 2 activity there, while he can still take over by hand over BLE. This closes open question Q21 in <a href="../docs/PLAN.md"><code>PLAN.md</code></a>.</p>
@@ -4454,7 +4454,7 @@ Reverting the client commit restores fail-and-exit behavior. No device change.</
 Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation, a flash or a motor run.</p>
 <h2 id="openspec--changes--add-home-network-mode--tasks--1-acceptance">1. Acceptance</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 1.1 Todor accepts this proposal and <a href="../docs/adr/0016-home-network-mode-with-ble-override.md">ADR-0016</a> for implementation (ADR status → accepted). Record the date and wording here; strict <code>openspec validate</code> and <code>spec:reader:check</code> pass.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 1.1 Todor accepts this proposal and <a href="../docs/adr/0016-home-network-mode-with-ble-override.md">ADR-0016</a> for implementation (ADR status → accepted). Record the date and wording here; strict <code>openspec validate</code> and <code>spec:reader:check</code> pass. <strong>Done 2026-10-22:</strong> Todor: “merge them and continue with next steps” on PR #107 after reviewing the aligned proposal; strict validation and reader check pass. No flash or motor run is authorized by this.</li>
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--2-core-state-machine-host">2. Core state machine (host)</h2><ul>
 <li>
@@ -6190,7 +6190,7 @@ electrical measurements and physical stopping bounds remain outside this change.
 </section><section class="document" id="openspec--changes--add-home-network-mode--proposal" aria-label="proposal">
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-home-network-mode/proposal.md">Markdown source ↗</a><div class="path">openspec/changes/add-home-network-mode/proposal.md</div></header>
     <h1 id="openspec--changes--add-home-network-mode--proposal--home-network-mode">Home network mode</h1><p>
-<strong>Status:</strong> draft for review (2026-10-22). Behaviour decided by Todor in conversation on 2026-10-22; no implementation, flash or motor run is authorized yet.</p>
+<strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
 <h2 id="openspec--changes--add-home-network-mode--proposal--why">Why</h2><p>
 Rovi can only be driven from a device on its own access point (AP) or over BLE, so a ROS 2 controller must run on a laptop that has given up its normal Wi-Fi. Todor wants a controller running as a service on the home network to drive the car around the house and take part in the other ROS 2 activity there, while he can still take over by hand over BLE. This closes open question Q21 in <a href="../docs/PLAN.md"><code>PLAN.md</code></a>.</p>
 <h2 id="openspec--changes--add-home-network-mode--proposal--what-changes">What Changes</h2><ul>

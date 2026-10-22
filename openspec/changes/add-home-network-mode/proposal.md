@@ -1,6 +1,6 @@
 # Home network mode
 
-**Status:** draft for review (2026-10-22). Behaviour decided by Todor in conversation on 2026-10-22; no implementation, flash or motor run is authorized yet.
+**Status:** accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.
 
 ## Why
 
