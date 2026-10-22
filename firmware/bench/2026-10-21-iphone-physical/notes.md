@@ -141,3 +141,22 @@ reused as timing evidence for this build. Independent sensor/UI stalls, invalid
 samples/reference changes, screen-orientation changes and permission denial/retry
 were not separately exercised by this procedure; their phone checks remain open.
 No motor-on result or measured stopping bound is inferred.
+
+
+## Remaining phone-check response — 2026-10-22
+
+For build `2b5104400362`, the next motor-power-off procedure requested displayed
+per-axis caps (including combined input), current Stream counters, phone/browser
+versions, screen-rotation recovery, and permission denial/retry if prompted.
+Todor replied “completed. when the page scrolls it stops the tilt control”.
+
+Record the procedure as reported completed and scrolling as reported to stop
+running tilt input. Exact caps, Stream counters, updated versions, rotation-fault
+text and whether a fresh permission prompt appeared were not supplied; no numeric
+or case-specific pass is inferred from “completed”.
+
+The product contract and `ui.js` intentionally pause Physical control on scroll,
+zeroing input and preserving arm/neutral. The existing browser regression checks
+zero, retained Armed state and explicit restart at neutral. Clarification was
+requested whether the observed phone behavior is that pause or a disarm/disconnect.
+No runtime change, motor run or firmware operation was performed for this report.

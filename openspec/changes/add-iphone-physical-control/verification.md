@@ -173,3 +173,13 @@ include 5.281 s and 8.132 s, totaling 24.605 s, so the announced 2 s/20 s bounds
 are not recorded as passed. Capture is stopped; no firmware was flashed.
 Task 3.2 remains partial for client cap evidence; the final functional stop/re-ARM/
 mode-switch checks are confirmed. No new drive is authorized.
+
+
+Latest motor-power-off response: Todor reported the remaining phone procedure
+“completed” and that scrolling stops tilt control ([record](../../../firmware/bench/2026-10-21-iphone-physical/notes.md#remaining-phone-check-response--2026-10-22)).
+Scroll-to-pause at zero with arm/neutral retained is intentional and covered by
+an existing browser regression; whether the phone only paused or also disarmed/
+disconnected is awaiting clarification. Requested cap values, Stream counters,
+versions, rotation message and permission-prompt outcome were not supplied.
+Tasks 3.1–3.3 remain open for their outstanding evidence; this report is not a
+confirmed new fault and does not change the control contract.
