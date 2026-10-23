@@ -17,7 +17,7 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 ## 3. Simulator
 
 - [x] 3.1 Model the mode in the sim car (network steps injected by the scenario) and add scenarios: deliberate and accidental hand-back, UDP takeover from ROS, mode commands from each transport, router restart in home mode, link loss → fallback, Home from fallback. All existing sim scenarios pass. **Done:** `net.rs` (stdin-scripted steps), `vble.rs` (virtual BLE), ROS `rovi/mode`, `rovi/release`, `rovi/network` and takeover notice; `network_scenarios.py` (14), `ros-network.sh` (UDP/BLE takeover from ROS, deliberate and accidental hand-back, ROS mode + release), `ros-reconnect.sh` in home mode; existing UDP (14) and product ROS scripts pass. All in CI.
-- [ ] 3.2 Build the transport-independent conformance suite (D13) with UDP, ROS and BLE GATT adapters against the simulator; port the shared existing scenarios into it and add every new car-control-api and network-mode scenario. CI runs it on every PR.
+- [x] 3.2 Build the transport-independent conformance suite (D13) with UDP, ROS and BLE GATT adapters against the simulator; port the shared existing scenarios into it and add every new car-control-api and network-mode scenario. CI runs it on every PR. **Done:** `conformance.py`/`conformance.sh`: 8 shared rules (arm rule, STOP latch, lease, out-of-limits, mode refused/applied, invalid mode, observation, release) × UDP, virtual BLE and ROS = 24 cases against one sim car in home mode, stable over 3 runs; in CI. Transport-specific checks (UDP sessions/sequences, ROS graph identity, BLE slots, takeover and hand-back) stay in `udp_scenarios.py`, `network_scenarios.py` and the ROS scripts rather than being duplicated here.
 
 ## 4. Firmware
 
