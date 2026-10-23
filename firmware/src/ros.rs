@@ -1,10 +1,12 @@
 //! The ROS 2 adapter: node `/rovi` over zenoh-nostd and `rmw_zenohd`, the same wiring as the
-//! sim car. The car is a zenoh client of the router on the laptop that joined the car AP.
+//! sim car. The car is a zenoh client of the router: on the laptop that joined the car AP in
+//! fallback mode, or on the home network in home mode (ADR-0016).
 
 extern crate alloc;
 
 use super::{log, logger::emit, now};
 use core::cell::{Cell, RefCell};
+use core::sync::atomic::{AtomicBool, Ordering};
 use embassy_futures::select::{select, select5, Either, Either5};
 use embassy_net::Stack;
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
@@ -21,7 +23,7 @@ const DOMAIN: u32 = 0;
 const NODE: &str = "rovi";
 /// TCP, which a stock `rmw_zenohd` listens on. Over UDP the router's listener can stop accepting
 /// every peer after a stall (eclipse-zenoh/zenoh#2849), so the car could not rejoin (ADR-0012).
-const ROUTER: &str = match option_env!("ROVI_ZENOH_ROUTER") {
+pub const ROUTER: &str = match option_env!("ROVI_ZENOH_ROUTER") {
     Some(v) => v,
     None => "tcp/192.168.4.2:7447",
 };
@@ -30,6 +32,9 @@ const ROUTER: &str = match option_env!("ROVI_ZENOH_ROUTER") {
 /// does not resend what a full receive queue drops: 8 slots and 512 bytes (the defaults) lost the
 /// controller's publisher tokens on the board, so the car never learned its node. 32 slots and
 /// 8192 bytes held a three-node graph; SOCKS 2 covers a reconnect while the old link is dropped.
+/// A router session is up: the home-mode router step waits for it.
+pub static LINK_UP: AtomicBool = AtomicBool::new(false);
+
 type Link = EmbassyLinkManager<'static, 512, 2, 32, 8192>;
 
 struct RosConfig {
@@ -62,12 +67,14 @@ fn leak(s: alloc::string::String) -> &'static str {
 
 /// Runs forever: connects to the router (retrying until it is up), declares the node and its
 /// endpoints, feeds the samples to the device, and starts over when the session ends.
-pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
+pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>, router: &'static str) -> ! {
     static CONFIG: StaticCell<RosConfig> = StaticCell::new();
     static CMD: StaticCell<Chan> = StaticCell::new();
     static ARM: StaticCell<Chan> = StaticCell::new();
     static TOKENS: StaticCell<TokenChan> = StaticCell::new();
     static ECHO: StaticCell<Chan> = StaticCell::new();
+    static MODE: StaticCell<Chan> = StaticCell::new();
+    static RELEASE: StaticCell<Chan> = StaticCell::new();
 
     let config: &'static RosConfig = CONFIG.init(RosConfig {
         transports: TransportLinkManager::from(Link::new(stack)),
@@ -79,16 +86,19 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
         TOKENS.init(Channel::new()),
         ECHO.init(Channel::new()),
     );
+    let (mode, release) = (MODE.init(Channel::new()), RELEASE.init(Channel::new()));
 
     // One session per connection. Each gets heap storage that is reclaimed once it has ended
     // (the link frees its buffer slot when dropped), so the car can reconnect indefinitely.
     loop {
         let transport = loop {
-            let endpoint = Endpoint::try_from(ROUTER).expect("ROVI_ZENOH_ROUTER endpoint");
+            // No address yet (the station is still joining): nothing to connect from.
+            stack.wait_config_up().await;
+            let endpoint = Endpoint::try_from(router).expect("router endpoint");
             match config.transports().connect(endpoint, config.buff()).await {
                 Ok(t) => break t,
                 Err(_) => {
-                    println!("ros: router {} not reachable, retrying", ROUTER);
+                    println!("ros: router {} not reachable, retrying", router);
                     emit(Event::Ros(RosLink::Retry));
                     Timer::after_secs(2).await;
                 }
@@ -102,8 +112,16 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
         let session: *mut Session<'static, RosConfig> =
             alloc::boxed::Box::into_raw(alloc::boxed::Box::new(Session::new(link)));
         // SAFETY: the session lives until it is reclaimed below.
-        let result =
-            declare_and_serve(dev, unsafe { &*session }, &zid, cmd, arm, tokens, echo).await;
+        let chans = Chans {
+            cmd,
+            arm,
+            tokens,
+            echo,
+            mode,
+            release,
+        };
+        let result = declare_and_serve(dev, unsafe { &*session }, &zid, router, &chans).await;
+        LINK_UP.store(false, Ordering::Relaxed);
         println!("ros session ended ({:?}), reconnecting", result.err());
         emit(Event::Ros(RosLink::Down));
         // The router is gone: a ROS owner is released now, not only by its lease.
@@ -118,19 +136,51 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>) -> ! {
         while arm.try_receive().is_ok() {}
         while tokens.try_receive().is_ok() {}
         while echo.try_receive().is_ok() {}
+        while mode.try_receive().is_ok() {}
+        while release.try_receive().is_ok() {}
         Timer::after_secs(2).await;
     }
+}
+
+struct Chans {
+    cmd: &'static Chan,
+    arm: &'static Chan,
+    tokens: &'static TokenChan,
+    echo: &'static Chan,
+    mode: &'static Chan,
+    release: &'static Chan,
 }
 
 async fn declare_and_serve(
     dev: &RefCell<Device>,
     session: &'static Session<'static, RosConfig>,
     zid: &str,
-    cmd: &'static Chan,
-    arm: &'static Chan,
-    tokens: &'static TokenChan,
-    echo: &'static Chan,
+    router: &str,
+    chans: &Chans,
 ) -> zenoh::ZResult<()> {
+    let Chans {
+        cmd,
+        arm,
+        tokens,
+        echo,
+        mode,
+        release,
+    } = *chans;
+    let mode_t = Topic {
+        name: "rovi/mode",
+        ty: rmw::UINT8.0,
+        hash: rmw::UINT8.1,
+    };
+    let release_t = Topic {
+        name: "rovi/release",
+        ty: rmw::EMPTY.0,
+        hash: rmw::EMPTY.1,
+    };
+    let network_t = Topic {
+        name: "rovi/network",
+        ty: rmw::STRING.0,
+        hash: rmw::STRING.1,
+    };
     let cmd_vel = Topic {
         name: "cmd_vel",
         ty: rmw::TWIST_STAMPED.0,
@@ -179,6 +229,9 @@ async fn declare_and_serve(
             &capabilities_t,
             rmw::QOS_RELIABLE_VOLATILE_1,
         ),
+        (7, Kind::Subscription, &mode_t, rmw::QOS_DEFAULT_10),
+        (8, Kind::Subscription, &release_t, rmw::QOS_DEFAULT_10),
+        (9, Kind::Publisher, &network_t, rmw::QOS_RELIABLE_VOLATILE_1),
     ]
     .map(|(id, kind, topic, qos)| {
         rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
@@ -191,6 +244,7 @@ async fn declare_and_serve(
     let status_gid = rmw::gid(eps[2].as_str());
     let echo_gid = rmw::gid(eps[4].as_str());
     let capabilities_gid = rmw::gid(eps[5].as_str());
+    let network_gid = rmw::gid(eps[8].as_str());
 
     let key = |t: &Topic| leak(rmw::topic_key(DOMAIN, t).unwrap().as_str().into());
     let cmd_sub = session
@@ -227,8 +281,68 @@ async fn declare_and_serve(
         .declare_publisher(zenoh::keyexpr::new(key(&capabilities_t))?)
         .finish()
         .await?;
-    println!("ros node /{} up, zid {}, router {}", NODE, zid, ROUTER);
+    let mode_sub = session
+        .declare_subscriber(zenoh::keyexpr::new(key(&mode_t))?)
+        .channel(mode.dyn_sender(), mode.dyn_receiver())
+        .finish()
+        .await?;
+    let release_sub = session
+        .declare_subscriber(zenoh::keyexpr::new(key(&release_t))?)
+        .channel(release.dyn_sender(), release.dyn_receiver())
+        .finish()
+        .await?;
+    let network_pub = session
+        .declare_publisher(zenoh::keyexpr::new(key(&network_t))?)
+        .finish()
+        .await?;
+    println!("ros node /{} up, zid {}, router {}", NODE, zid, router);
     emit(Event::Ros(RosLink::Up));
+    LINK_UP.store(true, Ordering::Relaxed);
+
+    let network_loops = embassy_futures::join::join3(
+        async {
+            while let Some(s) = mode_sub.recv().await {
+                let mut d = dev.borrow_mut();
+                d.on_ros_mode(now(), s.attachment().unwrap_or(&[]), s.payload());
+                if let Some((source, cmd, error)) = d.take_mode_log() {
+                    emit(Event::ModeCmd { source, cmd, error });
+                }
+            }
+        },
+        async {
+            while let Some(s) = release_sub.recv().await {
+                let fx = dev.borrow_mut().on_ros_release(
+                    now(),
+                    s.attachment().unwrap_or(&[]),
+                    s.payload(),
+                );
+                log(fx);
+            }
+        },
+        async {
+            // Network information: every second and on change.
+            let (mut seq, mut last, mut sent_at) = (0i64, [0u8; 8], 0u64);
+            let mut buf = [0u8; 128];
+            loop {
+                let (info, n) = {
+                    let d = dev.borrow();
+                    (d.network_info(), d.network_cdr(&mut buf))
+                };
+                if n > 0 && (info != last || now() >= sent_at + 1_000) {
+                    seq += 1;
+                    let att = Attachment {
+                        seq,
+                        timestamp: 0,
+                        gid: network_gid,
+                    }
+                    .encode();
+                    let _ = network_pub.put(&buf[..n]).attachment(&att).finish().await;
+                    (last, sent_at) = (info, now());
+                }
+                Timer::after_millis(10).await;
+            }
+        },
+    );
 
     let last_refresh = Cell::new(None::<u64>);
     let echo_loop = async {
@@ -330,6 +444,21 @@ async fn declare_and_serve(
                 let mut schedule = rovi_core::status::Publication::default();
                 let mut buf = [0u8; rovi_core::status::CDR_MAX];
                 loop {
+                    // A taken-over ROS owner hears it first (spec: Takeover notice).
+                    let notice = dev
+                        .borrow_mut()
+                        .take_takeover_notice(rovi_core::arbiter::Source::Ros);
+                    if let Some(n) = notice {
+                        let len = n.ros_cdr(&mut buf);
+                        seq += 1;
+                        let att = Attachment {
+                            seq,
+                            timestamp: 0,
+                            gid: status_gid,
+                        }
+                        .encode();
+                        let _ = status_pub.put(&buf[..len]).attachment(&att).finish().await;
+                    }
                     let snapshot = dev.borrow().status_snapshot();
                     if schedule.due(now(), snapshot) {
                         if let Some(n) = snapshot.encode_cdr(&mut buf) {
@@ -347,13 +476,13 @@ async fn declare_and_serve(
                 }
             },
         ),
-        select(echo_loop, capabilities_loop),
+        select(echo_loop, select(capabilities_loop, network_loops)),
     )
     .await;
     // Report the session or publication failure before the adapter reconnects.
     match ended {
         Either::First(Either5::First(Err(e))) => return Err(e.into()),
-        Either::Second(Either::Second(Err(e))) => return Err(e.into()),
+        Either::Second(Either::Second(Either::First(Err(e)))) => return Err(e.into()),
         _ => {}
     }
     Ok(())

@@ -261,6 +261,19 @@ jobs:
         run: |
           cargo clippy --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
           cargo build --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+      - name: Product firmware with ROS and home settings (build only; placeholder values)
+        working-directory: firmware
+        env:
+          CARGO_TARGET_DIR: target/home
+          ROVI_HOME_SSID: ci-home
+          ROVI_HOME_PASSWORD: ci-placeholder
+          ROVI_HOME_ROUTER: tcp/192.0.2.10:7447
+        run: |
+          cargo clippy --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc -- -D warnings
+          cargo build --locked --release --features ros --target xtensa-esp32s3-none-elf -Zbuild-std=core,alloc
+          # The home passphrase is only for the station config: never formatted, logged or served.
+          uses=$(grep -n "HOME_PASSWORD" src/*.rs | grep -v -e "option_env!" -e "netmode::settings" -e "panic!" -e "ROVI_HOME_PASSWORD must")
+          test "$(echo "$uses" | wc -l)" = 1 && echo "$uses" | grep -q "Wpa2Personal\|unwrap_or(\"\").try_into" || { echo "unexpected HOME_PASSWORD use: $uses"; exit 1; }
       - name: Product reversal bench firmware with ROS (build only)
         working-directory: firmware
         env:

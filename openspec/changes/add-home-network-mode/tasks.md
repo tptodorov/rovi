@@ -21,8 +21,8 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 
 ## 4. Firmware
 
-- [ ] 4.1 Build-time home settings with build-failure checks for partial/invalid sets (verified by building each case); station interface with DHCPv4, per-mode router endpoint, per-mode stack rebuild (or D2's reset fallback), budgets from D7. Firmware builds with and without `ros`; CI green.
-- [ ] 4.2 Check the passphrase appears in no log line, characteristic, Status or ROS topic (host test over the event catalog plus a board log grep in 6.1).
+- [x] 4.1 Build-time home settings with build-failure checks for partial/invalid sets (verified by building each case); station interface with DHCPv4, per-mode router endpoint, per-mode stack rebuild (or D2's reset fallback), budgets from D7. Firmware builds with and without `ros`; CI green. **Done (build-verified, not board-verified):** const settings check (partial/invalid sets fail the build with a named message), one stack per boot with reset-based switching (D2), the network supervisor (steps, budgets, station off while BLE owns, link loss, mode events), DHCPv4, per-mode router, two BLE slots with `on_ble_attach` and the Network characteristic, ROS `mode`/`release`/`network` and takeover notices, UDP notices and mode logs. Clippy clean; a home-settings image links (text 903 KB, bss 518 KB); CI builds it with placeholder settings. Behaviour is unproven until 6.1–6.3.
+- [x] 4.2 Check the passphrase appears in no log line, characteristic, Status or ROS topic (host test over the event catalog plus a board log grep in 6.1). **Done (host part):** no event, characteristic, Status or topic carries settings; a CI guard fails if `HOME_PASSWORD` is used anywhere but the station config. The board log grep is part of 6.1.
 
 ## 5. Client and docs
 
