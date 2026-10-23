@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>68 / 80</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>71 / 80</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -756,7 +756,7 @@ UDP Echo and the BLE Echo characteristic SHALL return payloads of at most 32 byt
 <strong>THEN</strong> each is returned and the car stays open</li>
 </ul>
 </details></article><h2 id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--added-requirements">ADDED Requirements</h2><article class="requirement" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--requirement-ble-claim-on-first-command"><h3>BLE claim on first command</h3><p>
-The car SHALL accept up to two BLE connections. A connection SHALL claim on its first Setpoint or Control write, not on connect; reads, notifications and Echo SHALL NOT claim. A non-owner's Setpoint or Control write that cannot claim SHALL be rejected with an ATT error and change nothing. When BLE ownership ends, the car SHALL disconnect that central; other BLE connections stay.</p>
+The car SHALL accept up to two BLE connections. A connection SHALL claim on its first Setpoint or Control write, not on connect; reads, notifications and Echo SHALL NOT claim. A Control write that cannot claim SHALL be rejected with an ATT error; a Setpoint write (without response) that cannot claim SHALL be ignored. Neither SHALL change anything. When BLE ownership ends, the car SHALL disconnect that central; other BLE connections stay.</p>
 <details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-watching-without-claiming"><summary>Watching without claiming</summary><ul>
 <li>
 <strong>GIVEN</strong> a UDP owner driving in home mode</li>
@@ -769,9 +769,9 @@ The car SHALL accept up to two BLE connections. A connection SHALL claim on its 
 <li>
 <strong>GIVEN</strong> a BLE owner and a second connected BLE central</li>
 <li>
-<strong>WHEN</strong> the second central writes a setpoint or ARM</li>
+<strong>WHEN</strong> the second central writes a setpoint, then ARM</li>
 <li>
-<strong>THEN</strong> the write is rejected with an ATT error and the owner, state and lease are unchanged</li>
+<strong>THEN</strong> the setpoint is ignored, ARM is rejected with an ATT error, and the owner, state and lease are unchanged</li>
 </ul>
 </details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--car-control-api--spec--scenario-owner-released-watcher-stays"><summary>Owner released, watcher stays</summary><ul>
 <li>
@@ -4462,11 +4462,11 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.2 Add BLE &gt; UDP &gt; ROS preemption and the hand-back latch to the arbiter/<code>Device</code> test-first: UDP over ROS in both modes, BLE over Wi-Fi in home mode only, owner-lost stop, disarmed new owner, latch set/cleared per D4. Existing <code>rovi-core</code> tests pass; the ones whose behaviour changes are updated with a note. <strong>Done:</strong> 11 Device tests; two &quot;ROS blocks UDP&quot; tests now assert takeover; 247 workspace tests pass.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Add mode and step events to the catalog (<code>events.rs</code>, <code>carlog.py</code>, <code>docs/LOGGING.md</code>) with tests; <code>test_carlog.py</code> passes.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.3 Add mode and step events to the catalog (<code>events.rs</code>, <code>carlog.py</code>, <code>docs/LOGGING.md</code>) with tests; <code>test_carlog.py</code> passes. <strong>Done:</strong> <code>net</code>, <code>net_step</code>, <code>mode_cmd</code>, <code>preempted</code>; <code>test_carlog</code> catalog check passes.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.4 Add the mode command (BLE codes 3/4, UDP kind 10, ROS <code>/rovi/mode</code>) and network information (BLE characteristic, UDP kind 11, ROS <code>/rovi/network</code>) codecs test-first, with every error case in <em>Mode command errors</em>.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.4 Add the mode command (BLE codes 3/4, UDP kind 10, ROS <code>/rovi/mode</code>) and network information (BLE characteristic, UDP kind 11, ROS <code>/rovi/network</code>) codecs test-first, with every error case in <em>Mode command errors</em>. <strong>Done:</strong> BLE codes 3/4, UDP <code>Mode</code> = 10, <code>on_ros_mode</code>, <code>Info</code> 8-byte/logfmt encodings, <code>take_mode_log</code>; 9 new tests.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.5 Add BLE claim-on-first-command (two connections, reads/Echo never claim), UDP <code>INFO</code> for any peer, ROS <code>/rovi/release</code> and the takeover-notice Status to <code>rovi-core</code> test-first, covering every scenario of those requirements.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.5 Add BLE claim-on-first-command (two connections, reads/Echo never claim), UDP <code>INFO</code> for any peer, ROS <code>/rovi/release</code> and the takeover-notice Status to <code>rovi-core</code> test-first, covering every scenario of those requirements. <strong>Done:</strong> <code>on_ble_attach</code> (claim on first write, two live slots, released owners cannot reclaim), UDP <code>Info</code> = 11, <code>on_ros_release</code>, <code>Notice</code> (UDP frame / ROS status); <code>on_ble_connect</code> keeps claim-at-connect until the firmware switches in 4.1. 10 new tests.</li>
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--3-simulator">3. Simulator</h2><ul>
 <li>

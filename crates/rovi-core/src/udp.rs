@@ -21,6 +21,8 @@ pub enum Kind {
     Echo = 9,
     /// Mode command from the owner: payload 1 = Home, 2 = Car network (ADR-0016).
     Mode = 10,
+    /// Observation for any peer: capabilities, status and network information (ADR-0016).
+    Info = 11,
 }
 
 impl Kind {
@@ -36,6 +38,7 @@ impl Kind {
             8 => Self::Busy,
             9 => Self::Echo,
             10 => Self::Mode,
+            11 => Self::Info,
             _ => return None,
         })
     }
