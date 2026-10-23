@@ -86,6 +86,10 @@ pub struct Device {
     network: Network,
     /// A takeover ended without a Home hand-back: the next ROS owner must arm explicitly.
     handback_latch: bool,
+    /// The station's DHCP address; 0.0.0.0 without one.
+    station_ip: [u8; 4],
+    /// The last mode command (source, command, refusal) for the adapter to log.
+    mode_log: Option<(Source, Command, Option<Error>)>,
 }
 
 /// Owner publishers the ROS ordering table tracks per session, as many as the graph holds (the
@@ -225,6 +229,8 @@ impl Device {
             last_udp_status: None,
             network: Network::boot(0, false),
             handback_latch: false,
+            station_ip: [0; 4],
+            mode_log: None,
         })
     }
 
@@ -266,6 +272,54 @@ impl Device {
     /// The station lost the home network.
     pub fn on_station_lost(&mut self, now: u64) {
         self.network.on_station_lost(now);
+    }
+
+    /// The station's DHCP address, or `None` when it has none.
+    pub fn set_station_ip(&mut self, ip: Option<[u8; 4]>) {
+        self.station_ip = ip.unwrap_or([0; 4]);
+    }
+
+    /// The BLE Network characteristic and the network part of UDP `INFO`.
+    pub fn network_info(&self) -> [u8; 8] {
+        self.network.info(self.station_ip).encode()
+    }
+
+    /// Writes the `rovi/network` sample (`std_msgs/String` CDR) and returns its length.
+    pub fn network_cdr(&self, out: &mut [u8]) -> usize {
+        self.network
+            .info(self.station_ip)
+            .encode_cdr(out)
+            .unwrap_or(0)
+    }
+
+    /// The last mode command, once, for the adapter's `ev=mode_cmd` line.
+    pub fn take_mode_log(&mut self) -> Option<(Source, Command, Option<Error>)> {
+        self.mode_log.take()
+    }
+
+    /// A mode command (`[1]` Home, `[2]` Car network) from the owner while disarmed; it applies
+    /// when that ownership ends. Refusals are kept as the owner's last control error.
+    fn mode_command(&mut self, who: Claimant, payload: &[u8]) -> Result<Effects, Error> {
+        self.arbiter.check_owner(who)?;
+        let cmd = match payload {
+            [1] => Some(Command::Home),
+            [2] => Some(Command::CarNetwork),
+            _ => None,
+        };
+        let result = match cmd {
+            None => Err(Error::Invalid),
+            Some(Command::Home) if !self.network.home_supported() => Err(Error::Invalid),
+            Some(_) if self.arbiter.state() == State::Armed => Err(Error::NotReady),
+            Some(c) => {
+                self.network.command(c);
+                Ok(Effects::default())
+            }
+        };
+        self.owner_error = result.err();
+        if let Some(c) = cmd {
+            self.mode_log = Some((who.source, c, result.err()));
+        }
+        result
     }
 
     /// Bookkeeping after `fx` from an input or a deadline, given the owner before it: a released
@@ -405,6 +459,11 @@ impl Device {
                     Err(_) => self.status_reply(Effects::default(), h, out),
                 }
             }
+            Kind::Mode if ours => match self.mode_command(who, payload) {
+                Ok(effects) => self.status_reply(effects, h, out),
+                Err(Error::NotOwner) => Reply::default(),
+                Err(_) => self.status_reply(Effects::default(), h, out),
+            },
             Kind::Bye if ours => match self.arbiter.release(now, who) {
                 Ok(effects) => Reply {
                     len: 0,
@@ -484,7 +543,8 @@ impl Device {
         }
     }
 
-    /// A write to the Control characteristic: 1 = ARM, 2 = STOP. An error rejects the write.
+    /// A write to the Control characteristic: 1 = ARM, 2 = STOP, 3 = Home, 4 = Car network.
+    /// An error rejects the write.
     pub fn on_ble_control(&mut self, now: u64, conn: BleConn, cmd: u8) -> Result<Effects, Error> {
         let due = self.expire(now);
         let result = self.ble_control(now, conn, cmd);
@@ -492,15 +552,11 @@ impl Device {
     }
 
     fn ble_control(&mut self, now: u64, conn: BleConn, cmd: u8) -> Result<Effects, Error> {
-        self.control(
-            now,
-            ble(conn),
-            match cmd {
-                1 => Some(true),
-                2 => Some(false),
-                _ => None,
-            },
-        )
+        match cmd {
+            3 | 4 => self.mode_command(ble(conn), &[cmd - 2]),
+            1 | 2 => self.control(now, ble(conn), Some(cmd == 1)),
+            _ => self.control(now, ble(conn), None),
+        }
     }
 
     /// The Status characteristic for the BLE owner: the state and the last control error.
@@ -626,6 +682,28 @@ impl Device {
             self.handback_latch = false;
         }
         result.unwrap_or_default()
+    }
+
+    /// A sample on `rovi/mode` (`std_msgs/UInt8`): 1 = Home, 2 = Car network, from the owner node.
+    pub fn on_ros_mode(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
+        let due = self.expire(now);
+        let Some(att) = Attachment::decode(attachment) else {
+            return due;
+        };
+        let Some(who) = self.ros_claimant(&att) else {
+            return due;
+        };
+        if self.arbiter.owner() != Some(who)
+            || !self.marks.accept(self.arbiter.session(), att.gid, att.seq)
+        {
+            return due;
+        }
+        let value = match payload {
+            [0, 1, 0, 0, _] => &payload[4..],
+            _ => &[],
+        };
+        let _ = self.mode_command(who, value);
+        due
     }
 
     /// Writes the `rovi/status` sample (`std_msgs/String` CDR) and returns its length.
@@ -2620,5 +2698,104 @@ mod tests {
         d.start_network(0, true);
         d.tick(crate::network::SCAN_BUDGET_MS);
         assert_eq!(d.network().mode(), Mode::Fallback);
+    }
+
+    // --- Mode command and network information (task 2.4) ---
+
+    fn uint8(v: u8) -> [u8; 5] {
+        [0, 1, 0, 0, v]
+    }
+
+    #[test]
+    fn ble_control_codes_3_and_4_set_a_pending_mode_command() {
+        let mut d = home_dev();
+        let (conn, _) = d.on_ble_connect(0, 1).unwrap();
+        d.on_ble_control(10, conn, 4).unwrap();
+        assert_eq!(d.network().pending(), Some(Command::CarNetwork));
+        d.on_ble_control(20, conn, 3).unwrap();
+        assert_eq!(d.network().pending(), Some(Command::Home));
+        assert_eq!(
+            d.take_mode_log(),
+            Some((Source::Ble, Command::Home, None)),
+            "the last command is logged"
+        );
+    }
+
+    #[test]
+    fn udp_mode_kind_sets_pending_and_replies_with_status() {
+        let mut d = dev();
+        let (_, s, _) = hello(&mut d, 0, A);
+        let (r, _) = send(&mut d, 10, A, Kind::Mode, s, 2, &[2]);
+        let (h, p) = r.unwrap();
+        assert_eq!(h.kind, Kind::Status);
+        assert_eq!(p[2], 0, "no error");
+        assert_eq!(d.network().pending(), Some(Command::CarNetwork));
+        send(&mut d, 20, A, Kind::Bye, s, 3, &[]);
+        assert_eq!(d.network().reason(), crate::network::Reason::Requested);
+    }
+
+    #[test]
+    fn ros_mode_from_the_owner_sets_pending_and_others_are_ignored() {
+        let mut d = home_dev();
+        let (_, arm) = ros_armed(&mut d, 0);
+        let other = publisher(&mut d, 2, 1, 1);
+        d.on_ros_arm(10, &at(&arm, 2), &bool_cdr(false));
+        d.on_ros_mode(20, &other, &uint8(2));
+        assert_eq!(d.network().pending(), None, "non-owner ignored");
+        let mode = publisher(&mut d, 1, 3, 1);
+        d.on_ros_mode(30, &mode, &uint8(2));
+        assert_eq!(d.network().pending(), Some(Command::CarNetwork));
+    }
+
+    #[test]
+    fn armed_owner_mode_command_is_refused_not_ready() {
+        let mut d = home_dev();
+        let s = armed(&mut d);
+        let (r, _) = send(&mut d, 10, A, Kind::Mode, s, 5, &[1]);
+        assert_eq!(r.unwrap().1[2], 3, "STATUS carries not-ready");
+        assert_eq!(d.arbiter().state(), State::Armed);
+        assert_eq!(d.network().pending(), None);
+        assert_eq!(
+            d.take_mode_log(),
+            Some((Source::Udp, Command::Home, Some(Error::NotReady)))
+        );
+    }
+
+    #[test]
+    fn unknown_mode_values_and_lengths_are_invalid_and_keep_the_pending_command() {
+        let mut d = home_dev();
+        let (_, s, _) = hello(&mut d, 0, A);
+        send(&mut d, 5, A, Kind::Mode, s, 2, &[2]);
+        for (seq, payload) in [(3, &[0u8][..]), (4, &[3]), (5, &[1, 1]), (6, &[])] {
+            let (r, _) = send(&mut d, 10, A, Kind::Mode, s, seq, payload);
+            assert_eq!(r.unwrap().1[2], 4, "invalid: {payload:?}");
+        }
+        assert_eq!(d.network().pending(), Some(Command::CarNetwork));
+        let mut b = home_dev();
+        let (conn, _) = b.on_ble_connect(0, 1).unwrap();
+        assert_eq!(b.on_ble_control(10, conn, 9), Err(Error::Invalid));
+    }
+
+    #[test]
+    fn home_without_home_support_is_invalid() {
+        let mut d = dev();
+        let (_, s, _) = hello(&mut d, 0, A);
+        let (r, _) = send(&mut d, 10, A, Kind::Mode, s, 2, &[1]);
+        assert_eq!(r.unwrap().1[2], 4, "invalid");
+        assert_eq!(d.network().pending(), None);
+    }
+
+    #[test]
+    fn network_information_reports_mode_and_station_ip() {
+        let mut d = home_dev();
+        d.set_station_ip(Some([192, 168, 1, 50]));
+        assert_eq!(d.network_info(), [2, 0, 0, 0, 192, 168, 1, 50]);
+        let mut out = [0u8; 96];
+        let n = d.network_cdr(&mut out);
+        assert!(core::str::from_utf8(&out[8..n - 1])
+            .unwrap()
+            .ends_with("ip=192.168.1.50"));
+        d.set_station_ip(None);
+        assert_eq!(d.network_info()[4..], [0; 4]);
     }
 }
