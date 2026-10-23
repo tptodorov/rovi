@@ -306,6 +306,11 @@ impl Device {
         self.network = Network::boot(now, home_supported);
     }
 
+    /// Starts in fallback after a mode-switch reset, keeping the reason the switch had.
+    pub fn start_network_fallback(&mut self, home_supported: bool, reason: crate::network::Reason) {
+        self.network = Network::boot_fallback(home_supported, reason);
+    }
+
     pub fn network(&self) -> &Network {
         &self.network
     }

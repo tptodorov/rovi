@@ -36,6 +36,117 @@ pub enum Reason {
     Requested,
 }
 
+impl Reason {
+    /// The reason from its network-information code (also the firmware's reset flag).
+    pub fn from_code(code: u8) -> Option<Self> {
+        Some(match code {
+            0 => Self::None,
+            1 => Self::NoSettings,
+            2 => Self::Scan,
+            3 => Self::Join,
+            4 => Self::Dhcp,
+            5 => Self::Router,
+            6 => Self::LinkLost,
+            7 => Self::Requested,
+            _ => return None,
+        })
+    }
+
+    pub fn code(self) -> u8 {
+        reason_code(self)
+    }
+}
+
+/// Build-time home settings: all three or none (spec *Build-time home settings*).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Settings {
+    None,
+    Home,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SettingsError {
+    /// Some but not all of SSID, passphrase and router were given.
+    Incomplete,
+    /// SSID is not 1..=32 bytes.
+    Ssid,
+    /// Passphrase is not 8..=63 printable ASCII characters.
+    Passphrase,
+    /// Router is not `tcp/<IPv4>:<port 1..=65535>`.
+    Router,
+}
+
+/// Checks the home settings; `const`, so the firmware refuses a bad set at build time.
+pub const fn settings(
+    ssid: Option<&str>,
+    passphrase: Option<&str>,
+    router: Option<&str>,
+) -> Result<Settings, SettingsError> {
+    let (ssid, passphrase, router) = match (ssid, passphrase, router) {
+        (None, None, None) => return Ok(Settings::None),
+        (Some(s), Some(p), Some(r)) => (s, p, r),
+        _ => return Err(SettingsError::Incomplete),
+    };
+    if ssid.is_empty() || ssid.len() > 32 {
+        return Err(SettingsError::Ssid);
+    }
+    let p = passphrase.as_bytes();
+    if p.len() < 8 || p.len() > 63 {
+        return Err(SettingsError::Passphrase);
+    }
+    let mut i = 0;
+    while i < p.len() {
+        if p[i] < 0x20 || p[i] > 0x7e {
+            return Err(SettingsError::Passphrase);
+        }
+        i += 1;
+    }
+    if !tcp_ipv4_endpoint(router.as_bytes()) {
+        return Err(SettingsError::Router);
+    }
+    Ok(Settings::Home)
+}
+
+/// `tcp/a.b.c.d:port` with octets 0..=255 and port 1..=65535.
+const fn tcp_ipv4_endpoint(b: &[u8]) -> bool {
+    let prefix = b"tcp/";
+    if b.len() <= prefix.len() {
+        return false;
+    }
+    let mut i = 0;
+    while i < prefix.len() {
+        if b[i] != prefix[i] {
+            return false;
+        }
+        i += 1;
+    }
+    // Four octets separated by '.', then ':' and the port.
+    let mut part = 0;
+    let mut value: u32 = 0;
+    let mut digits = 0;
+    while i < b.len() {
+        let c = b[i];
+        if c.is_ascii_digit() {
+            value = value * 10 + (c - b'0') as u32;
+            digits += 1;
+            if digits > 5 {
+                return false;
+            }
+        } else if (c == b'.' && part < 3) || (c == b':' && part == 3) {
+            if digits == 0 || value > 255 {
+                return false;
+            }
+            part += 1;
+            value = 0;
+            digits = 0;
+        } else {
+            return false;
+        }
+        i += 1;
+    }
+    part == 4 && digits > 0 && value >= 1 && value <= 65535
+}
+
 /// A mode command: pending until the commanding owner's ownership ends.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Command {
@@ -161,6 +272,19 @@ impl Network {
         };
         n.attempt(now, Cause::Boot);
         n
+    }
+
+    /// Boot straight into fallback after a mode switch reset with the stored reason (the
+    /// firmware switches station <-> AP by resetting, design D2). Home commands still work.
+    pub fn boot_fallback(home_supported: bool, reason: Reason) -> Self {
+        Self {
+            home_supported,
+            mode: Mode::Fallback,
+            reason,
+            pending: None,
+            cause: Cause::Boot,
+            deadline: 0,
+        }
     }
 
     pub fn mode(&self) -> Mode {
@@ -335,6 +459,94 @@ mod tests {
             &out[8..len - 1],
             b"mode=fallback pending=car-network fallback=scan ip=0.0.0.0"
         );
+    }
+
+    #[test]
+    fn a_reason_code_round_trips_for_the_reset_flag() {
+        for r in [
+            Reason::None,
+            Reason::NoSettings,
+            Reason::Scan,
+            Reason::Join,
+            Reason::Dhcp,
+            Reason::Router,
+            Reason::LinkLost,
+            Reason::Requested,
+        ] {
+            assert_eq!(Reason::from_code(reason_code(r)), Some(r));
+        }
+        assert_eq!(Reason::from_code(8), None);
+    }
+
+    #[test]
+    fn boot_after_a_switch_starts_in_fallback_with_the_stored_reason() {
+        let n = Network::boot_fallback(true, Reason::LinkLost);
+        assert_eq!((n.mode(), n.reason()), (Mode::Fallback, Reason::LinkLost));
+        let mut n = Network::boot_fallback(true, Reason::Requested);
+        n.command(Command::Home);
+        n.on_ownership_end(10, false);
+        assert_eq!(
+            n.mode(),
+            Mode::Attempting(Step::Scan),
+            "Home still works from it"
+        );
+    }
+
+    #[test]
+    fn home_settings_are_all_or_none_and_valid() {
+        use Settings as S;
+        assert_eq!(settings(None, None, None), Ok(S::None));
+        assert_eq!(
+            settings(
+                Some("devolo-899"),
+                Some("12345678"),
+                Some("tcp/192.168.1.244:7447")
+            ),
+            Ok(S::Home)
+        );
+        assert_eq!(
+            settings(Some("x"), None, None),
+            Err(SettingsError::Incomplete)
+        );
+        assert_eq!(
+            settings(Some(""), Some("12345678"), Some("tcp/1.2.3.4:1")),
+            Err(SettingsError::Ssid)
+        );
+        assert_eq!(
+            settings(
+                Some("0123456789012345678901234567890123"),
+                Some("12345678"),
+                Some("tcp/1.2.3.4:1")
+            ),
+            Err(SettingsError::Ssid)
+        );
+        assert_eq!(
+            settings(Some("a"), Some("1234567"), Some("tcp/1.2.3.4:1")),
+            Err(SettingsError::Passphrase)
+        );
+        assert_eq!(
+            settings(Some("a"), Some("12345678é"), Some("tcp/1.2.3.4:1")),
+            Err(SettingsError::Passphrase)
+        );
+        for bad in [
+            "udp/1.2.3.4:1",
+            "tcp/1.2.3:1",
+            "tcp/1.2.3.4",
+            "tcp/1.2.3.4:",
+            "tcp/256.1.1.1:1",
+            "tcp/1.2.3.4:70000",
+            "tcp/a.b.c.d:1",
+            "tcp/1.2.3.4:0",
+        ] {
+            assert_eq!(
+                settings(Some("a"), Some("12345678"), Some(bad)),
+                Err(SettingsError::Router),
+                "{bad}"
+            );
+        }
+        const CHECKED: Result<Settings, SettingsError> =
+            settings(Some("a"), Some("12345678"), Some("tcp/10.0.0.1:7447"));
+        assert_eq!(CHECKED, Ok(S::Home), "usable in const context");
     }
 
     #[test]
