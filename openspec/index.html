@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>66 / 80</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>68 / 80</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -4458,9 +4458,9 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--2-core-state-machine-host">2. Core state machine (host)</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.1 Add the network mode and supervisor transitions to <code>rovi-core</code> test-first: no settings → fallback; scan/join/DHCP/router failures → fallback; success → home; BLE disconnect in home → attempt; station loss → attempt; fallback terminal until reboot. Verify with unit tests covering every spec scenario in <code>network-mode</code>.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.1 Add the network mode and supervisor transitions to <code>rovi-core</code> test-first: no settings → fallback; scan/join/DHCP/router failures → fallback; success → home; BLE disconnect in home → attempt; station loss → attempt; fallback terminal until reboot. Verify with unit tests covering every spec scenario in <code>network-mode</code>. <strong>Done:</strong> <code>rovi-core::network</code>, 24 unit tests.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Add BLE &gt; UDP &gt; ROS preemption and the hand-back latch to the arbiter/<code>Device</code> test-first: UDP over ROS in both modes, BLE over Wi-Fi in home mode only, owner-lost stop, disarmed new owner, latch set/cleared per D4. Existing <code>rovi-core</code> tests pass; the ones whose behaviour changes are updated with a note.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.2 Add BLE &gt; UDP &gt; ROS preemption and the hand-back latch to the arbiter/<code>Device</code> test-first: UDP over ROS in both modes, BLE over Wi-Fi in home mode only, owner-lost stop, disarmed new owner, latch set/cleared per D4. Existing <code>rovi-core</code> tests pass; the ones whose behaviour changes are updated with a note. <strong>Done:</strong> 11 Device tests; two &quot;ROS blocks UDP&quot; tests now assert takeover; 247 workspace tests pass.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Add mode and step events to the catalog (<code>events.rs</code>, <code>carlog.py</code>, <code>docs/LOGGING.md</code>) with tests; <code>test_carlog.py</code> passes.</li>
 <li>

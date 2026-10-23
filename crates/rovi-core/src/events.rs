@@ -364,7 +364,7 @@ mod tests {
             claimed: Some(Source::Ble),
             released: true,
             stop: Some(StopReason::OwnerLost),
-            lease_late_ms: None,
+            ..Effects::default()
         };
         let mut evs = Vec::new();
         effects(fx, |e| evs.push(e));

@@ -5,6 +5,7 @@ use crate::arbiter::{Arbiter, Claimant, Config, Effects, Error, Source, State, S
 use crate::capabilities::Capabilities;
 use crate::graph::Graph;
 use crate::kinematics::{self, Geometry};
+use crate::network::{Command, Mode, Network, Step};
 use crate::rmw::Attachment;
 use crate::setpoint::Setpoint;
 use crate::status::Status;
@@ -80,6 +81,11 @@ pub struct Device {
     ble_generation: u32,
     /// Last delivered UDP status, including owner identity; avoids duplicating direct replies.
     last_udp_status: Option<(u128, Status)>,
+    /// Home or fallback networking (ADR-0016). Fallback, today's behaviour, until the firmware
+    /// starts it with home settings.
+    network: Network,
+    /// A takeover ended without a Home hand-back: the next ROS owner must arm explicitly.
+    handback_latch: bool,
 }
 
 /// Owner publishers the ROS ordering table tracks per session, as many as the graph holds (the
@@ -174,11 +180,21 @@ fn validated(cfg: Config, g: &Geometry) -> Result<Config, ProfileError> {
     })
 }
 
+/// Takeover priority (ADR-0016): a higher rank may take the car from a lower one.
+fn rank(source: Source) -> u8 {
+    match source {
+        Source::Ros => 0,
+        Source::Udp => 1,
+        Source::Ble => 2,
+    }
+}
+
 /// `a` then `b`, as one set of effects. `events::effects` logs a stop, then a release, then a
 /// claim, which is also the order they happen in when a deadline releases the car and the same
 /// input claims it again.
 fn merge(a: Effects, b: Effects) -> Effects {
     Effects {
+        preempted: b.preempted.or(a.preempted),
         claimed: b.claimed.or(a.claimed),
         released: a.released || b.released,
         stop: a.stop.or(b.stop),
@@ -207,6 +223,8 @@ impl Device {
             marks: Marks::new(session_seed),
             ble_generation: 0,
             last_udp_status: None,
+            network: Network::boot(0, false),
+            handback_latch: false,
         })
     }
 
@@ -225,11 +243,67 @@ impl Device {
     }
 
     fn expire(&mut self, now: u64) -> Effects {
+        self.network.tick(now);
+        let owner = self.arbiter.owner();
         let fx = self.arbiter.tick(now);
+        self.ended(now, owner, fx)
+    }
+
+    /// Starts home or fallback networking at boot: home only with home settings and ROS 2.
+    pub fn start_network(&mut self, now: u64, home_supported: bool) {
+        self.network = Network::boot(now, home_supported);
+    }
+
+    pub fn network(&self) -> &Network {
+        &self.network
+    }
+
+    /// The firmware finished a home-mode step (scan, join, DHCP, router).
+    pub fn on_network_step(&mut self, now: u64, step: Step, ok: bool) {
+        self.network.on_step(now, step, ok);
+    }
+
+    /// The station lost the home network.
+    pub fn on_station_lost(&mut self, now: u64) {
+        self.network.on_station_lost(now);
+    }
+
+    /// Bookkeeping after `fx` from an input or a deadline, given the owner before it: a released
+    /// owner's pending mode command applies, and a Home hand-back clears the ROS latch.
+    fn ended(&mut self, now: u64, owner: Option<Claimant>, fx: Effects) -> Effects {
         if fx.released {
             self.owner_error = None;
+            if let (Some(o), None) = (owner, fx.preempted) {
+                if o.source != Source::Ros && self.network.pending() == Some(Command::Home) {
+                    self.handback_latch = false;
+                }
+                self.network.on_ownership_end(now, o.source == Source::Ble);
+            }
         }
         fx
+    }
+
+    /// Claims for `who`, taking the car from a lower-priority owner where ADR-0016 allows:
+    /// UDP over ROS in both modes, BLE over UDP or ROS in home mode only.
+    fn claim(&mut self, now: u64, who: Claimant) -> Result<Effects, Error> {
+        match self.arbiter.claim(now, who) {
+            Err(Error::Busy) => {
+                let owner = self.arbiter.owner().ok_or(Error::Busy)?;
+                let home = self.network.mode() != Mode::Fallback;
+                let may =
+                    rank(who.source) > rank(owner.source) && (who.source != Source::Ble || home);
+                if !may {
+                    return Err(Error::Busy);
+                }
+                self.network.discard_pending();
+                if owner.source == Source::Ros {
+                    self.handback_latch = true;
+                }
+                self.owner_error = None;
+                Ok(self.arbiter.preempt(now, who))
+            }
+            other => other,
+        }
     }
 
     fn control(&mut self, now: u64, who: Claimant, arm: Option<bool>) -> Result<Effects, Error> {
@@ -246,9 +320,11 @@ impl Device {
         result
     }
 
-    /// May `source`'s radio be on? While one source owns the car, the others' radios are off.
+    /// May `source`'s radio be on? While one source owns the car, the others' radios are off,
+    /// except that outside fallback BLE always advertises, so it can take over (ADR-0016).
     pub fn radio_allowed(&self, source: Source) -> bool {
-        self.arbiter.owner().is_none_or(|o| o.source == source)
+        (source == Source::Ble && self.network.mode() != Mode::Fallback)
+            || self.arbiter.owner().is_none_or(|o| o.source == source)
     }
 
     /// May the Wi-Fi AP be up? UDP and ROS share it, so it is off only while BLE owns the car.
@@ -299,7 +375,7 @@ impl Device {
                 len: echo(payload).map_or(0, |p| udp::write(out, h, p).unwrap_or(0)),
                 ..Reply::default()
             },
-            Kind::Hello => match self.arbiter.claim(now, who) {
+            Kind::Hello => match self.claim(now, who) {
                 Ok(effects) => {
                     if effects.claimed.is_some() {
                         self.owner_error = None;
@@ -330,10 +406,10 @@ impl Device {
                 }
             }
             Kind::Bye if ours => match self.arbiter.release(now, who) {
-                Ok(effects) => {
-                    self.owner_error = None;
-                    Reply { len: 0, effects }
-                }
+                Ok(effects) => Reply {
+                    len: 0,
+                    effects: self.ended(now, Some(who), effects),
+                },
                 Err(_) => Reply::default(),
             },
             _ => Reply::default(),
@@ -368,7 +444,7 @@ impl Device {
             generation: self.ble_generation,
         };
         let due = self.expire(now);
-        let result = self.arbiter.claim(now, ble(conn));
+        let result = self.claim(now, ble(conn));
         if result.is_ok() {
             self.owner_error = None;
         }
@@ -436,9 +512,7 @@ impl Device {
     pub fn on_ble_disconnect(&mut self, now: u64, conn: BleConn) -> Effects {
         let due = self.expire(now);
         let fx = self.arbiter.release(now, ble(conn)).unwrap_or_default();
-        if fx.released {
-            self.owner_error = None;
-        }
+        let fx = self.ended(now, Some(ble(conn)), fx);
         merge(due, fx)
     }
 
@@ -446,15 +520,12 @@ impl Device {
     /// armed); without this, only its lease would stop the car. Other owners are not affected.
     pub fn on_ros_disconnect(&mut self, now: u64) -> Effects {
         let due = self.expire(now);
-        let fx = match self.arbiter.owner() {
-            Some(owner) if owner.source == Source::Ros => {
-                self.arbiter.release(now, owner).unwrap_or_default()
-            }
+        let owner = self.arbiter.owner();
+        let fx = match owner {
+            Some(o) if o.source == Source::Ros => self.arbiter.release(now, o).unwrap_or_default(),
             _ => Effects::default(),
         };
-        if fx.released {
-            self.owner_error = None;
-        }
+        let fx = self.ended(now, owner, fx);
         merge(due, fx)
     }
 
@@ -502,7 +573,7 @@ impl Device {
         if self.arbiter.owner().is_none() && (!self.arbiter.within_limits(&sp) || att.seq < 0) {
             return Effects::default();
         }
-        let Ok(mut fx) = self.arbiter.claim(now, who) else {
+        let Ok(mut fx) = self.claim(now, who) else {
             return Effects::default();
         };
         if fx.claimed.is_some() {
@@ -518,7 +589,7 @@ impl Device {
                 self.arbiter.state(),
                 State::Claimed | State::Stopped(StopReason::LeaseExpired)
             );
-            if e.stop.is_none() && auto_arm {
+            if e.stop.is_none() && auto_arm && !self.handback_latch {
                 let _ = self.arm(now, who);
             }
         }
@@ -549,8 +620,12 @@ impl Device {
             return Effects::default();
         }
         self.marks.accept(self.arbiter.session(), att.gid, att.seq);
-        self.control(now, who, Some(payload[4] == 1))
-            .unwrap_or_default()
+        let arm = payload[4] == 1;
+        let result = self.control(now, who, Some(arm));
+        if arm && result.is_ok() {
+            self.handback_latch = false;
+        }
+        result.unwrap_or_default()
     }
 
     /// Writes the `rovi/status` sample (`std_msgs/String` CDR) and returns its length.
@@ -1038,16 +1113,17 @@ mod tests {
     }
 
     #[test]
-    fn udp_owner_blocks_ros_and_ros_owner_blocks_udp() {
+    fn udp_owner_blocks_ros_and_udp_takes_over_from_ros() {
         let mut d = dev();
         send(&mut d, 0, A, Kind::Hello, 0, 1, &[]);
         let cmd = publisher(&mut d, 1, 1, 1);
         assert_eq!(d.on_ros_cmd_vel(1, &cmd, &cdr(0.5)), Effects::default());
+        // ADR-0016 replaced "a ROS owner blocks UDP": UDP now takes over from ROS.
         let mut d = dev();
         let cmd = publisher(&mut d, 1, 1, 1);
         d.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
         let (r, _) = send(&mut d, 1, A, Kind::Hello, 0, 1, &[]);
-        assert_eq!(r.unwrap().0.kind, Kind::Busy);
+        assert_eq!(r.unwrap().0.kind, Kind::HelloAck);
     }
 
     #[test]
@@ -2035,8 +2111,8 @@ mod tests {
         let cmd = publisher(&mut ros, 1, 1, 1);
         ros.on_ros_cmd_vel(0, &cmd, &cdr(0.5));
         let session = ros.arbiter().session();
-        let (r, _) = send(&mut ros, 999, A, Kind::Hello, 0, 1, &[]);
-        assert_eq!(r.unwrap().0.kind, Kind::Busy);
+        // A UDP HELLO now takes over from ROS (ADR-0016, tested separately); input without a
+        // claim still cannot touch the ROS owner's session.
         let setpoint = cdr(0.5);
         for kind in [Kind::Setpoint, Kind::Arm, Kind::Stop, Kind::Bye] {
             let payload = if kind == Kind::Setpoint {
@@ -2372,5 +2448,177 @@ mod tests {
         assert_eq!(ble_echo(0, &[1; ECHO_MAX + 1], &mut out), None);
         assert_eq!(ble_echo(0, b"abc", &mut out[..2]), None);
         assert_eq!(out, [0xaa; ECHO_MAX]);
+    }
+
+    // --- Takeover priority and hand-back (network-mode, ADR-0016) ---
+
+    use crate::network::{Command, Mode, Step};
+
+    fn home_dev() -> Device {
+        let mut d = dev();
+        d.start_network(0, true);
+        for step in [Step::Scan, Step::Join, Step::Dhcp, Step::Router] {
+            d.on_network_step(0, step, true);
+        }
+        assert_eq!(d.network().mode(), Mode::Home);
+        d
+    }
+
+    /// A ROS node streaming 1 m/s, armed by its own stream. Returns its cmd and arm attachments.
+    fn ros_armed(d: &mut Device, now: u64) -> ([u8; 33], [u8; 33]) {
+        let (cmd, arm) = (publisher(d, 1, 1, 1), publisher(d, 1, 2, 1));
+        d.on_ros_cmd_vel(now, &cmd, &cdr(1.0));
+        assert_eq!(d.arbiter().state(), State::Armed);
+        (cmd, arm)
+    }
+
+    fn hello(d: &mut Device, now: u64, peer: u128) -> (Kind, u32, Effects) {
+        let (r, fx) = send(d, now, peer, Kind::Hello, 0, 1, &[]);
+        let h = r.unwrap().0;
+        (h.kind, h.session, fx)
+    }
+
+    #[test]
+    fn udp_preempts_an_armed_ros_owner_and_starts_disarmed() {
+        let mut d = dev();
+        let (cmd, _) = ros_armed(&mut d, 0);
+        let ros_owner = d.arbiter().owner().unwrap();
+        let (kind, _, fx) = hello(&mut d, 100, A);
+        assert_eq!(kind, Kind::HelloAck);
+        assert_eq!(fx.stop, Some(StopReason::OwnerLost));
+        assert!(fx.released);
+        assert_eq!(fx.claimed, Some(Source::Udp));
+        assert_eq!(fx.preempted, Some(ros_owner));
+        assert_eq!(d.arbiter().state(), State::Claimed);
+        assert_eq!(d.wheels(100), [0.0; 4]);
+        d.on_ros_cmd_vel(150, &at(&cmd, 2), &cdr(1.0));
+        assert_eq!(
+            d.arbiter().owner().map(|o| o.source),
+            Some(Source::Udp),
+            "ROS ignored"
+        );
+        assert_eq!(d.wheels(150), [0.0; 4]);
+    }
+
+    #[test]
+    fn udp_does_not_preempt_udp_and_ros_does_not_preempt_udp() {
+        let mut d = dev();
+        armed(&mut d);
+        assert_eq!(hello(&mut d, 10, B).0, Kind::Busy);
+        let cmd = publisher(&mut d, 1, 1, 1);
+        d.on_ros_cmd_vel(20, &cmd, &cdr(1.0));
+        assert_eq!(d.arbiter().owner().map(|o| o.id), Some(A));
+    }
+
+    #[test]
+    fn ble_preempts_a_wifi_owner_only_in_home_mode() {
+        let mut fallback = dev();
+        armed(&mut fallback);
+        assert_eq!(fallback.on_ble_connect(10, 1).err(), Some(Error::Busy));
+
+        let mut d = home_dev();
+        armed(&mut d);
+        let (_, fx) = d.on_ble_connect(10, 1).unwrap();
+        assert_eq!(fx.stop, Some(StopReason::OwnerLost));
+        assert_eq!(fx.claimed, Some(Source::Ble));
+        assert_eq!(fx.preempted.map(|o| o.source), Some(Source::Udp));
+        assert_eq!(
+            d.arbiter().state(),
+            State::Claimed,
+            "the BLE owner starts disarmed"
+        );
+        assert!(!d.wifi_allowed(), "the station goes off");
+    }
+
+    #[test]
+    fn ble_advertises_while_wifi_owns_only_in_home_mode() {
+        let mut fallback = dev();
+        ros_armed(&mut fallback, 0);
+        assert!(!fallback.radio_allowed(Source::Ble));
+        let mut d = home_dev();
+        ros_armed(&mut d, 0);
+        assert!(d.radio_allowed(Source::Ble));
+    }
+
+    #[test]
+    fn takeover_without_home_latches_ros_until_an_explicit_arm() {
+        let mut d = dev();
+        let (cmd, arm) = ros_armed(&mut d, 0);
+        let (_, s, _) = hello(&mut d, 100, A);
+        send(&mut d, 200, A, Kind::Bye, s, 2, &[]);
+        d.on_ros_cmd_vel(300, &at(&cmd, 2), &cdr(1.0));
+        assert_eq!(d.arbiter().owner().map(|o| o.source), Some(Source::Ros));
+        assert_eq!(d.wheels(300), [0.0; 4], "no auto-arm after a takeover");
+        d.on_ros_arm(310, &at(&arm, 2), &bool_cdr(true));
+        assert_eq!(d.wheels(310), [0.5; 4], "an explicit arm resumes");
+        d.tick(1_310);
+        d.on_ros_cmd_vel(1_400, &at(&cmd, 3), &cdr(1.0));
+        assert_eq!(d.wheels(1_400), [0.5; 4], "latch cleared: auto-arm is back");
+    }
+
+    #[test]
+    fn takeover_ending_with_home_hands_back_with_auto_arm() {
+        let mut d = home_dev();
+        let (cmd, _) = ros_armed(&mut d, 0);
+        let (conn, _) = d.on_ble_connect(100, 1).unwrap();
+        d.network.command(Command::Home);
+        d.on_ble_disconnect(200, conn);
+        assert_eq!(d.network().mode(), Mode::Attempting(Step::Scan));
+        for step in [Step::Scan, Step::Join, Step::Dhcp, Step::Router] {
+            d.on_network_step(300, step, true);
+        }
+        d.on_ros_cmd_vel(400, &at(&cmd, 2), &cdr(1.0));
+        assert_eq!(d.wheels(400), [0.5; 4]);
+    }
+
+    #[test]
+    fn accidental_ble_loss_at_home_reattempts_with_ros_latched() {
+        let mut d = home_dev();
+        let (cmd, _) = ros_armed(&mut d, 0);
+        let (conn, _) = d.on_ble_connect(100, 1).unwrap();
+        let fx = d.on_ble_disconnect(200, conn);
+        assert!(fx.released);
+        assert_eq!(d.network().mode(), Mode::Attempting(Step::Scan));
+        for step in [Step::Scan, Step::Join, Step::Dhcp, Step::Router] {
+            d.on_network_step(300, step, true);
+        }
+        d.on_ros_cmd_vel(400, &at(&cmd, 2), &cdr(1.0));
+        assert_eq!(d.wheels(400), [0.0; 4]);
+    }
+
+    #[test]
+    fn preemption_discards_the_old_owners_pending_command() {
+        let mut d = home_dev();
+        ros_armed(&mut d, 0);
+        d.network.command(Command::CarNetwork);
+        let (_, s, _) = hello(&mut d, 100, A);
+        assert_eq!(d.network().pending(), None);
+        send(&mut d, 200, A, Kind::Bye, s, 2, &[]);
+        assert_eq!(d.network().mode(), Mode::Home);
+    }
+
+    #[test]
+    fn ble_claim_window_expiry_at_home_reattempts() {
+        let mut d = home_dev();
+        d.on_ble_connect(0, 1).unwrap();
+        assert!(d.tick(Config::DEFAULT.claim_window_ms).released);
+        assert_eq!(d.network().mode(), Mode::Attempting(Step::Scan));
+    }
+
+    #[test]
+    fn wifi_owner_ending_with_home_at_home_stays_home() {
+        let mut d = home_dev();
+        let (_, s, _) = hello(&mut d, 0, A);
+        d.network.command(Command::Home);
+        send(&mut d, 10, A, Kind::Bye, s, 2, &[]);
+        assert_eq!(d.network().mode(), Mode::Home);
+    }
+
+    #[test]
+    fn network_budget_runs_on_the_device_tick() {
+        let mut d = dev();
+        d.start_network(0, true);
+        d.tick(crate::network::SCAN_BUDGET_MS);
+        assert_eq!(d.network().mode(), Mode::Fallback);
     }
 }

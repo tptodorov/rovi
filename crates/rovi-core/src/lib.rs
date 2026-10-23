@@ -9,6 +9,7 @@ pub mod device;
 pub mod events;
 pub mod graph;
 pub mod kinematics;
+pub mod network;
 pub mod rmw;
 pub mod setpoint;
 pub mod status;
