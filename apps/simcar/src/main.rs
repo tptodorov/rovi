@@ -21,6 +21,12 @@ use std::time::{Duration, Instant};
 
 pub type Shared = Arc<Mutex<Device>>;
 
+/// Can Wi-Fi input reach the car? Not while BLE owns it (radio off) or while a home-mode attempt
+/// is still joining (no network yet); the sim's sockets stay open, so this gate stands in.
+pub fn wifi_up(d: &Device) -> bool {
+    d.wifi_allowed() && !matches!(d.network().mode(), rovi_core::network::Mode::Attempting(_))
+}
+
 pub fn ms(t0: Instant) -> u64 {
     t0.elapsed().as_millis() as u64
 }
@@ -57,7 +63,7 @@ fn udp_loop(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
     loop {
         match sock.recv_from(&mut buf) {
             // Wi-Fi is off while BLE owns the car: nothing arrives.
-            Ok(_) if !dev.lock().unwrap().wifi_allowed() => {}
+            Ok(_) if !wifi_up(&dev.lock().unwrap()) => {}
             Ok((n, from)) => {
                 peers.insert(peer_id(from), from);
                 let r = {

@@ -1,5 +1,6 @@
 //! The ROS 2 sim adapter: node `/rovi` over zenoh-nostd and `rmw_zenohd`, feeding the shared
-//! device. Subscribes `/cmd_vel` and `/rovi/arm`; publishes status and volatile capabilities.
+//! device. Subscribes `/cmd_vel`, `/rovi/arm`, `/rovi/mode` and `/rovi/release`; publishes status,
+//! network information and volatile capabilities. Input is ignored while Wi-Fi is off (BLE owns).
 
 use crate::{log, log_effects, ms, Shared};
 use embassy_futures::select::{select, select5, Either, Either5};
@@ -62,11 +63,15 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
     static ARM: StaticCell<Chan> = StaticCell::new();
     static TOKENS: StaticCell<TokenChan> = StaticCell::new();
     static ECHO: StaticCell<Chan> = StaticCell::new();
+    static MODE: StaticCell<Chan> = StaticCell::new();
+    static RELEASE: StaticCell<Chan> = StaticCell::new();
     static CONFIG: StaticCell<RosConfig> = StaticCell::new();
     let cmd: &'static Chan = CMD.init(Channel::new());
     let arm: &'static Chan = ARM.init(Channel::new());
     let lv_chan: &'static TokenChan = TOKENS.init(Channel::new());
     let echo: &'static Chan = ECHO.init(Channel::new());
+    let mode: &'static Chan = MODE.init(Channel::new());
+    let release: &'static Chan = RELEASE.init(Channel::new());
     let router =
         leak(std::env::var("ROVI_ZENOH_ROUTER").unwrap_or_else(|_| "tcp/127.0.0.1:7447".into()));
     let config: &'static RosConfig = CONFIG.init(RosConfig {
@@ -106,6 +111,8 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
             arm,
             lv_chan,
             echo,
+            mode,
+            release,
         );
         // Test hook: abandon a healthy session after N seconds, as a silent link loss would
         // (over UDP the router keeps the old session until its lease runs out).
@@ -136,6 +143,8 @@ async fn entry(dev: Shared, t0: Instant) -> zenoh::ZResult<()> {
         while arm.try_receive().is_ok() {}
         while lv_chan.try_receive().is_ok() {}
         while echo.try_receive().is_ok() {}
+        while mode.try_receive().is_ok() {}
+        while release.try_receive().is_ok() {}
         embassy_time::Timer::after_secs(2).await;
     }
 }
@@ -151,7 +160,24 @@ async fn serve(
     arm: &'static Chan,
     lv_chan: &'static TokenChan,
     echo: &'static Chan,
+    mode: &'static Chan,
+    release: &'static Chan,
 ) -> zenoh::ZResult<()> {
+    let mode_t = Topic {
+        name: "rovi/mode",
+        ty: rmw::UINT8.0,
+        hash: rmw::UINT8.1,
+    };
+    let release_t = Topic {
+        name: "rovi/release",
+        ty: rmw::EMPTY.0,
+        hash: rmw::EMPTY.1,
+    };
+    let network_t = Topic {
+        name: "rovi/network",
+        ty: rmw::STRING.0,
+        hash: rmw::STRING.1,
+    };
     let cmd_vel = Topic {
         name: "cmd_vel",
         ty: rmw::TWIST_STAMPED.0,
@@ -201,6 +227,9 @@ async fn serve(
             &capabilities_t,
             rmw::QOS_RELIABLE_VOLATILE_1,
         ),
+        (7, Kind::Subscription, &mode_t, rmw::QOS_DEFAULT_10),
+        (8, Kind::Subscription, &release_t, rmw::QOS_DEFAULT_10),
+        (9, Kind::Publisher, &network_t, rmw::QOS_RELIABLE_VOLATILE_1),
     ]
     .map(|(id, kind, topic, qos)| {
         rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
@@ -216,6 +245,7 @@ async fn serve(
     let status_gid = rmw::gid(tokens[2].as_str());
     let echo_gid = rmw::gid(tokens[4].as_str());
     let capabilities_gid = rmw::gid(tokens[5].as_str());
+    let network_gid = rmw::gid(tokens[8].as_str());
 
     let key = |t: &Topic| leak(rmw::topic_key(DOMAIN, t).unwrap().as_str().into());
     let cmd_sub = session
@@ -250,6 +280,20 @@ async fn serve(
         .await?;
     let capabilities_pub = session
         .declare_publisher(zenoh::keyexpr::new(key(&capabilities_t))?)
+        .finish()
+        .await?;
+    let mode_sub = session
+        .declare_subscriber(zenoh::keyexpr::new(key(&mode_t))?)
+        .channel(mode.dyn_sender(), mode.dyn_receiver())
+        .finish()
+        .await?;
+    let release_sub = session
+        .declare_subscriber(zenoh::keyexpr::new(key(&release_t))?)
+        .channel(release.dyn_sender(), release.dyn_receiver())
+        .finish()
+        .await?;
+    let network_pub = session
+        .declare_publisher(zenoh::keyexpr::new(key(&network_t))?)
         .finish()
         .await?;
     println!("ros node /{NODE} up, zid {zid}, router {router}");
@@ -311,11 +355,63 @@ async fn serve(
             embassy_time::Timer::after_millis(10).await;
         }
     };
+    let network_loops = embassy_futures::join::join3(
+        async {
+            while let Some(s) = mode_sub.recv().await {
+                let mut d = dev.lock().unwrap();
+                if !crate::wifi_up(&d) {
+                    continue;
+                }
+                d.on_ros_mode(ms(t0), s.attachment().unwrap_or(&[]), s.payload());
+                if let Some((source, cmd, error)) = d.take_mode_log() {
+                    log(Event::ModeCmd { source, cmd, error }, t0);
+                }
+            }
+        },
+        async {
+            while let Some(s) = release_sub.recv().await {
+                let fx = {
+                    let mut d = dev.lock().unwrap();
+                    if !crate::wifi_up(&d) {
+                        continue;
+                    }
+                    d.on_ros_release(ms(t0), s.attachment().unwrap_or(&[]), s.payload())
+                };
+                log_effects(fx, t0);
+            }
+        },
+        async {
+            // Network information: every second and on change.
+            let (mut seq, mut last, mut sent_at) = (0i64, [0u8; 8], 0u64);
+            let mut buf = [0u8; 128];
+            loop {
+                let (info, n) = {
+                    let d = dev.lock().unwrap();
+                    (d.network_info(), d.network_cdr(&mut buf))
+                };
+                if n > 0 && (info != last || ms(t0) >= sent_at + 1_000) {
+                    seq += 1;
+                    let att = Attachment {
+                        seq,
+                        timestamp: 0,
+                        gid: network_gid,
+                    }
+                    .encode();
+                    let _ = network_pub.put(&buf[..n]).attachment(&att).finish().await;
+                    (last, sent_at) = (info, ms(t0));
+                }
+                embassy_time::Timer::after_millis(10).await;
+            }
+        },
+    );
     let ended = select(
         select5(
             session.run(),
             async {
                 while let Some(s) = cmd_sub.recv().await {
+                    if !crate::wifi_up(&d1.lock().unwrap()) {
+                        continue; // Wi-Fi is off while BLE owns the car
+                    }
                     maybe_refresh(
                         session,
                         lv_ke,
@@ -335,6 +431,9 @@ async fn serve(
             },
             async {
                 while let Some(s) = arm_sub.recv().await {
+                    if !crate::wifi_up(&d2.lock().unwrap()) {
+                        continue;
+                    }
                     maybe_refresh(
                         session,
                         lv_ke,
@@ -368,6 +467,22 @@ async fn serve(
                 let mut schedule = rovi_core::status::Publication::default();
                 let mut buf = [0u8; rovi_core::status::CDR_MAX];
                 loop {
+                    // A taken-over ROS owner hears it first (spec: Takeover notice).
+                    let notice = d3
+                        .lock()
+                        .unwrap()
+                        .take_takeover_notice(rovi_core::arbiter::Source::Ros);
+                    if let Some(n) = notice {
+                        let len = n.ros_cdr(&mut buf);
+                        seq += 1;
+                        let att = Attachment {
+                            seq,
+                            timestamp: 0,
+                            gid: status_gid,
+                        }
+                        .encode();
+                        let _ = status_pub.put(&buf[..len]).attachment(&att).finish().await;
+                    }
                     let snapshot = d3.lock().unwrap().status_snapshot();
                     if schedule.due(ms(t0), snapshot) {
                         if let Some(n) = snapshot.encode_cdr(&mut buf) {
@@ -385,13 +500,13 @@ async fn serve(
                 }
             },
         ),
-        select(echo_loop, capabilities_loop),
+        select(echo_loop, select(capabilities_loop, network_loops)),
     )
     .await;
     // Report the session or publication failure before the adapter reconnects.
     match ended {
         Either::First(Either5::First(Err(e))) => return Err(e.into()),
-        Either::Second(Either::Second(Err(e))) => return Err(e.into()),
+        Either::Second(Either::Second(Either::First(Err(e)))) => return Err(e.into()),
         _ => {}
     }
     Ok(())
