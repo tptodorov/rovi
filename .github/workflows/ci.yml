@@ -106,6 +106,8 @@ jobs:
           cargo build --locked --features motor-bench
       - name: Product UDP scenarios against the sim car
         run: python3 apps/simcar/scenarios/udp_scenarios.py
+      - name: Network-mode scenarios against the sim car (UDP and virtual BLE)
+        run: python3 apps/simcar/scenarios/network_scenarios.py
       - name: Python unit tests
         env:
           MPLBACKEND: Agg

@@ -338,9 +338,12 @@ impl Device {
             .unwrap_or(0)
     }
 
-    /// The last takeover, once: the adapter sends the old owner its final status.
-    pub fn take_takeover_notice(&mut self) -> Option<Notice> {
-        self.notice.take()
+    /// The last takeover of a `source` owner, once: that transport's adapter sends the old owner
+    /// its final status. Each adapter takes only its own notices.
+    pub fn take_takeover_notice(&mut self, source: Source) -> Option<Notice> {
+        self.notice
+            .filter(|n| n.source == source)
+            .and_then(|_| self.notice.take())
     }
 
     /// The last mode command, once, for the adapter's `ev=mode_cmd` line.
@@ -3064,10 +3067,11 @@ mod tests {
     fn takeover_notice_goes_to_the_old_udp_session() {
         let mut d = home_dev();
         let s = armed(&mut d);
-        assert!(d.take_takeover_notice().is_none());
+        assert!(d.take_takeover_notice(Source::Udp).is_none());
         let conn = d.on_ble_attach(10, 1);
         d.on_ble_control(20, conn, 2).unwrap();
-        let notice = d.take_takeover_notice().unwrap();
+        assert!(d.take_takeover_notice(Source::Ros).is_none(), "not for ROS");
+        let notice = d.take_takeover_notice(Source::Udp).unwrap();
         assert_eq!(
             (notice.source, notice.id, notice.session),
             (Source::Udp, A, s)
@@ -3077,7 +3081,7 @@ mod tests {
         let (h, p) = udp::parse(&out[..n]).unwrap();
         assert_eq!((h.kind, h.session, h.seq), (Kind::Status, s, 0));
         assert_eq!(p, [3, 3, 0], "stopped, owner-lost, no error");
-        assert!(d.take_takeover_notice().is_none(), "given once");
+        assert!(d.take_takeover_notice(Source::Udp).is_none(), "given once");
     }
 
     #[test]
@@ -3085,7 +3089,7 @@ mod tests {
         let mut d = dev();
         ros_armed(&mut d, 0);
         hello(&mut d, 10, A);
-        let notice = d.take_takeover_notice().unwrap();
+        let notice = d.take_takeover_notice(Source::Ros).unwrap();
         assert_eq!(notice.source, Source::Ros);
         let mut out = [0u8; 96];
         let n = notice.ros_cdr(&mut out);
