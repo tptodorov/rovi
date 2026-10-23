@@ -16,10 +16,20 @@ nix-shell --run 'python3 -m apps.teleop --ble'
 Bare `--ble` scans for one advertising `Rovi M8`. If several match, pin the car
 with `--ble AA:BB:CC:DD:EE:FF`. BLE and `--target` are mutually exclusive.
 After name discovery, retries stay pinned to that car's MAC. They cannot roam
-to another car with the same name. Quit
-any UDP/other controller first: an owned car does not advertise. BLE connection
-claims ownership and turns the car AP off; the client does not change laptop
+to another car with the same name. The client claims with an acknowledged STOP
+right after connecting; if another controller owns the car it reports the car
+busy and retries. On the car's own network an owned car does not advertise; in
+home mode it does, and BLE takes over from a Wi-Fi controller ([ADR-0016](../../docs/adr/0016-home-network-mode-with-ble-override.md)).
+BLE ownership turns the car's Wi-Fi off; the client does not change laptop
 network settings or switch transports automatically. Both modes use the keys below.
+
+With home-mode firmware, `--target` takes the car's address on your home network,
+which the client prints on connect (`Car network: … ip=…`) and BLE shows too.
+`--mode home` or `--mode car` asks the car to join its home network or run its own
+network once this client releases it (quit); the car must be disarmed. If a BLE
+controller takes the car over, the UDP client says `another controller took the
+car`, beeps once and keeps retrying disarmed. The full mapping of operations to
+BLE, UDP and ROS is the [protocol reference](../../docs/reference/protocol.md).
 
 Use this only for a separately authorized, supervised motor session. The client
 requires a real terminal and an explicit transport selection. It does not change

@@ -3,7 +3,21 @@ import math
 import struct
 from apps.client.wire import Capabilities, Status, cdr
 
-HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY, ECHO = range(1, 10)
+HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY, ECHO, MODE, INFO = range(1, 12)
+# ADR-0016 mode command values and network-information names (8 bytes: mode, pending, reason, 0, IPv4).
+HOME, CAR_NETWORK = 1, 2
+NET_MODES = ("fallback", "attempting", "home")
+NET_PENDING = ("none", "home", "car-network")
+NET_REASONS = ("none", "no-settings", "scan", "join", "dhcp", "router", "link-lost", "requested")
+
+
+def network_text(info):
+    """The car's network information as one logfmt line, as the ROS topic prints it."""
+    try:
+        mode, pending, reason = NET_MODES[info[0]], NET_PENDING[info[1]], NET_REASONS[info[2]]
+    except IndexError:
+        return "network information not understood"
+    return f"mode={mode} pending={pending} fallback={reason} ip={'.'.join(map(str, info[4:8]))}"
 HEADER = struct.Struct("<2sBBII")
 
 class ClientError(Exception):
@@ -23,10 +37,14 @@ def parse(data):
         raise ValueError("short header")
     magic, version, kind, session, sequence = HEADER.unpack_from(data)
     payload = data[HEADER.size:]
-    lengths = {HELLO: 0, ACK: 27, SETPOINT: 68, ARM: 0, STOP: 0, BYE: 0, STATUS: 3, BUSY: 0}
-    if magic != b"RV" or version != 1 or kind not in range(1, 10):
+    lengths = {HELLO: 0, ACK: 27, SETPOINT: 68, ARM: 0, STOP: 0, BYE: 0, STATUS: 3, BUSY: 0,
+               MODE: 1, INFO: 38}
+    if magic != b"RV" or version != 1 or kind not in range(1, 12):
         raise ValueError("unknown frame")
-    if (kind == ECHO and len(payload) > 32) or (kind != ECHO and len(payload) != lengths[kind]):
+    if kind == INFO:  # an empty query, or the 38-byte answer
+        if len(payload) not in (0, lengths[INFO]):
+            raise ValueError("invalid payload length")
+    elif (kind == ECHO and len(payload) > 32) or (kind != ECHO and len(payload) != lengths[kind]):
         raise ValueError("invalid payload length")
     return kind, session, sequence, payload
 
@@ -57,6 +75,7 @@ class Session:
         self.status = None
         self.status_at = None
         self.echo_at = None
+        self.info_q = None
 
     def next_sequence(self):
         self.sequence = (self.sequence + 1) & 0xffffffff
@@ -76,12 +95,17 @@ class Session:
         self.setpoint_sequence = (self.setpoint_sequence + 1) & 0xffffffff
         return frame(SETPOINT, self.session, self.setpoint_sequence, cdr(*vector))
 
-    def control(self, kind, now):
-        if kind not in (ARM, STOP) or not self.caps:
+    def control(self, kind, now, payload=b""):
+        if not self.caps or not ((kind in (ARM, STOP) and not payload) or (kind == MODE and len(payload) == 1)):
             raise ClientError("no valid control session")
         q = self.next_sequence()
         self.pending = (kind, q, now + 500)
-        return frame(kind, self.session, q)
+        return frame(kind, self.session, q, payload)
+
+    def info(self, now):
+        """An INFO query (any peer may ask; the reply carries session 0)."""
+        self.info_q = self.next_sequence()
+        return frame(INFO, 0, self.info_q)
 
     def echo(self, now):
         q = self.next_sequence()
@@ -119,6 +143,13 @@ class Session:
             self.caps = capabilities(payload)
             self.hello = None
             return ('claimed', self.caps)
+        if kind == INFO and self.info_q is not None and q == self.info_q:
+            self.info_q = None
+            try:
+                status = Status.decode(payload[27:30])
+            except ValueError:
+                return None
+            return ('info', status, payload[30:38])
         if not self.caps or session != self.session:
             return None
         if kind == ECHO:
@@ -138,6 +169,9 @@ class Session:
             if ((status.state == "Stopped") != (status.reason is not None)
                     or status.error not in (None, "NotReady", "Invalid")):
                 return None
+            if q == 0 and status == Status('Stopped', 'OwnerLost', None):
+                # ADR-0016 takeover notice: the car now ignores this session.
+                raise LinkError("another controller took the car")
             matched = control[0] if control and q == control[1] else None
             if matched or (status.state != 'Armed' and control and control[0] == ARM):
                 self.pending = None

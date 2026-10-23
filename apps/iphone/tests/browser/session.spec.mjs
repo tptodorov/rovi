@@ -24,7 +24,8 @@ async function connect(page) {
 test('real page and session: connect disarmed, explicit ARM, hold and release, confirmed STOP', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await connect(page);
-  expect(await page.evaluate(() => fake.calls.some(([kind]) => kind === 'control'))).toBe(false);
+  // The only control write before ARM is the claiming STOP that connecting sends.
+  expect(await page.evaluate(() => fake.calls.some(([kind, code]) => kind === 'control' && code !== 2))).toBe(false);
   await page.getByRole('button', { name: 'ARM AT ZERO' }).click();
   await expect(page.locator('#local-arm')).toHaveText('Armed');
   const button = page.getByRole('button', { name: 'Hold to move forward', exact: true });
@@ -61,7 +62,7 @@ test('multi-touch cancels intent until every old pointer is released', async ({ 
 
 test('phone-sized preview, real Status age and blur never recover ownership automatically', async ({ page }, info) => {
   await connect(page);
-  await expect(page.locator('#reported')).toContainText('Claimed');
+  await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');  // claimed by its STOP
   const backward = await page.locator('[data-direction="backward"]').boundingBox();
   expect(backward.y + backward.height).toBeLessThanOrEqual(844);
   await page.screenshot({ path: info.outputPath('controller.png'), fullPage: true });
@@ -82,7 +83,10 @@ test('missing Web Bluetooth is explained without claiming a device', async ({ pa
 });
 
 test('STOP acts on touch while another finger holds a direction', async ({ page }) => {
-  await connect(page); await page.getByRole('button', { name: 'ARM AT ZERO' }).click();
+  await connect(page);
+  const stops = () => page.evaluate(() => fake.calls.filter(x => x[0] === 'control' && x[1] === 2).length);
+  const claimed = await stops();  // the claiming STOP
+  await page.getByRole('button', { name: 'ARM AT ZERO' }).click();
   await expect(page.locator('#local-arm')).toHaveText('Armed');
   const forward = await page.locator('[data-direction="forward"]').boundingBox();
   const stop = await page.locator('#stop').boundingBox();
@@ -95,5 +99,5 @@ test('STOP acts on touch while another finger holds a direction', async ({ page 
   await expect(page.locator('#local-arm')).toHaveText('Disarmed');
   await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  expect(await page.evaluate(() => fake.calls.filter(x => x[0] === 'control' && x[1] === 2).length)).toBe(1);
+  expect(await stops()).toBe(claimed + 1);
 });
