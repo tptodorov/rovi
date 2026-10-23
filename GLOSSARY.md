@@ -160,7 +160,8 @@ A milestone's checklist. An item is ticked only after it has been observed on re
 | **MITM** | Man-in-the-middle attack. |
 | **ECDH** | Elliptic-curve Diffie–Hellman key exchange. |
 | **AP** | Wi-Fi access point; the car runs one (see **Car AP**). |
-| **STA** | Wi-Fi station (client) mode; excluded for now. |
+| **STA** | Wi-Fi station (client) mode; the car's home mode ([ADR-0016](docs/adr/0016-home-network-mode-with-ble-override.md)). |
+| **Home mode / fallback mode** | The car on the home Wi-Fi as a station with a ROS router, or on its own AP (today's behaviour); see [protocol](docs/reference/protocol.md). |
 | **AP+STA** | Running access point and station at once. |
 | **SSID** | Wi-Fi network name (`Rovi M3`). |
 | **WPA2 / WPA3** | Wi-Fi security protocols; WPA2-Personal is used. |
