@@ -111,6 +111,7 @@ def check(path):
     try:
         reply = taker.hello()
         assert reply and reply[0] == udp.ACK, reply
+        serial(silent, "preempted", source="Ros")
         serial(silent, "stop", reason="OwnerLost")
         serial(silent, "claimed", source="Udp")
         after = path.stat().st_size
