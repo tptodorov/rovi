@@ -135,11 +135,18 @@ impl Network {
     /// station off).
     pub fn on_ownership_end(&mut self, now: u64, ble: bool) {
         match self.pending.take() {
+            // A Wi-Fi owner at home is already there; BLE turned the station off, so it rejoins.
+            Some(Command::Home) if self.mode == Mode::Home && !ble => {}
             Some(Command::Home) => self.attempt(now, Cause::Requested),
             Some(Command::CarNetwork) => self.fall_back(Reason::Requested),
             None if ble && self.mode == Mode::Home => self.attempt(now, Cause::BleEnded),
             None => {}
         }
+    }
+
+    /// The commanding owner was taken over: it never released, so its command does not apply.
+    pub fn discard_pending(&mut self) {
+        self.pending = None;
     }
 
     /// The station lost the home network while in home mode.
@@ -330,11 +337,28 @@ mod tests {
 
     #[test]
     fn later_command_replaces_the_pending_one() {
-        let mut n = home(0);
+        let mut n = fallback();
         n.command(Command::CarNetwork);
         n.command(Command::Home);
         n.on_ownership_end(1_000, false);
         assert_eq!(n.mode(), Mode::Attempting(Step::Scan));
+    }
+
+    #[test]
+    fn home_command_from_a_wifi_owner_at_home_keeps_home() {
+        let mut n = home(0);
+        n.command(Command::Home);
+        n.on_ownership_end(1_000, false);
+        assert_eq!((n.mode(), n.pending()), (Mode::Home, None));
+    }
+
+    #[test]
+    fn discarded_command_does_not_apply() {
+        let mut n = home(0);
+        n.command(Command::CarNetwork);
+        n.discard_pending();
+        n.on_ownership_end(1_000, false);
+        assert_eq!(n.mode(), Mode::Home);
     }
 
     #[test]
