@@ -82,9 +82,10 @@ test('a pending write completing at 200 ms closes before another nonzero submiss
 
 test('cleanup attempts STOP independently when zero never resolves, and disconnects by 500 ms', async () => {
   const { fake, session, setTime } = await ready(), zero = pending();
+  const before = fake.calls.length;  // after the claiming STOP
   fake.chars.setpoint.writeValueWithoutResponse = () => zero.promise;
   const closing = session.close('Test shutdown'); await flush();
-  assert.ok(fake.calls.some(([kind, code]) => kind === 'control' && code === 2));
+  assert.ok(fake.calls.slice(before).some(([kind, code]) => kind === 'control' && code === 2));
   setTime(500); session.tick(); await closing;
   assert.equal(fake.server.connected, false); assert.equal(session.phase, 'disconnected');
   zero.resolve(); await flush(); assert.equal(session.localArm, false);
@@ -92,9 +93,10 @@ test('cleanup attempts STOP independently when zero never resolves, and disconne
 
 test('zero rejection still attempts STOP; cleanup Status is device-reported, not physical proof', async () => {
   const { fake, session } = await ready();
+  const before = fake.calls.length;  // after the claiming STOP
   fake.chars.setpoint.writeValueWithoutResponse = async () => { throw new Error('write failed'); };
   await session.close('Test failure');
-  assert.ok(fake.calls.some(([kind, code]) => kind === 'control' && code === 2));
+  assert.ok(fake.calls.slice(before).some(([kind, code]) => kind === 'control' && code === 2));
   assert.match(session.message, /physical stop\/release not verified/);
 });
 

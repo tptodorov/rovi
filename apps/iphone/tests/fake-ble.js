@@ -3,10 +3,12 @@ import { UUID, SERVICE } from '../wire.js';
 export const capsBytes = () => Uint8Array.from('018fc2f53c5c8f023e3333333f9a99993e00004040e80310278813'.match(/../g).map(x => Number.parseInt(x, 16)));
 export const pending = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 
-export function fakeBle() {
+// claimOnWrite: ADR-0016 firmware, where connecting only watches and the first write claims.
+// busy: another controller owns the car, so a claiming control write is refused.
+export function fakeBle({ claimOnWrite = false, busy = false } = {}) {
   const calls = [], device = new EventTarget();
   device.name = 'Fake Rovi'; device.id = 'fake-only';
-  let report = Uint8Array.of(1, 0, 0), fresh = false;
+  let report = Uint8Array.of(claimOnWrite ? (busy ? 2 : 0) : 1, 0, 0), fresh = false;
   const chars = Object.fromEntries(Object.keys(UUID).map(name => [name, new EventTarget()]));
   for (const [name, char] of Object.entries(chars)) char.uuid = UUID[name];
   chars.setpoint.properties = { writeWithoutResponse: true };
@@ -20,6 +22,7 @@ export function fakeBle() {
   chars.setpoint.writeValueWithoutResponse = async bytes => { calls.push(['setpoint', Array.from(bytes)]); fresh = true; };
   chars.control.writeValueWithResponse = async bytes => {
     const code = bytes[0]; calls.push(['control', code]);
+    if (busy) throw new Error('NotAllowed: another controller owns the car');
     if (code === 1 && !fresh) throw new Error('NotReady');
     report = code === 1 ? Uint8Array.of(2, 0, 0) : Uint8Array.of(3, 1, 0);
     fresh = false;

@@ -28,6 +28,8 @@ class Peer:
         self.drop_echo=False;self.refuse_arm=False;self.fail_writes=False;self.hang_writes=False
         self.arm_hook=None;self.caps=CAPS_VALUE
         self.write_delay=self.read_delay=self.disconnect_delay=0
+        # ADR-0016 firmware: connecting does not claim; the first Setpoint/Control write does.
+        self.claim_on_write=False;self.busy=False
         self.chars={u:SimpleNamespace(properties=p,max_write_without_response_size=244) for u,p in {
             SETPOINT:['write-without-response'],CONTROL:['write'],CAPS:['read'],
             STATUS:['read','notify'],ECHO:['write-without-response','notify']}.items()}
@@ -43,6 +45,9 @@ class Peer:
         if self.hang_writes:await asyncio.sleep(10)
         if self.fail_writes:raise BleakError('injected write failure')
         if response:await asyncio.sleep(self.write_delay)
+        if self.busy and uuid==CONTROL:raise BleakError('ATT 0x13: another controller owns the car')
+        if self.claim_on_write and self.status==b'\x00\x00\x00' and uuid in (SETPOINT,CONTROL):
+            self.status=b'\x01\x00\x00'
         self.writes.append((uuid,bytes(data),response))
         if uuid==CONTROL:
             if data==b'\x01':
@@ -83,7 +88,8 @@ class BleTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_startup_six_directions_expiry_stop_and_quit(self):
         await self.start();self.key(b'w');await asyncio.sleep(.07)
-        self.assertFalse(any(u==CONTROL or (u==SETPOINT and any(vector(d))) for u,d,_ in self.peer.writes))
+        # The only control write before R is the claiming STOP: no ARM and no motion.
+        self.assertFalse(any((u==CONTROL and d!=b'\x02') or (u==SETPOINT and any(vector(d))) for u,d,_ in self.peer.writes))
         await self.arm()
         for key,want in [(b'w',(.1,0,0)),(b's',(-.1,0,0)),(b'a',(0,.1,0)),
                          (b'd',(0,-.1,0)),(b'q',(0,0,.3)),(b'e',(0,0,-.3))]:
@@ -132,7 +138,7 @@ class BleTests(unittest.IsolatedAsyncioTestCase):
         old_status(None,b'\x02\x00\x00');old_echo(None,struct.pack('<QI',1,1))
         self.key(b'w');await asyncio.sleep(.08)
         self.assertFalse(self.client.policy.armed)
-        self.assertFalse(any(u==CONTROL or (u==SETPOINT and any(vector(d))) for u,d,_ in replacement.writes))
+        self.assertFalse(any((u==CONTROL and d!=b'\x02') or (u==SETPOINT and any(vector(d))) for u,d,_ in replacement.writes))
         self.assertEqual(self.alert.call_count,1)
         await self.arm();self.key(b'w')
         await self.until(lambda:any(u==SETPOINT and any(vector(d)) for u,d,_ in replacement.writes))
@@ -207,6 +213,21 @@ class BleTests(unittest.IsolatedAsyncioTestCase):
             self.assertLess(time.monotonic()-started,.5)
             self.assertTrue(self.peer.disconnected)
             self.assertIn('STOP unconfirmed',self.output[-1])
+
+    async def test_claim_on_write_firmware_is_claimed_with_an_acknowledged_stop(self):
+        self.peer.claim_on_write=True;self.peer.status=b'\x00\x00\x00'
+        await self.start()
+        self.assertEqual(self.peer.writes[0][:3],(CONTROL,b'\x02',True),'claims with an acknowledged STOP')
+        self.assertFalse(any(u==CONTROL and d==b'\x01' for u,d,_ in self.peer.writes),'never arms by itself')
+        await self.arm()
+        self.key(b'w');await self.until(lambda:any(u==SETPOINT and vector(d)==(.1,0,0) for u,d,_ in self.peer.writes))
+
+    async def test_busy_car_is_not_mistaken_for_a_claim(self):
+        self.peer.claim_on_write=True;self.peer.status=b'\x02\x00\x00';self.peer.busy=True  # a Wi-Fi owner, armed
+        self.task=asyncio.create_task(self.client.run())
+        await self.until(lambda:any('another controller owns the car' in o for o in self.output))
+        self.assertFalse(self.client.ready)
+        self.assertFalse(any(u==SETPOINT and any(vector(d)) for u,d,_ in self.peer.writes))
 
     async def test_measured_rover_latencies_confirm_stop_within_budget(self):
         # 2026-10-22 rover timing: STOP write 75-124 ms, Status read 89-93 ms, BlueZ disconnect 2.1-2.6 s.

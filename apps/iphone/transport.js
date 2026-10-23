@@ -47,6 +47,13 @@ export class Ble {
       || typeof status.startNotifications !== 'function') throw new Error('Unsupported product GATT properties or browser write/read APIs');
     this.writesReady = true;
     const caps = copy(await capabilities.readValue()); this.check();
+    // Claim with an acknowledged STOP: ADR-0016 firmware claims on the first write (a bare
+    // connection only watches), and the response tells a claim from a car another controller
+    // owns. Older firmware has already claimed on connect; STOP keeps it disarmed either way.
+    try { await control.writeValueWithResponse(Uint8Array.of(2)); } catch (error) {
+      this.check(); throw new Error(`Car busy: another controller owns the car (${error.message})`);
+    }
+    this.check();
     const report = copy(await status.readValue()); this.check();
     status.addEventListener('characteristicvaluechanged', this.onStatus);
     await status.startNotifications(); this.check();

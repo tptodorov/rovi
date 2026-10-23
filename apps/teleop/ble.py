@@ -1,4 +1,4 @@
-"""Native BLE keyboard loop; connecting claims ownership, disconnecting releases."""
+"""Native BLE keyboard loop; an acknowledged STOP claims ownership, disconnecting releases."""
 import asyncio
 import struct
 import warnings
@@ -190,6 +190,17 @@ class BleClient:
             raise ClientError(f'invalid BLE capabilities: {exc}') from exc
         self.policy = Policy(caps)
         self.seq = 0
+        # Claim with an acknowledged STOP: ADR-0016 firmware claims on the first write (a bare
+        # connection only watches), and the response tells a claim from a car another controller
+        # owns. Older firmware has already claimed on connect; STOP keeps it disarmed either way.
+        try:
+            await asyncio.wait_for(self.peer.write_gatt_char(CONTROL,bytes([2]),response=True),1)
+        except BleakError as exc:
+            if not self.peer.is_connected:
+                raise LinkError(f'BLE claim disconnected: {exc}') from exc
+            raise LinkError(f'BLE car busy, another controller owns the car: {exc}') from exc
+        except (OSError,asyncio.TimeoutError) as exc:
+            raise LinkError(f'BLE claim failed: {exc}') from exc
         if not self.observe(await self.io(self.peer.read_gatt_char(STATUS),1)) or self.status.state not in ('Claimed','Stopped'):
             raise ClientError('unexpected BLE claim Status')
         peer,generation = self.peer,self.generation
