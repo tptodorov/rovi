@@ -1,7 +1,7 @@
 import struct
 import unittest
 from apps.client.wire import Status
-from apps.teleop.protocol import Session, ClientError, frame, parse, HELLO, ACK, ARM, STOP, STATUS, ECHO, BUSY
+from apps.teleop.protocol import Session, ClientError, LinkError, frame, parse, network_text, HELLO, ACK, ARM, STOP, STATUS, ECHO, BUSY, MODE, INFO
 
 CAPS = struct.pack("<B5f3H", 1, .03, .1275, 1, 1, 3, 1000, 10000, 5000)
 
@@ -18,6 +18,40 @@ class ProtocolTests(unittest.TestCase):
         for caps in [CAPS[:1]+struct.pack('<f', float('nan'))+CAPS[5:], CAPS[:21]+struct.pack('<3H',199,1000,5000), bytes([2])+CAPS[1:]]:
             s=Session(); seq=parse(s.start(0))[2]
             with self.assertRaises(ClientError): s.receive(frame(ACK,42,seq,caps),1)
+
+    def test_takeover_notice_is_a_lost_link_that_says_why(self):
+        # ADR-0016: a higher-priority controller took the car; the old session hears owner-lost.
+        s = self.claimed()
+        with self.assertRaisesRegex(LinkError, 'another controller took the car'):
+            s.receive(frame(STATUS, 42, 0, b'\x03\x03\x00'), 2)
+        other = self.claimed()
+        self.assertIsNone(other.receive(frame(STATUS, 41, 0, b'\x03\x03\x00'), 2), 'another session')
+        self.assertEqual(other.receive(frame(STATUS, 42, 0, b'\x03\x02\x00'), 3)[0], 'status', 'lease stop is not a takeover')
+
+    def test_mode_command_is_a_correlated_control_with_a_payload(self):
+        s = self.claimed()
+        kind, session, q, payload = parse(s.control(MODE, 10, bytes([2])))
+        self.assertEqual((kind, session, payload), (MODE, 42, b'\x02'))
+        event = s.receive(frame(STATUS, 42, q, b'\x01\x00\x00'), 11)
+        self.assertEqual((event[0], event[2]), ('status', MODE))
+        with self.assertRaises(ClientError): s.control(MODE, 12, b'')
+
+    def test_info_reply_is_matched_by_sequence_and_decoded(self):
+        s = self.claimed()
+        q = parse(s.info(10))[2]
+        reply = CAPS + b'\x02\x00\x00' + bytes([2, 0, 0, 0, 192, 168, 1, 50])
+        self.assertIsNone(s.receive(frame(INFO, 0, q + 1, reply), 11), 'unmatched')
+        event = s.receive(frame(INFO, 0, q, reply), 11)
+        self.assertEqual(event[0], 'info')
+        self.assertEqual(event[1], Status('Armed', None, None))
+        self.assertEqual(network_text(event[2]), 'mode=home pending=none fallback=none ip=192.168.1.50')
+        self.assertIsNone(s.receive(frame(INFO, 0, q, reply), 12), 'answered once')
+
+    def test_network_text_names_every_code(self):
+        self.assertEqual(network_text(bytes([0, 2, 7, 0, 0, 0, 0, 0])),
+                         'mode=fallback pending=car-network fallback=requested ip=0.0.0.0')
+        self.assertEqual(network_text(bytes([1, 1, 6, 0, 0, 0, 0, 0]))[:40], 'mode=attempting pending=home fallback=li')
+        self.assertEqual(network_text(b'\x09' * 8), 'network information not understood')
 
     def test_invalid_frames_do_not_refresh_deadline(self):
         s=Session(); seq=parse(s.start(0))[2]

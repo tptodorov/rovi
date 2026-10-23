@@ -9,7 +9,7 @@ import time
 import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
-from apps.teleop.ble import BleClient, BleakError, NAME, SERVICE, SETPOINT, CONTROL, CAPS, STATUS, ECHO, discover
+from apps.teleop.ble import BleClient, BleakError, NAME, SERVICE, SETPOINT, CONTROL, CAPS, STATUS, ECHO, NETWORK, discover
 from apps.teleop.protocol import ClientError, LinkError
 from apps.teleop.tests.test_protocol import CAPS as CAPS_VALUE
 from apps.teleop.tests.test_terminal import Terminal, ROOT
@@ -39,7 +39,9 @@ class Peer:
     async def disconnect(self):
         self.disconnected=True;await asyncio.sleep(self.disconnect_delay);self.is_connected=False
     async def read_gatt_char(self,uuid):
-        await asyncio.sleep(self.read_delay);return self.caps if uuid==CAPS else self.status
+        await asyncio.sleep(self.read_delay)
+        if uuid==NETWORK:return bytes([2,0,0,0,192,168,1,50])
+        return self.caps if uuid==CAPS else self.status
     async def start_notify(self,uuid,callback):self.callbacks[uuid]=callback
     async def write_gatt_char(self,uuid,data,response):
         if self.hang_writes:await asyncio.sleep(10)
@@ -221,6 +223,19 @@ class BleTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(any(u==CONTROL and d==b'\x01' for u,d,_ in self.peer.writes),'never arms by itself')
         await self.arm()
         self.key(b'w');await self.until(lambda:any(u==SETPOINT and vector(d)==(.1,0,0) for u,d,_ in self.peer.writes))
+
+    async def test_mode_option_writes_the_mode_control_and_shows_the_network(self):
+        self.peer.chars[NETWORK]=SimpleNamespace(properties=['read','notify'],max_write_without_response_size=0)
+        self.client=BleClient(NAME,self.reader,self.output.append,find=self.find,alert=self.alert,mode='car')
+        await self.start()
+        controls=[d for u,d,_ in self.peer.writes if u==CONTROL]
+        self.assertEqual(controls[:2],[b'\x02',b'\x04'],'claiming STOP, then Car network')
+        self.assertIn('Car network: mode=home pending=none fallback=none ip=192.168.1.50',self.output)
+        self.assertTrue(any('Mode car-network pending' in o for o in self.output))
+
+    async def test_older_firmware_without_network_characteristic_still_connects(self):
+        await self.start()
+        self.assertFalse(any(o.startswith('Car network:') for o in self.output))
 
     async def test_busy_car_is_not_mistaken_for_a_claim(self):
         self.peer.claim_on_write=True;self.peer.status=b'\x02\x00\x00';self.peer.busy=True  # a Wi-Fi owner, armed

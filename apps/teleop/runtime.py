@@ -6,7 +6,7 @@ import termios
 import time
 import tty
 from .policy import Policy, ZERO
-from .protocol import Session, ClientError, LinkError, frame, parse, ARM, STOP, STATUS
+from .protocol import Session, ClientError, LinkError, frame, parse, network_text, ARM, STOP, STATUS, MODE, HOME, CAR_NETWORK
 from .audio import beep
 from apps.client.wire import Status
 
@@ -65,7 +65,7 @@ def read_keys(input_fd):
 
 
 class Client:
-    def __init__(self, peer, sock, input_fd, emit, *, clock=milliseconds, wait=wait_readable, alert=beep):
+    def __init__(self, peer, sock, input_fd, emit, *, clock=milliseconds, wait=wait_readable, alert=beep, mode=None):
         self.peer,self.sock,self.input_fd,self.emit = peer,sock,input_fd,emit
         self.clock,self.wait = clock,wait
         self.session = Session()
@@ -76,6 +76,8 @@ class Client:
         self.recovering = False
         self.alerted = False
         self.discard_keys = False
+        # ADR-0016: Home or Car network, sent again on every claim (a command belongs to its session).
+        self.mode = {'home': HOME, 'car': CAR_NETWORK, None: None}[mode]
 
     def send(self, packet):
         try:
@@ -90,6 +92,9 @@ class Client:
         if event[0] == 'claimed':
             self.policy = Policy(event[1])
             self.discard_keys = True
+            self.send(self.session.info(now))
+            if self.mode:
+                self.send(self.session.control(MODE,now,bytes([self.mode])))
             if self.recovering:
                 self.emit(f'Claimed disarmed session={self.session.session} capabilities={dict(event[1]._asdict())}; verifying Echo')
             else:
@@ -101,6 +106,14 @@ class Client:
             label = 'Reconnected' if self.connected_once else 'Connected'
             self.connected_once = True
             self.emit(f'{label} disarmed session={self.session.session}; press R to arm')
+        elif event[0] == 'info':
+            self.emit(f'Car network: {network_text(event[2])}')
+        elif event[0] == 'status' and event[2] == MODE:
+            name = 'home' if self.mode == HOME else 'car-network'
+            if event[1].error is None:
+                self.emit(f'Mode {name} pending; it applies when this controller releases the car (quit)')
+            else:
+                self.emit(f'Mode {name} refused: {event[1].error}')
         elif event[0] == 'status':
             self.policy.observe(event[1],event[2])
             if event[2] == STOP:

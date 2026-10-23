@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>75 / 80</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>76 / 80</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -4482,7 +4482,7 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--5-client-and-docs">5. Client and docs</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 5.1 Laptop teleop: <code>--mode home|car</code>, network-information display, takeover notice shown as &quot;overridden&quot;, BLE claim on first write; rerun the iPhone client tests against the new claim timing; fake-peer/GATT tests for success, refusal (armed, invalid) and display.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 5.1 Laptop teleop: <code>--mode home|car</code>, network-information display, takeover notice shown as &quot;overridden&quot;, BLE claim on first write; rerun the iPhone client tests against the new claim timing; fake-peer/GATT tests for success, refusal (armed, invalid) and display. <strong>Done:</strong> both BLE clients claim with an acknowledged STOP (claim-on-write firmware; busy car reported, never mistaken for a claim); laptop <code>--mode home|car</code> over UDP (kind 10) and BLE (Control 3/4), <code>INFO</code> / Network characteristic line, UDP takeover notice treated as a lost link (&quot;another controller took the car&quot;). Laptop 70 tests (23 BLE also with Bleak 2.1.1); iPhone 50 Node + 37 Chromium. iPhone mode UI deferred to #109.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 5.2 Write <code>docs/reference/protocol.md</code>: one row per operation, one column per transport (BLE, UDP, ROS), linked from the specs and client READMEs. Mark ADR-0004 and ADR-0008 as partly superseded by ADR-0016; README build command with the home variables, PLAN/GLOSSARY updates; reader regenerated.</li>
 </ul>

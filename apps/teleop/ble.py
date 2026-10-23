@@ -4,7 +4,7 @@ import struct
 import warnings
 from .audio import beep
 from .policy import Policy, ZERO
-from .protocol import ARM, STOP, ClientError, LinkError, capabilities
+from .protocol import ARM, STOP, ClientError, LinkError, capabilities, network_text
 from .runtime import milliseconds, read_keys
 from apps.client.wire import Status, ble_setpoint
 
@@ -15,8 +15,8 @@ except ImportError:  # UDP and fake-GATT tests do not require Bleak.
         pass
 
 SERVICE = 'd47a0010-45b2-4d19-8db0-6bd87e9c0001'
-SETPOINT, CONTROL, CAPS, STATUS, ECHO = [
-    f'd47a00{i:02x}-45b2-4d19-8db0-6bd87e9c0001' for i in range(0x11,0x16)
+SETPOINT, CONTROL, CAPS, STATUS, ECHO, NETWORK = [
+    f'd47a00{i:02x}-45b2-4d19-8db0-6bd87e9c0001' for i in range(0x11,0x17)
 ]
 NAME = 'Rovi M8'
 
@@ -38,7 +38,7 @@ async def discover(address):
 
 
 class BleClient:
-    def __init__(self, address, input_fd, emit, *, find=discover, clock=milliseconds, alert=beep):
+    def __init__(self, address, input_fd, emit, *, find=discover, clock=milliseconds, alert=beep, mode=None):
         self.address,self.input_fd,self.emit = address,input_fd,emit
         self.find,self.clock,self.alert = find,clock,alert
         self.peer = self.policy = self.task = None
@@ -47,6 +47,8 @@ class BleClient:
         self.action = self.failure = self.status = self.status_at = self.echo_at = None
         self.echoes = {}
         self.cleanup_ok = False
+        # ADR-0016 mode command (Control 3 = Home, 4 = Car network), sent on every claim.
+        self.mode = mode
 
     def input(self, keys):
         if any(k in keys for k in (3,4,27)):
@@ -203,6 +205,19 @@ class BleClient:
             raise LinkError(f'BLE claim failed: {exc}') from exc
         if not self.observe(await self.io(self.peer.read_gatt_char(STATUS),1)) or self.status.state not in ('Claimed','Stopped'):
             raise ClientError('unexpected BLE claim Status')
+        if self.peer.services.get_characteristic(NETWORK) is not None:  # older firmware lacks it
+            self.emit(f'Car network: {network_text(await self.io(self.peer.read_gatt_char(NETWORK),1))}')
+        if self.mode:
+            name = 'home' if self.mode=='home' else 'car-network'
+            try:
+                await asyncio.wait_for(self.peer.write_gatt_char(CONTROL,bytes([3 if self.mode=='home' else 4]),response=True),1)
+                self.emit(f'Mode {name} pending; it applies when this controller releases the car (quit)')
+            except BleakError as exc:
+                if not self.peer.is_connected:
+                    raise LinkError(f'BLE mode command disconnected: {exc}') from exc
+                self.emit(f'Mode {name} refused: {exc}')
+            except (OSError,asyncio.TimeoutError) as exc:
+                raise LinkError(f'BLE mode command failed: {exc}') from exc
         peer,generation = self.peer,self.generation
         for uuid in (STATUS,ECHO):
             await self.io(peer.start_notify(uuid,lambda _,data,k=uuid:self.notification(peer,generation,k,bytes(data))),1)

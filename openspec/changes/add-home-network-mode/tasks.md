@@ -26,7 +26,7 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 
 ## 5. Client and docs
 
-- [ ] 5.1 Laptop teleop: `--mode home|car`, network-information display, takeover notice shown as "overridden", BLE claim on first write; rerun the iPhone client tests against the new claim timing; fake-peer/GATT tests for success, refusal (armed, invalid) and display.
+- [x] 5.1 Laptop teleop: `--mode home|car`, network-information display, takeover notice shown as "overridden", BLE claim on first write; rerun the iPhone client tests against the new claim timing; fake-peer/GATT tests for success, refusal (armed, invalid) and display. **Done:** both BLE clients claim with an acknowledged STOP (claim-on-write firmware; busy car reported, never mistaken for a claim); laptop `--mode home|car` over UDP (kind 10) and BLE (Control 3/4), `INFO` / Network characteristic line, UDP takeover notice treated as a lost link ("another controller took the car"). Laptop 70 tests (23 BLE also with Bleak 2.1.1); iPhone 50 Node + 37 Chromium. iPhone mode UI deferred to #109.
 - [ ] 5.2 Write `docs/reference/protocol.md`: one row per operation, one column per transport (BLE, UDP, ROS), linked from the specs and client READMEs. Mark ADR-0004 and ADR-0008 as partly superseded by ADR-0016; README build command with the home variables, PLAN/GLOSSARY updates; reader regenerated.
 
 ## 6. Board acceptance (each step separately announced; motor steps need Todor's go)
