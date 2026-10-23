@@ -52,6 +52,92 @@ enum Cause {
     LinkLost,
 }
 
+/// What every transport reports about the network: BLE Network characteristic, UDP `INFO`,
+/// ROS `/rovi/network`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Info {
+    pub mode: Mode,
+    pub pending: Option<Command>,
+    pub reason: Reason,
+    /// Station IPv4; 0.0.0.0 without one.
+    pub ip: [u8; 4],
+}
+
+impl Info {
+    /// `[mode, pending, reason, 0, ip0, ip1, ip2, ip3]`.
+    pub fn encode(self) -> [u8; 8] {
+        let mode = match self.mode {
+            Mode::Fallback => 0,
+            Mode::Attempting(_) => 1,
+            Mode::Home => 2,
+        };
+        let pending = match self.pending {
+            None => 0,
+            Some(Command::Home) => 1,
+            Some(Command::CarNetwork) => 2,
+        };
+        let [a, b, c, d] = self.ip;
+        [mode, pending, reason_code(self.reason), 0, a, b, c, d]
+    }
+
+    /// The `/rovi/network` sample: a CDR `std_msgs/String` in logfmt.
+    pub fn encode_cdr(self, out: &mut [u8]) -> Option<usize> {
+        use core::fmt::Write;
+        let mode = match self.mode {
+            Mode::Fallback => "fallback",
+            Mode::Attempting(_) => "attempting",
+            Mode::Home => "home",
+        };
+        let pending = match self.pending {
+            None => "none",
+            Some(Command::Home) => "home",
+            Some(Command::CarNetwork) => "car-network",
+        };
+        let [a, b, c, d] = self.ip;
+        let mut text = crate::rmw::Key::<96>::new();
+        write!(
+            text,
+            "mode={mode} pending={pending} fallback={} ip={a}.{b}.{c}.{d}",
+            reason_name(self.reason)
+        )
+        .ok()?;
+        let bytes = text.as_str().as_bytes();
+        let n = 9 + bytes.len();
+        let out = out.get_mut(..n)?;
+        out[..4].copy_from_slice(&[0, 1, 0, 0]);
+        out[4..8].copy_from_slice(&(bytes.len() as u32 + 1).to_le_bytes());
+        out[8..n - 1].copy_from_slice(bytes);
+        out[n - 1] = 0;
+        Some(n)
+    }
+}
+
+fn reason_code(r: Reason) -> u8 {
+    match r {
+        Reason::None => 0,
+        Reason::NoSettings => 1,
+        Reason::Scan => 2,
+        Reason::Join => 3,
+        Reason::Dhcp => 4,
+        Reason::Router => 5,
+        Reason::LinkLost => 6,
+        Reason::Requested => 7,
+    }
+}
+
+fn reason_name(r: Reason) -> &'static str {
+    match r {
+        Reason::None => "none",
+        Reason::NoSettings => "no-settings",
+        Reason::Scan => "scan",
+        Reason::Join => "join",
+        Reason::Dhcp => "dhcp",
+        Reason::Router => "router",
+        Reason::LinkLost => "link-lost",
+        Reason::Requested => "requested",
+    }
+}
+
 #[derive(Debug)]
 pub struct Network {
     /// Firmware built with home settings and ROS 2.
@@ -91,6 +177,15 @@ impl Network {
 
     pub fn home_supported(&self) -> bool {
         self.home_supported
+    }
+
+    pub fn info(&self, ip: [u8; 4]) -> Info {
+        Info {
+            mode: self.mode,
+            pending: self.pending,
+            reason: self.reason,
+            ip,
+        }
     }
 
     /// The firmware finished a step of the current attempt. Reports for any other step (late,
@@ -203,6 +298,43 @@ mod tests {
         let mut n = Network::boot(0, true);
         n.on_step(100, Step::Scan, false);
         n
+    }
+
+    #[test]
+    fn info_encodes_mode_pending_reason_and_ip() {
+        let mut n = fallback();
+        n.command(Command::Home);
+        assert_eq!(n.info([0; 4]).encode(), [0, 1, 2, 0, 0, 0, 0, 0]);
+        let n = home(0);
+        assert_eq!(
+            n.info([192, 168, 1, 50]).encode(),
+            [2, 0, 0, 0, 192, 168, 1, 50]
+        );
+        let mut n = home(0);
+        n.on_ownership_end(1, true);
+        n.command(Command::CarNetwork);
+        assert_eq!(n.info([0; 4]).encode()[..3], [1, 2, 0]);
+    }
+
+    #[test]
+    fn info_cdr_is_a_logfmt_string() {
+        let mut out = [0u8; 96];
+        let n = home(0)
+            .info([192, 168, 1, 50])
+            .encode_cdr(&mut out)
+            .unwrap();
+        let text = b"mode=home pending=none fallback=none ip=192.168.1.50";
+        assert_eq!(out[..4], [0, 1, 0, 0]);
+        assert_eq!(out[4..8], (text.len() as u32 + 1).to_le_bytes());
+        assert_eq!(&out[8..n - 1], text);
+        assert_eq!(out[n - 1], 0);
+        let mut n2 = fallback();
+        n2.command(Command::CarNetwork);
+        let len = n2.info([0; 4]).encode_cdr(&mut out).unwrap();
+        assert_eq!(
+            &out[8..len - 1],
+            b"mode=fallback pending=car-network fallback=scan ip=0.0.0.0"
+        );
     }
 
     #[test]

@@ -6,7 +6,7 @@
 import collections, re, sys, time
 
 # Keep in sync with src/events.rs (test_carlog.py checks it).
-CATALOG = {"boot", "claimed", "released", "stop", "state", "ble", "mtu", "wifi", "ros", "error", "dropped"}
+CATALOG = {"boot", "claimed", "released", "stop", "state", "ble", "mtu", "wifi", "ros", "net", "net_step", "mode_cmd", "preempted", "error", "dropped"}
 PANIC = re.compile(r"panicked|PANIC")
 EV = re.compile(r"(?:^|\s)(ev=\S+.*)")
 INT = re.compile(r"-?\d+$")

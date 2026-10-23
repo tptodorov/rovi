@@ -15,6 +15,10 @@ use crate::udp::{self, Header, Kind};
 pub const CAPABILITIES_LEN: usize = 27;
 /// Bytes of the `STATUS` payload: state, stop reason, last error.
 pub const STATUS_LEN: usize = 3;
+/// Bytes of the UDP `INFO` payload: capabilities, status, network information.
+pub const INFO_LEN: usize = CAPABILITIES_LEN + STATUS_LEN + 8;
+/// BLE connections the device tracks: one owner and one watcher (ADR-0016).
+pub const BLE_SLOTS: usize = 2;
 /// Largest echo payload (UDP `ECHO`, BLE Echo characteristic).
 pub const ECHO_MAX: usize = 32;
 
@@ -48,6 +52,42 @@ pub struct Reply {
 pub struct BleConn {
     pub handle: u16,
     generation: u32,
+}
+
+/// A controller was taken over: tell it on its own transport, once (spec *Takeover notice*).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Notice {
+    pub source: Source,
+    /// The UDP peer id, BLE token or ROS node of the old owner.
+    pub id: u128,
+    /// The old owner's session.
+    pub session: u32,
+}
+
+impl Notice {
+    /// What the old owner is told: stopped, owner-lost, in its own session.
+    pub fn status(&self) -> Status {
+        Status {
+            state: State::Stopped(StopReason::OwnerLost),
+            error: None,
+            session: self.session,
+        }
+    }
+
+    /// The unsolicited UDP `STATUS` for the old session (sequence 0); 0 if `out` is too small.
+    pub fn udp_frame(&self, out: &mut [u8]) -> usize {
+        let header = Header {
+            kind: Kind::Status,
+            session: self.session,
+            seq: 0,
+        };
+        udp::write(out, header, &self.status().encode()).unwrap_or(0)
+    }
+
+    /// The `rovi/status` sample for the old ROS owner.
+    pub fn ros_cdr(&self, out: &mut [u8]) -> usize {
+        self.status().encode_cdr(out).unwrap_or(0)
+    }
 }
 
 /// Why a device profile is refused. The device does not start, so nothing can claim it and the
@@ -86,6 +126,14 @@ pub struct Device {
     network: Network,
     /// A takeover ended without a Home hand-back: the next ROS owner must arm explicitly.
     handback_latch: bool,
+    /// The station's DHCP address; 0.0.0.0 without one.
+    station_ip: [u8; 4],
+    /// The last mode command (source, command, refusal) for the adapter to log.
+    mode_log: Option<(Source, Command, Option<Error>)>,
+    /// Open BLE connections; only these can claim with a write.
+    ble_live: [Option<BleConn>; BLE_SLOTS],
+    /// The last takeover, for the adapter to tell the old owner.
+    notice: Option<Notice>,
 }
 
 /// Owner publishers the ROS ordering table tracks per session, as many as the graph holds (the
@@ -225,6 +273,10 @@ impl Device {
             last_udp_status: None,
             network: Network::boot(0, false),
             handback_latch: false,
+            station_ip: [0; 4],
+            mode_log: None,
+            ble_live: [None; BLE_SLOTS],
+            notice: None,
         })
     }
 
@@ -268,11 +320,72 @@ impl Device {
         self.network.on_station_lost(now);
     }
 
+    /// The station's DHCP address, or `None` when it has none.
+    pub fn set_station_ip(&mut self, ip: Option<[u8; 4]>) {
+        self.station_ip = ip.unwrap_or([0; 4]);
+    }
+
+    /// The BLE Network characteristic and the network part of UDP `INFO`.
+    pub fn network_info(&self) -> [u8; 8] {
+        self.network.info(self.station_ip).encode()
+    }
+
+    /// Writes the `rovi/network` sample (`std_msgs/String` CDR) and returns its length.
+    pub fn network_cdr(&self, out: &mut [u8]) -> usize {
+        self.network
+            .info(self.station_ip)
+            .encode_cdr(out)
+            .unwrap_or(0)
+    }
+
+    /// The last takeover, once: the adapter sends the old owner its final status.
+    pub fn take_takeover_notice(&mut self) -> Option<Notice> {
+        self.notice.take()
+    }
+
+    /// The last mode command, once, for the adapter's `ev=mode_cmd` line.
+    pub fn take_mode_log(&mut self) -> Option<(Source, Command, Option<Error>)> {
+        self.mode_log.take()
+    }
+
+    /// A mode command (`[1]` Home, `[2]` Car network) from the owner while disarmed; it applies
+    /// when that ownership ends. Refusals are kept as the owner's last control error.
+    fn mode_command(&mut self, who: Claimant, payload: &[u8]) -> Result<Effects, Error> {
+        self.arbiter.check_owner(who)?;
+        let cmd = match payload {
+            [1] => Some(Command::Home),
+            [2] => Some(Command::CarNetwork),
+            _ => None,
+        };
+        let result = match cmd {
+            None => Err(Error::Invalid),
+            Some(Command::Home) if !self.network.home_supported() => Err(Error::Invalid),
+            Some(_) if self.arbiter.state() == State::Armed => Err(Error::NotReady),
+            Some(c) => {
+                self.network.command(c);
+                Ok(Effects::default())
+            }
+        };
+        self.owner_error = result.err();
+        if let Some(c) = cmd {
+            self.mode_log = Some((who.source, c, result.err()));
+        }
+        result
+    }
+
     /// Bookkeeping after `fx` from an input or a deadline, given the owner before it: a released
     /// owner's pending mode command applies, and a Home hand-back clears the ROS latch.
     fn ended(&mut self, now: u64, owner: Option<Claimant>, fx: Effects) -> Effects {
         if fx.released {
             self.owner_error = None;
+            // A BLE owner that lost the car is being disconnected; it cannot claim again.
+            if let Some(o) = owner.filter(|o| o.source == Source::Ble) {
+                for slot in &mut self.ble_live {
+                    if slot.is_some_and(|c| ble(c) == o) {
+                        *slot = None;
+                    }
+                }
+            }
             if let (Some(o), None) = (owner, fx.preempted) {
                 if o.source != Source::Ros && self.network.pending() == Some(Command::Home) {
                     self.handback_latch = false;
@@ -296,6 +409,11 @@ impl Device {
                     return Err(Error::Busy);
                 }
                 self.network.discard_pending();
+                self.notice = Some(Notice {
+                    source: owner.source,
+                    id: owner.id,
+                    session: self.arbiter.session(),
+                });
                 if owner.source == Source::Ros {
                     self.handback_latch = true;
                 }
@@ -375,6 +493,17 @@ impl Device {
                 len: echo(payload).map_or(0, |p| udp::write(out, h, p).unwrap_or(0)),
                 ..Reply::default()
             },
+            Kind::Info => {
+                let mut info = [0u8; INFO_LEN];
+                info[..CAPABILITIES_LEN].copy_from_slice(&self.capabilities());
+                info[CAPABILITIES_LEN..CAPABILITIES_LEN + STATUS_LEN]
+                    .copy_from_slice(&self.status());
+                info[CAPABILITIES_LEN + STATUS_LEN..].copy_from_slice(&self.network_info());
+                Reply {
+                    len: reply(Kind::Info, 0, &info, out),
+                    ..Reply::default()
+                }
+            }
             Kind::Hello => match self.claim(now, who) {
                 Ok(effects) => {
                     if effects.claimed.is_some() {
@@ -405,6 +534,11 @@ impl Device {
                     Err(_) => self.status_reply(Effects::default(), h, out),
                 }
             }
+            Kind::Mode if ours => match self.mode_command(who, payload) {
+                Ok(effects) => self.status_reply(effects, h, out),
+                Err(Error::NotOwner) => Reply::default(),
+                Err(_) => self.status_reply(Effects::default(), h, out),
+            },
             Kind::Bye if ours => match self.arbiter.release(now, who) {
                 Ok(effects) => Reply {
                     len: 0,
@@ -431,10 +565,24 @@ impl Device {
         Reply { len, effects }
     }
 
-    /// A BLE central connected: that is the claim.
-    /// Returns the connection's token for every later call; a refused claim leaves the
-    /// connection without one (the adapter disconnects it).
+    /// A BLE central connected and claims at once (M8 behaviour, until the firmware moves to
+    /// [`on_ble_attach`](Self::on_ble_attach)). Returns the connection's token for every later
+    /// call; a refused claim leaves the connection without one (the adapter disconnects it).
     pub fn on_ble_connect(&mut self, now: u64, handle: u16) -> Result<(BleConn, Effects), Error> {
+        let conn = self.on_ble_attach(now, handle);
+        let due = core::mem::take(&mut self.pending);
+        let result = self.claim(now, ble(conn));
+        if result.is_ok() {
+            self.owner_error = None;
+        } else {
+            self.detach(conn);
+        }
+        self.returned(due, result).map(|fx| (conn, fx))
+    }
+
+    /// A BLE central connected. It can read and get notifications without claiming; its first
+    /// Setpoint or Control write claims (ADR-0016). Returns the token for every later call.
+    pub fn on_ble_attach(&mut self, now: u64, handle: u16) -> BleConn {
         self.ble_generation = match self.ble_generation.wrapping_add(1) {
             0 => 1,
             g => g,
@@ -444,11 +592,32 @@ impl Device {
             generation: self.ble_generation,
         };
         let due = self.expire(now);
-        let result = self.claim(now, ble(conn));
-        if result.is_ok() {
-            self.owner_error = None;
+        self.pending = merge(self.pending, due);
+        if let Some(slot) = self.ble_live.iter_mut().find(|s| s.is_none()) {
+            *slot = Some(conn);
         }
-        self.returned(due, result).map(|fx| (conn, fx))
+        conn
+    }
+
+    fn detach(&mut self, conn: BleConn) {
+        for slot in &mut self.ble_live {
+            if *slot == Some(conn) {
+                *slot = None;
+            }
+        }
+    }
+
+    /// Claims for a live BLE connection that does not own the car yet.
+    fn ble_claim(&mut self, now: u64, conn: BleConn) -> Result<Effects, Error> {
+        if self.ble_owns(conn) {
+            return Ok(Effects::default());
+        }
+        if !self.ble_live.contains(&Some(conn)) {
+            return Err(Error::NotOwner);
+        }
+        let fx = self.claim(now, ble(conn))?;
+        self.owner_error = None;
+        Ok(fx)
     }
 
     /// Returns `due` with an accepted input's effects, or keeps it for the next tick.
@@ -465,7 +634,18 @@ impl Device {
     /// A write to the Setpoint characteristic: `seq u32` (LE) then the CDR `TwistStamped`.
     pub fn on_ble_setpoint(&mut self, now: u64, conn: BleConn, data: &[u8]) -> Effects {
         let due = self.expire(now);
-        merge(due, self.ble_setpoint(now, conn, data))
+        // A setpoint that does not decode must not claim.
+        let decodes = data
+            .split_first_chunk::<4>()
+            .is_some_and(|(_, cdr)| Setpoint::decode(cdr).is_ok());
+        if !decodes {
+            return due;
+        }
+        let claimed = match self.ble_claim(now, conn) {
+            Ok(fx) => fx,
+            Err(_) => return due,
+        };
+        merge(merge(due, claimed), self.ble_setpoint(now, conn, data))
     }
 
     fn ble_setpoint(&mut self, now: u64, conn: BleConn, data: &[u8]) -> Effects {
@@ -484,23 +664,23 @@ impl Device {
         }
     }
 
-    /// A write to the Control characteristic: 1 = ARM, 2 = STOP. An error rejects the write.
+    /// A write to the Control characteristic: 1 = ARM, 2 = STOP, 3 = Home, 4 = Car network.
+    /// An error rejects the write.
     pub fn on_ble_control(&mut self, now: u64, conn: BleConn, cmd: u8) -> Result<Effects, Error> {
         let due = self.expire(now);
-        let result = self.ble_control(now, conn, cmd);
+        let result = self.ble_claim(now, conn).and_then(|claimed| {
+            self.ble_control(now, conn, cmd)
+                .map(|fx| merge(claimed, fx))
+        });
         self.returned(due, result)
     }
 
     fn ble_control(&mut self, now: u64, conn: BleConn, cmd: u8) -> Result<Effects, Error> {
-        self.control(
-            now,
-            ble(conn),
-            match cmd {
-                1 => Some(true),
-                2 => Some(false),
-                _ => None,
-            },
-        )
+        match cmd {
+            3 | 4 => self.mode_command(ble(conn), &[cmd - 2]),
+            1 | 2 => self.control(now, ble(conn), Some(cmd == 1)),
+            _ => self.control(now, ble(conn), None),
+        }
     }
 
     /// The Status characteristic for the BLE owner: the state and the last control error.
@@ -511,6 +691,7 @@ impl Device {
     /// The central disconnected.
     pub fn on_ble_disconnect(&mut self, now: u64, conn: BleConn) -> Effects {
         let due = self.expire(now);
+        self.detach(conn);
         let fx = self.arbiter.release(now, ble(conn)).unwrap_or_default();
         let fx = self.ended(now, Some(ble(conn)), fx);
         merge(due, fx)
@@ -626,6 +807,48 @@ impl Device {
             self.handback_latch = false;
         }
         result.unwrap_or_default()
+    }
+
+    /// A sample on `rovi/release` (`std_msgs/Empty`) from the owner node: release at once, like a
+    /// UDP BYE (an owner-lost stop if armed); a pending mode command applies.
+    pub fn on_ros_release(&mut self, now: u64, attachment: &[u8], _payload: &[u8]) -> Effects {
+        let due = self.expire(now);
+        let Some(att) = Attachment::decode(attachment) else {
+            return due;
+        };
+        let Some(who) = self.ros_claimant(&att) else {
+            return due;
+        };
+        if self.arbiter.owner() != Some(who)
+            || !self.marks.accept(self.arbiter.session(), att.gid, att.seq)
+        {
+            return due;
+        }
+        let fx = self.arbiter.release(now, who).unwrap_or_default();
+        let fx = self.ended(now, Some(who), fx);
+        merge(due, fx)
+    }
+
+    /// A sample on `rovi/mode` (`std_msgs/UInt8`): 1 = Home, 2 = Car network, from the owner node.
+    pub fn on_ros_mode(&mut self, now: u64, attachment: &[u8], payload: &[u8]) -> Effects {
+        let due = self.expire(now);
+        let Some(att) = Attachment::decode(attachment) else {
+            return due;
+        };
+        let Some(who) = self.ros_claimant(&att) else {
+            return due;
+        };
+        if self.arbiter.owner() != Some(who)
+            || !self.marks.accept(self.arbiter.session(), att.gid, att.seq)
+        {
+            return due;
+        }
+        let value = match payload {
+            [0, 1, 0, 0, _] => &payload[4..],
+            _ => &[],
+        };
+        let _ = self.mode_command(who, value);
+        due
     }
 
     /// Writes the `rovi/status` sample (`std_msgs/String` CDR) and returns its length.
@@ -2620,5 +2843,268 @@ mod tests {
         d.start_network(0, true);
         d.tick(crate::network::SCAN_BUDGET_MS);
         assert_eq!(d.network().mode(), Mode::Fallback);
+    }
+
+    // --- Mode command and network information (task 2.4) ---
+
+    fn uint8(v: u8) -> [u8; 5] {
+        [0, 1, 0, 0, v]
+    }
+
+    #[test]
+    fn ble_control_codes_3_and_4_set_a_pending_mode_command() {
+        let mut d = home_dev();
+        let (conn, _) = d.on_ble_connect(0, 1).unwrap();
+        d.on_ble_control(10, conn, 4).unwrap();
+        assert_eq!(d.network().pending(), Some(Command::CarNetwork));
+        d.on_ble_control(20, conn, 3).unwrap();
+        assert_eq!(d.network().pending(), Some(Command::Home));
+        assert_eq!(
+            d.take_mode_log(),
+            Some((Source::Ble, Command::Home, None)),
+            "the last command is logged"
+        );
+    }
+
+    #[test]
+    fn udp_mode_kind_sets_pending_and_replies_with_status() {
+        let mut d = dev();
+        let (_, s, _) = hello(&mut d, 0, A);
+        let (r, _) = send(&mut d, 10, A, Kind::Mode, s, 2, &[2]);
+        let (h, p) = r.unwrap();
+        assert_eq!(h.kind, Kind::Status);
+        assert_eq!(p[2], 0, "no error");
+        assert_eq!(d.network().pending(), Some(Command::CarNetwork));
+        send(&mut d, 20, A, Kind::Bye, s, 3, &[]);
+        assert_eq!(d.network().reason(), crate::network::Reason::Requested);
+    }
+
+    #[test]
+    fn ros_mode_from_the_owner_sets_pending_and_others_are_ignored() {
+        let mut d = home_dev();
+        let (_, arm) = ros_armed(&mut d, 0);
+        let other = publisher(&mut d, 2, 1, 1);
+        d.on_ros_arm(10, &at(&arm, 2), &bool_cdr(false));
+        d.on_ros_mode(20, &other, &uint8(2));
+        assert_eq!(d.network().pending(), None, "non-owner ignored");
+        let mode = publisher(&mut d, 1, 3, 1);
+        d.on_ros_mode(30, &mode, &uint8(2));
+        assert_eq!(d.network().pending(), Some(Command::CarNetwork));
+    }
+
+    #[test]
+    fn armed_owner_mode_command_is_refused_not_ready() {
+        let mut d = home_dev();
+        let s = armed(&mut d);
+        let (r, _) = send(&mut d, 10, A, Kind::Mode, s, 5, &[1]);
+        assert_eq!(r.unwrap().1[2], 3, "STATUS carries not-ready");
+        assert_eq!(d.arbiter().state(), State::Armed);
+        assert_eq!(d.network().pending(), None);
+        assert_eq!(
+            d.take_mode_log(),
+            Some((Source::Udp, Command::Home, Some(Error::NotReady)))
+        );
+    }
+
+    #[test]
+    fn unknown_mode_values_and_lengths_are_invalid_and_keep_the_pending_command() {
+        let mut d = home_dev();
+        let (_, s, _) = hello(&mut d, 0, A);
+        send(&mut d, 5, A, Kind::Mode, s, 2, &[2]);
+        for (seq, payload) in [(3, &[0u8][..]), (4, &[3]), (5, &[1, 1]), (6, &[])] {
+            let (r, _) = send(&mut d, 10, A, Kind::Mode, s, seq, payload);
+            assert_eq!(r.unwrap().1[2], 4, "invalid: {payload:?}");
+        }
+        assert_eq!(d.network().pending(), Some(Command::CarNetwork));
+        let mut b = home_dev();
+        let (conn, _) = b.on_ble_connect(0, 1).unwrap();
+        assert_eq!(b.on_ble_control(10, conn, 9), Err(Error::Invalid));
+    }
+
+    #[test]
+    fn home_without_home_support_is_invalid() {
+        let mut d = dev();
+        let (_, s, _) = hello(&mut d, 0, A);
+        let (r, _) = send(&mut d, 10, A, Kind::Mode, s, 2, &[1]);
+        assert_eq!(r.unwrap().1[2], 4, "invalid");
+        assert_eq!(d.network().pending(), None);
+    }
+
+    #[test]
+    fn network_information_reports_mode_and_station_ip() {
+        let mut d = home_dev();
+        d.set_station_ip(Some([192, 168, 1, 50]));
+        assert_eq!(d.network_info(), [2, 0, 0, 0, 192, 168, 1, 50]);
+        let mut out = [0u8; 96];
+        let n = d.network_cdr(&mut out);
+        assert!(core::str::from_utf8(&out[8..n - 1])
+            .unwrap()
+            .ends_with("ip=192.168.1.50"));
+        d.set_station_ip(None);
+        assert_eq!(d.network_info()[4..], [0; 4]);
+    }
+
+    // --- Protocol alignment (task 2.5) ---
+
+    #[test]
+    fn attached_ble_central_watches_without_claiming() {
+        let mut d = home_dev();
+        let s = armed(&mut d);
+        let conn = d.on_ble_attach(10, 1);
+        assert_eq!(
+            d.ble_status(),
+            [2, 0, 0],
+            "it reads the UDP owner's armed state"
+        );
+        assert_eq!(
+            d.on_ble_disconnect(20, conn),
+            Effects::default(),
+            "nothing to release"
+        );
+        assert_eq!(d.arbiter().owner().map(|o| o.id), Some(A));
+        assert_eq!(d.arbiter().session(), s);
+        assert!(d.wifi_allowed());
+    }
+
+    #[test]
+    fn first_ble_setpoint_or_control_write_claims() {
+        let mut d = dev();
+        let conn = d.on_ble_attach(0, 1);
+        assert_eq!(d.ble_status()[0], 0, "open before any write");
+        let fx = d.on_ble_setpoint(10, conn, &ble_sp(1, 0.0));
+        assert_eq!(fx.claimed, Some(Source::Ble));
+        assert_eq!(d.ble_status()[0], 1, "claimed after the first write");
+
+        let mut d = dev();
+        let conn = d.on_ble_attach(0, 1);
+        let fx = d.on_ble_control(10, conn, 2).unwrap();
+        assert_eq!(fx.claimed, Some(Source::Ble), "STOP claims too");
+    }
+
+    #[test]
+    fn second_ble_central_cannot_claim_while_ble_owns() {
+        let mut d = dev();
+        let owner = d.on_ble_attach(0, 1);
+        d.on_ble_setpoint(10, owner, &ble_sp(1, 0.0));
+        let other = d.on_ble_attach(20, 2);
+        assert_eq!(
+            d.on_ble_setpoint(30, other, &ble_sp(1, 0.5)),
+            Effects::default()
+        );
+        assert_eq!(d.on_ble_control(40, other, 1), Err(Error::Busy));
+        assert!(d.ble_owns(owner) && !d.ble_owns(other));
+        assert_eq!(d.on_ble_disconnect(50, other), Effects::default());
+        assert!(d.ble_owns(owner));
+    }
+
+    #[test]
+    fn attached_ble_write_takes_over_a_wifi_owner_in_home_mode() {
+        let mut d = home_dev();
+        armed(&mut d);
+        let conn = d.on_ble_attach(10, 1);
+        let fx = d.on_ble_control(20, conn, 2).unwrap();
+        assert_eq!(fx.preempted.map(|o| o.source), Some(Source::Udp));
+        assert!(d.ble_owns(conn) && !d.wifi_allowed());
+    }
+
+    #[test]
+    fn udp_info_answers_any_peer_with_capabilities_status_and_network() {
+        let mut d = home_dev();
+        d.set_station_ip(Some([10, 0, 0, 7]));
+        let s = armed(&mut d);
+        let (r, fx) = send(&mut d, 10, B, Kind::Info, 0, 9, &[]);
+        let (h, p) = r.unwrap();
+        assert_eq!((h.kind, h.session, h.seq), (Kind::Info, 0, 9));
+        assert_eq!(p[..CAPABILITIES_LEN], d.capabilities()[..]);
+        assert_eq!(
+            p[CAPABILITIES_LEN..CAPABILITIES_LEN + STATUS_LEN],
+            [2, 0, 0]
+        );
+        assert_eq!(
+            p[CAPABILITIES_LEN + STATUS_LEN..INFO_LEN],
+            [2, 0, 0, 0, 10, 0, 0, 7]
+        );
+        assert_eq!(fx, Effects::default());
+        assert_eq!(d.arbiter().session(), s, "observation changes nothing");
+        assert_eq!(d.arbiter().state(), State::Armed);
+    }
+
+    #[test]
+    fn ros_release_from_the_owner_applies_a_pending_mode_at_once() {
+        let mut d = dev();
+        d.start_network(0, true);
+        d.on_network_step(0, Step::Scan, false); // fallback
+        let (cmd, arm) = ros_armed(&mut d, 0);
+        d.on_ros_arm(5, &at(&arm, 2), &bool_cdr(false));
+        let mode = publisher(&mut d, 1, 3, 1);
+        d.on_ros_mode(10, &mode, &uint8(1));
+        let other = publisher(&mut d, 2, 1, 1);
+        assert_eq!(
+            d.on_ros_release(15, &other, &[0, 1, 0, 0, 0]),
+            Effects::default()
+        );
+        let release = publisher(&mut d, 1, 4, 1);
+        let fx = d.on_ros_release(20, &release, &[0, 1, 0, 0, 0]);
+        assert!(fx.released);
+        assert_eq!(d.network().mode(), Mode::Attempting(Step::Scan));
+        let _ = cmd;
+    }
+
+    #[test]
+    fn ros_release_while_armed_stops_owner_lost() {
+        let mut d = dev();
+        ros_armed(&mut d, 0);
+        let release = publisher(&mut d, 1, 4, 1);
+        let fx = d.on_ros_release(10, &release, &[0, 1, 0, 0, 0]);
+        assert_eq!(fx.stop, Some(StopReason::OwnerLost));
+        assert_eq!(d.arbiter().state(), State::Open);
+    }
+
+    #[test]
+    fn takeover_notice_goes_to_the_old_udp_session() {
+        let mut d = home_dev();
+        let s = armed(&mut d);
+        assert!(d.take_takeover_notice().is_none());
+        let conn = d.on_ble_attach(10, 1);
+        d.on_ble_control(20, conn, 2).unwrap();
+        let notice = d.take_takeover_notice().unwrap();
+        assert_eq!(
+            (notice.source, notice.id, notice.session),
+            (Source::Udp, A, s)
+        );
+        let mut out = [0u8; 64];
+        let n = notice.udp_frame(&mut out);
+        let (h, p) = udp::parse(&out[..n]).unwrap();
+        assert_eq!((h.kind, h.session, h.seq), (Kind::Status, s, 0));
+        assert_eq!(p, [3, 3, 0], "stopped, owner-lost, no error");
+        assert!(d.take_takeover_notice().is_none(), "given once");
+    }
+
+    #[test]
+    fn takeover_notice_for_a_ros_owner_is_a_status_sample() {
+        let mut d = dev();
+        ros_armed(&mut d, 0);
+        hello(&mut d, 10, A);
+        let notice = d.take_takeover_notice().unwrap();
+        assert_eq!(notice.source, Source::Ros);
+        let mut out = [0u8; 96];
+        let n = notice.ros_cdr(&mut out);
+        let text = core::str::from_utf8(&out[8..n - 1]).unwrap();
+        assert!(
+            text.starts_with("state=stopped reason=owner-lost"),
+            "{text}"
+        );
+    }
+
+    #[test]
+    fn released_ble_owner_cannot_reclaim_but_the_watcher_can() {
+        let mut d = dev();
+        let owner = d.on_ble_attach(0, 1);
+        d.on_ble_control(0, owner, 2).unwrap(); // claims, then the claim window runs out
+        let watcher = d.on_ble_attach(10, 2);
+        assert!(d.tick(Config::DEFAULT.claim_window_ms).released);
+        assert_eq!(d.on_ble_control(10_001, owner, 2), Err(Error::NotOwner));
+        let fx = d.on_ble_control(10_002, watcher, 2).unwrap();
+        assert_eq!(fx.claimed, Some(Source::Ble));
     }
 }
