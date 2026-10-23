@@ -67,6 +67,15 @@ pub const STRING: (&str, &str) = (
     "std_msgs::msg::dds_::String_",
     "RIHS01_df668c740482bbd48fb39d76a70dfd4bd59db1288021743503259e948f6b1a18",
 );
+/// Hashes read from ROS Jazzy's `std_msgs/msg/*.json` (2026-10-23; Bool/String matched the above).
+pub const UINT8: (&str, &str) = (
+    "std_msgs::msg::dds_::UInt8_",
+    "RIHS01_6138bd83d8c3569cb80a667db03cfc1629f529fee79d944c39c34e352e72f010",
+);
+pub const EMPTY: (&str, &str) = (
+    "std_msgs::msg::dds_::Empty_",
+    "RIHS01_20b625256f32d5dbc0d04fee44f43c41e51c70d3502f84b4a08e7a9c26a96312",
+);
 
 /// QoS as `rmw_zenoh` encodes it in liveliness keys: best effort, keep last 1 / 5, and the
 /// default (reliable, keep last 10).

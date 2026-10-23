@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>71 / 80</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>73 / 80</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -4470,9 +4470,9 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--3-simulator">3. Simulator</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Model the mode in the sim car (network steps injected by the scenario) and add scenarios: deliberate and accidental hand-back, UDP takeover from ROS, mode commands from each transport, router restart in home mode, link loss → fallback, Home from fallback. All existing sim scenarios pass.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.1 Model the mode in the sim car (network steps injected by the scenario) and add scenarios: deliberate and accidental hand-back, UDP takeover from ROS, mode commands from each transport, router restart in home mode, link loss → fallback, Home from fallback. All existing sim scenarios pass. <strong>Done:</strong> <code>net.rs</code> (stdin-scripted steps), <code>vble.rs</code> (virtual BLE), ROS <code>rovi/mode</code>, <code>rovi/release</code>, <code>rovi/network</code> and takeover notice; <code>network_scenarios.py</code> (14), <code>ros-network.sh</code> (UDP/BLE takeover from ROS, deliberate and accidental hand-back, ROS mode + release), <code>ros-reconnect.sh</code> in home mode; existing UDP (14) and product ROS scripts pass. All in CI.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Build the transport-independent conformance suite (D13) with UDP, ROS and BLE GATT adapters against the simulator; port the shared existing scenarios into it and add every new car-control-api and network-mode scenario. CI runs it on every PR.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.2 Build the transport-independent conformance suite (D13) with UDP, ROS and BLE GATT adapters against the simulator; port the shared existing scenarios into it and add every new car-control-api and network-mode scenario. CI runs it on every PR. <strong>Done:</strong> <code>conformance.py</code>/<code>conformance.sh</code>: 8 shared rules (arm rule, STOP latch, lease, out-of-limits, mode refused/applied, invalid mode, observation, release) × UDP, virtual BLE and ROS = 24 cases against one sim car in home mode, stable over 3 runs; in CI. Transport-specific checks (UDP sessions/sequences, ROS graph identity, BLE slots, takeover and hand-back) stay in <code>udp_scenarios.py</code>, <code>network_scenarios.py</code> and the ROS scripts rather than being duplicated here.</li>
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--4-firmware">4. Firmware</h2><ul>
 <li>

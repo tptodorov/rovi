@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# The sim car must rejoin the ROS graph after the router goes away and comes back.
+# The sim car must rejoin the ROS graph after the router goes away and comes back. With
+# ROVI_SIM_HOME=1 the car must also stay in home mode throughout (ADR-0016: a router restart is
+# handled by the router reconnect, not by the network mode).
 # Needs docker and `cargo build --features ros` in apps/simcar.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
@@ -24,4 +26,8 @@ for cycle in 1 2 3; do  # repeated drops must not leak or wedge the adapter
   router; sleep 3
   if ! wait_for_node 40; then echo "FAIL: the car did not rejoin after router restart $cycle"; tail -5 /tmp/rovi-reconnect.log; exit 1; fi
 done
+if [ "${ROVI_SIM_HOME:-0}" = 1 ]; then
+  grep -q "ev=net mode=Home" /tmp/rovi-reconnect.log || { echo "FAIL: never in home mode"; exit 1; }
+  if grep -q "ev=net mode=Fallback" /tmp/rovi-reconnect.log; then echo "FAIL: a router restart left home mode"; exit 1; fi
+fi
 echo "reconnect: ok"

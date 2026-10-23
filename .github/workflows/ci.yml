@@ -106,6 +106,8 @@ jobs:
           cargo build --locked --features motor-bench
       - name: Product UDP scenarios against the sim car
         run: python3 apps/simcar/scenarios/udp_scenarios.py
+      - name: Network-mode scenarios against the sim car (UDP and virtual BLE)
+        run: python3 apps/simcar/scenarios/network_scenarios.py
       - name: Python unit tests
         env:
           MPLBACKEND: Agg
@@ -155,6 +157,14 @@ jobs:
         run: apps/simcar/scenarios/ros-refresh.sh
       - name: Product stale UDP router session recovery
         run: apps/simcar/scenarios/ros-stale-session.sh
+      - name: Product network mode across ROS, UDP and virtual BLE (takeover, hand-back, mode, release)
+        run: apps/simcar/scenarios/ros-network.sh
+      - name: Transport conformance suite (same rules over UDP, virtual BLE and ROS)
+        run: apps/simcar/scenarios/conformance.sh
+      - name: Product router reconnect in home mode (mode unchanged)
+        env:
+          ROVI_SIM_HOME: "1"
+        run: apps/simcar/scenarios/ros-reconnect.sh
       - name: Product read-only board probe (loopback)
         run: |
           log=$(mktemp)
