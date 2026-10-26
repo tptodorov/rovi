@@ -1,0 +1,24 @@
+"""Builds the four 6.1 images. Secrets come from NetworkManager (AP) and gopass (home); never printed."""
+import os, subprocess, sys
+root = "/home/todor/tptodorov/rovi/firmware"
+def secret(cmd): return subprocess.check_output(cmd, text=True).strip()
+ap = secret(["nmcli", "-s", "-g", "802-11-wireless-security.psk", "connection", "show", "rovi-m8"])
+home = dict(l.split("=", 1) for l in secret(["gopass", "show", "-n", "env/rovi/home"]).splitlines()[1:] if "=" in l)
+images = {
+    "a-nosettings": {},
+    "b-home": {"ROVI_HOME_SSID": home["ROVI_HOME_SSID"], "ROVI_HOME_PASSWORD": home["ROVI_HOME_PASSWORD"], "ROVI_HOME_ROUTER": home["ROVI_HOME_ROUTER"]},
+    "d-nossid": {"ROVI_HOME_SSID": "rovi-no-such-network", "ROVI_HOME_PASSWORD": "placeholder1", "ROVI_HOME_ROUTER": home["ROVI_HOME_ROUTER"]},
+    "diag-scan": None,
+    "e-wrongpass": {"ROVI_HOME_SSID": home["ROVI_HOME_SSID"], "ROVI_HOME_PASSWORD": "wrong-passphrase-1", "ROVI_HOME_ROUTER": home["ROVI_HOME_ROUTER"]},
+}
+esp = os.path.expanduser("~/.rustup/toolchains/esp")
+env0 = dict(os.environ, ROVI_WIFI_PASSWORD=ap,
+            PATH=f"{esp}/bin:{esp}/xtensa-esp-elf/esp-15.2.0_20250920/xtensa-esp-elf/bin:" + os.environ["PATH"],
+            LIBCLANG_PATH=f"{esp}/xtensa-esp32-elf-clang/esp-20.1.1_20250829/esp-clang/lib")
+for k in ("ROVI_HOME_SSID", "ROVI_HOME_PASSWORD", "ROVI_HOME_ROUTER"): env0.pop(k, None)
+for name in sys.argv[1:] or images:
+    extra = images[name] if images[name] is not None else images["b-home"]
+    env = dict(env0, CARGO_TARGET_DIR=f"target/b61-{name}", **extra)
+    r = subprocess.run(["cargo", "build", "--locked", "--release", "--features", "ros", "--target", "xtensa-esp32s3-none-elf",
+                        "-Zbuild-std=core,alloc"], cwd=root, env=env, capture_output=True, text=True)
+    print(name, "ok" if r.returncode == 0 else "FAILED", r.stderr.strip().splitlines()[-1] if r.stderr else "")

@@ -447,10 +447,16 @@ impl Device {
     }
 
     /// May `source`'s radio be on? While one source owns the car, the others' radios are off,
-    /// except that outside fallback BLE always advertises, so it can take over (ADR-0016).
+    /// except that in home mode BLE always advertises, so it can take over (ADR-0016), and BLE is
+    /// quiet while a home attempt runs.
     pub fn radio_allowed(&self, source: Source) -> bool {
-        (source == Source::Ble && self.network.mode() != Mode::Fallback)
-            || self.arbiter.owner().is_none_or(|o| o.source == source)
+        match (source, self.network.mode()) {
+            // BLE advertising during a home attempt stretched the Wi-Fi scan from 160 ms to 2.7 s
+            // on the board (coexistence, 2026-10-26); the car is not drivable then anyway.
+            (Source::Ble, Mode::Attempting(_)) => false,
+            (Source::Ble, Mode::Home) => true,
+            _ => self.arbiter.owner().is_none_or(|o| o.source == source),
+        }
     }
 
     /// May the Wi-Fi AP be up? UDP and ROS share it, so it is off only while BLE owns the car.
@@ -3115,5 +3121,23 @@ mod tests {
         assert_eq!(d.on_ble_control(10_001, owner, 2), Err(Error::NotOwner));
         let fx = d.on_ble_control(10_002, watcher, 2).unwrap();
         assert_eq!(fx.claimed, Some(Source::Ble));
+    }
+
+    #[test]
+    fn ble_is_quiet_while_a_home_attempt_runs() {
+        // Measured on the board (2026-10-26): advertising during a scan stretched it from
+        // 160 ms to 2.7 s through coexistence, past the scan budget.
+        let mut d = dev();
+        d.start_network(0, true);
+        assert!(!d.radio_allowed(Source::Ble), "attempting at boot");
+        for step in [Step::Scan, Step::Join, Step::Dhcp, Step::Router] {
+            d.on_network_step(0, step, true);
+        }
+        assert!(d.radio_allowed(Source::Ble), "home");
+        let conn = d.on_ble_attach(10, 1);
+        d.on_ble_control(20, conn, 2).unwrap();
+        d.on_ble_disconnect(30, conn);
+        assert_eq!(d.network().mode(), Mode::Attempting(Step::Scan));
+        assert!(!d.radio_allowed(Source::Ble), "rejoining after BLE");
     }
 }

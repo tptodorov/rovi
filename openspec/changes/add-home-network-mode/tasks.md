@@ -31,7 +31,7 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 
 ## 6. Board acceptance (each step separately announced; motor steps need Todor's go)
 
-- [ ] 6.1 Bare board, no motors: boot with no settings, out of range, wrong passphrase, no router, and success; log shows each step's duration within budget.
+- [x] 6.1 Bare board, no motors: boot with no settings, out of range, wrong passphrase, no router, and success; log shows each step's duration within budget. **Done 2026-10-26 ([evidence](../../../firmware/bench/2026-10-26-home-network-mode/notes.md)):** Todor's go; all five boots, B2 watch/INFO/BLE takeover, B3/B4 reset switches both ways; no passphrase in any log. Fixed on the way: BLE quiet during attempts (coexistence stretched the scan to 2.7 s) and steps ending with the core budget. Open: join budget tight (4.5 s of 5 s), laptop firewall and dual-homed routing for the router host.
 - [ ] 6.2 Stand: ROS node on the home network drives; UDP and BLE takeovers stop and need explicit ARM; deliberate hand-back resumes ROS; accidental BLE drop needs `/rovi/arm` true; mode commands from BLE, UDP and ROS switch modes both ways; Todor observes wheels.
 - [ ] 6.3 Coexistence: 15-minute ROS soak in home mode with BLE advertising, compared with the 2026-10-20 ROS soak baseline; link loss by walking out of range falls back with the AP up.
 

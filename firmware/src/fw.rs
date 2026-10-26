@@ -111,14 +111,19 @@ async fn switch_mode(fallback: Option<Reason>) -> ! {
     software_reset()
 }
 
-fn station_config() -> wifi::Config {
-    wifi::Config::Station(
-        StationConfig::default()
-            .with_ssid(HOME_SSID.unwrap_or("").try_into().unwrap())
-            .with_authentication(AuthenticationMethodConfig::Wpa2Personal(
-                HOME_PASSWORD.unwrap_or("").try_into().unwrap(),
-            )),
-    )
+/// The home station; `found` pins the strongest access point the scan found (BSSID, channel).
+/// On the board this did not shorten the join (0.66-2.8 s either way, 6.1 on 2026-10-26); it
+/// keeps the join on the access point the scan saw when a home network has several.
+fn station_config(found: Option<([u8; 6], u8)>) -> wifi::Config {
+    let config = StationConfig::default()
+        .with_ssid(HOME_SSID.unwrap_or("").try_into().unwrap())
+        .with_authentication(AuthenticationMethodConfig::Wpa2Personal(
+            HOME_PASSWORD.unwrap_or("").try_into().unwrap(),
+        ));
+    wifi::Config::Station(match found {
+        Some((bssid, channel)) => config.with_bssid(bssid).with_channel(channel),
+        None => config,
+    })
 }
 
 #[cfg(feature = "ros")]
@@ -359,7 +364,7 @@ async fn main(_spawner: Spawner) -> ! {
     static RESOURCES: static_cell::StaticCell<StackResources<6>> = static_cell::StaticCell::new();
     let resources = RESOURCES.init(StackResources::new());
     let (net, mut net_runner) = if home_boot {
-        wifi.set_config(&station_config()).unwrap();
+        wifi.set_config(&station_config(None)).unwrap();
         embassy_net::new(
             wifi::Interface::station(),
             NetConfig::dhcpv4(Default::default()),
@@ -503,7 +508,9 @@ async fn main(_spawner: Spawner) -> ! {
     .unwrap();
     let advertising = Mutex::<NoopRawMutex, _>::new(peripheral);
     let slot = async || loop {
-        until(|| dev.borrow().radio_allowed(Source::Ble)).await;
+        // Quiet during a home attempt too (the core's rule): advertising slows the scan.
+        let ble_ok = || dev.borrow().radio_allowed(Source::Ble);
+        until(ble_ok).await;
         let accepted = {
             let mut peripheral = advertising.lock().await;
             select(
@@ -520,7 +527,7 @@ async fn main(_spawner: Spawner) -> ! {
                         .ok()?;
                     advertiser.accept().await.ok()
                 },
-                until(|| !dev.borrow().radio_allowed(Source::Ble)),
+                until(|| !ble_ok()),
             )
             .await
         };
@@ -746,25 +753,37 @@ async fn main(_spawner: Spawner) -> ! {
                         Step::Scan => netmode::SCAN_BUDGET_MS,
                         _ => netmode::JOIN_BUDGET_MS,
                     });
-                    let ok = match step {
-                        Step::Scan => {
-                            let cfg = ScanConfig::default()
-                                .with_ssid(HOME_SSID.unwrap_or("").try_into().unwrap());
-                            matches!(
-                                with_timeout(budget, wifi.scan_async(&cfg)).await,
-                                Ok(Ok(found)) if !found.is_empty()
-                            )
+                    let run = async {
+                        match step {
+                            Step::Scan => {
+                                let cfg = ScanConfig::default()
+                                    .with_ssid(HOME_SSID.unwrap_or("").try_into().unwrap());
+                                let best = match with_timeout(budget, wifi.scan_async(&cfg)).await {
+                                    Ok(Ok(found)) => found
+                                        .iter()
+                                        .max_by_key(|ap| ap.signal_strength)
+                                        .map(|ap| (ap.bssid, ap.channel)),
+                                    _ => None,
+                                };
+                                if let Some(ap) = best {
+                                    let _ = wifi.set_config(&station_config(Some(ap)));
+                                }
+                                best.is_some()
+                            }
+                            Step::Join => {
+                                station_on = matches!(
+                                    with_timeout(budget, wifi.connect_async()).await,
+                                    Ok(Ok(_))
+                                );
+                                station_on
+                            }
+                            Step::Dhcp => with_timeout(budget, net.wait_config_up()).await.is_ok(),
+                            Step::Router => with_timeout(budget, until(ros_up)).await.is_ok(),
                         }
-                        Step::Join => {
-                            station_on = matches!(
-                                with_timeout(budget, wifi.connect_async()).await,
-                                Ok(Ok(_))
-                            );
-                            station_on
-                        }
-                        Step::Dhcp => with_timeout(budget, net.wait_config_up()).await.is_ok(),
-                        Step::Router => with_timeout(budget, until(ros_up)).await.is_ok(),
                     };
+                    // The core ends the attempt when its budget runs out; stop the step then too.
+                    let left = until(|| dev.borrow().network().mode() != Mode::Attempting(step));
+                    let ok = matches!(select(run, left).await, Either::First(true));
                     let ip = net.config_v4().map(|c| c.address.address().octets());
                     let mut d = dev.borrow_mut();
                     d.on_network_step(now(), step, ok);

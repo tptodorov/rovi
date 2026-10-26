@@ -1,0 +1,85 @@
+[2026-10-26T14:00:38Z INFO ] Serial port: '/dev/ttyACM0'
+[2026-10-26T14:00:38Z INFO ] Connecting...
+[2026-10-26T14:00:38Z INFO ] Using flash stub
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x14d0
+load:0x403c8700,len:0xdcc
+load:0x403cb700,len:0x2f54
+entry 0x403c8900
+I (29) boot: ESP-IDF v6.1-beta1-497-g14f663f003e 2nd stage bootloader
+I (30) boot: Multicore bootloader
+I (30) boot: chip revision: v0.2
+I (30) boot: efuse block revision: v1.4
+I (34) boot.esp32s3: Boot SPI Speed : 40MHz
+I (38) boot.esp32s3: SPI Mode       : DIO
+I (42) boot.esp32s3: SPI Flash Size : 16MB
+I (45) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (52) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (72) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (78) boot: End of partition table
+I (82) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=00100h (   256) map
+I (89) esp_image: segment 1: paddr=00010128 vaddr=3fc97960 size=00010h (    16) load
+I (97) esp_image: segment 2: paddr=00010140 vaddr=3c000140 size=1cad8h (117464) map
+I (133) esp_image: segment 3: paddr=0002cc20 vaddr=3fc97970 size=033f8h ( 13304) load
+I (137) esp_image: segment 4: paddr=00030020 vaddr=42020020 size=b0788h (722824) map
+I (319) esp_image: segment 5: paddr=000e07b0 vaddr=3fc9ad68 size=0195ch (  6492) load
+I (322) esp_image: segment 6: paddr=000e2114 vaddr=40378000 size=0f95ch ( 63836) load
+I (349) boot: Loaded app from partition at offset 0x10000
+I (349) boot: Disabling RNG early entropy source...
+E (350) boot: Image contains multiple DROM segments. Only the last one will be mapped.
+home mode attempt: station SSID=<home-ssid> router=tcp/192.168.1.244:7447 udp=7777 lease_ms=1000
+ev=boot ver=0.1.0 reset=ChipPowerOn at_ms=424
+ev=net mode=Attempting step=Scan at_ms=429
+ev=net_step step=Scan result=Ok took_ms=173 at_ms=602
+ev=net mode=Attempting step=Join at_ms=602
+ev=net_step step=Join result=Ok took_ms=2788 at_ms=3390
+ev=net mode=Attempting step=Dhcp at_ms=3391
+ev=net_step step=Dhcp result=Ok took_ms=842 at_ms=4233
+ev=net mode=Attempting step=Router at_ms=4233
+network mode switch: resetting into fallback
+ev=net_step step=Router result=Failed took_ms=1383 at_ms=5617
+ev=net mode=Fallback reason=Router at_ms=5617
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x3 (RTC_SW_SYS_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40378827
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fce2820,len:0x14d0
+load:0x403c8700,len:0xdcc
+load:0x403cb700,len:0x2f54
+entry 0x403c8900
+I (31) boot: ESP-IDF v6.1-beta1-497-g14f663f003e 2nd stage bootloader
+I (31) boot: Multicore bootloader
+I (32) boot: chip revision: v0.2
+I (32) boot: efuse block revision: v1.4
+I (36) boot.esp32s3: Boot SPI Speed : 40MHz
+I (40) boot.esp32s3: SPI Mode       : DIO
+I (43) boot.esp32s3: SPI Flash Size : 16MB
+I (47) boot: Enabling RNG early entropy source...
+I (52) boot: Partition Table:
+I (54) boot: ## Label            Usage          Type ST Offset   Length
+I (61) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (67) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (74) boot:  2 factory          factory app      00 00 00010000 00fa0000
+I (80) boot: End of partition table
+I (84) esp_image: segment 0: paddr=00010020 vaddr=3c000020 size=00100h (   256) map
+I (91) esp_image: segment 1: paddr=00010128 vaddr=3fc97960 size=00010h (    16) load
+I (98) esp_image: segment 2: paddr=00010140 vaddr=3c000140 size=1cad8h (117464) map
+I (135) esp_image: segment 3: paddr=0002cc20 vaddr=3fc97970 size=033f8h ( 13304) load
+I (139) esp_image: segment 4: paddr=00030020 vaddr=42020020 size=b0788h (722824) map
+I (321) esp_image: segment 5: paddr=000e07b0 vaddr=3fc9ad68 size=0195ch (  6492) load
+I (324) esp_image: segment 6: paddr=000e2114 vaddr=40378000 size=0f95ch ( 63836) load
+I (351) boot: Loaded app from partition at offset 0x10000
+I (351) boot: Disabling RNG early entropy source...
+E (351) boot: Image contains multiple DROM segments. Only the last one will be mapped.
+M8 board-only AP=Rovi M8 udp=192.168.4.1:7777 WPA2 channel=1 lease_ms=1000
+ev=boot ver=0.1.0 reset=Sw at_ms=1018
+ev=net mode=Fallback reason=Router at_ms=1023

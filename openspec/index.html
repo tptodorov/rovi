@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>77 / 80</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>78 / 80</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -3871,6 +3871,8 @@ ROS</td>
 Network information is <code>mode=… pending=… fallback=… ip=…</code> (BLE/UDP: a fixed 8-byte binary form: mode, pending, reason, reserved, IPv4). UDP is available in home mode with no extra code because the UDP task binds to whichever stack is active; trust is the home network (<a href="../docs/adr/0008-local-link-security-baseline.md">ADR-0008</a> superseded for station mode).</p>
 <h3 id="openspec--changes--add-home-network-mode--design--d7-budgets">D7. Budgets</h3><p>
 Scan ≤1500 ms (spec); join + DHCP + router ≤5000 ms after the network is found. Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the <code>ros</code> feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.</p>
+<h3 id="openspec--changes--add-home-network-mode--design--d14-ble-is-quiet-while-a-home-attempt-runs-board-measured-2026-10-26">D14. BLE is quiet while a home attempt runs (board-measured, 2026-10-26)</h3><p>
+With both BLE slots advertising, the Wi-Fi scan took 2.7 s instead of 160 ms (coexistence), past the scan budget. <code>Device::radio_allowed(Ble)</code> is false while attempting; BLE advertises again in home mode or fallback. The attempt lasts at most about 5.5 s, during which the car cannot be driven anyway.</p>
 <h3 id="openspec--changes--add-home-network-mode--design--d10-ble-claims-on-the-first-command-two-connection-slots">D10. BLE claims on the first command; two connection slots</h3><p>
 <code>HostResources</code> grows to two connections. A connection is unclaimed until its first Setpoint or Control write, which calls the existing claim path (so preemption, BUSY and the claim window apply then). Reads, notifications and Echo never claim. Losing ownership still disconnects that central (D8); the other stays. Existing clients write ARM or a setpoint right after connecting, so they claim as before. Alternative: one slot with an idle timeout, rejected because a watcher would block the rescue controller.</p>
 <h3 id="openspec--changes--add-home-network-mode--design--d11-one-udp-observer-query">D11. One UDP observer query</h3><p>
@@ -4488,7 +4490,7 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--6-board-acceptance-each-step-separately-announced-motor-steps-need-todors-go">6. Board acceptance (each step separately announced; motor steps need Todor's go)</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 6.1 Bare board, no motors: boot with no settings, out of range, wrong passphrase, no router, and success; log shows each step's duration within budget.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 6.1 Bare board, no motors: boot with no settings, out of range, wrong passphrase, no router, and success; log shows each step's duration within budget. <strong>Done 2026-10-26 (<a href="../firmware/bench/2026-10-26-home-network-mode/notes.md">evidence</a>):</strong> Todor's go; all five boots, B2 watch/INFO/BLE takeover, B3/B4 reset switches both ways; no passphrase in any log. Fixed on the way: BLE quiet during attempts (coexistence stretched the scan to 2.7 s) and steps ending with the core budget. Open: join budget tight (4.5 s of 5 s), laptop firewall and dual-homed routing for the router host.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 6.2 Stand: ROS node on the home network drives; UDP and BLE takeovers stop and need explicit ARM; deliberate hand-back resumes ROS; accidental BLE drop needs <code>/rovi/arm</code> true; mode commands from BLE, UDP and ROS switch modes both ways; Todor observes wheels.</li>
 <li>

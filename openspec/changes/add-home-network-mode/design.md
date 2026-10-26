@@ -50,6 +50,10 @@ Network information is `mode=… pending=… fallback=… ip=…` (BLE/UDP: a fi
 
 Scan ≤1500 ms (spec); join + DHCP + router ≤5000 ms after the network is found. Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the `ros` feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.
 
+### D14. BLE is quiet while a home attempt runs (board-measured, 2026-10-26)
+
+With both BLE slots advertising, the Wi-Fi scan took 2.7 s instead of 160 ms (coexistence), past the scan budget. `Device::radio_allowed(Ble)` is false while attempting; BLE advertises again in home mode or fallback. The attempt lasts at most about 5.5 s, during which the car cannot be driven anyway.
+
 ### D10. BLE claims on the first command; two connection slots
 
 `HostResources` grows to two connections. A connection is unclaimed until its first Setpoint or Control write, which calls the existing claim path (so preemption, BUSY and the claim window apply then). Reads, notifications and Echo never claim. Losing ownership still disconnects that central (D8); the other stays. Existing clients write ARM or a setpoint right after connecting, so they claim as before. Alternative: one slot with an idle timeout, rejected because a watcher would block the rescue controller.
