@@ -48,11 +48,11 @@ Network information is `mode=… pending=… fallback=… ip=…` (BLE/UDP: a fi
 
 ### D7. Budgets
 
-Scan ≤1500 ms (spec); join + DHCP + router ≤5000 ms after the network is found. Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the `ros` feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.
+Scan ≤1500 ms (spec); join + DHCP + router ≤8000 ms after the network is found (raised from 5000 ms by Todor on 2026-10-26 after board check 6.1 measured 4.5 s on good runs and a 2 s router retry; ADR-0016's "~5 s" predates this). Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the `ros` feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.
 
 ### D14. BLE is quiet while a home attempt runs (board-measured, 2026-10-26)
 
-With both BLE slots advertising, the Wi-Fi scan took 2.7 s instead of 160 ms (coexistence), past the scan budget. `Device::radio_allowed(Ble)` is false while attempting; BLE advertises again in home mode or fallback. The attempt lasts at most about 5.5 s, during which the car cannot be driven anyway.
+With both BLE slots advertising, the Wi-Fi scan took 2.7 s instead of 160 ms (coexistence), past the scan budget. `Device::radio_allowed(Ble)` is false while attempting; BLE advertises again in home mode or fallback. The attempt lasts at most about 9.5 s (1.5 s scan, 8 s join budget), during which the car cannot be driven anyway.
 
 ### D10. BLE claims on the first command; two connection slots
 

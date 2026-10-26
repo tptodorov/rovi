@@ -6,8 +6,10 @@
 
 /// Longest scan for the configured network before falling back.
 pub const SCAN_BUDGET_MS: u64 = 1_500;
-/// Join + DHCP + router, counted from the moment the network is found.
-pub const JOIN_BUDGET_MS: u64 = 5_000;
+/// Join + DHCP + router, counted from the moment the network is found. 8 s: the board took
+/// 4.5 s on good runs (join 0.66-2.8 s, DHCP 0.9 s, router 0.8 s; 6.1 on 2026-10-26), and a
+/// router retry waits 2 s (Todor raised it from 5 s on 2026-10-26).
+pub const JOIN_BUDGET_MS: u64 = 8_000;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Mode {

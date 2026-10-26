@@ -491,7 +491,7 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 <li>
 <strong>Home mode.</strong> At boot, if the firmware was built with home Wi-Fi settings, the car joins the home Wi-Fi as a station (DHCP) and connects to the configured ROS router. When both succeed it serves ROS 2 (and UDP) there (<a href="../docs/adr/0011-ros-auto-arm.md">ADR-0011</a> auto-arm unchanged).</li>
 <li>
-<strong>Fallback.</strong> If no settings were built in, the network is not seen in a ~1.5 s scan, or join + address + ROS router do not succeed within ~5 s, the car runs exactly today's AP behaviour. It stays there until reboot or a Home mode command. AP and station never run at the same time.</li>
+<strong>Fallback.</strong> If no settings were built in, the network is not seen in a ~1.5 s scan, or join + address + ROS router do not succeed within ~8 s, the car runs exactly today's AP behaviour. It stays there until reboot or a Home mode command. AP and station never run at the same time.</li>
 <li>
 <strong>Mode command on every transport.</strong> A disarmed owner on BLE, UDP or ROS can choose Home or Car network; it takes effect when that ownership ends. So every mode is reachable from any one type of client, without reflashing or touching the car.</li>
 <li>
@@ -859,7 +859,7 @@ At boot the car SHALL attempt home mode when the firmware was built with home se
 <strong>THEN</strong> the station is stopped and the car enters fallback mode with reason router</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--requirement-join-budget"><h3>Join budget</h3><p>
-Every home-mode attempt (at boot, after a mode command, after a BLE override ends, after station loss) SHALL fall back when the network is not found by a scan lasting at most 1500 ms. Once found, joining, DHCP and the ROS router session together SHALL complete within 5000 ms or the car SHALL fall back. Each step's outcome and duration SHALL be logged.</p>
+Every home-mode attempt (at boot, after a mode command, after a BLE override ends, after station loss) SHALL fall back when the network is not found by a scan lasting at most 1500 ms. Once found, joining, DHCP and the ROS router session together SHALL complete within 8000 ms or the car SHALL fall back. Each step's outcome and duration SHALL be logged.</p>
 <details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-network-not-in-range"><summary>Network not in range</summary><ul>
 <li>
 <strong>GIVEN</strong> built-in settings and the network out of range</li>
@@ -874,7 +874,7 @@ Every home-mode attempt (at boot, after a mode command, after a BLE override end
 <li>
 <strong>WHEN</strong> the car boots</li>
 <li>
-<strong>THEN</strong> the join step is logged as failed and the car enters fallback mode with reason join within 5000 ms of the network being found</li>
+<strong>THEN</strong> the join step is logged as failed and the car enters fallback mode with reason join within 8000 ms of the network being found</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--requirement-fallback-is-sticky"><h3>Fallback is sticky</h3><p>
 Fallback mode SHALL last until reboot or until a Home mode command takes effect. The car SHALL NOT retry the home network on its own.</p>
@@ -3870,9 +3870,9 @@ ROS</td>
 <p>
 Network information is <code>mode=… pending=… fallback=… ip=…</code> (BLE/UDP: a fixed 8-byte binary form: mode, pending, reason, reserved, IPv4). UDP is available in home mode with no extra code because the UDP task binds to whichever stack is active; trust is the home network (<a href="../docs/adr/0008-local-link-security-baseline.md">ADR-0008</a> superseded for station mode).</p>
 <h3 id="openspec--changes--add-home-network-mode--design--d7-budgets">D7. Budgets</h3><p>
-Scan ≤1500 ms (spec); join + DHCP + router ≤5000 ms after the network is found. Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the <code>ros</code> feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.</p>
+Scan ≤1500 ms (spec); join + DHCP + router ≤8000 ms after the network is found (raised from 5000 ms by Todor on 2026-10-26 after board check 6.1 measured 4.5 s on good runs and a 2 s router retry; ADR-0016's &quot;~5 s&quot; predates this). Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the <code>ros</code> feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.</p>
 <h3 id="openspec--changes--add-home-network-mode--design--d14-ble-is-quiet-while-a-home-attempt-runs-board-measured-2026-10-26">D14. BLE is quiet while a home attempt runs (board-measured, 2026-10-26)</h3><p>
-With both BLE slots advertising, the Wi-Fi scan took 2.7 s instead of 160 ms (coexistence), past the scan budget. <code>Device::radio_allowed(Ble)</code> is false while attempting; BLE advertises again in home mode or fallback. The attempt lasts at most about 5.5 s, during which the car cannot be driven anyway.</p>
+With both BLE slots advertising, the Wi-Fi scan took 2.7 s instead of 160 ms (coexistence), past the scan budget. <code>Device::radio_allowed(Ble)</code> is false while attempting; BLE advertises again in home mode or fallback. The attempt lasts at most about 9.5 s (1.5 s scan, 8 s join budget), during which the car cannot be driven anyway.</p>
 <h3 id="openspec--changes--add-home-network-mode--design--d10-ble-claims-on-the-first-command-two-connection-slots">D10. BLE claims on the first command; two connection slots</h3><p>
 <code>HostResources</code> grows to two connections. A connection is unclaimed until its first Setpoint or Control write, which calls the existing claim path (so preemption, BUSY and the claim window apply then). Reads, notifications and Echo never claim. Losing ownership still disconnects that central (D8); the other stays. Existing clients write ARM or a setpoint right after connecting, so they claim as before. Alternative: one slot with an idle timeout, rejected because a watcher would block the rescue controller.</p>
 <h3 id="openspec--changes--add-home-network-mode--design--d11-one-udp-observer-query">D11. One UDP observer query</h3><p>
@@ -6199,7 +6199,7 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 <li>
 <strong>Home mode.</strong> At boot, if the firmware was built with home Wi-Fi settings, the car joins the home Wi-Fi as a station (DHCP) and connects to the configured ROS router. When both succeed it serves ROS 2 (and UDP) there (<a href="../docs/adr/0011-ros-auto-arm.md">ADR-0011</a> auto-arm unchanged).</li>
 <li>
-<strong>Fallback.</strong> If no settings were built in, the network is not seen in a ~1.5 s scan, or join + address + ROS router do not succeed within ~5 s, the car runs exactly today's AP behaviour. It stays there until reboot or a Home mode command. AP and station never run at the same time.</li>
+<strong>Fallback.</strong> If no settings were built in, the network is not seen in a ~1.5 s scan, or join + address + ROS router do not succeed within ~8 s, the car runs exactly today's AP behaviour. It stays there until reboot or a Home mode command. AP and station never run at the same time.</li>
 <li>
 <strong>Mode command on every transport.</strong> A disarmed owner on BLE, UDP or ROS can choose Home or Car network; it takes effect when that ownership ends. So every mode is reachable from any one type of client, without reflashing or touching the car.</li>
 <li>
