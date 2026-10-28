@@ -36,6 +36,20 @@ The crate SHALL separate messages a client sends to the car from messages the ca
 - **WHEN** client code tries to send a Status frame
 - **THEN** it does not compile against the client API, or the binding rejects it with a named error
 
+### Requirement: One model per concept
+
+Each protocol concept (Setpoint, Command, Status, Capabilities, Network information, Echo) SHALL be one type, with its BLE, UDP and ROS encodings defined beside it, including the ROS text form. Every encoding SHALL have a decoder and round-trip tests. Display and log names SHALL come from that type. Differences between transports SHALL be limited to those listed as intentional in the crate documentation, each with its reason.
+
+#### Scenario: Same Status over three transports
+
+- **WHEN** the car reports one Status over BLE, UDP and ROS
+- **THEN** decoding each with the crate yields equal Status values, apart from fields that are documented as transport-specific
+
+#### Scenario: Same validation in every client
+
+- **WHEN** the laptop client and the phone receive the same malformed Capabilities, Status or Network bytes
+- **THEN** both reject them with the same error kind
+
 ### Requirement: Generated golden vectors
 
 The crate SHALL generate a committed vector file of valid and malformed cases for every message. CI SHALL fail when the committed file differs from the generated one. Bytes for existing messages SHALL be identical to the protocol in force before extraction. A changed vector SHALL be accompanied by a recorded compatibility decision: compatible addition, or a protocol version change that decoders enforce.

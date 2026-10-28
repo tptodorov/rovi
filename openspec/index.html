@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>200</b> requirements</div><div><b>370</b> scenarios</div><div><b>87 / 99</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>201</b> requirements</div><div><b>372</b> scenarios</div><div><b>87 / 102</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -1156,6 +1156,20 @@ The crate SHALL separate messages a client sends to the car from messages the ca
 <strong>WHEN</strong> client code tries to send a Status frame</li>
 <li>
 <strong>THEN</strong> it does not compile against the client API, or the binding rejects it with a named error</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-rovi-protocol--specs--wire-protocol--spec--requirement-one-model-per-concept"><h3>One model per concept</h3><p>
+Each protocol concept (Setpoint, Command, Status, Capabilities, Network information, Echo) SHALL be one type, with its BLE, UDP and ROS encodings defined beside it, including the ROS text form. Every encoding SHALL have a decoder and round-trip tests. Display and log names SHALL come from that type. Differences between transports SHALL be limited to those listed as intentional in the crate documentation, each with its reason.</p>
+<details class="scenario" id="openspec--changes--add-rovi-protocol--specs--wire-protocol--spec--scenario-same-status-over-three-transports"><summary>Same Status over three transports</summary><ul>
+<li>
+<strong>WHEN</strong> the car reports one Status over BLE, UDP and ROS</li>
+<li>
+<strong>THEN</strong> decoding each with the crate yields equal Status values, apart from fields that are documented as transport-specific</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-rovi-protocol--specs--wire-protocol--spec--scenario-same-validation-in-every-client"><summary>Same validation in every client</summary><ul>
+<li>
+<strong>WHEN</strong> the laptop client and the phone receive the same malformed Capabilities, Status or Network bytes</li>
+<li>
+<strong>THEN</strong> both reject them with the same error kind</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-rovi-protocol--specs--wire-protocol--spec--requirement-generated-golden-vectors"><h3>Generated golden vectors</h3><p>
 The crate SHALL generate a committed vector file of valid and malformed cases for every message. CI SHALL fail when the committed file differs from the generated one. Bytes for existing messages SHALL be identical to the protocol in force before extraction. A changed vector SHALL be accompanied by a recorded compatibility decision: compatible addition, or a protocol version change that decoders enforce.</p>
@@ -4262,6 +4276,236 @@ literal topic strings</td>
 Bindings are thin: typed values in, typed values or a named error out. No policy, retries or session state; those belong to the shared client (<a href="https://github.com/tptodorov/rovi/issues/108">#108</a>). If the phone module fails to load, connection stays disabled with an explanation; there is no JavaScript fallback codec.</p>
 <h3 id="openspec--changes--add-rovi-protocol--design--d6-one-conformance-suite-two-targets">D6. One conformance suite, two targets</h3><p>
 <code>apps/simcar/scenarios/conformance.py</code> uses only <code>rovi_protocol</code> to build and read messages and gains a target: <code>sim</code> (today's CI run over UDP, virtual BLE and ROS) and <code>device</code> (real car over UDP and BLE via BlueZ, ROS via blackbox). On the device, observational rules (INFO, Echo, Capabilities, Status, Network, malformed rejection, BUSY, not-owner) run with motor power off and never arm. Motion rules run only in a separately announced stand batch. Results record firmware revision and vector hash.</p>
+<h3 id="openspec--changes--add-rovi-protocol--design--d7-one-model-per-concept-encodings-per-transport">D7. One model per concept, encodings per transport</h3><p>
+Each concept (Status, Capabilities, Network information, Command, Echo, Setpoint) is one Rust type. BLE, UDP and ROS are encodings of that type, defined next to it, each with an encoder, a decoder and round-trip tests, including the ROS logfmt text. Display and log names come from the same enum, using the ROS spelling (<code>lease-expired</code>, <code>car-network</code>). No client keeps its own name table.</p>
+<h3 id="openspec--changes--add-rovi-protocol--design--d8-variant-inventory-and-alignment">D8. Variant inventory and alignment</h3><p>
+Inventory from 2026-10-28 code review (<code>rovi-core</code>, <code>firmware/src</code>, <code>apps/simcar/src</code>, <code>apps/client</code>, <code>apps/teleop</code>, <code>apps/iphone</code>, <code>conformance.py</code>).</p>
+<p>
+<strong>Implementation variants</strong> (one message, several codes). All are removed by D1–D7 with <strong>no byte change</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>
+#</th>
+<th>
+Difference</th>
+<th>
+Today</th>
+<th>
+Aligned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+I1</td>
+<td>
+Capabilities validation</td>
+<td>
+<code>apps/client</code>: none; teleop: lease ≥ 200, claim/reclaim &gt; 0; phone: lease ≥ 500, claim ≥ 1000, reclaim ≠ 0</td>
+<td>
+Crate decoder checks structure (version 1, finite positive geometry, finite non-negative limits, non-zero windows). Client minimums are named per-profile constants in the crate, not inline literals</td>
+</tr>
+<tr>
+<td>
+I2</td>
+<td>
+Status consistency (stopped ⇔ reason)</td>
+<td>
+Phone checks at decode; teleop checks later in its session; <code>apps/client</code> never</td>
+<td>
+Decoder rejects it</td>
+</tr>
+<tr>
+<td>
+I3</td>
+<td>
+Network reserved byte 3</td>
+<td>
+Phone rejects non-zero; Python ignores it</td>
+<td>
+Decoder rejects it</td>
+</tr>
+<tr>
+<td>
+I4</td>
+<td>
+Names</td>
+<td>
+Python <code>LeaseExpired</code>/<code>None</code>, phone <code>CarNetwork</code>/<code>'none'</code>, ROS <code>lease-expired</code>/<code>car-network</code></td>
+<td>
+One enum, ROS spelling (D7)</td>
+</tr>
+<tr>
+<td>
+I5</td>
+<td>
+Setpoint encoding</td>
+<td>
+Phone rejects non-finite values; Python does not</td>
+<td>
+Encoder rejects non-finite values and <code>vz</code>/roll/pitch ≠ 0</td>
+</tr>
+<tr>
+<td>
+I6</td>
+<td>
+UDP payload sizes and INFO layout</td>
+<td>
+Teleop length table; teleop and conformance slice <code>[27:30]</code>, <code>[30:38]</code></td>
+<td>
+Typed <code>Frame</code> / <code>Info</code></td>
+</tr>
+<tr>
+<td>
+I7</td>
+<td>
+BLE UUIDs</td>
+<td>
+Firmware macro literals, <code>ble.py</code>, <code>wire.js</code></td>
+<td>
+Crate constants; firmware <code>gatt_service</code> uses them</td>
+</tr>
+<tr>
+<td>
+I8</td>
+<td>
+ROS topic table, types and QoS</td>
+<td>
+Duplicated in <code>firmware/src/ros.rs</code> and <code>apps/simcar/src/ros.rs</code> (~440 differing lines, endpoint indexes by position)</td>
+<td>
+One topic table in the crate; endpoints by name</td>
+</tr>
+<tr>
+<td>
+I9</td>
+<td>
+Network republish (on change, else every 1 s)</td>
+<td>
+Hand-written in both ROS adapters; Status and Capabilities use <code>rovi-core</code> <code>Publication</code></td>
+<td>
+A <code>rovi-core</code> network <code>Publication</code>, like the others</td>
+</tr>
+<tr>
+<td>
+I10</td>
+<td>
+Sim virtual BLE op codes</td>
+<td>
+Ad-hoc framing in <code>vble.rs</code> and in the conformance suite</td>
+<td>
+Test transport defined in the crate (sim-only, no radio, ADR-0002)</td>
+</tr>
+</tbody>
+</table>
+<p>
+After I8–I9, the firmware and sim ROS adapters differ only in runtime glue (embassy vs std). Shared handler code goes into a common module where the runtimes allow.</p>
+<p>
+<strong>Transport variants</strong> (contract differences between BLE, UDP and ROS):</p>
+<table>
+<thead>
+<tr>
+<th>
+#</th>
+<th>
+Difference</th>
+<th>
+Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+T1</td>
+<td>
+Claim: connect + first write / <code>HELLO</code> / first <code>cmd_vel</code> from a graph node</td>
+<td>
+Keep: each transport's native session model (ADR-0013, ADR-0016)</td>
+</tr>
+<tr>
+<td>
+T2</td>
+<td>
+Release: disconnect / <code>BYE</code> / <code>/rovi/release</code></td>
+<td>
+Keep, same reason</td>
+</tr>
+<tr>
+<td>
+T3</td>
+<td>
+ROS auto-arms on its stream</td>
+<td>
+Keep (ADR-0011)</td>
+</tr>
+<tr>
+<td>
+T4</td>
+<td>
+Sequences: u32 serial (BLE, UDP) vs ROS attachment i64 per publisher</td>
+<td>
+Keep: ROS defines its attachment</td>
+</tr>
+<tr>
+<td>
+T5</td>
+<td>
+No takeover notice on BLE</td>
+<td>
+Keep: BLE is never taken over</td>
+</tr>
+<tr>
+<td>
+T6</td>
+<td>
+ROS Status text carries <code>session=</code>; binary Status does not</td>
+<td>
+Keep: ROS has no handshake that returns a session, and bench tools use it</td>
+</tr>
+<tr>
+<td>
+T7</td>
+<td>
+Echo: bytes ≤ 32 (BLE, UDP) vs <code>Int64</code> (ROS)</td>
+<td>
+Keep: ROS-native type; one typed <code>Echo</code> with per-transport encoding</td>
+</tr>
+<tr>
+<td>
+T8</td>
+<td>
+Mode command codes: BLE Control 3/4, UDP <code>MODE</code> 1/2, ROS <code>UInt8</code> 1/2</td>
+<td>
+Keep bytes: renumbering would break the accepted phone/firmware pairing for no behavioural gain. One <code>Command</code> enum; the BLE mapping lives in one place</td>
+</tr>
+<tr>
+<td>
+T9</td>
+<td>
+Status/Capabilities/Network on ROS are logfmt text, binary elsewhere</td>
+<td>
+Keep text for ROS tools; generated and decoded by the crate from the same type (D7)</td>
+</tr>
+<tr>
+<td>
+T10</td>
+<td>
+ROS network key <code>fallback=</code> names the field the binary layout and code call <code>reason</code></td>
+<td>
+<strong>Align</strong> (protocol change, text only): rename to <code>reason=</code>. Only Rovi tools read it</td>
+</tr>
+<tr>
+<td>
+T11</td>
+<td>
+Status, Capabilities and Network delivery: BLE read/notify, UDP <code>INFO</code>/<code>HELLO_ACK</code> replies and unsolicited <code>STATUS</code>, ROS periodic topics</td>
+<td>
+Keep; the conformance suite checks the same observable values on all three</td>
+</tr>
+</tbody>
+</table>
+<p>
+T10 is the only proposed contract change. It requires Todor's explicit approval at acceptance (task 1.1). Without it, T10 stays as it is and is listed as a known difference. All other transport differences are documented in the crate's module docs and <code>docs/reference/protocol.md</code>, generated from one table.</p>
 <h2 id="openspec--changes--add-rovi-protocol--design--alternatives">Alternatives</h2><ul>
 <li>
 <strong>Schema language (protobuf, FlatBuffers, Cap'n Proto) with generated code.</strong> Rejected: existing layouts are fixed BLE/UDP byte formats and ROS CDR; a schema would need custom encodings or a protocol change, plus a generator in the firmware build. Rust types already give a single source.</li>
@@ -4895,7 +5139,7 @@ Archive after acceptance; close Q21 in <code>PLAN.md</code>.</li>
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-rovi-protocol/tasks.md">Markdown source ↗</a><div class="path">openspec/changes/add-rovi-protocol/tasks.md</div></header>
     <h1 id="openspec--changes--add-rovi-protocol--tasks--rovi-protocol-tasks">Rovi protocol tasks</h1><h2 id="openspec--changes--add-rovi-protocol--tasks--1-approval">1. Approval</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 1.1 Todor explicitly accepts the proposal; record the wording and the home-network byte contract it targets, and pass strict validation.</li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 1.1 Todor explicitly accepts the proposal; record the wording, the home-network byte contract it targets, and the decision on alignment T10 (rename ROS <code>fallback=</code> to <code>reason=</code>). Pass strict validation.</li>
 </ul>
 <h2 id="openspec--changes--add-rovi-protocol--tasks--2-crate-extraction">2. Crate extraction</h2><ul>
 <li>
@@ -4904,6 +5148,12 @@ Archive after acceptance; close Q21 in <code>PLAN.md</code>.</li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Create <code>crates/rovi-protocol</code>; move wire types from <code>rovi-core</code>; add validating decoders, direction types and property tests; vectors byte-identical.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Switch <code>rovi-core</code>, firmware (with and without ROS) and sim car; record firmware size before/after; sim conformance and all workspace tests pass unchanged.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.4 Remove implementation variants I1–I10 (design D8): one model per concept with per-transport encodings and ROS text decoders; crate UUIDs in the firmware GATT service; one ROS topic table and a network <code>Publication</code> used by firmware and sim; typed sim BLE test transport. Add cross-transport equality tests.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.5 If T10 was approved, rename the ROS network key with a recorded vector change and update its readers; otherwise document it as a known difference.</li>
+<li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.6 Generate the transport-difference table in <code>docs/reference/protocol.md</code> from the crate's list of intentional differences.</li>
 </ul>
 <h2 id="openspec--changes--add-rovi-protocol--tasks--3-python-binding">3. Python binding</h2><ul>
 <li>

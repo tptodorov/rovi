@@ -2,13 +2,16 @@
 
 ## 1. Approval
 
-- [ ] 1.1 Todor explicitly accepts the proposal; record the wording and the home-network byte contract it targets, and pass strict validation.
+- [ ] 1.1 Todor explicitly accepts the proposal; record the wording, the home-network byte contract it targets, and the decision on alignment T10 (rename ROS `fallback=` to `reason=`). Pass strict validation.
 
 ## 2. Crate extraction
 
 - [ ] 2.1 Freeze golden vectors from current Rust tests and Python/JavaScript fixtures before moving code; add the generator and CI freshness check.
 - [ ] 2.2 Create `crates/rovi-protocol`; move wire types from `rovi-core`; add validating decoders, direction types and property tests; vectors byte-identical.
 - [ ] 2.3 Switch `rovi-core`, firmware (with and without ROS) and sim car; record firmware size before/after; sim conformance and all workspace tests pass unchanged.
+- [ ] 2.4 Remove implementation variants I1–I10 (design D8): one model per concept with per-transport encodings and ROS text decoders; crate UUIDs in the firmware GATT service; one ROS topic table and a network `Publication` used by firmware and sim; typed sim BLE test transport. Add cross-transport equality tests.
+- [ ] 2.5 If T10 was approved, rename the ROS network key with a recorded vector change and update its readers; otherwise document it as a known difference.
+- [ ] 2.6 Generate the transport-difference table in `docs/reference/protocol.md` from the crate's list of intentional differences.
 
 ## 3. Python binding
 
