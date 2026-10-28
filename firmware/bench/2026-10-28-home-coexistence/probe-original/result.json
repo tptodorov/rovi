@@ -1,0 +1,6 @@
+{
+  "source": "/home/todor/tptodorov/rovi/apps/simcar/scenarios/ros_latency.py",
+  "sent": 300,
+  "received": 275,
+  "lost": 25
+}

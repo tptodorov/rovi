@@ -1,0 +1,68 @@
+{
+  "started": "2026-10-28T15:03:55.600158+00:00",
+  "commands": [
+    {
+      "command": [
+        "nmcli",
+        "-g",
+        "GENERAL.STATE,GENERAL.CONNECTION,IP4.ADDRESS,IP4.GATEWAY",
+        "device",
+        "show",
+        "wlp1s0f0"
+      ],
+      "exit": 0,
+      "stdout": "100 (connected)\n<home-ssid>\n192.168.1.244/24\n192.168.1.1\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "iw",
+        "dev",
+        "wlp1s0f0",
+        "link"
+      ],
+      "exit": 0,
+      "stdout": "Connected to <mac> (on wlp1s0f0)\n\tSSID: <home-ssid>\n\tfreq: 5220.0\n\tRX: 158352273 bytes (136207 packets)\n\tTX: 10297209 bytes (55158 packets)\n\tsignal: -36 dBm\n\trx bitrate: 866.7 MBit/s VHT-MCS 9 80MHz short GI VHT-NSS 2\n\ttx bitrate: 866.7 MBit/s VHT-MCS 9 80MHz short GI VHT-NSS 2\n\tbss flags: short-slot-time\n\tdtim period: 1\n\tbeacon int: 100\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "iw",
+        "dev",
+        "wlp1s0f0",
+        "get",
+        "power_save"
+      ],
+      "exit": 0,
+      "stdout": "Power save: off\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "ip",
+        "-j",
+        "route",
+        "get",
+        "192.168.1.193"
+      ],
+      "exit": 0,
+      "stdout": "[{\"dst\":\"192.168.1.193\",\"dev\":\"enp0s20f0u3u3\",\"prefsrc\":\"192.168.1.148\",\"flags\":[],\"uid\":1000,\"cache\":[]}]\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "ping",
+        "-n",
+        "-c",
+        "3",
+        "-W",
+        "1",
+        "192.168.1.193"
+      ],
+      "exit": 0,
+      "stdout": "PING 192.168.1.193 (192.168.1.193): 56 data bytes\n64 bytes from 192.168.1.193: icmp_seq=0 ttl=219 time=62.723 ms\n64 bytes from 192.168.1.193: icmp_seq=1 ttl=220 time=3.359 ms\n64 bytes from 192.168.1.193: icmp_seq=2 ttl=221 time=13.442 ms\n--- 192.168.1.193 ping statistics ---\n3 packets transmitted, 3 packets received, 0% packet loss\nround-trip min/avg/max/stddev = 3.359/26.508/62.723/25.937 ms\n",
+      "stderr": ""
+    }
+  ],
+  "finished": "2026-10-28T15:03:57.658554+00:00"
+}

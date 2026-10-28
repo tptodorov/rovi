@@ -1,0 +1,77 @@
+"""6.3 physical station-loss check. No claims, controls, setpoints or ARM.
+
+Wait for READY, move the powered board outside home Wi-Fi for 60 seconds, then
+return with USB intact. BLE reads and a directed Wi-Fi scan verify fallback/AP.
+"""
+import asyncio
+import json
+from pathlib import Path
+import signal
+import shutil
+import subprocess
+import sys
+import time
+
+ROOT=Path('/home/todor/tptodorov/rovi')
+sys.path.insert(0,str(ROOT))
+sys.path.insert(0,'/tmp/rovi-61')
+import bench
+from apps.simcar.scenarios import carlog
+from apps.teleop.ble import NAME,STATUS,NETWORK
+from bleak import BleakClient,BleakScanner
+
+OUT=Path('/tmp/rovi-home-range-2026-10-28')
+OUT.mkdir(mode=0o700,exist_ok=False)
+LOG=OUT/'car.log'
+monitor=None
+
+def save(name,data): (OUT/name).write_text(json.dumps(data,indent=2)+'\n')
+
+async def info():
+    dev=await BleakScanner.find_device_by_name(NAME,timeout=8)
+    assert dev,'no fallback BLE advertisement'
+    async with BleakClient(dev,timeout=10) as peer:
+        return {'status':list(await peer.read_gatt_char(STATUS)),
+                'network':list(await peer.read_gatt_char(NETWORK))}
+
+try:
+    assert subprocess.run(['pgrep','-x','espflash'],capture_output=True).returncode==1
+    monitor=bench.monitor(str(LOG))
+    found,_=bench.wait(str(LOG),carlog.ev('net',mode='Home'),25)
+    assert found,'Home not ready before range check'
+    (OUT/'ready').write_text(str(time.time()))
+    print('READY: keep USB connected, move out of home Wi-Fi for 60 seconds, then return.',flush=True)
+    deadline=time.monotonic()+360
+    while True:
+        events=carlog.events(LOG)
+        assert monitor.poll() is None,'serial monitor stopped'
+        assert not carlog.PANIC.search(carlog.read(LOG))
+        assert not [e for e in events if e['ev'] in ('claimed','released','stop','error','dropped') or e.get('state')=='Armed' or any(e.get('wheels_pm',[]))],'unexpected ownership/motor/fault event'
+        boots=[e for e in events if e['ev']=='boot']
+        assert all(e.get('reset')=='Sw' for e in boots[1:]),'power/reset interruption during range check'
+        if any(carlog.ev('net',mode='Fallback',reason='LinkLost')(e) for e in events) and len(boots)==2:
+            break
+        assert time.monotonic()<deadline,'no station-loss fallback within six minutes'
+        time.sleep(.1)
+    before=asyncio.run(info());save('fallback-info.json',before)
+    assert before['status'][0]==0 and before['network'][0]==0 and before['network'][2]==6,before
+    beacon=None
+    for _ in range(4):
+        r=subprocess.run(['sudo','-n','iw','dev','wlp1s0f0','scan','ssid','Rovi M8'],capture_output=True,text=True,timeout=20)
+        if r.returncode==0:
+            matches=[b for b in r.stdout.split('BSS ') if any(line.strip()=='SSID: Rovi M8' for line in b.splitlines())]
+            if matches:
+                beacon=[line.strip() for b in matches for line in b.splitlines() if line.strip().startswith(('SSID:','freq:','signal:'))]
+                break
+        time.sleep(1)
+    assert beacon,'fallback AP beacon not observed'
+    save('result.json',{'complete':True,'at':time.time(),'network':before,'ap_beacon':beacon,'events':carlog.events(LOG)})
+    print('FALLBACK AND AP VERIFIED. Return to home Wi-Fi range with USB still connected.',flush=True)
+    if shutil.which('notify-send'):
+        subprocess.run(['notify-send','Rovi range check','Fallback/AP verified. Return to home Wi-Fi range.'],capture_output=True)
+except BaseException as exc:
+    save('failure.json',{'error':repr(exc),'at':time.time()})
+    print('RANGE CHECK FAILED',repr(exc),flush=True)
+    raise
+finally:
+    if monitor and monitor.poll() is None:bench.stop(monitor)
