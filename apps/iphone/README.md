@@ -39,7 +39,7 @@ No test touches a BLE device. Runtime assets use no third-party scripts or comma
 
 | File | Role |
 | --- | --- |
-| `wire.js` | 72-byte setpoint, capabilities and Status codecs |
+| `wire.js` | 72-byte setpoint, capabilities, Status and Network codecs |
 | `hold.js` | Input interpreter: press-and-hold intent with 250 ms expiry |
 | `physical.js`, `angles.js` | Calibrated three-axis input, posture guards and independent sensor/hold deadlines |
 | `transport.js` | Web Bluetooth picker, GATT validation and reads/writes |
@@ -66,8 +66,8 @@ uses normal bounded cleanup. Neither action sends ARM or motion.
 Older firmware without the Network characteristic keeps ordinary driving;
 network controls remain unavailable. No SSID or password is entered in this UI.
 Implementation/verification is tracked in
-[`add-iphone-network-controls`](../../openspec/changes/add-iphone-network-controls/proposal.md).
-Real iPhone/Bluefy validation of these new controls is still pending.
+[`iphone-network-controls`](../../openspec/specs/iphone-network-controls/spec.md).
+The [scoped Bluefy check](../../firmware/bench/2026-10-28-iphone-network-controls/notes.md) passed on 2026-10-28: both switches, fresh Home/Pending none after reconnect and normal disconnect. Phone/browser versions and the cause of an initial brief BLE disappearance remain unrecorded or unresolved.
 
 ## Physical mode
 
@@ -115,7 +115,7 @@ renew the separate 250 ms running-input deadline. Cached angles and stream ticks
 cannot keep either alive. The compact controller keeps requested motion and ARM/START/PAUSE with STOP
 in a persistent thumb dock. A sticky status area keeps the session/fault reason
 visible. Raw sensor angles, Status age, stream counters and limits are in collapsed
-**Connection & diagnostics**; opening it pauses input. Lock/app switch/screen
+**Connection, network & diagnostics**; opening it pauses input. Lock/app switch/screen
 rotation require manual motion setup/retry, connect, Set neutral & ARM and START. Existing
 stream/Status/cleanup deadlines are unchanged. No compass heading, declared
 motion interval or integrated gyro rate controls the car.

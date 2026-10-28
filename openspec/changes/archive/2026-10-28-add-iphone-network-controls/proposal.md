@@ -1,6 +1,6 @@
 # iPhone network controls
 
-**Status:** accepted for implementation, 2026-10-28. Todor said “do it” after the recommendation to add iPhone Home/Car network controls and network status (#109). No motor run is authorized. Real iPhone/Bluefy validation remains separate from host/browser evidence.
+**Status:** accepted for implementation, 2026-10-28. Todor said “do it” after the recommendation to add iPhone Home/Car network controls and network status (#109). The network commands authorize no motor run. Scoped Bluefy acceptance completed on 2026-10-28: Todor confirmed fresh Home/Pending none after switching and reconnecting, then clean disconnect; see [verification](verification.md). Host, phone and earlier user-motion evidence remain separate.
 
 ## Why
 

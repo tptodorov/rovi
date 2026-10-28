@@ -1,0 +1,8 @@
+{
+  "car.log": {
+    "raw_sha256": "7b2194a46d39f0c9b19c98a58d27f9f51772d242f39bc09600ba6f7cb3fb1319",
+    "published_sha256": "8f184f72deaeb7ad2621363ae48b1ca8f973d36335e13b18ff0d19942e1d53b9",
+    "normalization": "SSID and MAC redacted; CR/CRLF to LF"
+  },
+  "raw_source": "/tmp/rovi-bluefy-network-recovery-20261028-180550"
+}
