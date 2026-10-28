@@ -61,6 +61,8 @@ fn random_bytes(bytes: &mut [u8]) -> Result<(), getrandom::Error> {
 }
 
 const UDP_PORT: u16 = 7777;
+/// Scans per home attempt before the scan step fails (the core's 1.5 s budget still applies).
+const SCAN_TRIES: usize = 3;
 
 const HOME_SSID: Option<&str> = option_env!("ROVI_HOME_SSID");
 const HOME_PASSWORD: Option<&str> = option_env!("ROVI_HOME_PASSWORD");
@@ -758,13 +760,21 @@ async fn main(_spawner: Spawner) -> ! {
                             Step::Scan => {
                                 let cfg = ScanConfig::default()
                                     .with_ssid(HOME_SSID.unwrap_or("").try_into().unwrap());
-                                let best = match with_timeout(budget, wifi.scan_async(&cfg)).await {
-                                    Ok(Ok(found)) => found
-                                        .iter()
-                                        .max_by_key(|ap| ap.signal_strength)
-                                        .map(|ap| (ap.bssid, ap.channel)),
-                                    _ => None,
-                                };
+                                // One active scan takes ~160 ms and missed the access point about 1 in 30
+                                // times on the board (2026-10-28); the budget allows a few tries.
+                                let mut best = None;
+                                for _ in 0..SCAN_TRIES {
+                                    best = match with_timeout(budget, wifi.scan_async(&cfg)).await {
+                                        Ok(Ok(found)) => found
+                                            .iter()
+                                            .max_by_key(|ap| ap.signal_strength)
+                                            .map(|ap| (ap.bssid, ap.channel)),
+                                        _ => None,
+                                    };
+                                    if best.is_some() {
+                                        break;
+                                    }
+                                }
                                 if let Some(ap) = best {
                                     let _ = wifi.set_config(&station_config(Some(ap)));
                                 }
