@@ -9,8 +9,9 @@ use core::cell::{Cell, RefCell};
 use core::sync::atomic::{AtomicBool, Ordering};
 use embassy_futures::select::{select, select5, Either, Either5};
 use embassy_net::Stack;
+use embassy_net::{dns::DnsQueryType, IpAddress};
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, channel::Channel};
-use embassy_time::Timer;
+use embassy_time::{with_timeout, Duration, Timer};
 use esp_println::println;
 use rovi_core::device::Device;
 use rovi_core::events::{Event, Link as RosLink};
@@ -61,6 +62,42 @@ impl ZSessionConfig for RosConfig {
 type Chan = Channel<NoopRawMutex, FixedCapacitySample<192, 160>, 4>;
 type TokenChan = Channel<NoopRawMutex, FixedCapacitySample<384, 8>, 8>;
 
+/// Bounds each lookup; smoltcp sends immediately and retries after 1 s (then 2 s more).
+const RESOLVE_TIMEOUT_MS: u64 = 3_000;
+
+/// The router endpoint with its host name looked up: `tcp/<name>:<port>` becomes
+/// `tcp/<ipv4>:<port>`. An IPv4 literal is returned unchanged (and logs nothing). `*.local` names go
+/// out as mDNS: the responder answers by unicast to the query's source port (RFC 6762 section 6.7),
+/// so the car does not need to receive multicast. `None` when the lookup fails or times out.
+async fn resolve(stack: Stack<'static>, router: &str) -> Option<alloc::string::String> {
+    let (host, port) = router.strip_prefix("tcp/")?.rsplit_once(':')?;
+    if host.parse::<core::net::Ipv4Addr>().is_ok() {
+        return Some(router.into());
+    }
+    // smoltcp selects mDNS with a case-sensitive `.local` suffix check.
+    let host = host.to_ascii_lowercase();
+    let started = now();
+    let found = with_timeout(
+        Duration::from_millis(RESOLVE_TIMEOUT_MS),
+        stack.dns_query(&host, DnsQueryType::A),
+    )
+    .await;
+    let ip = match found {
+        Ok(Ok(addresses)) => addresses.iter().find_map(|a| match a {
+            IpAddress::Ipv4(v4) => Some(v4.octets()),
+            #[allow(unreachable_patterns)]
+            _ => None,
+        }),
+        _ => None,
+    };
+    emit(Event::Resolve {
+        ok: ip.is_some(),
+        took_ms: now().saturating_sub(started) as u32,
+        ip: ip.unwrap_or([0; 4]),
+    });
+    ip.map(|o| alloc::format!("tcp/{}.{}.{}.{}:{port}", o[0], o[1], o[2], o[3]))
+}
+
 fn leak(s: alloc::string::String) -> &'static str {
     alloc::boxed::Box::leak(s.into_boxed_str())
 }
@@ -94,7 +131,13 @@ pub async fn run(dev: &RefCell<Device>, stack: Stack<'static>, router: &'static 
         let transport = loop {
             // No address yet (the station is still joining): nothing to connect from.
             stack.wait_config_up().await;
-            let endpoint = Endpoint::try_from(router).expect("router endpoint");
+            // A host name is looked up on every attempt, so a new address is picked up.
+            let Some(target) = resolve(stack, router).await else {
+                println!("ros: cannot resolve router {}, retrying", router);
+                Timer::after_secs(1).await;
+                continue;
+            };
+            let endpoint = Endpoint::try_from(target.as_str()).expect("router endpoint");
             match config.transports().connect(endpoint, config.buff()).await {
                 Ok(t) => break t,
                 Err(_) => {

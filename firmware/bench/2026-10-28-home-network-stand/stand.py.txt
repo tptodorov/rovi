@@ -1,0 +1,163 @@
+"""6.2 stand batch, authorized by Todor; requires the normal home image and a live observer.
+
+Uses /tmp/rovi-home-ros.py in the Jazzy container. Every ROS forward pulse expires
+after one second; UDP/BLE pulses end within one second. Always stops/releases.
+"""
+import asyncio
+import json
+import os
+from pathlib import Path
+import socket
+import subprocess
+import sys
+import time
+
+sys.path.insert(0, '/tmp/rovi-61')
+import bench
+sys.path.insert(0, '/home/todor/tptodorov/rovi')
+from apps.client.wire import ble_setpoint, cdr
+from apps.teleop.ble import CONTROL, STATUS, SETPOINT, NETWORK, NAME
+from bleak import BleakClient, BleakScanner
+
+OUT = Path('/home/todor/tptodorov/rovi/firmware/bench/2026-10-28-home-network-stand')
+OUT.mkdir(exist_ok=True)
+LOG = OUT / 'car.log'
+os.environ['ROVI_TARGET'] = '192.168.1.193:7777'
+import udp_scenarios as udp
+import carlog
+
+def rpc(op, **kwargs):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.settimeout(2)
+        s.sendto(json.dumps(dict(op=op, **kwargs)).encode(), ('127.0.0.1',18762))
+        return json.loads(s.recv(2048))
+
+def mark(): return LOG.stat().st_size
+
+def saw(offset, name, timeout=12, **fields):
+    found, seen = carlog.wait(LOG, offset, carlog.ev(name, **fields), timeout)
+    assert found, (name, fields, seen[-5:])
+    return found
+
+def no_motion(offset):
+    events = carlog.events(LOG, offset)
+    states = [e for e in carlog.events(LOG) if e.get('ev') == 'state']
+    assert states and not any(states[-1]['wheels_pm']), 'latest state is not zero'
+    assert not [e for e in events if e.get('ev') == 'state' and any(e.get('wheels_pm', []))], events[-6:]
+
+def ros_drive():
+    off = mark(); rpc('drive')
+    saw(off,'state',state='Armed',wheels_pm=[83]*4)
+    time.sleep(1.1)
+    saw(off,'state',state='Armed',wheels_pm=[0]*4)
+
+async def ble_peer():
+    dev = await BleakScanner.find_device_by_name(NAME, timeout=10)
+    assert dev, 'not advertising while ROS owns'
+    peer = BleakClient(dev, timeout=10)
+    await peer.connect()
+    print('BLE watcher status', list(await peer.read_gatt_char(STATUS)), flush=True)
+    return peer
+
+async def ble_drive(peer):
+    await peer.write_gatt_char(SETPOINT,ble_setpoint(1),response=True)
+    await peer.write_gatt_char(CONTROL,b'\x01',response=True)
+    assert (await peer.read_gatt_char(STATUS))[0] == 2
+    off = mark()
+    for seq in range(2,8):
+        await peer.write_gatt_char(SETPOINT,ble_setpoint(seq,0.1),response=True)
+        await asyncio.sleep(0.03)
+    saw(off,'state',state='Armed',wheels_pm=[83]*4)
+
+async def run():
+    if '--accidental-only' in sys.argv:
+        off=mark();rpc('stream');saw(off,'claimed',source='Ros');ros_drive()
+        await accidental()
+        return
+    print('1. ROS home stream, one-second forward pulse',flush=True)
+    off=mark();rpc('stream');saw(off,'claimed',source='Ros');ros_drive()
+    print('2. UDP takeover stops ROS; unarmed setpoints remain zero',flush=True)
+    rpc('drive');time.sleep(0.2);off=mark();c=udp.Client()
+    try:
+        assert c.hello()[0] == udp.ACK
+        saw(off,'preempted',source='Ros');saw(off,'stop',reason='OwnerLost');saw(off,'claimed',source='Udp')
+        off=mark()
+        for _ in range(8): c.send(udp.SETPOINT,cdr(0.1));time.sleep(0.05)
+        no_motion(off)
+        print('3. Explicit UDP ARM, forward pulse, STOP, BYE',flush=True)
+        c.send(udp.SETPOINT,cdr());assert c.status(udp.ARM)==(2,0,0)
+        off=mark()
+        for _ in range(12): c.send(udp.SETPOINT,cdr(0.1));time.sleep(0.05)
+        saw(off,'state',state='Armed',wheels_pm=[83]*4)
+        c.send(udp.SETPOINT,cdr());assert c.status(udp.STOP)==(3,1,0)
+    finally:
+        off=mark();c.send(udp.BYE);c.s.close()
+    saw(off,'claimed',source='Ros')
+    off=mark();rpc('drive');time.sleep(1.2);no_motion(off)
+    rpc('arm');ros_drive()
+    print('4. BLE takeover while ROS moves; explicit ARM; Home hand-back',flush=True)
+    peer=await ble_peer()
+    try:
+        rpc('drive');time.sleep(0.2);off=mark()
+        await peer.write_gatt_char(CONTROL,b'\x02',response=True)
+        saw(off,'preempted',source='Ros');saw(off,'claimed',source='Ble')
+        off=mark()
+        await peer.write_gatt_char(SETPOINT,ble_setpoint(0,0.1),response=True)
+        await asyncio.sleep(0.3);no_motion(off)
+        await ble_drive(peer)
+        await peer.write_gatt_char(CONTROL,b'\x02',response=True)
+        await peer.write_gatt_char(CONTROL,b'\x03',response=True)
+        print('Deliberate Home pending',list(await peer.read_gatt_char(NETWORK)),flush=True)
+    finally:
+        off=mark();await peer.disconnect()
+    saw(off,'claimed',source='Ros',timeout=20)
+    saw(off,'state',state='Armed');ros_drive()
+    await accidental()
+
+async def accidental():
+    print('5. Armed BLE disconnect without Home; ROS blocked until explicit ARM',flush=True)
+    peer=await ble_peer()
+    try:
+        rpc('drive');time.sleep(0.2);off=mark()
+        await peer.write_gatt_char(CONTROL,b'\x02',response=True)
+        saw(off,'preempted',source='Ros');await ble_drive(peer)
+    finally:
+        off=mark();await peer.disconnect()
+    found, _ = carlog.wait(LOG,off,lambda e:e.get('ev')=='stop' and e.get('reason') in ('OwnerLost','LeaseExpired'),12)
+    assert found, 'no safety stop during disconnect'
+    saw(off,'claimed',source='Ros',timeout=20)
+    off=mark();rpc('drive');time.sleep(1.2);no_motion(off)
+    rpc('arm');ros_drive()
+    print('6. Final ROS STOP and release',flush=True)
+    off=mark();rpc('stop');time.sleep(0.3);rpc('release');saw(off,'released')
+    print('6.2 motor/ownership batch: PASS; disarmed and released',flush=True)
+
+if __name__=='__main__':
+    monitor=bench.monitor(str(LOG))
+    worker=None
+    try:
+        saw(0,'net',mode='Home',timeout=20)
+        with open(OUT/'ros.log','wb') as log:
+            worker=subprocess.Popen(['docker','run','--rm','--name','rovi-home-stand','--net','host',
+                '-v','/tmp/rovi-client-lan.json5:/c.json5:ro',
+                '-v','/tmp/rovi-home-ros.py:/bench.py:ro',
+                '-e','ZENOH_SESSION_CONFIG_URI=/c.json5','rovi-ros-sim',
+                'bash','-c','source /opt/ros/jazzy/setup.bash && python3 /bench.py'],stdout=log,stderr=subprocess.STDOUT)
+            deadline=time.monotonic()+20
+            while True:
+                try:
+                    if rpc('info')['subscriptions']: break
+                except (TimeoutError,ConnectionError): pass
+                assert time.monotonic()<deadline,'ROS graph did not appear'
+                time.sleep(0.2)
+            asyncio.run(run())
+    finally:
+        try: rpc('exit')
+        except (TimeoutError,ConnectionError): pass
+        if worker:
+            try: worker.wait(timeout=8)
+            except subprocess.TimeoutExpired:
+                subprocess.run(['docker','stop','-t','2','rovi-home-stand'],capture_output=True)
+                worker.wait(timeout=8)
+        time.sleep(1.3)
+        bench.stop(monitor)

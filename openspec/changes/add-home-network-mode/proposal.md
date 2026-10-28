@@ -20,11 +20,12 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
   * ROS gets an explicit release (`/rovi/release`) like UDP BYE and BLE disconnect.
   * A preempted owner receives a final Status (stopped, owner-lost) on its own transport.
   * One transport-independent scenario suite runs the shared rules over BLE, UDP and ROS in the simulator.
+* **Router by name (Todor, 2026-10-28: “i want to resolve the router by name”).** Accept IPv4 or a host name; resolve `.local` through mDNS and other names through DHCP DNS on every connection attempt, within the existing join budget. Literal endpoints remain supported.
 * **Settings at build time.** SSID, passphrase and the home ROS router endpoint are build variables, like today's `ROVI_WIFI_PASSWORD`, flashed over USB. Nothing about the home network is sent over the air.
 * **Trust.** Any device on the home network may control the car, with no new authentication ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) station-mode exclusion superseded).
 * **Observability.** New log events report mode changes, mode commands and each join step with its duration.
 
-Deferred: a shared Rust client crate for all clients ([#108](https://github.com/tptodorov/rovi/issues/108)), the iPhone mode/network UI ([#109](https://github.com/tptodorov/rovi/issues/109)) and resolving the router by name via mDNS ([#115](https://github.com/tptodorov/rovi/issues/115)). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.
+Deferred: a shared Rust client crate for all clients ([#108](https://github.com/tptodorov/rovi/issues/108)), the iPhone mode/network UI ([#109](https://github.com/tptodorov/rovi/issues/109)). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, automatic router discovery via zenoh scouting, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.
 
 ## Capabilities
 

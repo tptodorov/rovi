@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>187</b> requirements</div><div><b>343</b> scenarios</div><div><b>79 / 81</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>188</b> requirements</div><div><b>348</b> scenarios</div><div><b>81 / 82</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -515,6 +515,8 @@ One transport-independent scenario suite runs the shared rules over BLE, UDP and
 </ul>
 </li>
 <li>
+<strong>Router by name (Todor, 2026-10-28: “i want to resolve the router by name”).</strong> Accept IPv4 or a host name; resolve <code>.local</code> through mDNS and other names through DHCP DNS on every connection attempt, within the existing join budget. Literal endpoints remain supported.</li>
+<li>
 <strong>Settings at build time.</strong> SSID, passphrase and the home ROS router endpoint are build variables, like today's <code>ROVI_WIFI_PASSWORD</code>, flashed over USB. Nothing about the home network is sent over the air.</li>
 <li>
 <strong>Trust.</strong> Any device on the home network may control the car, with no new authentication (<a href="../docs/adr/0008-local-link-security-baseline.md">ADR-0008</a> station-mode exclusion superseded).</li>
@@ -522,7 +524,7 @@ One transport-independent scenario suite runs the shared rules over BLE, UDP and
 <strong>Observability.</strong> New log events report mode changes, mode commands and each join step with its duration.</li>
 </ul>
 <p>
-Deferred: a shared Rust client crate for all clients (<a href="https://github.com/tptodorov/rovi/issues/108">#108</a>), the iPhone mode/network UI (<a href="https://github.com/tptodorov/rovi/issues/109">#109</a>) and resolving the router by name via mDNS (<a href="https://github.com/tptodorov/rovi/issues/115">#115</a>). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.</p>
+Deferred: a shared Rust client crate for all clients (<a href="https://github.com/tptodorov/rovi/issues/108">#108</a>), the iPhone mode/network UI (<a href="https://github.com/tptodorov/rovi/issues/109">#109</a>). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, automatic router discovery via zenoh scouting, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.</p>
 
       <a class="button" href="#openspec--changes--add-home-network-mode--proposal">Open decisions &amp; evidence →</a></div>
 <section id="reading" class="reading"><h2>A small reading key</h2>
@@ -1027,7 +1029,7 @@ In home mode, loss of the station link SHALL stop the car as the lease rules req
 <strong>THEN</strong> the car stays in home mode and the ROS session reconnects as it does on the AP</li>
 </ul>
 </details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--requirement-build-time-home-settings"><h3>Build-time home settings</h3><p>
-Home settings SHALL be supplied only at build time: SSID (1–32 bytes), WPA2 passphrase (8–63 ASCII) and ROS router endpoint (<code>tcp/&lt;IPv4&gt;:&lt;port&gt;</code>), all three or none. An incomplete or invalid set SHALL fail the build. The passphrase SHALL never be sent or reported over any interface or log.</p>
+Home settings SHALL be supplied only at build time: SSID (1–32 bytes), WPA2 passphrase (8–63 ASCII) and ROS router endpoint (<code>tcp/&lt;IPv4 or host name&gt;:&lt;port&gt;</code>), all three or none. An incomplete or invalid set SHALL fail the build. The passphrase SHALL never be sent or reported over any interface or log.</p>
 <details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-partial-settings-fail-the-build"><summary>Partial settings fail the build</summary><ul>
 <li>
 <strong>GIVEN</strong> a build with an SSID but no passphrase, or a malformed router endpoint</li>
@@ -1053,6 +1055,48 @@ The car log SHALL report each mode change (home, fallback with reason, attemptin
 <strong>WHEN</strong> the car boots</li>
 <li>
 <strong>THEN</strong> the log shows the failed scan with its duration and a fallback mode event naming the scan as the reason</li>
+</ul>
+</details></article><article class="requirement" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--requirement-router-name-resolution"><h3>Router name resolution</h3><p>
+The firmware SHALL resolve router host names to IPv4 on every connection attempt, including reconnects: <code>.local</code> names use mDNS, other names use DHCP DNS. Names SHALL be case-insensitive. Each lookup SHALL finish within 3000 ms and the existing home-attempt budget SHALL still apply. Literal IPv4 endpoints SHALL bypass DNS. Lookup result, duration and resolved address SHALL be logged without credentials.</p>
+<details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-named-router-at-boot"><summary>Named router at boot</summary><ul>
+<li>
+<strong>GIVEN</strong> a configured router <code>tcp/blackbox.local:7447</code> advertised on the home network</li>
+<li>
+<strong>WHEN</strong> the car attempts home mode</li>
+<li>
+<strong>THEN</strong> it resolves the name and connects to that IPv4 address within the existing join budget</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-uppercase-local-name"><summary>Uppercase local name</summary><ul>
+<li>
+<strong>GIVEN</strong> a router name ending in <code>.LOCAL</code></li>
+<li>
+<strong>WHEN</strong> the car resolves it</li>
+<li>
+<strong>THEN</strong> it uses mDNS just as for the lowercase name</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-router-reconnect"><summary>Router reconnect</summary><ul>
+<li>
+<strong>GIVEN</strong> home mode and a lost ROS router session</li>
+<li>
+<strong>WHEN</strong> the car retries the connection</li>
+<li>
+<strong>THEN</strong> it resolves the configured name again and uses the returned address</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-name-unavailable"><summary>Name unavailable</summary><ul>
+<li>
+<strong>GIVEN</strong> home settings with an unresolvable router name</li>
+<li>
+<strong>WHEN</strong> the home-attempt budget ends</li>
+<li>
+<strong>THEN</strong> the car enters fallback with reason router and the log records lookup failure</li>
+</ul>
+</details><details class="scenario" id="openspec--changes--add-home-network-mode--specs--network-mode--spec--scenario-literal-endpoint"><summary>Literal endpoint</summary><ul>
+<li>
+<strong>GIVEN</strong> a configured literal IPv4 router endpoint</li>
+<li>
+<strong>WHEN</strong> the car connects</li>
+<li>
+<strong>THEN</strong> it uses that endpoint without a DNS query</li>
 </ul>
 </details></article></section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--specs--car-control-api--spec" aria-label="car control api">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/specs/car-control-api/spec.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/specs/car-control-api/spec.md</div></header>
@@ -3875,13 +3919,13 @@ Scan ≤1500 ms (spec); join + DHCP + router ≤8000 ms after the network is fou
 The home ROS router is <code>rmw_zenohd</code> from ROS 2 Jazzy (<code>rmw_zenoh_cpp</code> 0.2.11, the version CI and the bench use) in a Docker container, run by a systemd unit in <code>~/mycfg</code> (<code>hosts/blackbox/modules/rovi-ros-router.nix</code>). Blackbox is always on; blade is a laptop and hosts nothing permanent. Facts that shaped it:</p>
 <ul>
 <li>
-The car's <code>ROVI_HOME_ROUTER</code> is a literal address (zenoh-nostd takes no hostnames; <a href="https://github.com/tptodorov/rovi/issues/115">#115</a>), so the host needs a stable address: a DHCP reservation (Todor's, in the home router) for its wired MAC. The wired address is the one to use: with two interfaces on one subnet the kernel's strict reverse-path filtering drops traffic that arrives on Wi-Fi while the cable is in.</li>
+The car uses <code>tcp/blackbox.local:7447</code>; firmware resolves it to IPv4 before passing a literal endpoint to zenoh-nostd. Every connection attempt performs a fresh lookup. No DHCP reservation is needed (the devolo is a bridge; the gateway supplies DHCP).</li>
 <li>
 TCP 7447 must be open on every interface that can carry the LAN (the first version opened Wi-Fi only; the car would have been refused).</li>
 <li>
-A host with two interfaces on the home subnet must set <code>arp_ignore=1</code>/<code>arp_announce=2</code>: otherwise it answers the car's ARP request on both, the car may cache the Wi-Fi MAC, and its traffic is dropped by reverse-path filtering (the car stalled right after its first batch; found on the board 2026-10-28). Applied in <code>~/mycfg</code>.</li>
+A host with two interfaces on the home subnet must set <code>arp_ignore=1</code>/<code>arp_announce=2</code>: otherwise it answers the car's ARP request on both, the car may cache the Wi-Fi MAC, and its traffic is lost on the unusable Wi-Fi path (the car stalled right after its first batch; found on the board 2026-10-28). Applied in <code>~/mycfg</code>.</li>
 <li>
-No DHCP reservation is available (the devolo is only a bridge); the router host's address is the one its lease gives (stable across a reboot in practice). Name resolution (<a href="https://github.com/tptodorov/rovi/issues/115">#115</a>) is the address-free alternative.</li>
+The kernel sysctls showed loose filtering (<code>rp_filter=2</code>), not strict filtering as initially reported. The ARP captures and successful before/after fix establish ARP flux; they do not identify the exact packet-drop mechanism.</li>
 <li>
 Blackbox on Wi-Fi alone was unusable for transfers (200-1500 ms latency, broken SSH streams): the router host must be cabled.</li>
 </ul>
@@ -3943,6 +3987,10 @@ Fallback has no automatic retry (it would blink the AP off every scan). A Home c
 <li>
 Whether the ROS router step should also wait for the controller's liveliness tokens — settle from board data; does not change the specs.</li>
 </ul>
+<h3 id="openspec--changes--add-home-network-mode--design--d16-resolve-the-configured-router-name-before-connecting-115">D16. Resolve the configured router name before connecting (#115)</h3><p>
+Todor requested name resolution on 2026-10-28. Enable embassy-net <code>dns</code>/<code>mdns</code>; its DNS socket already fits <code>StackResources&lt;6&gt;</code>. Resolve A records on every connection attempt, bounded at 3 seconds and still cancelled by the existing home-attempt deadline. Normalize case because smoltcp 0.12 selects mDNS with a lowercase suffix comparison. <code>.local</code> uses legacy unicast-response mDNS queries from an ephemeral port: no multicast listener/group join is needed. Other names use DHCP DNS. Numeric IPv4 endpoints bypass the lookup. Failed lookups retry until the home budget ends, then fallback; no stored-IP fallback or zenoh patch.</p>
+<p>
+Log <code>resolve</code> with result, duration and IPv4 (zero on failure). Board evidence is in <a href="../firmware/bench/2026-10-29-router-by-name/notes.md">router-by-name notes</a>. Router restart also exposed a 90-second Docker stop wait; the blackbox unit now explicitly stops its container (<code>docker stop -t 5</code>, <code>TimeoutStopSec=20</code>). Fresh-name lookup on reconnect is verified; an actual DHCP address change and cable-unplugged operation are not qualified.</p>
 </section><section class="document" id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design" aria-label="design">
     <header class="doc-header"><span class="eyebrow">Archived change</span><a href="changes/archive/2026-10-20-add-four-wheel-api/design.md">Markdown source ↗</a><div class="path">openspec/changes/archive/2026-10-20-add-four-wheel-api/design.md</div></header>
     <h1 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design--m6-implementation-design">M6 implementation design</h1><h2 id="openspec--changes--archive--2026-10-20-add-four-wheel-api--design--context">Context</h2><p>
@@ -4492,9 +4540,17 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--4-firmware">4. Firmware</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.1 Build-time home settings with build-failure checks for partial/invalid sets (verified by building each case); station interface with DHCPv4, per-mode router endpoint, per-mode stack rebuild (or D2's reset fallback), budgets from D7. Firmware builds with and without <code>ros</code>; CI green. <strong>Done (build-verified, not board-verified):</strong> const settings check (partial/invalid sets fail the build with a named message), one stack per boot with reset-based switching (D2), the network supervisor (steps, budgets, station off while BLE owns, link loss, mode events), DHCPv4, per-mode router, two BLE slots with <code>on_ble_attach</code> and the Network characteristic, ROS <code>mode</code>/<code>release</code>/<code>network</code> and takeover notices, UDP notices and mode logs. Clippy clean; a home-settings image links (text 903 KB, bss 518 KB); CI builds it with placeholder settings. Behaviour is unproven until 6.1–6.3.</li>
+<p>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.1 Build-time home settings with build-failure checks for partial/invalid sets (verified by building each case); station interface with DHCPv4, per-mode router endpoint, per-mode stack rebuild (or D2's reset fallback), budgets from D7. Firmware builds with and without <code>ros</code>; CI green. <strong>Done (build-verified, not board-verified):</strong> const settings check (partial/invalid sets fail the build with a named message), one stack per boot with reset-based switching (D2), the network supervisor (steps, budgets, station off while BLE owns, link loss, mode events), DHCPv4, per-mode router, two BLE slots with <code>on_ble_attach</code> and the Network characteristic, ROS <code>mode</code>/<code>release</code>/<code>network</code> and takeover notices, UDP notices and mode logs. Clippy clean; a home-settings image links (text 903 KB, bss 518 KB); CI builds it with placeholder settings. Behaviour is unproven until 6.1–6.3.</p>
+</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.2 Check the passphrase appears in no log line, characteristic, Status or ROS topic (host test over the event catalog plus a board log grep in 6.1). <strong>Done (host part):</strong> no event, characteristic, Status or topic carries settings; a CI guard fails if <code>HOME_PASSWORD</code> is used anywhere but the station config. The board log grep is part of 6.1.</li>
+<p>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.2 Check the passphrase appears in no log line, characteristic, Status or ROS topic (host test over the event catalog plus a board log grep in 6.1). <strong>Done (host part):</strong> no event, characteristic, Status or topic carries settings; a CI guard fails if <code>HOME_PASSWORD</code> is used anywhere but the station config. The board log grep is part of 6.1.</p>
+</li>
+<li>
+<p>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 4.3 Router name resolution (<a href="https://github.com/tptodorov/rovi/issues/115">#115</a>, Todor requested 2026-10-28): validate host names at build time, resolve before each connection attempt, log result/duration/address, preserve literal endpoints and existing join budgets. <strong>Done:</strong> embassy-net DNS/mDNS, 3-second lookup bound, lowercase normalization (board regression before/after), leading-zero IPv4 rejection (failing/passing host regression), <a href="../firmware/bench/2026-10-29-router-by-name/notes.md">board checks</a> for success, missing name, wrong passphrase and fresh lookup after router restart; workspace tests, log-catalog tests and firmware clippy pass.</p>
+</li>
 </ul>
 <h2 id="openspec--changes--add-home-network-mode--tasks--5-client-and-docs">5. Client and docs</h2><ul>
 <li>
@@ -4508,7 +4564,7 @@ Behaviour decided by Todor on 2026-10-22. Nothing here authorizes implementation
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 6.1b Router host on blackbox (Todor: &quot;use blackbox as a router machine&quot;): <code>rovi-ros-router</code> deployed in <code>~/mycfg</code>. <strong>Done 2026-10-28 (<a href="../firmware/bench/2026-10-28-blackbox-router/notes.md">evidence</a>):</strong> service enabled and active, image tag equals the repo's, crash recovery (container kill ~11 s; SIGKILL, one container), <strong>restart across a reboot</strong> (Todor's go: up by itself, 0 restarts, same addresses), a ROS client over the LAN. The car then <strong>could not reach it</strong> (0/12 boots): blackbox answered the car's ARP request on both its cable and Wi-Fi interfaces (&quot;ARP flux&quot;), the car cached the Wi-Fi MAC and its traffic was dropped; fixed in <code>~/mycfg</code> with <code>arp_ignore=1</code>/<code>arp_announce=2</code> (generation 408; the firewall also opens the cable, generation 407). Also found and fixed: a single Wi-Fi scan missed the network ~1 in 30 boots (now up to 3 tries inside the 1.5 s budget). Result: <strong>10/10 boots</strong> reach <code>Home</code> with the router step at ~105 ms; BLE mode commands 3/4 verified on the board both ways. The home image points at <code>tcp/192.168.1.175:7447</code> and is flashed. Open: no DHCP reservation is possible (the devolo is a bridge; the DHCP server is the gateway); see PLAN Q22.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 6.2 Stand: ROS node on the home network drives; UDP and BLE takeovers stop and need explicit ARM; deliberate hand-back resumes ROS; accidental BLE drop needs <code>/rovi/arm</code> true; mode commands from BLE, UDP and ROS switch modes both ways; Todor observes wheels.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 6.2 Stand: ROS node on the home network drives; UDP and BLE takeovers stop and need explicit ARM; deliberate hand-back resumes ROS; accidental BLE drop needs <code>/rovi/arm</code> true; mode commands from BLE, UDP and ROS switch modes both ways; Todor observes wheels. <strong>Done 2026-10-28 (<a href="../firmware/bench/2026-10-28-home-network-stand/notes.md">evidence</a>):</strong> stand readiness and wheel observations confirmed by Todor; ROS drives over blackbox, UDP/BLE takeovers zero and require ARM, deliberate Home hand-back auto-arms, accidental BLE disconnect stays latched until <code>/rovi/arm</code> true, all six mode commands (both ways over BLE/UDP/ROS) pass. BlueZ disconnect allows lease expiry before release; no OwnerLost-first RF-loss timing is claimed. Normal named image/Home restored, temporary router/client/firewall removed, serial free.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 6.3 Coexistence: 15-minute ROS soak in home mode with BLE advertising, compared with the 2026-10-20 ROS soak baseline; link loss by walking out of range falls back with the AP up.</li>
 </ul>
@@ -6239,6 +6295,8 @@ One transport-independent scenario suite runs the shared rules over BLE, UDP and
 </ul>
 </li>
 <li>
+<strong>Router by name (Todor, 2026-10-28: “i want to resolve the router by name”).</strong> Accept IPv4 or a host name; resolve <code>.local</code> through mDNS and other names through DHCP DNS on every connection attempt, within the existing join budget. Literal endpoints remain supported.</li>
+<li>
 <strong>Settings at build time.</strong> SSID, passphrase and the home ROS router endpoint are build variables, like today's <code>ROVI_WIFI_PASSWORD</code>, flashed over USB. Nothing about the home network is sent over the air.</li>
 <li>
 <strong>Trust.</strong> Any device on the home network may control the car, with no new authentication (<a href="../docs/adr/0008-local-link-security-baseline.md">ADR-0008</a> station-mode exclusion superseded).</li>
@@ -6246,7 +6304,7 @@ One transport-independent scenario suite runs the shared rules over BLE, UDP and
 <strong>Observability.</strong> New log events report mode changes, mode commands and each join step with its duration.</li>
 </ul>
 <p>
-Deferred: a shared Rust client crate for all clients (<a href="https://github.com/tptodorov/rovi/issues/108">#108</a>), the iPhone mode/network UI (<a href="https://github.com/tptodorov/rovi/issues/109">#109</a>) and resolving the router by name via mDNS (<a href="https://github.com/tptodorov/rovi/issues/115">#115</a>). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.</p>
+Deferred: a shared Rust client crate for all clients (<a href="https://github.com/tptodorov/rovi/issues/108">#108</a>), the iPhone mode/network UI (<a href="https://github.com/tptodorov/rovi/issues/109">#109</a>). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, automatic router discovery via zenoh scouting, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.</p>
 <h2 id="openspec--changes--add-home-network-mode--proposal--capabilities">Capabilities</h2><h3 id="openspec--changes--add-home-network-mode--proposal--new-capabilities">New Capabilities</h3><ul>
 <li>
 <code>network-mode</code>: home/fallback selection, join budget, mode command and its errors on all transports, network information, hand-back latch, BLE availability in home mode, link loss, build-time settings and mode events.</li>
