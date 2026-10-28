@@ -49,6 +49,26 @@ No test touches a BLE device. Runtime assets use no third-party scripts or comma
 Physical input is an interpreter beside `hold.js`, selected by the control-mode
 switch. It supplies intent to the existing Session and cannot arm or write GATT.
 
+## Car network
+
+Open **Connection, network & diagnostics** to see the reported mode, pending
+request, last fallback reason and available home address. Home Wi-Fi can have
+no address while Bluetooth owns the car, because Wi-Fi is paused then.
+Disconnected values are labelled **Last reported**.
+
+While disarmed, choose **Use Home Wi-Fi** or **Use car network**. The client sends
+zero, confirms the mode command with fresh Status and Network reads, then ends
+Bluetooth control so the car can apply it. Reconnect to check the resulting
+network. Home also provides deliberate hand-back to ROS when already at home.
+A refused request stays connected/disarmed with an explanation; unconfirmed work
+uses normal bounded cleanup. Neither action sends ARM or motion.
+
+Older firmware without the Network characteristic keeps ordinary driving;
+network controls remain unavailable. No SSID or password is entered in this UI.
+Implementation/verification is tracked in
+[`add-iphone-network-controls`](../../openspec/changes/add-iphone-network-controls/proposal.md).
+Real iPhone/Bluefy validation of these new controls is still pending.
+
 ## Physical mode
 
 The [accepted implementation scope](../../openspec/changes/archive/2026-10-22-add-iphone-physical-control/proposal.md#proposal-acceptance)

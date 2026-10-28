@@ -1,0 +1,131 @@
+{
+  "udp": {
+    "started": "2026-10-28T17:16:38.548076+00:00",
+    "finished": "2026-10-28T17:31:44.720523+00:00",
+    "target": [
+      "192.168.1.193",
+      7777
+    ],
+    "requested_seconds": 900.0,
+    "interface": "wlp1s0f0",
+    "complete": true,
+    "sent": 4035,
+    "lost": 9,
+    "link_transitions": 18,
+    "verdict": "loss observed",
+    "reassociation_requested": false,
+    "journal_limit_lines": 2000
+  },
+  "ros": {
+    "started_epoch": 1793207798.4377081,
+    "finished_epoch": 1793208699.9435601,
+    "requested_seconds": 900.0,
+    "sent": 18000,
+    "received": 18000,
+    "lost": 0,
+    "reply_depth": 128,
+    "foreign": 0,
+    "duplicates": 0,
+    "complete": true,
+    "min_ms": 7.751004,
+    "median_ms": 42.8642075,
+    "p95_ms": 144.371022,
+    "max_ms": 315.248358
+  },
+  "serial_events": [
+    {
+      "ev": "boot",
+      "ver": "0.1.0",
+      "reset": "ChipPowerOn",
+      "at_ms": 426
+    },
+    {
+      "ev": "net",
+      "mode": "Attempting",
+      "step": "Scan",
+      "at_ms": 431
+    },
+    {
+      "ev": "net_step",
+      "step": "Scan",
+      "result": "Ok",
+      "took_ms": 163,
+      "at_ms": 594
+    },
+    {
+      "ev": "net",
+      "mode": "Attempting",
+      "step": "Join",
+      "at_ms": 594
+    },
+    {
+      "ev": "net_step",
+      "step": "Join",
+      "result": "Ok",
+      "took_ms": 2787,
+      "at_ms": 3381
+    },
+    {
+      "ev": "net",
+      "mode": "Attempting",
+      "step": "Dhcp",
+      "at_ms": 3381
+    },
+    {
+      "ev": "net_step",
+      "step": "Dhcp",
+      "result": "Ok",
+      "took_ms": 839,
+      "at_ms": 4220
+    },
+    {
+      "ev": "net",
+      "mode": "Attempting",
+      "step": "Router",
+      "at_ms": 4221
+    },
+    {
+      "ev": "resolve",
+      "result": "Ok",
+      "took_ms": 9,
+      "ip": "192.168.1.175",
+      "at_ms": 4229
+    },
+    {
+      "ev": "ros",
+      "link": "up",
+      "at_ms": 4321
+    },
+    {
+      "ev": "net_step",
+      "step": "Router",
+      "result": "Ok",
+      "took_ms": 108,
+      "at_ms": 4329
+    },
+    {
+      "ev": "net",
+      "mode": "Home",
+      "at_ms": 4330
+    },
+    {
+      "ev": "ble",
+      "link": "up",
+      "id": 1,
+      "mtu": 23,
+      "at_ms": 5341
+    },
+    {
+      "ev": "mtu",
+      "id": 1,
+      "mtu": 247,
+      "at_ms": 5542
+    },
+    {
+      "ev": "ble",
+      "link": "down",
+      "id": 1,
+      "at_ms": 10010
+    }
+  ]
+}

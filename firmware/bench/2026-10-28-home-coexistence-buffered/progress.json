@@ -1,0 +1,20 @@
+{
+  "at": 1793208704.7860553,
+  "ros_received": 18000,
+  "ros_links": [
+    {
+      "ev": "ros",
+      "link": "up",
+      "at_ms": 4321
+    }
+  ],
+  "advertisement": {
+    "at": 1793208704.785486,
+    "found": [
+      {
+        "rssi": -44,
+        "name": "Rovi M8"
+      }
+    ]
+  }
+}

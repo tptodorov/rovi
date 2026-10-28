@@ -1,0 +1,19 @@
+{"event": "link", "at": "2026-10-28T17:16:42.617135+00:00", "elapsed_s": 0.0, "sequence": 1, "ok": false, "error": "TimeoutError", "errno": null}
+{"event": "link", "at": "2026-10-28T17:16:47.029181+00:00", "elapsed_s": 4.412, "sequence": 2, "ok": true, "rtt_ms": 30.653}
+{"event": "link", "at": "2026-10-28T17:17:48.578980+00:00", "elapsed_s": 65.962, "sequence": 281, "ok": false, "error": "TimeoutError", "errno": null}
+{"event": "link", "at": "2026-10-28T17:17:51.042816+00:00", "elapsed_s": 68.426, "sequence": 282, "ok": true, "rtt_ms": 17.24}
+{"event": "link", "at": "2026-10-28T17:22:23.641558+00:00", "elapsed_s": 341.024, "sequence": 1551, "ok": false, "error": "TimeoutError", "errno": null}
+{"event": "link", "at": "2026-10-28T17:22:26.092282+00:00", "elapsed_s": 343.475, "sequence": 1552, "ok": true, "rtt_ms": 15.626}
+{"event": "link", "at": "2026-10-28T17:26:23.657007+00:00", "elapsed_s": 581.04, "sequence": 2659, "ok": false, "error": "TimeoutError", "errno": null}
+{"event": "link", "at": "2026-10-28T17:26:26.120289+00:00", "elapsed_s": 583.503, "sequence": 2660, "ok": true, "rtt_ms": 13.505}
+{"event": "link", "at": "2026-10-28T17:26:58.692475+00:00", "elapsed_s": 616.075, "sequence": 2803, "ok": false, "error": "TimeoutError", "errno": null}
+{"event": "link", "at": "2026-10-28T17:27:01.142097+00:00", "elapsed_s": 618.525, "sequence": 2804, "ok": true, "rtt_ms": 14.396}
+{"event": "link", "at": "2026-10-28T17:27:43.644319+00:00", "elapsed_s": 661.027, "sequence": 2994, "ok": false, "error": "TimeoutError", "errno": null}
+{"event": "link", "at": "2026-10-28T17:27:46.095874+00:00", "elapsed_s": 663.479, "sequence": 2995, "ok": true, "rtt_ms": 14.848}
+{"event": "link", "at": "2026-10-28T17:28:30.458676+00:00", "elapsed_s": 707.842, "sequence": 3193, "ok": false, "error": "TimeoutError", "errno": null}
+{"event": "link", "at": "2026-10-28T17:28:32.899849+00:00", "elapsed_s": 710.283, "sequence": 3194, "ok": true, "rtt_ms": 10.333}
+{"event": "link", "at": "2026-10-28T17:28:35.458652+00:00", "elapsed_s": 712.842, "sequence": 3196, "ok": false, "error": "TimeoutError", "errno": null}
+{"event": "link", "at": "2026-10-28T17:28:37.910484+00:00", "elapsed_s": 715.293, "sequence": 3197, "ok": true, "rtt_ms": 17.672}
+{"event": "link", "at": "2026-10-28T17:29:18.671146+00:00", "elapsed_s": 756.054, "sequence": 3379, "ok": false, "error": "TimeoutError", "errno": null}
+{"event": "link", "at": "2026-10-28T17:29:21.128168+00:00", "elapsed_s": 758.511, "sequence": 3380, "ok": true, "rtt_ms": 12.425}
+{"started": "2026-10-28T17:16:38.548076+00:00", "finished": "2026-10-28T17:31:44.720523+00:00", "target": ["192.168.1.193", 7777], "requested_seconds": 900.0, "interface": "wlp1s0f0", "complete": true, "sent": 4035, "lost": 9, "link_transitions": 18, "verdict": "loss observed", "reassociation_requested": false, "journal_limit_lines": 2000}
