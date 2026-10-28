@@ -1,0 +1,1 @@
+{"started_epoch": 1793199835.4646482, "finished_epoch": 1793200736.9750557, "requested_seconds": 900.0, "sent": 18000, "received": 16158, "lost": 1842, "foreign": 0, "duplicates": 0, "complete": true, "min_ms": 7.846793, "median_ms": 34.973036, "p95_ms": 107.172099, "max_ms": 309.783154}

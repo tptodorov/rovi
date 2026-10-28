@@ -1,0 +1,97 @@
+{
+  "complete": true,
+  "ros": {
+    "started_epoch": 1793199835.4646482,
+    "finished_epoch": 1793200736.9750557,
+    "requested_seconds": 900.0,
+    "sent": 18000,
+    "received": 16158,
+    "lost": 1842,
+    "foreign": 0,
+    "duplicates": 0,
+    "complete": true,
+    "min_ms": 7.846793,
+    "median_ms": 34.973036,
+    "p95_ms": 107.172099,
+    "max_ms": 309.783154,
+    "rtt": {
+      "count": 16158,
+      "min_ms": 7.846793,
+      "median_ms": 34.973036,
+      "p95_ms": 107.172099,
+      "max_ms": 309.783154
+    }
+  },
+  "udp": {
+    "started": "2026-10-28T15:03:55.600139+00:00",
+    "finished": "2026-10-28T15:18:59.862138+00:00",
+    "target": [
+      "192.168.1.193",
+      7777
+    ],
+    "requested_seconds": 900.0,
+    "interface": "wlp1s0f0",
+    "complete": true,
+    "sent": 4184,
+    "lost": 2,
+    "link_transitions": 5,
+    "verdict": "loss observed",
+    "reassociation_requested": false,
+    "journal_limit_lines": 2000,
+    "rtt": {
+      "count": 4182,
+      "min_ms": 4.471,
+      "median_ms": 6.71,
+      "p95_ms": 62.157,
+      "max_ms": 74.872
+    }
+  },
+  "ble": {
+    "scans": 16,
+    "detections": 16
+  },
+  "serial": {
+    "boots": 1,
+    "counts": {
+      "boot": 1,
+      "net": 5,
+      "net_step": 4,
+      "resolve": 1,
+      "ros": 1,
+      "ble": 2,
+      "mtu": 1
+    },
+    "problems": [],
+    "ros_links": [
+      {
+        "ev": "ros",
+        "link": "up",
+        "at_ms": 4321
+      }
+    ]
+  },
+  "observations": {
+    "status": {
+      "messages": 1000,
+      "max_gap_s": 1.1270077228546143
+    },
+    "network": {
+      "messages": 889,
+      "max_gap_s": 1.1950273513793945
+    },
+    "capabilities": {
+      "messages": 1000,
+      "max_gap_s": 1.1127231121063232
+    }
+  },
+  "baseline": {
+    "date": "2026-10-20",
+    "network": "car AP, idle ROS session",
+    "udp_sent": 4363,
+    "udp_lost": 0,
+    "median_ms": 4.901,
+    "p95_ms": 8.659,
+    "max_ms": 46.614,
+    "comparison_limit": "Different topology and active ROS Echo workload; not a controlled regression comparison"
+  }
+}

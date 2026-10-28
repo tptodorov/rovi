@@ -1,0 +1,80 @@
+"""Observational /rovi/echo probe for home-mode coexistence; no motion/control topics."""
+import json
+import math
+import os
+from pathlib import Path
+import statistics
+import time
+
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
+from std_msgs.msg import Int64, String
+
+out=Path('/evidence')
+seconds=float(os.environ.get('ROVI_SOAK_SECONDS','900'))
+hz=20
+count=int(seconds*hz)
+rclpy.init()
+n=Node('rovi_home_soak')
+qos=QoSProfile(depth=1,reliability=ReliabilityPolicy.BEST_EFFORT)
+pub=n.create_publisher(Int64,'/rovi/echo',qos)
+sent={}
+seen=set()
+rtts=[]
+foreign=duplicates=0
+log=(out/'ros-echo.jsonl').open('w')
+observations=(out/'ros-observed.jsonl').open('w')
+
+def reply(m):
+    global foreign,duplicates
+    if m.data not in sent:
+        foreign+=1
+        return
+    if m.data in seen:
+        duplicates+=1
+        return
+    seen.add(m.data)
+    rtt=(time.monotonic_ns()-m.data)/1e6
+    rtts.append(rtt)
+    log.write(json.dumps({'sequence':sent[m.data],'sent_ns':m.data,'rtt_ms':rtt,'received_epoch':time.time()})+'\n')
+    log.flush()
+
+n.create_subscription(Int64,'/rovi/echo_reply',reply,qos)
+for topic in ('status','network','capabilities'):
+    n.create_subscription(String,'/rovi/'+topic,lambda m,t=topic: (observations.write(json.dumps({'topic':t,'data':m.data,'at':time.time()})+'\n'),observations.flush()),10)
+
+try:
+    deadline=time.monotonic()+20
+    while not pub.get_subscription_count():
+        assert time.monotonic()<deadline,'no car echo subscription'
+        rclpy.spin_once(n,timeout_sec=0.05)
+    settle=time.monotonic()+3
+    while time.monotonic()<settle:rclpy.spin_once(n,timeout_sec=0.05)
+    t0=time.monotonic()
+    started=time.time()
+    (out/'ros-start.json').write_text(json.dumps({'epoch':started,'monotonic':t0,'seconds':seconds,'hz':hz})+'\n')
+    for i in range(count):
+        due=t0+i/hz
+        while time.monotonic()<due:
+            rclpy.spin_once(n,timeout_sec=max(0,min(0.01,due-time.monotonic())))
+        m=Int64(data=time.monotonic_ns())
+        sent[m.data]=i+1
+        pub.publish(m)
+        if i==hz*5:assert seen,'no ROS echoes in first five seconds'
+    deadline=t0+seconds+1.5
+    while time.monotonic()<deadline:rclpy.spin_once(n,timeout_sec=0.01)
+    ordered=sorted(rtts)
+    summary={'started_epoch':started,'finished_epoch':time.time(),'requested_seconds':seconds,
+             'sent':len(sent),'received':len(seen),'lost':len(sent)-len(seen),
+             'foreign':foreign,'duplicates':duplicates,'complete':len(sent)==count,
+             'min_ms':min(ordered) if ordered else None,
+             'median_ms':statistics.median(ordered) if ordered else None,
+             'p95_ms':ordered[max(0,math.ceil(.95*len(ordered))-1)] if ordered else None,
+             'max_ms':max(ordered) if ordered else None}
+    assert len(seen)==len(rtts)<=len(sent)
+    (out/'ros-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+    print(json.dumps(summary),flush=True)
+finally:
+    log.close();observations.close()
+    n.destroy_node();rclpy.shutdown()

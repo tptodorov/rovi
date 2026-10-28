@@ -1,0 +1,1 @@
+ros sent=300 count=270 loss_pct=10.0 median_ms=33.031 p95_ms=103.196 max_ms=154.842

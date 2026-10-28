@@ -1,0 +1,17 @@
+{
+  "command": [
+    "journalctl",
+    "--no-pager",
+    "--output=short-iso-precise",
+    "--since",
+    "2026-10-28T15:03:55.600139+00:00",
+    "--lines=2000",
+    "-u",
+    "NetworkManager",
+    "-u",
+    "wpa_supplicant"
+  ],
+  "exit": 0,
+  "stdout": "-- No entries --\n",
+  "stderr": ""
+}

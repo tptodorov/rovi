@@ -1,0 +1,45 @@
+"""Regenerate redacted bench derivatives from private captures; retain raw hashes."""
+from pathlib import Path
+import gzip
+import hashlib
+import json
+import re
+import subprocess
+
+root=Path('/home/todor/tptodorov/rovi')
+out=root/'firmware/bench/2026-10-28-home-coexistence'
+out.mkdir(exist_ok=True)
+home=dict(l.split('=',1) for l in subprocess.check_output(['gopass','show','-n','env/rovi/home'],text=True).splitlines()[1:] if '=' in l)
+manifest={'redactions':['actual home SSID','MAC addresses','network UUIDs'],
+          'normalization':'CRLF and CR line endings normalized to LF in published derivatives',
+          'files':{}}
+
+def publish(src,dest):
+    src=Path(src);raw=src.read_bytes()
+    assert home['ROVI_HOME_PASSWORD'].encode() not in raw,'passphrase found in '+str(src)
+    text=raw.decode().replace(home['ROVI_HOME_SSID'],'<home-ssid>')
+    text=re.sub(r'\b[0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5}\b','<mac>',text)
+    text=re.sub(r'\b[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}\b','<uuid>',text)
+    data=text.replace('\r\n','\n').replace('\r','\n').encode()
+    target=out/dest;target.parent.mkdir(parents=True,exist_ok=True)
+    target.write_bytes(gzip.compress(data,mtime=0) if target.suffix=='.gz' else data)
+    manifest['files'][dest]={'raw_sha256':hashlib.sha256(raw).hexdigest(),
+        'published_sha256':hashlib.sha256(target.read_bytes()).hexdigest(),
+        'redacted_uncompressed_sha256':hashlib.sha256(data).hexdigest()}
+
+p=Path('/tmp/rovi-home-soak-2026-10-28')
+for src in sorted(p.rglob('*')):
+    if src.is_file():
+        dest='soak/'+str(src.relative_to(p))
+        if src.suffix=='.jsonl':dest+='.gz'
+        publish(src,dest)
+p=Path('/tmp/rovi-home-range-2026-10-28')
+for name in ('car.log','failure.json'):publish(p/name,'range-attempt/'+name)
+for tag in ('original','buffered','fixed','original-again'):
+    p=Path('/tmp/rovi-ros-loss-'+tag)
+    for name in ('car.log','result.json','ros.txt'):publish(p/name,'probe-'+tag+'/'+name)
+for name in ('rovi-home-soak-analyze.py','rovi-home-range.py','rovi-ros-loss-repro.py',
+             'rovi-ros-latency-original.py','rovi-ros-latency-depth128.py','rovi-coexistence-publish.py'):
+    publish('/tmp/'+name,'scripts/'+name+'.txt')
+(out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+print('Regenerated',len(manifest['files']),'derivatives; raw captures unchanged.')

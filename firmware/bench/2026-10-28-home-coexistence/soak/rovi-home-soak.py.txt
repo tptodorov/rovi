@@ -1,0 +1,132 @@
+"""6.3 no-motion home soak. Reuses wifi_soak and the installed normal firmware.
+
+Leaves blackbox untouched, records BLE advertising without connecting during the
+timed interval, and always releases the serial port and its own ROS client.
+"""
+import asyncio
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import signal
+import subprocess
+import sys
+import time
+
+ROOT=Path('/home/todor/tptodorov/rovi')
+sys.path.insert(0,str(ROOT))
+sys.path.insert(0,str(ROOT/'firmware/bench'))
+sys.path.insert(0,'/tmp/rovi-61')
+from apps.simcar.scenarios import carlog
+from apps.teleop.ble import NAME,STATUS,NETWORK
+from bleak import BleakClient,BleakScanner
+import bench
+
+OUT=Path('/tmp/rovi-home-soak-2026-10-28')
+OUT.mkdir(mode=0o700,exist_ok=False)
+LOG=OUT/'car.log'
+SECONDS=900
+monitor=udp=ros=None
+cleanup={}
+
+def save(name,data):
+    (OUT/name).write_text(json.dumps(data,indent=2)+'\n')
+
+def command(args):
+    p=subprocess.run(args,capture_output=True,text=True,timeout=15)
+    return {'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+
+def audit():
+    assert monitor.poll() is None,'serial capture stopped'
+    ev=carlog.events(LOG)
+    assert sum(e['ev']=='boot' for e in ev)==1,'unexpected reset'
+    assert not [e for e in ev if e['ev'] in ('claimed','released','stop','error','dropped') or e.get('state')=='Armed' or any(e.get('wheels_pm',[]))],'ownership/motion/fault event'
+    assert not carlog.PANIC.search(carlog.read(LOG)),'panic'
+    return ev
+
+async def initial_info():
+    dev=await BleakScanner.find_device_by_name(NAME,timeout=10)
+    assert dev,'car not advertising'
+    async with BleakClient(dev,timeout=10) as peer:
+        state=list(await peer.read_gatt_char(STATUS))
+        net=list(await peer.read_gatt_char(NETWORK))
+        assert state[0]==0 and net[0]==2 and net[1]==0,(state,net)
+        return {'status':state,'network':net,'target':'.'.join(map(str,net[4:8]))}
+
+async def advertisement():
+    devices=await BleakScanner.discover(timeout=3,return_adv=True)
+    found=[{'rssi':a.rssi,'name':a.local_name} for d,a in devices.values() if d.name==NAME or a.local_name==NAME]
+    return {'at':time.time(),'found':found}
+
+def interrupt(*_):raise KeyboardInterrupt
+signal.signal(signal.SIGTERM,interrupt)
+
+try:
+    assert subprocess.run(['pgrep','-x','espflash'],capture_output=True).returncode==1,'port in use'
+    elf=ROOT/'firmware/target/b61-b-name/xtensa-esp32s3-none-elf/release/rovi-firmware'
+    digest=hashlib.sha256(elf.read_bytes()).hexdigest()
+    assert digest==json.loads((ROOT/'firmware/bench/2026-10-28-home-network-stand/analysis.json').read_text())['image_sha256']
+    save('identity.json',{'started':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        'source':command(['git','rev-parse','HEAD'])['stdout'].strip(),'image_sha256':digest,
+        'authorization':'Todor: go on after merging 6.2; agreed to help with out-of-range check after soak',
+        'commands':'ROS Echo only, UDP Echo only; initial BLE reads before timing, scans during timing',
+        'route_before':command(['ip','route','get','1.1.1.1'])})
+    for script in ('rovi-home-soak.py','rovi-home-soak-ros.py'):shutil.copyfile('/tmp/'+script,OUT/(script+'.txt'))
+    monitor=bench.monitor(str(LOG))
+    found,_=bench.wait(str(LOG),carlog.ev('net',mode='Home'),25)
+    assert found,'did not reach Home'
+    info=asyncio.run(initial_info());save('initial-info.json',info);audit()
+    target=info['target']
+    save('route-to-car.json',command(['ip','route','get',target]))
+    with (OUT/'udp.txt').open('wb') as ulog,(OUT/'ros.txt').open('wb') as rlog,(OUT/'advertising.jsonl').open('w') as blog:
+        ros=subprocess.Popen(['docker','run','--rm','--name','rovi-home-soak-client','--net','host',
+            '-v','/tmp/rovi-client-lan.json5:/c.json5:ro','-v','/tmp/rovi-home-soak-ros.py:/probe.py:ro',
+            '-v',str(OUT)+':/evidence','-e','ZENOH_SESSION_CONFIG_URI=/c.json5',
+            'rovi-ros-sim','bash','-c','source /opt/ros/jazzy/setup.bash && python3 /probe.py'],stdout=rlog,stderr=subprocess.STDOUT)
+        deadline=time.monotonic()+30
+        while not (OUT/'ros-start.json').exists():
+            assert ros.poll() is None,'ROS probe exited during setup'
+            assert time.monotonic()<deadline,'ROS setup timed out'
+            audit();time.sleep(.1)
+        udp=subprocess.Popen(['python3',str(ROOT/'firmware/bench/wifi_soak.py'),'--target',target+':7777',
+            '--interface','wlp1s0f0','--seconds',str(SECONDS),'--output',str(OUT/'udp')],stdout=ulog,stderr=subprocess.STDOUT)
+        print('TIMED SOAK STARTED',datetime.datetime.now(datetime.timezone.utc).isoformat(),flush=True)
+        next_scan=0;end=time.monotonic()+SECONDS+60
+        while ros.poll() is None or udp.poll() is None:
+            events=audit()
+            assert time.monotonic()<end,'soak exceeded bounded duration'
+            if time.monotonic()>=next_scan:
+                ad=asyncio.run(advertisement());blog.write(json.dumps(ad)+'\n');blog.flush()
+                save('progress.json',{'at':time.time(),'ros_received':sum(1 for _ in (OUT/'ros-echo.jsonl').open()),
+                    'ros_links':[e for e in events if e['ev']=='ros'],'advertisement':ad})
+                next_scan=time.monotonic()+57
+            if ros.poll() is not None:assert ros.returncode==0,'ROS probe failed'
+            if udp.poll() is not None:assert udp.returncode in (0,1),'UDP recorder failed'
+            time.sleep(.25)
+        assert ros.returncode==0 and udp.returncode in (0,1)
+        udp_summary=json.loads((OUT/'udp/summary.json').read_text())
+        ros_summary=json.loads((OUT/'ros-summary.json').read_text())
+        assert udp_summary['complete'] and ros_summary['complete']
+        events=audit()
+        assert not [e for e in events if e['ev']=='ros' and e.get('link')=='down'],'ROS session disconnected'
+        save('result.json',{'udp':udp_summary,'ros':ros_summary,'serial_events':events})
+        cleanup['complete']=True
+        print('SOAK FINISHED',json.dumps({'udp_sent':udp_summary['sent'],'udp_lost':udp_summary['lost'],'ros':ros_summary}),flush=True)
+except BaseException as exc:
+    cleanup['failure']=repr(exc)
+    print('SOAK ABORTED',repr(exc),flush=True)
+finally:
+    if udp and udp.poll() is None:
+        udp.send_signal(signal.SIGINT)
+        try:udp.wait(timeout=15)
+        except subprocess.TimeoutExpired:udp.terminate();udp.wait(timeout=5)
+    if ros and ros.poll() is None:
+        command(['docker','stop','-t','2','rovi-home-soak-client'])
+        ros.wait(timeout=8)
+    if monitor and monitor.poll() is None:bench.stop(monitor)
+    cleanup['route_after']=command(['ip','route','get','1.1.1.1'])
+    cleanup['router_after']=command(['ssh','-o','BatchMode=yes','-o','ConnectTimeout=5','blackbox','systemctl is-active rovi-ros-router; ss -tn sport = :7447'])
+    cleanup['finished']=time.time();save('cleanup.json',cleanup)
+    if not cleanup.get('complete'):sys.exit(1)

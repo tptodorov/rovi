@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-28T15:03:38.598938+00:00",
+  "source": "a93ff1940a3fb615c72992037c0fb68bea8e7481",
+  "image_sha256": "b52dea02abd9560e848a476d325b1a6831c7685ffdc0cc6ac696e3fca9c28f97",
+  "authorization": "Todor: go on after merging 6.2; agreed to help with out-of-range check after soak",
+  "commands": "ROS Echo only, UDP Echo only; initial BLE reads before timing, scans during timing",
+  "route_before": {
+    "exit": 0,
+    "stdout": "1.1.1.1 via 192.168.1.1 dev enp0s20f0u3u3 src 192.168.1.148 uid 1000 \n    cache \n",
+    "stderr": ""
+  }
+}

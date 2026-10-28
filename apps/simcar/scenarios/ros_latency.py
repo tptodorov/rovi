@@ -48,7 +48,9 @@ def main():
         seen.add(m.data)
         rtts.append((time.monotonic_ns() - m.data) / 1e6)
 
-    node.create_subscription(Int64, "/rovi/echo_reply", on_reply, qos)
+    # Buffer bursty replies so they are counted before a newer sample overwrites them.
+    reply_qos = QoSProfile(depth=128, reliability=ReliabilityPolicy.BEST_EFFORT)
+    node.create_subscription(Int64, "/rovi/echo_reply", on_reply, reply_qos)
     ex = SingleThreadedExecutor()
     ex.add_node(node)
     t_end = time.monotonic() + WAIT

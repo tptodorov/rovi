@@ -1,0 +1,59 @@
+"""Check the public recorder outputs, compute RTTs and compare the idle AP baseline."""
+import hashlib
+import json
+import math
+from pathlib import Path
+import statistics
+import sys
+
+ROOT=Path('/home/todor/tptodorov/rovi')
+sys.path.insert(0,str(ROOT/'apps/simcar/scenarios'))
+import carlog
+
+def rtt(values):
+    values=sorted(values)
+    return {'count':len(values),'min_ms':min(values),'median_ms':statistics.median(values),
+            'p95_ms':values[math.ceil(.95*len(values))-1],'max_ms':max(values)}
+
+def analyze(out):
+    ros=json.loads((out/'ros-summary.json').read_text())
+    udp=json.loads((out/'udp/summary.json').read_text())
+    rr=[json.loads(l) for l in (out/'ros-echo.jsonl').read_text().splitlines()]
+    ur=[json.loads(l) for l in (out/'udp/echo.jsonl').read_text().splitlines()]
+    ads=[json.loads(l) for l in (out/'advertising.jsonl').read_text().splitlines()]
+    assert ros['complete'] and udp['complete']
+    assert ros['requested_seconds']==udp['requested_seconds']==900
+    assert ros['sent']==18000
+    assert len(rr)==ros['received']==len({r['sequence'] for r in rr})==len({r['sent_ns'] for r in rr})
+    assert all(1<=r['sequence']<=ros['sent'] and r['rtt_ms']>=0 for r in rr)
+    assert len(ur)==udp['sent'] and [r['sequence'] for r in ur]==list(range(1,len(ur)+1))
+    assert sum(not r['ok'] for r in ur)==udp['lost']
+    assert ur[-1]['elapsed_s']>=899,'short observation'
+    problems,boots,counts=carlog.check(out/'car.log')
+    assert not problems and boots==1,(problems,boots)
+    events=carlog.events(out/'car.log')
+    assert not [e for e in events if e['ev'] in ('claimed','released','stop','error','dropped') or e.get('state')=='Armed' or any(e.get('wheels_pm',[]))]
+    links=[e for e in events if e['ev']=='ros']
+    assert len(links)==1 and links[0]['link']=='up',links
+    observed=[json.loads(l) for l in (out/'ros-observed.jsonl').read_text().splitlines()]
+    by_topic={topic:[r for r in observed if r['topic']==topic] for topic in ('status','network','capabilities')}
+    for r in by_topic['status']:assert r['data']=='state=open reason=none error=none session=0',r
+    for r in by_topic['network']:assert 'mode=home pending=none' in r['data'],r
+    summary={'complete':True,'ros':dict(ros,rtt=rtt(r['rtt_ms'] for r in rr)),
+             'udp':dict(udp,rtt=rtt(r['rtt_ms'] for r in ur if r['ok'])),
+             'ble':{'scans':len(ads),'detections':sum(bool(r['found']) for r in ads)},
+             'serial':{'boots':boots,'counts':dict(counts),'problems':problems,'ros_links':links},
+             'observations':{k:{'messages':len(v),'max_gap_s':max((b['at']-a['at'] for a,b in zip(v,v[1:])),default=None)} for k,v in by_topic.items()},
+             'baseline':{'date':'2026-10-20','network':'car AP, idle ROS session','udp_sent':4363,'udp_lost':0,
+                         'median_ms':4.901,'p95_ms':8.659,'max_ms':46.614,
+                         'comparison_limit':'Different topology and active ROS Echo workload; not a controlled regression comparison'}}
+    return summary
+
+if __name__=='__main__':
+    # Numeric checks use fixture data; the integration assertions consume live recorder output.
+    assert rtt([4,1,2,3,5])['p95_ms']==5
+    assert rtt(range(1,21))['p95_ms']==19
+    out=Path(sys.argv[1])
+    result=analyze(out)
+    (out/'analysis.json').write_text(json.dumps(result,indent=2)+'\n')
+    print(json.dumps(result,indent=2))
