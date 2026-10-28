@@ -35,6 +35,7 @@ ev=stop reason=LeaseExpired lease_late_ms=7 at_ms=7210
 | `net` | `mode` = `Home`, `Attempting`, `Fallback`; `step` (Attempting: `Scan`, `Join`, `Dhcp`, `Router`); `reason` (Fallback: `NoSettings`, `Scan`, `Join`, `Dhcp`, `Router`, `LinkLost`, `Requested`) | The network mode changed ([ADR-0016](adr/0016-home-network-mode-with-ble-override.md)) |
 | `net_step` | `step`; `result` = `Ok`, `Failed`; `took_ms` | A home-mode step finished |
 | `mode_cmd` | `source`; `cmd` = `Home`, `CarNetwork`; `result` = `Ok`, `NotReady`, `Invalid` | An owner sent a mode command |
+| `resolve` | `result` = `Ok`, `Failed`; `took_ms`; `ip` (0.0.0.0 on failure) | The home ROS router's host name was looked up (mDNS for `*.local`); a literal IPv4 logs nothing |
 | `preempted` | `source` (of the old owner) | A higher-priority controller took the car; followed by `stop reason=OwnerLost`, `released`, `claimed` |
 | `error` | `src` | A fault. `sim/carlog.py` flags it. `src`: `wifi_ap` (the AP switch failed); `motor_nonfinite`, `motor_config`, `motor_driver` (motor control refused a NaN/infinite wheel command, has an invalid configuration, or a pin write failed; the car raises an out-of-limits stop). |
 | `dropped` | `n` | `n` events were lost because the ring was full. Flagged too. |

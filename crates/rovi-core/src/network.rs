@@ -74,7 +74,7 @@ pub enum SettingsError {
     Ssid,
     /// Passphrase is not 8..=63 printable ASCII characters.
     Passphrase,
-    /// Router is not `tcp/<IPv4>:<port 1..=65535>`.
+    /// Router is not `tcp/<IPv4 or host name>:<port 1..=65535>`.
     Router,
 }
 
@@ -103,14 +103,16 @@ pub const fn settings(
         }
         i += 1;
     }
-    if !tcp_ipv4_endpoint(router.as_bytes()) {
+    if !tcp_endpoint(router.as_bytes()) {
         return Err(SettingsError::Router);
     }
     Ok(Settings::Home)
 }
 
-/// `tcp/a.b.c.d:port` with octets 0..=255 and port 1..=65535.
-const fn tcp_ipv4_endpoint(b: &[u8]) -> bool {
+/// `tcp/<host>:<port>`: `host` is an IPv4 literal or a host name, `port` is 1..=65535. A name
+/// ending in `.local` is resolved over mDNS by the car; any other name needs the DHCP-supplied DNS
+/// server to know it.
+const fn tcp_endpoint(b: &[u8]) -> bool {
     let prefix = b"tcp/";
     if b.len() <= prefix.len() {
         return false;
@@ -122,31 +124,102 @@ const fn tcp_ipv4_endpoint(b: &[u8]) -> bool {
         }
         i += 1;
     }
-    // Four octets separated by '.', then ':' and the port.
+    // The port follows the last ':'.
+    let mut colon = b.len();
+    let mut k = prefix.len();
+    while k < b.len() {
+        if b[k] == b':' {
+            colon = k;
+        }
+        k += 1;
+    }
+    if colon == b.len() {
+        return false;
+    }
+    let mut port: u32 = 0;
+    let mut digits = 0;
+    let mut k = colon + 1;
+    while k < b.len() {
+        if !b[k].is_ascii_digit() {
+            return false;
+        }
+        port = port * 10 + (b[k] - b'0') as u32;
+        digits += 1;
+        if digits > 5 {
+            return false;
+        }
+        k += 1;
+    }
+    if digits == 0 || port < 1 || port > 65535 {
+        return false;
+    }
+    host_ok(b, prefix.len(), colon)
+}
+
+/// `b[start..end]` is an IPv4 literal or a host name.
+const fn host_ok(b: &[u8], start: usize, end: usize) -> bool {
+    if end <= start || end - start > 253 {
+        return false;
+    }
+    let mut letter = false;
+    let mut k = start;
+    while k < end {
+        if b[k].is_ascii_alphabetic() {
+            letter = true;
+        }
+        k += 1;
+    }
+    // Digits and dots only: it must be a well-formed IPv4 address, not a mangled one.
+    if !letter {
+        return ipv4_ok(b, start, end);
+    }
+    // Dot-separated labels of letters, digits and hyphens, 1..=63 bytes, not hyphen-edged.
+    let mut label_start = start;
+    let mut k = start;
+    while k <= end {
+        if k == end || b[k] == b'.' {
+            let len = k - label_start;
+            if len == 0 || len > 63 || b[label_start] == b'-' || b[k - 1] == b'-' {
+                return false;
+            }
+            label_start = k + 1;
+        } else if !(b[k].is_ascii_alphanumeric() || b[k] == b'-') {
+            return false;
+        }
+        k += 1;
+    }
+    true
+}
+
+const fn ipv4_ok(b: &[u8], start: usize, end: usize) -> bool {
     let mut part = 0;
     let mut value: u32 = 0;
     let mut digits = 0;
-    while i < b.len() {
-        let c = b[i];
-        if c.is_ascii_digit() {
-            value = value * 10 + (c - b'0') as u32;
-            digits += 1;
-            if digits > 5 {
-                return false;
-            }
-        } else if (c == b'.' && part < 3) || (c == b':' && part == 3) {
+    let mut k = start;
+    while k <= end {
+        if k == end || b[k] == b'.' {
             if digits == 0 || value > 255 {
                 return false;
             }
             part += 1;
             value = 0;
             digits = 0;
+        } else if b[k].is_ascii_digit() {
+            // Rust's socket parser rejects leading-zero octets too.
+            if digits > 0 && value == 0 {
+                return false;
+            }
+            value = value * 10 + (b[k] - b'0') as u32;
+            digits += 1;
+            if digits > 3 {
+                return false;
+            }
         } else {
             return false;
         }
-        i += 1;
+        k += 1;
     }
-    part == 4 && digits > 0 && value >= 1 && value <= 65535
+    part == 4
 }
 
 /// A mode command: pending until the commanding owner's ownership ends.
@@ -536,9 +609,23 @@ mod tests {
             "tcp/1.2.3.4",
             "tcp/1.2.3.4:",
             "tcp/256.1.1.1:1",
+            "tcp/01.2.3.4:7447",
+            "tcp/1.002.3.4:7447",
             "tcp/1.2.3.4:70000",
-            "tcp/a.b.c.d:1",
             "tcp/1.2.3.4:0",
+            // host names: letters/digits/hyphens in dot-separated labels, no empty or hyphen-edged
+            // label, at least one letter (an all-digit name is a malformed address)
+            "tcp/:7447",
+            "tcp/.local:7447",
+            "tcp/a..local:7447",
+            "tcp/-a.local:7447",
+            "tcp/a-.local:7447",
+            "tcp/a_b.local:7447",
+            "tcp/black box.local:7447",
+            "tcp/1.2.3:1",
+            "tcp/host.local:0",
+            "tcp/host.local",
+            "tcp/host.local:70000",
         ] {
             assert_eq!(
                 settings(Some("a"), Some("12345678"), Some(bad)),
@@ -546,6 +633,27 @@ mod tests {
                 "{bad}"
             );
         }
+        for good in [
+            "tcp/blackbox.local:7447",
+            "tcp/Blackbox.LOCAL:7447",
+            "tcp/blackbox:7447",
+            "tcp/a-b.c1.local:1",
+            "tcp/a.b.c.d:1",
+            "tcp/192.168.1.175:7447",
+        ] {
+            assert_eq!(
+                settings(Some("a"), Some("12345678"), Some(good)),
+                Ok(S::Home),
+                "{good}"
+            );
+        }
+        let long_label =
+            "tcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.local:1";
+        assert_eq!(
+            settings(Some("a"), Some("12345678"), Some(long_label)),
+            Err(SettingsError::Router),
+            "a label is at most 63 bytes"
+        );
         const CHECKED: Result<Settings, SettingsError> =
             settings(Some("a"), Some("12345678"), Some("tcp/10.0.0.1:7447"));
         assert_eq!(CHECKED, Ok(S::Home), "usable in const context");

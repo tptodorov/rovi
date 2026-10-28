@@ -80,6 +80,12 @@ pub enum Event {
     },
     /// A higher-priority controller took the car from an owner of this source.
     Preempted(Source),
+    /// The ROS router's host name was looked up (an IPv4 literal needs no lookup and logs nothing).
+    Resolve {
+        ok: bool,
+        took_ms: u32,
+        ip: [u8; 4],
+    },
     Fault(Fault),
     /// Events lost because the log ring was full.
     Dropped(u32),
@@ -243,6 +249,15 @@ impl fmt::Display for Record {
                 }
             )?,
             Event::Preempted(s) => write!(f, "ev=preempted source={}", source(s))?,
+            Event::Resolve { ok, took_ms, ip } => write!(
+                f,
+                "ev=resolve result={} took_ms={took_ms} ip={}.{}.{}.{}",
+                if ok { "Ok" } else { "Failed" },
+                ip[0],
+                ip[1],
+                ip[2],
+                ip[3]
+            )?,
             Event::Fault(Fault::WifiAp) => f.write_str("ev=error src=wifi_ap")?,
             Event::Fault(Fault::MotorNonFinite) => f.write_str("ev=error src=motor_nonfinite")?,
             Event::Fault(Fault::MotorConfig) => f.write_str("ev=error src=motor_config")?,
@@ -466,6 +481,22 @@ mod tests {
                     error: Some(Error::NotReady),
                 },
                 "ev=mode_cmd source=Ble cmd=Home result=NotReady at_ms=42",
+            ),
+            (
+                Event::Resolve {
+                    ok: true,
+                    took_ms: 112,
+                    ip: [192, 168, 1, 175],
+                },
+                "ev=resolve result=Ok took_ms=112 ip=192.168.1.175 at_ms=42",
+            ),
+            (
+                Event::Resolve {
+                    ok: false,
+                    took_ms: 3000,
+                    ip: [0; 4],
+                },
+                "ev=resolve result=Failed took_ms=3000 ip=0.0.0.0 at_ms=42",
             ),
             (
                 Event::Preempted(Source::Ros),

@@ -1,0 +1,136 @@
+"""6.2 mode commands both ways over BLE, UDP and ROS; zero setpoints only.
+
+Temporarily joins the existing rovi-m8 Wi-Fi profile and runs a fallback router.
+Restores the prior Wi-Fi, deletes its firewall rule/containers, and frees serial.
+"""
+import asyncio
+import json
+from pathlib import Path
+import socket
+import subprocess
+import sys
+import time
+
+sys.path.insert(0,'/tmp')
+import importlib.util
+spec=importlib.util.spec_from_file_location('stand','/tmp/rovi-home-stand.py')
+stand=importlib.util.module_from_spec(spec);spec.loader.exec_module(stand)
+bench=stand.bench
+udp=stand.udp
+OUT=stand.OUT
+LOG=OUT/'modes-car.log'
+stand.LOG=LOG
+worker=None
+worker_log=None
+rule=['-i','wlp1s0f0','-s','192.168.4.0/24','-p','tcp','--dport','7447','-m','comment','--comment','rovi-home-mode-check','-j','nixos-fw-accept']
+
+def command(args,**kw):
+    return subprocess.run(args,check=True,capture_output=True,text=True,**kw).stdout.strip()
+
+def transition(offset, mode):
+    stand.saw(offset,'net',mode=mode,timeout=25)
+    print('Mode',mode,flush=True)
+    time.sleep(1)
+
+async def ble_mode(value):
+    peer=await stand.ble_peer()
+    try:
+        await peer.write_gatt_char(stand.CONTROL,b'\x02',response=True)
+        await peer.write_gatt_char(stand.CONTROL,bytes([value]),response=True)
+        status=list(await peer.read_gatt_char(stand.STATUS))
+        info=list(await peer.read_gatt_char(stand.NETWORK))
+        assert status[0]!=2 and status[2]==0,(status,info)
+        assert info[1]==(1 if value==3 else 2),info
+    finally:
+        try:
+            await peer.disconnect()
+        except EOFError:
+            # The accepted mode command can reset the board before BlueZ completes disconnect.
+            print('BlueZ disconnect ended at board reset; verifying serial transition',flush=True)
+
+def udp_mode(value,host):
+    udp.HOST=host
+    c=udp.Client()
+    try:
+        deadline=time.monotonic()+10
+        while True:
+            reply=c.hello()
+            if reply and reply[0]==udp.ACK:break
+            assert time.monotonic()<deadline,'UDP no HELLO_ACK'
+            time.sleep(0.2)
+        c.status(udp.STOP)
+        c.send(10,bytes([value]))
+        r=c.recv(expected_seq=c.seq)
+        assert r and r[0]==udp.STATUS and r[2][2]==0,r
+    finally:
+        c.send(udp.BYE);c.s.close()
+
+def stop_worker():
+    global worker,worker_log
+    if worker is not None:
+        try:stand.rpc('exit')
+        except TimeoutError:pass
+        try:worker.wait(timeout=8)
+        except subprocess.TimeoutExpired:
+            subprocess.run(['docker','stop','-t','2','rovi-home-mode-client'],capture_output=True)
+            worker.wait(timeout=8)
+        worker=None
+        worker_log.close()
+
+def start_worker(config,label):
+    global worker,worker_log
+    worker_log=open(OUT/('modes-'+label+'-ros.log'),'wb')
+    worker=subprocess.Popen(['docker','run','--rm','--name','rovi-home-mode-client','--net','host',
+        '-v',config+':/c.json5:ro','-v','/tmp/rovi-home-ros.py:/bench.py:ro',
+        '-e','ZENOH_SESSION_CONFIG_URI=/c.json5','rovi-ros-sim','bash','-c',
+        'source /opt/ros/jazzy/setup.bash && python3 /bench.py'],stdout=worker_log,stderr=subprocess.STDOUT)
+    deadline=time.monotonic()+25
+    while True:
+        try:
+            if stand.rpc('info')['subscriptions']:break
+        except TimeoutError:pass
+        assert time.monotonic()<deadline,'no ROS graph'
+        time.sleep(0.2)
+
+def ros_mode(value):
+    off=stand.mark();stand.rpc('stream');stand.saw(off,'claimed',source='Ros')
+    stand.rpc('stop');time.sleep(0.3)
+    off=stand.mark();stand.rpc('mode',value=value)
+    stand.saw(off,'mode_cmd',source='Ros',cmd='Home' if value==1 else 'CarNetwork',result='Ok')
+    stand.rpc('release')
+
+if __name__=='__main__':
+    previous=command(['nmcli','-g','GENERAL.CON-UUID','device','show','wlp1s0f0'])
+    assert previous and previous!='--','no current Wi-Fi connection'
+    monitor=bench.monitor(str(LOG))
+    firewall=False
+    router=False
+    try:
+        transition(0,'Home')
+        command(['sudo','-n','iptables','-I','nixos-fw','1',*rule]);firewall=True
+        command(['docker','run','-d','--rm','--name','rovi-home-mode-router','--net','host',
+            'rovi-ros-sim','bash','-c','source /opt/ros/jazzy/setup.bash && ros2 run rmw_zenoh_cpp rmw_zenohd']);router=True
+        print('BLE Car network then Home',flush=True)
+        off=stand.mark();asyncio.run(ble_mode(4));transition(off,'Fallback')
+        off=stand.mark();asyncio.run(ble_mode(3));transition(off,'Home')
+        print('UDP Car network then Home',flush=True)
+        off=stand.mark();udp_mode(2,'192.168.1.193');transition(off,'Fallback')
+        command(['nmcli','connection','up','rovi-m8'])
+        off=stand.mark();udp_mode(1,'192.168.4.1');transition(off,'Home')
+        command(['nmcli','connection','up','uuid',previous])
+        print('ROS Car network then Home',flush=True)
+        start_worker('/tmp/rovi-client-lan.json5','home')
+        off=stand.mark();ros_mode(2);transition(off,'Fallback');stop_worker()
+        command(['nmcli','connection','up','rovi-m8'])
+        Path('/tmp/rovi-fallback-client.json5').write_text('{ mode:"client", connect:{ endpoints:["tcp/127.0.0.1:7447"] }, scouting:{ multicast:{ enabled:false } } }')
+        start_worker('/tmp/rovi-fallback-client.json5','fallback')
+        off=stand.mark();ros_mode(1);transition(off,'Home');stop_worker()
+        assert not [e for e in stand.carlog.events(LOG) if e.get('ev')=='state' and any(e.get('wheels_pm',[]))],'unexpected motion'
+        print('Mode switches both ways on all three transports: PASS; no motion',flush=True)
+    finally:
+        stop_worker()
+        if router: subprocess.run(['docker','stop','-t','2','rovi-home-mode-router'],capture_output=True)
+        if firewall: subprocess.run(['sudo','-n','iptables','-D','nixos-fw',*rule],check=True,capture_output=True)
+        command(['nmcli','connection','up','uuid',previous])
+        time.sleep(1.3)
+        bench.stop(monitor)

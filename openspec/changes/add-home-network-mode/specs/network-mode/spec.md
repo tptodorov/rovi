@@ -174,7 +174,7 @@ In home mode, loss of the station link SHALL stop the car as the lease rules req
 
 ### Requirement: Build-time home settings
 
-Home settings SHALL be supplied only at build time: SSID (1–32 bytes), WPA2 passphrase (8–63 ASCII) and ROS router endpoint (`tcp/<IPv4>:<port>`), all three or none. An incomplete or invalid set SHALL fail the build. The passphrase SHALL never be sent or reported over any interface or log.
+Home settings SHALL be supplied only at build time: SSID (1–32 bytes), WPA2 passphrase (8–63 ASCII) and ROS router endpoint (`tcp/<IPv4 or host name>:<port>`), all three or none. An incomplete or invalid set SHALL fail the build. The passphrase SHALL never be sent or reported over any interface or log.
 
 #### Scenario: Partial settings fail the build
 
@@ -197,3 +197,37 @@ The car log SHALL report each mode change (home, fallback with reason, attemptin
 - **GIVEN** built-in settings and the network out of range
 - **WHEN** the car boots
 - **THEN** the log shows the failed scan with its duration and a fallback mode event naming the scan as the reason
+
+### Requirement: Router name resolution
+
+The firmware SHALL resolve router host names to IPv4 on every connection attempt, including reconnects: `.local` names use mDNS, other names use DHCP DNS. Names SHALL be case-insensitive. Each lookup SHALL finish within 3000 ms and the existing home-attempt budget SHALL still apply. Literal IPv4 endpoints SHALL bypass DNS. Lookup result, duration and resolved address SHALL be logged without credentials.
+
+#### Scenario: Named router at boot
+
+- **GIVEN** a configured router `tcp/blackbox.local:7447` advertised on the home network
+- **WHEN** the car attempts home mode
+- **THEN** it resolves the name and connects to that IPv4 address within the existing join budget
+
+#### Scenario: Uppercase local name
+
+- **GIVEN** a router name ending in `.LOCAL`
+- **WHEN** the car resolves it
+- **THEN** it uses mDNS just as for the lowercase name
+
+#### Scenario: Router reconnect
+
+- **GIVEN** home mode and a lost ROS router session
+- **WHEN** the car retries the connection
+- **THEN** it resolves the configured name again and uses the returned address
+
+#### Scenario: Name unavailable
+
+- **GIVEN** home settings with an unresolvable router name
+- **WHEN** the home-attempt budget ends
+- **THEN** the car enters fallback with reason router and the log records lookup failure
+
+#### Scenario: Literal endpoint
+
+- **GIVEN** a configured literal IPv4 router endpoint
+- **WHEN** the car connects
+- **THEN** it uses that endpoint without a DNS query

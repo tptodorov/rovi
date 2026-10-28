@@ -1,0 +1,13 @@
+{"at": 1793193898.4129205, "network": "mode=home pending=none fallback=none ip=192.168.1.193"}
+{"at": 1793193898.946437, "status": "state=open reason=none error=none session=0"}
+{"at": 1793193899.6744807, "command": {"op": "info"}}
+{"at": 1793193899.685044, "command": {"op": "stream"}}
+{"at": 1793193899.7606301, "status": "state=armed reason=none error=none session=348036993"}
+{"at": 1793193899.792107, "command": {"op": "stop"}}
+{"at": 1793193899.8620315, "status": "state=stopped reason=stop error=none session=348036993"}
+{"at": 1793193900.0998404, "command": {"op": "mode", "value": 2}}
+{"at": 1793193900.1724715, "network": "mode=home pending=car-network fallback=none ip=192.168.1.193"}
+{"at": 1793193900.203618, "command": {"op": "release"}}
+{"at": 1793193900.2672899, "network": "mode=fallback pending=none fallback=requested ip=192.168.1.193"}
+{"at": 1793193900.3775, "status": "state=open reason=none error=none session=0"}
+{"at": 1793193901.3081496, "command": {"op": "exit"}}

@@ -1,0 +1,486 @@
+{
+  "setup-car.log": {
+    "boots": 1,
+    "counts": {
+      "boot": 1,
+      "net": 5,
+      "net_step": 4,
+      "resolve": 1,
+      "ros": 1,
+      "claimed": 5,
+      "state": 10,
+      "preempted": 1,
+      "stop": 4,
+      "released": 5
+    },
+    "problems": [],
+    "mode_commands": [],
+    "nonzero_states": [
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 6751
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 7898
+      }
+    ],
+    "stops": [
+      {
+        "ev": "stop",
+        "reason": "OwnerLost",
+        "at_ms": 8090
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 8591
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 8622
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 8701
+      }
+    ]
+  },
+  "takeovers-car.log": {
+    "boots": 1,
+    "counts": {
+      "boot": 1,
+      "net": 15,
+      "net_step": 12,
+      "resolve": 1,
+      "ros": 1,
+      "claimed": 8,
+      "state": 31,
+      "preempted": 3,
+      "stop": 8,
+      "released": 8,
+      "ble": 4,
+      "mtu": 2,
+      "mode_cmd": 1
+    },
+    "problems": [],
+    "mode_commands": [
+      {
+        "ev": "mode_cmd",
+        "source": "Ble",
+        "cmd": "Home",
+        "result": "Ok",
+        "at_ms": 16612
+      }
+    ],
+    "nonzero_states": [
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 6717
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 7949
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 8675
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 10714
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 15022
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 15985
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 23638
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 24038
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 26889
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 27421
+      }
+    ],
+    "stops": [
+      {
+        "ev": "stop",
+        "reason": "OwnerLost",
+        "at_ms": 8141
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 9277
+      },
+      {
+        "ev": "stop",
+        "reason": "OwnerLost",
+        "at_ms": 15263
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 16522
+      },
+      {
+        "ev": "stop",
+        "reason": "OwnerLost",
+        "at_ms": 27053
+      },
+      {
+        "ev": "stop",
+        "reason": "LeaseExpired",
+        "lease_late_ms": 6,
+        "at_ms": 28868
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 42082
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 42149
+      }
+    ]
+  },
+  "car.log": {
+    "boots": 1,
+    "counts": {
+      "boot": 1,
+      "net": 10,
+      "net_step": 8,
+      "resolve": 1,
+      "ros": 1,
+      "claimed": 5,
+      "state": 17,
+      "ble": 2,
+      "mtu": 1,
+      "preempted": 1,
+      "stop": 5,
+      "released": 5
+    },
+    "problems": [],
+    "mode_commands": [],
+    "nonzero_states": [
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 6714
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 10601
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 11163
+      },
+      {
+        "ev": "state",
+        "state": "Armed",
+        "wheels_pm": [
+          83,
+          83,
+          83,
+          83
+        ],
+        "at_ms": 20176
+      }
+    ],
+    "stops": [
+      {
+        "ev": "stop",
+        "reason": "OwnerLost",
+        "at_ms": 10796
+      },
+      {
+        "ev": "stop",
+        "reason": "LeaseExpired",
+        "lease_late_ms": 9,
+        "at_ms": 12612
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 21350
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 21696
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 21776
+      }
+    ]
+  },
+  "setup-modes-car.log": {
+    "boots": 3,
+    "counts": {
+      "boot": 3,
+      "net": 13,
+      "net_step": 8,
+      "resolve": 2,
+      "ros": 2,
+      "ble": 4,
+      "mtu": 2,
+      "stop": 2,
+      "claimed": 2,
+      "state": 4,
+      "mode_cmd": 2,
+      "released": 2,
+      "wifi": 1
+    },
+    "problems": [],
+    "mode_commands": [
+      {
+        "ev": "mode_cmd",
+        "source": "Ble",
+        "cmd": "CarNetwork",
+        "result": "Ok",
+        "at_ms": 8709
+      },
+      {
+        "ev": "mode_cmd",
+        "source": "Ble",
+        "cmd": "Home",
+        "result": "Ok",
+        "at_ms": 2361
+      }
+    ],
+    "nonzero_states": [],
+    "stops": [
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 8619
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 2271
+      }
+    ]
+  },
+  "modes-car.log": {
+    "boots": 7,
+    "counts": {
+      "boot": 7,
+      "net": 29,
+      "net_step": 16,
+      "resolve": 4,
+      "ros": 6,
+      "ble": 4,
+      "mtu": 2,
+      "stop": 6,
+      "claimed": 6,
+      "state": 15,
+      "mode_cmd": 6,
+      "released": 6,
+      "wifi": 1
+    },
+    "problems": [],
+    "mode_commands": [
+      {
+        "ev": "mode_cmd",
+        "source": "Ble",
+        "cmd": "CarNetwork",
+        "result": "Ok",
+        "at_ms": 9254
+      },
+      {
+        "ev": "mode_cmd",
+        "source": "Ble",
+        "cmd": "Home",
+        "result": "Ok",
+        "at_ms": 2526
+      },
+      {
+        "ev": "mode_cmd",
+        "source": "Udp",
+        "cmd": "CarNetwork",
+        "result": "Ok",
+        "at_ms": 3272
+      },
+      {
+        "ev": "mode_cmd",
+        "source": "Udp",
+        "cmd": "Home",
+        "result": "Ok",
+        "at_ms": 4310
+      },
+      {
+        "ev": "mode_cmd",
+        "source": "Ros",
+        "cmd": "CarNetwork",
+        "result": "Ok",
+        "at_ms": 9156
+      },
+      {
+        "ev": "mode_cmd",
+        "source": "Ros",
+        "cmd": "Home",
+        "result": "Ok",
+        "at_ms": 7113
+      }
+    ],
+    "nonzero_states": [],
+    "stops": [
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 9164
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 2436
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 3260
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 4296
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 8852
+      },
+      {
+        "ev": "stop",
+        "reason": "Stop",
+        "at_ms": 6811
+      }
+    ]
+  },
+  "image_sha256": "b52dea02abd9560e848a476d325b1a6831c7685ffdc0cc6ac696e3fca9c28f97"
+}

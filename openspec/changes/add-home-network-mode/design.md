@@ -53,10 +53,10 @@ Scan ≤1500 ms (spec); join + DHCP + router ≤8000 ms after the network is fou
 ### D15. The router host is blackbox, on its cable (decided by Todor, verified 2026-10-28)
 
 The home ROS router is `rmw_zenohd` from ROS 2 Jazzy (`rmw_zenoh_cpp` 0.2.11, the version CI and the bench use) in a Docker container, run by a systemd unit in `~/mycfg` (`hosts/blackbox/modules/rovi-ros-router.nix`). Blackbox is always on; blade is a laptop and hosts nothing permanent. Facts that shaped it:
-* The car's `ROVI_HOME_ROUTER` is a literal address (zenoh-nostd takes no hostnames; [#115](https://github.com/tptodorov/rovi/issues/115)), so the host needs a stable address: a DHCP reservation (Todor's, in the home router) for its wired MAC. The wired address is the one to use: with two interfaces on one subnet the kernel's strict reverse-path filtering drops traffic that arrives on Wi-Fi while the cable is in.
+* The car uses `tcp/blackbox.local:7447`; firmware resolves it to IPv4 before passing a literal endpoint to zenoh-nostd. Every connection attempt performs a fresh lookup. No DHCP reservation is needed (the devolo is a bridge; the gateway supplies DHCP).
 * TCP 7447 must be open on every interface that can carry the LAN (the first version opened Wi-Fi only; the car would have been refused).
-* A host with two interfaces on the home subnet must set `arp_ignore=1`/`arp_announce=2`: otherwise it answers the car's ARP request on both, the car may cache the Wi-Fi MAC, and its traffic is dropped by reverse-path filtering (the car stalled right after its first batch; found on the board 2026-10-28). Applied in `~/mycfg`.
-* No DHCP reservation is available (the devolo is only a bridge); the router host's address is the one its lease gives (stable across a reboot in practice). Name resolution ([#115](https://github.com/tptodorov/rovi/issues/115)) is the address-free alternative.
+* A host with two interfaces on the home subnet must set `arp_ignore=1`/`arp_announce=2`: otherwise it answers the car's ARP request on both, the car may cache the Wi-Fi MAC, and its traffic is lost on the unusable Wi-Fi path (the car stalled right after its first batch; found on the board 2026-10-28). Applied in `~/mycfg`.
+* The kernel sysctls showed loose filtering (`rp_filter=2`), not strict filtering as initially reported. The ARP captures and successful before/after fix establish ARP flux; they do not identify the exact packet-drop mechanism.
 * Blackbox on Wi-Fi alone was unusable for transfers (200-1500 ms latency, broken SSH streams): the router host must be cabled.
 
 ### D14. BLE is quiet while a home attempt runs (board-measured, 2026-10-26)
@@ -107,3 +107,9 @@ Fallback has no automatic retry (it would blink the AP off every scan). A Home c
 ## Open Questions
 
 * Whether the ROS router step should also wait for the controller's liveliness tokens — settle from board data; does not change the specs.
+
+### D16. Resolve the configured router name before connecting (#115)
+
+Todor requested name resolution on 2026-10-28. Enable embassy-net `dns`/`mdns`; its DNS socket already fits `StackResources<6>`. Resolve A records on every connection attempt, bounded at 3 seconds and still cancelled by the existing home-attempt deadline. Normalize case because smoltcp 0.12 selects mDNS with a lowercase suffix comparison. `.local` uses legacy unicast-response mDNS queries from an ephemeral port: no multicast listener/group join is needed. Other names use DHCP DNS. Numeric IPv4 endpoints bypass the lookup. Failed lookups retry until the home budget ends, then fallback; no stored-IP fallback or zenoh patch.
+
+Log `resolve` with result, duration and IPv4 (zero on failure). Board evidence is in [router-by-name notes](../../../firmware/bench/2026-10-29-router-by-name/notes.md). Router restart also exposed a 90-second Docker stop wait; the blackbox unit now explicitly stops its container (`docker stop -t 5`, `TimeoutStopSec=20`). Fresh-name lookup on reconnect is verified; an actual DHCP address change and cable-unplugged operation are not qualified.

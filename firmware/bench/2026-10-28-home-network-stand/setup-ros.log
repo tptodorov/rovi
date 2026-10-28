@@ -1,0 +1,12 @@
+{"at": 1793193105.7727225, "status": "state=open reason=none error=none session=0"}
+{"at": 1793193106.0547986, "network": "mode=home pending=none fallback=none ip=192.168.1.193"}
+{"at": 1793193106.2211463, "command": {"op": "info"}}
+{"at": 1793193106.2318242, "command": {"op": "stream"}}
+{"at": 1793193106.2719607, "status": "state=armed reason=none error=none session=339700878"}
+{"at": 1793193106.2934754, "command": {"op": "drive"}}
+{"at": 1793193107.4996815, "command": {"op": "drive"}}
+{"at": 1793193107.7211866, "status": "state=stopped reason=owner-lost error=none session=339700878"}
+{"at": 1793193107.7217293, "status": "state=claimed reason=none error=none session=339700879"}
+{"at": 1793193108.1799858, "command": {"op": "exit"}}
+{"at": 1793193108.224978, "status": "state=open reason=none error=none session=0"}
+{"at": 1793193108.3084152, "status": "state=stopped reason=stop error=none session=339700881"}

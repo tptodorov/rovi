@@ -63,6 +63,8 @@ fn random_bytes(bytes: &mut [u8]) -> Result<(), getrandom::Error> {
 const UDP_PORT: u16 = 7777;
 /// Scans per home attempt before the scan step fails (the core's 1.5 s budget still applies).
 const SCAN_TRIES: usize = 3;
+/// Association attempts per home attempt before the join step fails (the core's budget still applies).
+const JOIN_TRIES: usize = 3;
 
 const HOME_SSID: Option<&str> = option_env!("ROVI_HOME_SSID");
 const HOME_PASSWORD: Option<&str> = option_env!("ROVI_HOME_PASSWORD");
@@ -76,7 +78,7 @@ const HOME: bool = match netmode::settings(HOME_SSID, HOME_PASSWORD, HOME_ROUTER
     }
     Err(SettingsError::Ssid) => panic!("ROVI_HOME_SSID must be 1..=32 bytes"),
     Err(SettingsError::Passphrase) => panic!("ROVI_HOME_PASSWORD must be 8..=63 printable ASCII"),
-    Err(SettingsError::Router) => panic!("ROVI_HOME_ROUTER must be tcp/<IPv4>:<port>"),
+    Err(SettingsError::Router) => panic!("ROVI_HOME_ROUTER must be tcp/<IPv4 or host name>:<port>"),
 };
 
 /// Survives the software reset that switches station <-> AP (design D2): `SWITCH | reason` boots
@@ -781,10 +783,18 @@ async fn main(_spawner: Spawner) -> ! {
                                 best.is_some()
                             }
                             Step::Join => {
-                                station_on = matches!(
-                                    with_timeout(budget, wifi.connect_async()).await,
-                                    Ok(Ok(_))
-                                );
+                                // An association sometimes fails at once (1 of ~25 boots on the board,
+                                // 2026-10-29); try again inside the budget. A wrong passphrase makes the
+                                // driver block for the whole budget instead, so it still fails.
+                                for _ in 0..JOIN_TRIES {
+                                    station_on = matches!(
+                                        with_timeout(budget, wifi.connect_async()).await,
+                                        Ok(Ok(_))
+                                    );
+                                    if station_on {
+                                        break;
+                                    }
+                                }
                                 station_on
                             }
                             Step::Dhcp => with_timeout(budget, net.wait_config_up()).await.is_ok(),
