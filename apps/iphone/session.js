@@ -1,4 +1,4 @@
-import { capabilities, status, setpoint, ZERO, DIRECTIONS } from './wire.js';
+import { capabilities, status, network, setpoint, ZERO, DIRECTIONS } from './wire.js';
 import { Hold } from './hold.js';
 import { Physical } from './physical.js';
 import { Ble, pickDevice, supportError } from './transport.js';
@@ -15,6 +15,9 @@ export class Session {
   caps = null;
   reported = null;
   reportedAt = 0;
+  networkInfo = null;
+  networkMessage = '';
+  networkProblem = '';
   generation = 0;
   seq = 0;
   stats = { writes: 0, maxGap: 0, maxWrite: 0 };
@@ -23,7 +26,7 @@ export class Session {
   changed = () => {};
 
   constructor({ bluetooth, protocol, now = () => performance.now(), active = () => true,
-    makeTransport = (device, onStatus, onLost) => new Ble(device, onStatus, onLost) } = {}) {
+    makeTransport = (device, onStatus, onLost, onNetwork) => new Ble(device, onStatus, onLost, onNetwork) } = {}) {
     Object.assign(this, { bluetooth, protocol, now, active, makeTransport });
     this.message = supportError(bluetooth, protocol) || 'Choose a car. Connecting claims it; ARM is always explicit.';
   }
@@ -75,7 +78,7 @@ export class Session {
     const generation = ++this.generation;
     this.phase = 'choosing'; this.localArm = false; this.hold.reset();
     this.physical.invalidate('Hold neutral, then tap Set neutral & ARM.');
-    this.caps = null; this.reported = null; this.device = null; this.seq = 0;
+    this.caps = null; this.reported = null; this.networkInfo = null; this.networkMessage = ''; this.networkProblem = ''; this.device = null; this.seq = 0;
     this.stats = { writes: 0, maxGap: 0, maxWrite: 0 };
     this.message = 'Select the car in Bluefy’s picker. The picker alone does not claim it.'; this.changed();
     try {
@@ -87,7 +90,8 @@ export class Session {
       this.message = 'Connecting and validating; no ARM or motion is sent.';
       this.transport = this.makeTransport(device,
         bytes => { if (generation === this.generation) this.notification(bytes); },
-        () => { if (generation === this.generation) void this.close('Bluetooth connection lost'); });
+        () => { if (generation === this.generation) void this.close('Bluetooth connection lost'); },
+        bytes => { if (generation === this.generation) this.observeNetwork(bytes); });
       const transport = this.transport;
       this.job('setup', async () => {
         const initial = await transport.open();
@@ -96,6 +100,7 @@ export class Session {
         const report = status(initial.report);
         if (!['Claimed', 'Stopped'].includes(report.state)) throw new Error('Car did not report a disarmed claim');
         this.observe(initial.report);
+        this.observeNetwork(initial.network);
         if (generation !== this.generation || !this.checkDeadlines()) return;
         await this.sendZero(transport);
       }, () => {
@@ -111,6 +116,27 @@ export class Session {
   notification(bytes) {
     if (!['connecting', 'ready'].includes(this.phase)) return;
     try { this.observe(bytes); } catch (error) { void this.close(error.message); }
+  }
+
+  observeNetwork(bytes) {
+    try {
+      this.networkInfo = bytes ? network(bytes) : null;
+      this.networkProblem = this.networkInfo ? '' : 'Network information unavailable on this firmware.';
+    } catch {
+      this.networkInfo = null;
+      this.networkProblem = 'Network information unavailable; reconnect to retry.';
+    }
+    this.changed();
+    return this.networkInfo;
+  }
+
+  setNetwork(mode) {
+    if (!['Home', 'CarNetwork'].includes(mode) || this.phase !== 'ready' || this.localArm ||
+        this.reported?.state === 'Armed' || this.control || !this.networkInfo || !this.active()) return;
+    this.clearInputs();
+    this.control = { kind: 'network', mode, step: 'zero', deadline: this.now() + 1000 };
+    this.networkMessage = 'Requesting network change…';
+    this.pump(); this.changed();
   }
 
   observe(bytes) {
@@ -141,6 +167,7 @@ export class Session {
   }
 
   stop() {
+    if (this.control?.kind === 'network') this.networkMessage = 'Network request not confirmed. Reconnect to check the car.';
     this.localArm = false; this.clearInputs();
     if (this.phase !== 'ready') { void this.close('STOP requested during connection'); return; }
     if (this.control?.kind === 'stop') return;
@@ -167,7 +194,10 @@ export class Session {
     if (!this.checkPhysical()) return false;
     if (this.phase !== 'ready') return true;
     if (now - this.lastTick >= 200 || now - this.lastSubmit >= 200) { void this.close('Stream delayed by 200 ms; connect and ARM again'); return false; }
-    if (this.control && now >= this.control.deadline) { void this.close('Control confirmation timed out'); return false; }
+    if (this.control && now >= this.control.deadline) {
+      if (this.control.kind === 'network') this.networkMessage = 'Network request not confirmed. Reconnect to check the car.';
+      void this.close('Control confirmation timed out'); return false;
+    }
     if (this.busy?.kind === 'read' && now - this.busy.started >= 1000) { void this.close('Status read timed out'); return false; }
     return true;
   }
@@ -205,12 +235,44 @@ export class Session {
       if (this.now() >= control.deadline) { void this.close('Control confirmation timed out'); return; }
       const current = action => { if (this.control === control) action(); };
       if (control.step === 'zero') this.job('setpoint', () => this.sendZero(), () => current(() => { control.step = 'write'; }));
-      else if (control.step === 'write') this.job('control', () => this.transport.control(control.kind === 'arm' ? 1 : 2), () => current(() => { control.step = 'read'; }));
+      else if (['status-zero', 'network-zero'].includes(control.step)) this.job('setpoint', () => this.sendZero(), () => current(() => {
+        control.step = control.step === 'status-zero' ? 'read' : 'network';
+      }));
+      else if (control.step === 'write') this.job('control', () => this.transport.control(
+        control.kind === 'arm' ? 1 : control.kind === 'network' ? (control.mode === 'Home' ? 3 : 4) : 2
+      ), () => current(() => { control.step = control.kind === 'network' ? 'status-zero' : 'read'; }), error => {
+        if (control.kind === 'network') current(() => {
+          // Firmware rejects the ATT write on refusal; fresh Status supplies its reason.
+          control.writeError = error; control.step = 'status-zero';
+        });
+        else void this.close(error.message);
+      });
+      else if (control.step === 'network') this.job('network-read', () => this.transport.readNetwork(), bytes => current(() => {
+        const info = this.observeNetwork(bytes);
+        if (!info || info.pending !== control.mode) {
+          this.networkMessage = 'Network request not confirmed. Reconnect to check the car.';
+          throw new Error(this.networkMessage);
+        }
+        this.control = null;
+        const name = control.mode === 'Home' ? 'Home Wi-Fi' : 'Car network';
+        this.networkMessage = `${name} requested; the car applies it after Bluetooth disconnects. Reconnect to check.`;
+        void this.close(this.networkMessage);
+      }));
       else {
         this.lastRead = this.now();
         this.job('read', () => this.transport.read(), bytes => current(() => {
           const report = this.observe(bytes);
           if (this.now() >= control.deadline) throw new Error('Late control confirmation');
+          if (control.kind === 'network') {
+            if (report.state === 'Armed') throw new Error('Car is armed; network change was not confirmed');
+            if (report.error !== 'none') {
+              this.control = null;
+              const name = control.mode === 'Home' ? 'Home Wi-Fi' : 'Car network';
+              this.networkMessage = report.error === 'Invalid' ? `${name} is unavailable on this car.` : `Network request refused: ${report.error}.`;
+            } else if (control.writeError) throw control.writeError;
+            else control.step = 'network-zero';
+            this.changed(); return;
+          }
           const confirmed = report.error === 'none' && (control.kind === 'arm' ? report.state === 'Armed' : report.state === 'Stopped' && report.reason === 'Stop');
           if (!confirmed) throw new Error(`${control.kind.toUpperCase()} was not confirmed by the fresh Status read`);
           this.control = null; this.localArm = control.kind === 'arm'; this.clearInputs();
@@ -231,6 +293,7 @@ export class Session {
     if (this.phase === 'closing') return this.closePromise;
     this.physical.disable('Session ended; enable sensors and calibrate again.');
     if (this.phase === 'disconnected') return Promise.resolve();
+    if (this.control?.kind === 'network') this.networkMessage = 'Network request not confirmed. Reconnect to check the car.';
     ++this.generation; this.localArm = false; this.clearInputs(); this.control = null;
     this.phase = 'closing'; this.message = reason;
     this.cleanup = { deadline: this.now() + 500, stopReported: false };

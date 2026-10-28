@@ -1,4 +1,4 @@
-import { SERVICE, UUID } from './wire.js';
+import { SERVICE, UUID, NETWORK_UUID } from './wire.js';
 
 export function supportError(bluetooth, protocol) {
   if (protocol !== 'https:') return 'Open the HTTPS controller page in Bluefy.';
@@ -19,9 +19,10 @@ export class Ble {
   writesReady = false;
   chars = {};
 
-  constructor(device, onStatus, onLost) {
+  constructor(device, onStatus, onLost, onNetwork = () => {}) {
     this.device = device;
     this.onStatus = event => { if (!this.closed) onStatus(copy(event.target.value)); };
+    this.onNetwork = event => { if (!this.closed) onNetwork(copy(event.target.value)); };
     this.onLost = () => { if (!this.closed) onLost(); };
     device.addEventListener('gattserverdisconnected', this.onLost);
   }
@@ -39,6 +40,11 @@ export class Ble {
     for (const [name, uuid] of Object.entries(UUID)) {
       this.chars[name] = await service.getCharacteristic(uuid); this.check();
     }
+    try { this.chars.network = await service.getCharacteristic(NETWORK_UUID); } catch (error) {
+      if (error.name !== 'NotFoundError') throw error;
+    }
+    this.check();
+    if (!this.chars.network?.properties.read || typeof this.chars.network.readValue !== 'function') this.chars.network = null;
     const { setpoint, control, capabilities, status } = this.chars;
     if (!setpoint.properties.writeWithoutResponse || typeof setpoint.writeValueWithoutResponse !== 'function'
       || !control.properties.write || typeof control.writeValueWithResponse !== 'function'
@@ -57,16 +63,27 @@ export class Ble {
     const report = copy(await status.readValue()); this.check();
     status.addEventListener('characteristicvaluechanged', this.onStatus);
     await status.startNotifications(); this.check();
-    return { caps, report };
+    const network = await this.readNetwork();
+    if (this.chars.network?.properties.notify && typeof this.chars.network.startNotifications === 'function') {
+      this.chars.network.addEventListener('characteristicvaluechanged', this.onNetwork);
+      await this.chars.network.startNotifications(); this.check();
+    }
+    return { caps, report, network };
   }
 
   async send(bytes) { this.check(); await this.chars.setpoint.writeValueWithoutResponse(bytes); this.check(); }
   async control(code) { this.check(); await this.chars.control.writeValueWithResponse(Uint8Array.of(code)); this.check(); }
   async read() { this.check(); const result = copy(await this.chars.status.readValue()); this.check(); return result; }
+  async readNetwork() {
+    this.check();
+    if (!this.chars.network) return null;
+    const result = copy(await this.chars.network.readValue()); this.check(); return result;
+  }
 
   disconnect() {
     this.closed = true;
     this.chars.status?.removeEventListener('characteristicvaluechanged', this.onStatus);
+    this.chars.network?.removeEventListener('characteristicvaluechanged', this.onNetwork);
     this.device.removeEventListener('gattserverdisconnected', this.onLost);
     this.device.gatt?.disconnect();
   }

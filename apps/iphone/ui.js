@@ -7,6 +7,8 @@ export function mount(session) {
   const modes = [...document.querySelectorAll('[name="control-mode"]')];
   const buttons = [...document.querySelectorAll('[data-direction]')];
   const drive = byId('physical-drive');
+  byId('network-home').addEventListener('click', () => session.setNetwork('Home'));
+  byId('network-car').addEventListener('click', () => session.setNetwork('CarNetwork'));
   const pointers = new Map();
   const active = () => document.visibilityState === 'visible' && document.hasFocus();
   session.active = active;
@@ -148,6 +150,14 @@ export function mount(session) {
     byId('arm').disabled = !ready || session.localArm || Boolean(session.control) || (physicalMode && !physical.canCalibrate(now));
     byId('stop').disabled = !session.transport?.connected || session.phase === 'closing';
     text('local-arm', session.localArm ? 'Armed' : 'Disarmed');
+    const network = session.networkInfo;
+    const networkNames = { Home: 'Home Wi-Fi', Fallback: 'Car network', Attempting: 'Joining Home Wi-Fi', CarNetwork: 'Car network', none: 'none' };
+    const fallbackNames = { none: 'none', NoSettings: 'not configured', Scan: 'home Wi-Fi not found', Join: 'could not join home Wi-Fi', Dhcp: 'no home address', Router: 'ROS router unavailable', LinkLost: 'home Wi-Fi lost', Requested: 'requested' };
+    const canChangeNetwork = ready && !session.localArm && session.reported?.state !== 'Armed' && !session.control && Boolean(network);
+    byId('network-home').disabled = !canChangeNetwork;
+    byId('network-car').disabled = !canChangeNetwork;
+    text('network-info', network ? `${ready ? '' : 'Last reported: '}${networkNames[network.mode]} · Pending: ${networkNames[network.pending]} · Last fallback: ${fallbackNames[network.reason]} · ${network.ip === '0.0.0.0' ? 'Home address unavailable' : `Home address: ${network.ip}`}` : 'Network information unavailable');
+    text('network-message', session.networkMessage || session.networkProblem || 'Switching ends Bluetooth control. STOP to disarm first.');
     text('stage-title', !ready ? (session.phase === 'disconnected' ? (session.device ? 'Connection ended' : 'Connect your Rovi') : phases[session.phase]) :
       !session.localArm ? (physicalMode && !physical.canCalibrate(now) ? (permissionPending ? 'Allow phone motion' : physical.fresh(now) ? 'Hold your phone flat' : 'Waiting for sensors') : 'Ready to arm') :
       !physicalMode ? 'Hold to drive' : physical.driving ? 'Tilt control live' : canStart ? 'Ready to tilt' : 'Return to neutral');

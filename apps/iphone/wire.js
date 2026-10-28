@@ -1,4 +1,5 @@
 export const SERVICE = 'd47a0010-45b2-4d19-8db0-6bd87e9c0001';
+export const NETWORK_UUID = 'd47a0016-45b2-4d19-8db0-6bd87e9c0001';
 export const UUID = Object.fromEntries(['setpoint', 'control', 'capabilities', 'status'].map(
   (name, i) => [name, `d47a001${i + 1}-45b2-4d19-8db0-6bd87e9c0001`],
 ));
@@ -57,4 +58,13 @@ export function direction(caps, name) {
   const [axis, sign] = DIRECTIONS[name] ?? [];
   if (!axis) throw new Error('Unknown direction');
   return { ...ZERO, [axis]: sign * Math.min(axis === 'wz' ? 0.3 : 0.1, caps[`max_${axis}`]) };
+}
+
+export function network(data) {
+  const bytes = view(data, 8);
+  const modes = ['Fallback', 'Attempting', 'Home'], pending = ['none', 'Home', 'CarNetwork'];
+  const reasons = ['none', 'NoSettings', 'Scan', 'Join', 'Dhcp', 'Router', 'LinkLost', 'Requested'];
+  const mode = modes[bytes.getUint8(0)], request = pending[bytes.getUint8(1)], reason = reasons[bytes.getUint8(2)];
+  if (!mode || !request || !reason || bytes.getUint8(3) !== 0) throw new Error('Unsupported network information');
+  return { mode, pending: request, reason, ip: [4, 5, 6, 7].map(i => bytes.getUint8(i)).join('.') };
 }

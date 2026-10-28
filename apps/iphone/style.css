@@ -142,3 +142,5 @@ body[data-driving="true"] #local-arm { background: var(--accent); color: var(--o
 @media (prefers-color-scheme: dark) {
   :root { --page: #0f1a15; --surface: #192b22; --surface-alt: #233a2d; --ink: #edf4ed; --muted: #b3c6b8; --line: #385441; --accent: #8ce0b5; --on-accent: #0d2c1f; --warning: #f5d785; --warning-bg: #3f351d; --danger: #fa7a84; --on-danger: #38080d; --focus: #98c9ff; --shadow: 0 6px 24px #00000035; }
 }
+
+.network-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: .75rem; }

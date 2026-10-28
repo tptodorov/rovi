@@ -1,0 +1,18 @@
+{
+  "started": "2026-10-28T18:05:50.353878+00:00",
+  "build": "82fbd45f4050",
+  "scope": "recover normal boot and capture Bluefy network test; no ARM",
+  "monitor_pid": 1571613,
+  "capture_pid": 1571610,
+  "command": [
+    "espflash",
+    "monitor",
+    "--port",
+    "/dev/serial/by-id/usb-1a86_USB_Single_Serial_5C85037678-if00",
+    "--non-interactive",
+    "--skip-update-check"
+  ],
+  "prior_capture": "/tmp/rovi-bluefy-network-20261028-180237",
+  "intentional_boot_reset": true,
+  "snapshot_note": "Final capture after Todor confirmed normal disconnect; serial confirms Home recovery; serial monitor then stopped."
+}

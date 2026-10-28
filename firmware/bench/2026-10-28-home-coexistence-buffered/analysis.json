@@ -1,0 +1,98 @@
+{
+  "complete": true,
+  "ros": {
+    "started_epoch": 1793207798.4377081,
+    "finished_epoch": 1793208699.9435601,
+    "requested_seconds": 900.0,
+    "sent": 18000,
+    "received": 18000,
+    "lost": 0,
+    "reply_depth": 128,
+    "foreign": 0,
+    "duplicates": 0,
+    "complete": true,
+    "min_ms": 7.751004,
+    "median_ms": 42.8642075,
+    "p95_ms": 144.371022,
+    "max_ms": 315.248358,
+    "rtt": {
+      "count": 18000,
+      "min_ms": 7.751004,
+      "median_ms": 42.8642075,
+      "p95_ms": 144.371022,
+      "max_ms": 315.248358
+    }
+  },
+  "udp": {
+    "started": "2026-10-28T17:16:38.548076+00:00",
+    "finished": "2026-10-28T17:31:44.720523+00:00",
+    "target": [
+      "192.168.1.193",
+      7777
+    ],
+    "requested_seconds": 900.0,
+    "interface": "wlp1s0f0",
+    "complete": true,
+    "sent": 4035,
+    "lost": 9,
+    "link_transitions": 18,
+    "verdict": "loss observed",
+    "reassociation_requested": false,
+    "journal_limit_lines": 2000,
+    "rtt": {
+      "count": 4026,
+      "min_ms": 4.446,
+      "median_ms": 6.687,
+      "p95_ms": 62.682,
+      "max_ms": 78.797
+    }
+  },
+  "ble": {
+    "scans": 16,
+    "detections": 16
+  },
+  "serial": {
+    "boots": 1,
+    "counts": {
+      "boot": 1,
+      "net": 5,
+      "net_step": 4,
+      "resolve": 1,
+      "ros": 1,
+      "ble": 2,
+      "mtu": 1
+    },
+    "problems": [],
+    "ros_links": [
+      {
+        "ev": "ros",
+        "link": "up",
+        "at_ms": 4321
+      }
+    ]
+  },
+  "observations": {
+    "status": {
+      "messages": 1000,
+      "max_gap_s": 1.1111390590667725
+    },
+    "network": {
+      "messages": 887,
+      "max_gap_s": 1.2282581329345703
+    },
+    "capabilities": {
+      "messages": 1000,
+      "max_gap_s": 1.1273083686828613
+    }
+  },
+  "baseline": {
+    "date": "2026-10-20",
+    "network": "car AP, idle ROS session",
+    "udp_sent": 4363,
+    "udp_lost": 0,
+    "median_ms": 4.901,
+    "p95_ms": 8.659,
+    "max_ms": 46.614,
+    "comparison_limit": "Different topology and active ROS Echo workload; not a controlled regression comparison"
+  }
+}
