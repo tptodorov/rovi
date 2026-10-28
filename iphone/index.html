@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f3f5ef">
-  <meta name="rovi-build" content="2b5104400362">
+  <meta name="rovi-build" content="82fbd45f4050">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Rovi · Controller</title>
-  <link rel="stylesheet" href="style.2b5104400362.css">
+  <link rel="stylesheet" href="style.82fbd45f4050.css">
 </head>
 <body data-phase="disconnected" data-armed="false">
   <a class="skip-link" href="#controls">Skip to driving controls</a>
@@ -52,9 +52,16 @@
 
 
     <details id="diagnostics" class="diagnostics">
-      <summary><span>Connection &amp; diagnostics</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <summary><span>Connection, network &amp; diagnostics</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
       <div class="diagnostics-body">
         <p id="device">No car selected</p>
+        <h2>Car network</h2>
+        <p id="network-info" aria-live="polite">Network information unavailable</p>
+        <div class="network-actions" aria-label="Change car network">
+          <button id="network-home" class="quiet-button" type="button" disabled>Use Home Wi-Fi</button>
+          <button id="network-car" class="quiet-button" type="button" disabled>Use car network</button>
+        </div>
+        <p id="network-message" role="status">Switching ends Bluetooth control. STOP to disarm first.</p>
         <div class="detail-heading"><h2>Last reported by car</h2><span id="status-age">No report</span></div>
         <p id="reported">State unknown · reason unknown · error unknown</p>
         <p id="limits">Limits unavailable</p><p id="windows">Windows unavailable</p><p id="stream">Stream: no writes</p>
@@ -82,6 +89,6 @@
     <div class="primary-slot"><button id="arm" class="primary-action" type="button" disabled>ARM AT ZERO</button><button id="physical-drive" class="primary-action" type="button" aria-pressed="false" hidden disabled>START TILT CONTROL</button></div>
     <button id="stop" class="stop" type="button" aria-label="STOP" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 5v8l5 5h8l5-5V8l-5-5z"/><path d="M9 9h6v6H9z"/></svg><span>STOP<small>Disarm car</small></span></button>
   </footer>
-  <script type="module" src="app.2b5104400362.js"></script>
+  <script type="module" src="app.82fbd45f4050.js"></script>
 </body>
 </html>
