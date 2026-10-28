@@ -50,6 +50,13 @@ Network information is `mode=… pending=… fallback=… ip=…` (BLE/UDP: a fi
 
 Scan ≤1500 ms (spec); join + DHCP + router ≤8000 ms after the network is found (raised from 5000 ms by Todor on 2026-10-26 after board check 6.1 measured 4.5 s on good runs and a 2 s router retry; ADR-0016's "~5 s" predates this). Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the `ros` feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.
 
+### D15. The router host is blackbox, on its cable (decided by Todor, verified 2026-10-28)
+
+The home ROS router is `rmw_zenohd` from ROS 2 Jazzy (`rmw_zenoh_cpp` 0.2.11, the version CI and the bench use) in a Docker container, run by a systemd unit in `~/mycfg` (`hosts/blackbox/modules/rovi-ros-router.nix`). Blackbox is always on; blade is a laptop and hosts nothing permanent. Facts that shaped it:
+* The car's `ROVI_HOME_ROUTER` is a literal address (zenoh-nostd takes no hostnames; [#115](https://github.com/tptodorov/rovi/issues/115)), so the host needs a stable address: a DHCP reservation (Todor's, in the home router) for its wired MAC. The wired address is the one to use: with two interfaces on one subnet the kernel's strict reverse-path filtering drops traffic that arrives on Wi-Fi while the cable is in.
+* TCP 7447 must be open on every interface that can carry the LAN (the first version opened Wi-Fi only; the car would have been refused).
+* Blackbox on Wi-Fi alone was unusable for transfers (200-1500 ms latency, broken SSH streams): the router host must be cabled.
+
 ### D14. BLE is quiet while a home attempt runs (board-measured, 2026-10-26)
 
 With both BLE slots advertising, the Wi-Fi scan took 2.7 s instead of 160 ms (coexistence), past the scan budget. `Device::radio_allowed(Ble)` is false while attempting; BLE advertises again in home mode or fallback. The attempt lasts at most about 9.5 s (1.5 s scan, 8 s join budget), during which the car cannot be driven anyway.

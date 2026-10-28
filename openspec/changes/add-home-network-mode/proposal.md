@@ -24,7 +24,7 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 * **Trust.** Any device on the home network may control the car, with no new authentication ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) station-mode exclusion superseded).
 * **Observability.** New log events report mode changes, mode commands and each join step with its duration.
 
-Deferred: a shared Rust client crate for all clients ([#108](https://github.com/tptodorov/rovi/issues/108)) and the iPhone mode/network UI ([#109](https://github.com/tptodorov/rovi/issues/109)). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.
+Deferred: a shared Rust client crate for all clients ([#108](https://github.com/tptodorov/rovi/issues/108)), the iPhone mode/network UI ([#109](https://github.com/tptodorov/rovi/issues/109)) and resolving the router by name via mDNS ([#115](https://github.com/tptodorov/rovi/issues/115)). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.
 
 ## Capabilities
 
