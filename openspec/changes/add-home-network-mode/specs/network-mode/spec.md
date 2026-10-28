@@ -28,7 +28,7 @@ At boot the car SHALL attempt home mode when the firmware was built with home se
 
 ### Requirement: Join budget
 
-Every home-mode attempt (at boot, after a mode command, after a BLE override ends, after station loss) SHALL fall back when the network is not found by a scan lasting at most 1500 ms. Once found, joining, DHCP and the ROS router session together SHALL complete within 5000 ms or the car SHALL fall back. Each step's outcome and duration SHALL be logged.
+Every home-mode attempt (at boot, after a mode command, after a BLE override ends, after station loss) SHALL fall back when the network is not found by a scan lasting at most 1500 ms. Once found, joining, DHCP and the ROS router session together SHALL complete within 8000 ms or the car SHALL fall back. Each step's outcome and duration SHALL be logged.
 
 #### Scenario: Network not in range
 
@@ -40,7 +40,7 @@ Every home-mode attempt (at boot, after a mode command, after a BLE override end
 
 - **GIVEN** built-in settings with a wrong passphrase
 - **WHEN** the car boots
-- **THEN** the join step is logged as failed and the car enters fallback mode with reason join within 5000 ms of the network being found
+- **THEN** the join step is logged as failed and the car enters fallback mode with reason join within 8000 ms of the network being found
 
 ### Requirement: Fallback is sticky
 

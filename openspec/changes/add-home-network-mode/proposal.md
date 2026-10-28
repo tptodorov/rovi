@@ -9,7 +9,7 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 ## What Changes
 
 * **Home mode.** At boot, if the firmware was built with home Wi-Fi settings, the car joins the home Wi-Fi as a station (DHCP) and connects to the configured ROS router. When both succeed it serves ROS 2 (and UDP) there ([ADR-0011](../../../docs/adr/0011-ros-auto-arm.md) auto-arm unchanged).
-* **Fallback.** If no settings were built in, the network is not seen in a ~1.5 s scan, or join + address + ROS router do not succeed within ~5 s, the car runs exactly today's AP behaviour. It stays there until reboot or a Home mode command. AP and station never run at the same time.
+* **Fallback.** If no settings were built in, the network is not seen in a ~1.5 s scan, or join + address + ROS router do not succeed within ~8 s, the car runs exactly today's AP behaviour. It stays there until reboot or a Home mode command. AP and station never run at the same time.
 * **Mode command on every transport.** A disarmed owner on BLE, UDP or ROS can choose Home or Car network; it takes effect when that ownership ends. So every mode is reachable from any one type of client, without reflashing or touching the car.
 * **Network information on every transport.** Mode, pending command, last fallback reason and the car's home IP, readable by owners and non-owners (BLE characteristic, UDP kind, ROS topic).
 * **Takeover priority: BLE > UDP > ROS.** UDP preempts a ROS owner in both modes; in home mode BLE (which keeps advertising) preempts UDP or ROS. Preemption stops the car and leaves the new owner disarmed. **BREAKING** for [ADR-0004](../../../docs/adr/0004-single-owner-latest-setpoint.md)'s first-claim rule.
@@ -24,7 +24,7 @@ Rovi can only be driven from a device on its own access point (AP) or over BLE, 
 * **Trust.** Any device on the home network may control the car, with no new authentication ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) station-mode exclusion superseded).
 * **Observability.** New log events report mode changes, mode commands and each join step with its duration.
 
-Deferred: a shared Rust client crate for all clients ([#108](https://github.com/tptodorov/rovi/issues/108)) and the iPhone mode/network UI ([#109](https://github.com/tptodorov/rovi/issues/109)). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.
+Deferred: a shared Rust client crate for all clients ([#108](https://github.com/tptodorov/rovi/issues/108)), the iPhone mode/network UI ([#109](https://github.com/tptodorov/rovi/issues/109)) and resolving the router by name via mDNS ([#115](https://github.com/tptodorov/rovi/issues/115)). Out of scope: a ROS echo (router liveliness covers it), running AP and station together, UDP authentication, mDNS/zenoh scouting for the router, NTP/OTA, changing home settings without a reflash, automatic retry of home Wi-Fi from fallback, BLE preemption in fallback mode.
 
 ## Capabilities
 

@@ -3,10 +3,13 @@
 //! acceptance (ADR-0002).
 //!
 //! `simcar [port] [lease_ms claim_window_ms reclaim_window_ms]`. Logs one `ev=` line per event (`events.rs`).
+//! Virtual BLE listens on `port + 1` (`vble.rs`); `ROVI_SIM_HOME=1` scripts home mode (`net.rs`).
 //! With `ros`, the router endpoint is `ROVI_ZENOH_ROUTER` (default `tcp/127.0.0.1:7447`).
 
+mod net;
 #[cfg(feature = "ros")]
 mod ros;
+mod vble;
 
 use rovi_core::arbiter::{Config, Effects, State};
 use rovi_core::device::Device;
@@ -17,6 +20,12 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 pub type Shared = Arc<Mutex<Device>>;
+
+/// Can Wi-Fi input reach the car? Not while BLE owns it (radio off) or while a home-mode attempt
+/// is still joining (no network yet); the sim's sockets stay open, so this gate stands in.
+pub fn wifi_up(d: &Device) -> bool {
+    d.wifi_allowed() && !matches!(d.network().mode(), rovi_core::network::Mode::Attempting(_))
+}
 
 pub fn ms(t0: Instant) -> u64 {
     t0.elapsed().as_millis() as u64
@@ -50,12 +59,19 @@ fn udp_loop(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
     println!("simcar listening on udp/{port}");
     let (mut buf, mut out) = ([0u8; 1500], [0u8; 128]);
     let mut owner_addr = None;
+    let mut peers = std::collections::HashMap::new();
     loop {
         match sock.recv_from(&mut buf) {
+            // Wi-Fi is off while BLE owns the car: nothing arrives.
+            Ok(_) if !wifi_up(&dev.lock().unwrap()) => {}
             Ok((n, from)) => {
+                peers.insert(peer_id(from), from);
                 let r = {
                     let mut d = dev.lock().unwrap();
                     let r = d.on_udp(ms(t0), peer_id(from), &buf[..n], &mut out);
+                    if let Some((source, cmd, error)) = d.take_mode_log() {
+                        log(Event::ModeCmd { source, cmd, error }, t0);
+                    }
                     if d.arbiter().owner().is_some_and(|o| {
                         o.source == rovi_core::arbiter::Source::Udp && o.id == peer_id(from)
                     }) {
@@ -75,6 +91,17 @@ fn udp_loop(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
                 ) => {}
             Err(e) => return Err(e),
         }
+        // A taken-over UDP owner hears it was stopped (spec: Takeover notice).
+        let notice = dev
+            .lock()
+            .unwrap()
+            .take_takeover_notice(rovi_core::arbiter::Source::Udp);
+        if let Some(n) = notice {
+            let len = n.udp_frame(&mut out);
+            if let Some(to) = peers.get(&n.id) {
+                sock.send_to(&out[..len], to)?;
+            }
+        }
         let pending = dev.lock().unwrap().udp_status_notification(&mut out);
         if let Some((peer, n)) = pending {
             if let Some(to) = owner_addr.filter(|a| peer_id(*a) == peer) {
@@ -84,7 +111,7 @@ fn udp_loop(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
     }
 }
 
-fn control_loop(dev: Shared, t0: Instant) {
+fn control_loop(dev: Shared, t0: Instant, mut net: net::Net) {
     #[cfg(feature = "motor-bench")]
     let mut drive = {
         let motor = rovi_motor_control::MotorControl::new(
@@ -98,6 +125,7 @@ fn control_loop(dev: Shared, t0: Instant) {
     let mut last = (State::Open, [0.0f32; 4]);
     loop {
         std::thread::sleep(Duration::from_millis(10));
+        net.tick(&dev, t0);
         let (fx, state, wheels) = {
             let mut d = dev.lock().unwrap();
             #[cfg(not(feature = "motor-bench"))]
@@ -181,9 +209,11 @@ fn main() -> std::io::Result<()> {
     #[cfg(feature = "motor-bench")]
     println!("{}", rovi_drive::bench::BANNER);
 
-    let (d, u) = (dev.clone(), dev.clone());
-    std::thread::spawn(move || control_loop(d, t0));
+    let net = net::start(&dev, t0);
+    let (d, u, b) = (dev.clone(), dev.clone(), dev.clone());
+    std::thread::spawn(move || control_loop(d, t0, net));
     std::thread::spawn(move || udp_loop(u, t0, port).expect("udp"));
+    std::thread::spawn(move || vble::run(b, t0, port + 1).expect("virtual ble"));
 
     #[cfg(feature = "ros")]
     ros::run(dev, t0);

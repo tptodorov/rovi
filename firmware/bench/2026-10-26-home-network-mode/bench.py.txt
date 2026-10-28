@@ -1,0 +1,38 @@
+"""6.1 helpers: flash an image, capture serial from a fresh boot, stop the monitor cleanly."""
+import os, signal, subprocess, sys, time
+sys.path.insert(0, "/home/todor/tptodorov/rovi/apps/simcar/scenarios")
+import carlog
+PORT = "/dev/serial/by-id/usb-1a86_USB_Single_Serial_5C85037678-if00"
+FW = "/home/todor/tptodorov/rovi/firmware/target/b61-{}/xtensa-esp32s3-none-elf/release/rovi-firmware"
+OUT = "/home/todor/tptodorov/rovi/firmware/bench/2026-10-26-home-network-mode"
+os.makedirs(OUT, exist_ok=True)
+
+def free_port():
+    subprocess.run(["pkill", "-TERM", "-x", "espflash"]); time.sleep(1)
+    assert subprocess.run(["pgrep", "-x", "espflash"], capture_output=True).returncode != 0, "espflash still running"
+
+def flash(image):
+    free_port()
+    r = subprocess.run(["espflash", "flash", "--non-interactive", "--port", PORT, FW.format(image)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout[-800:] + r.stderr[-800:]
+
+def monitor(log):
+    """Starts serial capture (the monitor resets the board: a fresh boot). Returns the process."""
+    free_port()
+    f = open(log, "wb")
+    return subprocess.Popen(["espflash", "monitor", "--port", PORT, "--non-interactive", "--skip-update-check"],
+                            stdout=f, stderr=subprocess.STDOUT, start_new_session=True)
+
+def stop(p):
+    os.killpg(p.pid, signal.SIGTERM)
+    try: p.wait(5)
+    except subprocess.TimeoutExpired: os.killpg(p.pid, signal.SIGKILL); p.wait(5)
+    free_port()
+
+def wait(log, pred, timeout, offset=0):
+    found, seen = carlog.wait(log, offset, pred, timeout)
+    return found, seen
+
+def no_passphrase(*logs):
+    home = subprocess.check_output(["gopass", "show", "-o", "env/rovi/home"], text=True).strip().encode()
+    return not any(home in open(l, "rb").read() for l in logs)

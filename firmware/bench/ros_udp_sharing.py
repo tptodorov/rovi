@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""UDP and ROS share the AP: the non-owner can neither claim, drive nor renew the lease.
+"""UDP and ROS share Wi-Fi: ROS cannot take the car from UDP; UDP takes it from ROS disarmed.
 
 Announced batch; requires Todor's go and live serial capture. Run inside the Jazzy
 router container (ros_stops.sh) with ROVI_TARGET set. Owners arm with zero wheels
@@ -8,8 +8,10 @@ only; the intruder streams vx=0.1, which must never reach the wheels.
 1. UDP owner armed at zero, then silent. A ROS node streams vx=0.1: no ROS claim,
    wheels stay zero, AP stays on, and the UDP lease still expires ~1 s after its
    last setpoint. ROS stops; BYE releases.
-2. ROS owner auto-armed at zero, then silent. UDP HELLO gets BUSY and its vx=0.1
-   setpoints are ignored; the ROS lease still expires. ROS STOP; the car releases.
+2. ROS owner auto-armed at zero, then silent. UDP HELLO takes the car over (ADR-0016): an
+   owner-lost stop for ROS, and the UDP owner starts disarmed, so its vx=0.1 setpoints without
+   ARM never reach the wheels. UDP BYE releases. (Until 2026-10-23 phase 2 expected BUSY; see
+   the 2026-10-19 bench notes for that rule's evidence.)
 """
 import os
 from pathlib import Path
@@ -94,7 +96,7 @@ def check(path):
         client.s.close()
     serial(offset, "released")
 
-    print("=== 2. ROS owner, UDP intruder ===", flush=True)
+    print("=== 2. ROS owner, UDP takes over ===", flush=True)
     offset = path.stat().st_size
     # Zeros claim and auto-arm; the first may be dropped while the car learns the publisher.
     end = time.monotonic() + 5
@@ -104,33 +106,28 @@ def check(path):
         spin(0.05)
     serial(offset, "claimed", source="Ros")
     serial(offset, "state", state="Armed", wheels_pm=[0, 0, 0, 0])
-    armed = first(offset, "state", state="Armed")
     silent = path.stat().st_size
-    intruder = udp.Client()
+    taker = udp.Client()
     try:
-        reply = intruder.hello()
-        assert reply and reply[0] == udp.BUSY, reply
-        print("ROS silent; UDP gets BUSY and streams vx=0.1 for 2 s: wheels must stay still",
+        reply = taker.hello()
+        assert reply and reply[0] == udp.ACK, reply
+        serial(silent, "preempted", source="Ros")
+        serial(silent, "stop", reason="OwnerLost")
+        serial(silent, "claimed", source="Udp")
+        after = path.stat().st_size
+        print("UDP took over disarmed; it streams vx=0.1 without ARM for 2 s: wheels must stay still",
               flush=True)
         end = time.monotonic() + INTRUDE_SECONDS
         while time.monotonic() < end:
-            intruder.send(udp.SETPOINT, cdr(0.1))
-            intruder.send(udp.ARM)
+            taker.send(udp.SETPOINT, cdr(0.1))
             time.sleep(0.05)
+        never(after, "disarmed UDP owner")
+        offset = path.stat().st_size
+        taker.send(udp.BYE)
     finally:
-        intruder.s.close()
-    serial(silent, "stop", reason="LeaseExpired")
-    stop = first(silent, "stop", reason="LeaseExpired")
-    assert stop["at_ms"] - armed["at_ms"] < 1600, (armed, stop)
-    never(silent, "UDP intruder")
-    print(f"ROS lease expired {stop['at_ms'] - armed['at_ms']} ms after arming; "
-          "no UDP claim, zero wheels", flush=True)
-    offset = path.stat().st_size
-    message = Bool()
-    message.data = False
-    arm.publish(message)
+        taker.s.close()
+    serial(offset, "released")
     node.destroy_publisher(cmd)
-    serial(offset, "released", timeout=8)
     node.destroy_node()
     print("UDP/ROS sharing: passed; released", flush=True)
 

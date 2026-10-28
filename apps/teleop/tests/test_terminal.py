@@ -11,7 +11,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
-from apps.teleop.protocol import parse, frame, HELLO, ACK, ARM, STOP, BYE, STATUS, ECHO, SETPOINT, BUSY
+from apps.teleop.protocol import parse, frame, HELLO, ACK, ARM, STOP, BYE, STATUS, ECHO, SETPOINT, BUSY, MODE, INFO
 from apps.teleop.tests.test_protocol import CAPS
 
 ROOT=Path(__file__).resolve().parents[3]
@@ -41,6 +41,8 @@ class Peer:
                 reply=frame(STATUS,42,q,b'\x02\x00\x00')
             if kind==STOP:reply=frame(STATUS,42,q,b'\x03\x01\x00')
             if kind==ECHO and not self.drop_echo:reply=data
+            if kind==MODE:reply=frame(STATUS,42,q,b'\x01\x00\x00')  # accepted while disarmed
+            if kind==INFO:reply=frame(INFO,0,q,CAPS+b'\x01\x00\x00'+bytes([2,0,0,0,192,168,1,50]))
             if reply:self.sock.sendto(reply,peer)
     def close(self):
         self.alive=False;self.thread.join(timeout=1);self.sock.close()
@@ -73,6 +75,26 @@ class Terminal:
         self.proc.stdout.close()
         if self.master is not None:os.close(self.master)
         os.close(self.slave)
+
+class ModeTests(unittest.TestCase):
+    def test_mode_option_sends_the_command_and_network_line_is_shown(self):
+        peer=Peer();t=None
+        try:
+            t=Terminal(peer.address,[sys.executable,'-u','-m','apps.teleop','--target',f'{peer.address[0]}:{peer.address[1]}','--mode','car'])
+            t.expect('Connected disarmed')
+            t.expect('Car network: mode=home pending=none fallback=none ip=192.168.1.50')
+            t.expect('Mode car-network pending; it applies when this controller releases the car (quit)')
+            self.assertIn((MODE,b'\x02'),[(k,pl) for k,_,_,pl in peer.packets])
+            self.assertFalse(any(k==ARM for k,*_ in peer.packets),'a mode command never arms')
+            self.assertEqual(t.finish(),0)
+        finally:
+            if t:t.close()
+            peer.close()
+
+    def test_mode_option_is_validated(self):
+        result=subprocess.run([sys.executable,'-m','apps.teleop','--target','127.0.0.1:7777','--mode','away'],cwd=ROOT,capture_output=True,timeout=5)
+        self.assertEqual(result.returncode,2)
+
 
 class TerminalTests(unittest.TestCase):
     def setUp(self):

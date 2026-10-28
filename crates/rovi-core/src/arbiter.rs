@@ -77,6 +77,8 @@ pub struct Effects {
     /// Only for a lease stop: detection time minus the accepted setpoint's lease deadline.
     /// Captured before clearing the deadline; independent of log/transport delivery time.
     pub lease_late_ms: Option<u64>,
+    /// A higher-priority controller took the car from this owner (ADR-0016): tell it so.
+    pub preempted: Option<Claimant>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -197,6 +199,20 @@ impl Arbiter {
         }
     }
 
+    /// Takes the car from the current owner for `who` (ADR-0016): an owner-lost stop and release
+    /// for the old owner, then a fresh, disarmed claim. The caller decides who may preempt.
+    pub fn preempt(&mut self, now: u64, who: Claimant) -> Effects {
+        let old = self.owner;
+        self.open();
+        let claimed = self.claim(now, who).unwrap_or_default();
+        Effects {
+            stop: Some(StopReason::OwnerLost),
+            released: old.is_some(),
+            preempted: old,
+            ..claimed
+        }
+    }
+
     pub fn arm(&mut self, now: u64, who: Claimant) -> Result<(), Error> {
         self.check_owner(who)?;
         if !self.lease_valid(now) || self.fresh_needed {
@@ -267,10 +283,9 @@ impl Arbiter {
         let stop = (self.state == State::Armed).then_some(StopReason::OwnerLost);
         self.open();
         Ok(Effects {
-            claimed: None,
             released: true,
             stop,
-            lease_late_ms: None,
+            ..Effects::default()
         })
     }
 
@@ -625,6 +640,7 @@ mod tests {
                 released: true,
                 stop: Some(StopReason::OwnerLost),
                 lease_late_ms: None,
+                preempted: None,
             }
         );
         assert_eq!(a.state(), State::Open);

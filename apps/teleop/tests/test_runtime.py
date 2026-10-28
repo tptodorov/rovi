@@ -26,8 +26,9 @@ class RuntimeTests(unittest.TestCase):
     def test_cleanup_attempts_every_send_despite_failures(self):
         for fail in [(SETPOINT,),(STOP,),(SETPOINT,STOP),(BYE,)]:
             c,clock,sock,out=self.client(fail)
+            before=len(sock.sent)  # the claim's INFO query (ADR-0016) is not part of cleanup
             self.assertFalse(c.cleanup())
-            self.assertEqual([p[0] for p in sock.sent],[SETPOINT,STOP,BYE])
+            self.assertEqual([p[0] for p in sock.sent[before:]],[SETPOINT,STOP,BYE])
             self.assertLessEqual(clock.now,500)
             self.assertIn('unconfirmed',' '.join(out))
 

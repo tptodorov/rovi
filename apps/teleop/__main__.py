@@ -38,6 +38,9 @@ def main(argv=None):
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument('--target',type=target,metavar='IPV4:PORT')
     mode.add_argument('--ble',type=ble_address,nargs='?',const='Rovi M8',metavar='MAC',help='BLE mode; discover one Rovi M8 or pin its MAC')
+    parser.add_argument('--mode',choices=('home','car'),
+                        help='after connecting, ask the car to join its home network (home) or run its own car network (car) '
+                             'once this controller releases it; the car must be disarmed (ADR-0016)')
     args = parser.parse_args(argv)
     previous = {sig:signal.getsignal(sig) for sig in (signal.SIGTERM,signal.SIGHUP)}
     try:
@@ -47,12 +50,12 @@ def main(argv=None):
             emit = lambda message:console(sys.stdout.fileno(),message)
             if args.ble is not None:
                 from .ble import BleClient
-                client = BleClient(args.ble,sys.stdin.fileno(),emit)
+                client = BleClient(args.ble,sys.stdin.fileno(),emit,mode=args.mode)
                 asyncio.run(client.run())
             else:
                 with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as sock:
                     sock.setblocking(False)
-                    client = Client(args.target,sock,sys.stdin.fileno(),emit)
+                    client = Client(args.target,sock,sys.stdin.fileno(),emit,mode=args.mode)
                     client.run()
             return 0 if client.cleanup_ok else 1
     except (ClientError,OSError,termios.error) as exc:

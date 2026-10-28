@@ -1,0 +1,32 @@
+"""B2: BLE watcher reads Network; UDP INFO to the car's home address; BLE claim and release."""
+import asyncio, socket, struct, sys, json
+sys.path.insert(0, "/home/todor/tptodorov/rovi")
+from bleak import BleakClient, BleakScanner
+from apps.teleop.ble import CONTROL, STATUS, NETWORK, NAME
+from apps.teleop.protocol import network_text
+
+def info(ip):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(1)
+    s.sendto(b"RV\x01\x0b" + struct.pack("<II", 0, 7), (ip, 7777))
+    d = s.recvfrom(256)[0]; s.close()
+    return d[3], list(d[12+27:12+30]), network_text(d[12+30:12+38])
+
+async def main():
+    out = {}
+    dev = await BleakScanner.find_device_by_name(NAME, timeout=8)
+    assert dev, "car not advertising in home mode"
+    async with BleakClient(dev, timeout=10) as c:
+        out["watch_status"] = list(await c.read_gatt_char(STATUS))
+        net = bytes(await c.read_gatt_char(NETWORK)); out["watch_network"] = network_text(net)
+        ip = ".".join(map(str, net[4:8])); out["ip"] = ip
+        out["udp_info"] = info(ip)
+        await asyncio.sleep(1)
+        await c.write_gatt_char(CONTROL, b"\x02", response=True)   # claim with STOP
+        out["claimed_status"] = list(await c.read_gatt_char(STATUS))
+        await asyncio.sleep(2)
+        try:
+            info(ip); out["udp_while_ble_owns"] = "answered (unexpected)"
+        except socket.timeout:
+            out["udp_while_ble_owns"] = "no answer (station off)"
+    print(json.dumps(out))
+asyncio.run(main())

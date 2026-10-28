@@ -18,9 +18,9 @@ Todor's constraint: extend the current protocols and implementation minimally so
 
 A firmware task runs `attempt home → serve → (BLE override | link loss) → attempt home → … | fallback (terminal until reboot)`. The pure transition logic lives in `rovi-core` (testable on the host and in the simulator); the firmware task executes scan/join/DHCP/router steps with the budgets and reports outcomes to it. Alternative considered: deciding inside `wifi_gate` — rejected, it would mix radio switching with mode policy and is not host-testable.
 
-### D2. Station and AP are exclusive; the stack is rebuilt per mode
+### D2. Station and AP are exclusive; one network stack per boot (builder's call, 2026-10-23)
 
-Station mode uses `wifi::Interface::station()` with DHCPv4; fallback uses the existing AP interface and static address. A mode change stops the radio interface, tears down the stack-dependent tasks (UDP, ROS) and restarts them on the new stack. Alternative: AP+STA with channel sharing — rejected by Todor (AP only as fallback). Turning the station off for a BLE takeover must work without a reset (it happens with a BLE link up). If `esp-radio` 1.0.0-beta.1 cannot switch between station and AP at runtime, the home→fallback switch may use a software reset into a forced-fallback flag held in RTC memory, but only when no BLE connection exists; the extra `boot` event must be logged (builder's call).
+A boot uses either the station interface with DHCPv4 (home attempt) or the AP interface with the static `192.168.4.1/24` (fallback), and the existing UDP and ROS tasks run unchanged on that one stack. Switching between them is a software reset with a one-word flag in persistent RTC memory: `SWITCH | reason` boots into fallback with that reason; power-on and every other reset attempt home. A BLE takeover in home mode does not reset: the station disconnects and later rejoins through a normal attempt. Considered: two live stacks (both interfaces exist in esp-radio 1.0.0-beta.1) with the UDP task on two sockets and the ROS adapter switching link managers — rejected for now: a second router link costs about 16 KB of RAM and would change the M8-validated UDP/ROS code paths, while mode switches are rare (a mode command, a failed attempt, a lost home network). Costs: an `ev=boot reset=Sw` line, a BLE watcher is dropped, and the reboot counts against the 2500 ms "AP up" budget, which board check 6.1 measures. AP+STA stays rejected by Todor.
 
 ### D3. Preemption is one arbiter rule: BLE > UDP > ROS
 
@@ -48,7 +48,20 @@ Network information is `mode=… pending=… fallback=… ip=…` (BLE/UDP: a fi
 
 ### D7. Budgets
 
-Scan ≤1500 ms (spec); join + DHCP + router ≤5000 ms after the network is found. Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the `ros` feature ignore home settings and always fall back (home mode requires a ROS router). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.
+Scan ≤1500 ms (spec); join + DHCP + router ≤8000 ms after the network is found (raised from 5000 ms by Todor on 2026-10-26 after board check 6.1 measured 4.5 s on good runs and a 2 s router retry; ADR-0016's "~5 s" predates this). Every home-mode attempt (boot, after a BLE disconnect, after station loss) uses the same budgets, starting when the attempt starts. Builds without the `ros` feature ignore home settings and always fall back (home mode requires a ROS router). The scan step tries up to three times inside its budget (one active scan takes ~160 ms and missed the network about 1 in 30 boots on the board; a missing network still falls back in ~1.8 s). Values are compile-time constants, logged per step so they can be tuned from board data. The router step reuses the existing zenoh session open with a deadline instead of its retry loop.
+
+### D15. The router host is blackbox, on its cable (decided by Todor, verified 2026-10-28)
+
+The home ROS router is `rmw_zenohd` from ROS 2 Jazzy (`rmw_zenoh_cpp` 0.2.11, the version CI and the bench use) in a Docker container, run by a systemd unit in `~/mycfg` (`hosts/blackbox/modules/rovi-ros-router.nix`). Blackbox is always on; blade is a laptop and hosts nothing permanent. Facts that shaped it:
+* The car's `ROVI_HOME_ROUTER` is a literal address (zenoh-nostd takes no hostnames; [#115](https://github.com/tptodorov/rovi/issues/115)), so the host needs a stable address: a DHCP reservation (Todor's, in the home router) for its wired MAC. The wired address is the one to use: with two interfaces on one subnet the kernel's strict reverse-path filtering drops traffic that arrives on Wi-Fi while the cable is in.
+* TCP 7447 must be open on every interface that can carry the LAN (the first version opened Wi-Fi only; the car would have been refused).
+* A host with two interfaces on the home subnet must set `arp_ignore=1`/`arp_announce=2`: otherwise it answers the car's ARP request on both, the car may cache the Wi-Fi MAC, and its traffic is dropped by reverse-path filtering (the car stalled right after its first batch; found on the board 2026-10-28). Applied in `~/mycfg`.
+* No DHCP reservation is available (the devolo is only a bridge); the router host's address is the one its lease gives (stable across a reboot in practice). Name resolution ([#115](https://github.com/tptodorov/rovi/issues/115)) is the address-free alternative.
+* Blackbox on Wi-Fi alone was unusable for transfers (200-1500 ms latency, broken SSH streams): the router host must be cabled.
+
+### D14. BLE is quiet while a home attempt runs (board-measured, 2026-10-26)
+
+With both BLE slots advertising, the Wi-Fi scan took 2.7 s instead of 160 ms (coexistence), past the scan budget. `Device::radio_allowed(Ble)` is false while attempting; BLE advertises again in home mode or fallback. The attempt lasts at most about 9.5 s (1.5 s scan, 8 s join budget), during which the car cannot be driven anyway.
 
 ### D10. BLE claims on the first command; two connection slots
 

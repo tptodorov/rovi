@@ -1,0 +1,20 @@
+"""Claim with an acknowledged STOP, send a BLE mode command, show the network info, disconnect."""
+import asyncio, json, sys
+sys.path.insert(0, "/home/todor/tptodorov/rovi")
+from bleak import BleakClient, BleakScanner
+from apps.teleop.ble import CONTROL, STATUS, NETWORK, NAME
+from apps.teleop.protocol import network_text
+cmd = {"home": 3, "car": 4}[sys.argv[1]]
+async def main():
+    dev = await BleakScanner.find_device_by_name(NAME, timeout=10)
+    assert dev, "car not advertising"
+    out = {}
+    async with BleakClient(dev, timeout=10) as c:
+        out["before"] = network_text(bytes(await c.read_gatt_char(NETWORK)))
+        await c.write_gatt_char(CONTROL, b"\x02", response=True)          # claim, disarmed
+        out["claimed_status"] = list(await c.read_gatt_char(STATUS))
+        await c.write_gatt_char(CONTROL, bytes([cmd]), response=True)      # the mode command
+        out["after_cmd"] = network_text(bytes(await c.read_gatt_char(NETWORK)))
+        out["status_after"] = list(await c.read_gatt_char(STATUS))
+    print(json.dumps(out))
+asyncio.run(main())

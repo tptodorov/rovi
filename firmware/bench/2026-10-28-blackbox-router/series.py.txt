@@ -1,0 +1,21 @@
+import sys, subprocess; sys.path.insert(0, "/tmp/rovi-61")
+import bench
+bench.OUT = "/home/todor/tptodorov/rovi/firmware/bench/2026-10-28-blackbox-router"
+from bench import *
+mode, n = sys.argv[1], int(sys.argv[2])
+res = []
+for i in range(n):
+    log = f"{bench.OUT}/series-{mode}-{i+1}.log"
+    ping = None
+    if mode == "bbping":
+        ping = subprocess.Popen(["ssh", "-o", "BatchMode=yes", "blackbox", "ping -c 60 -i 0.25 -W 1 192.168.1.193 >/dev/null 2>&1"])
+    if mode == "ping":
+        ping = subprocess.Popen(["ping", "-c", "60", "-i", "0.25", "-W", "1", "192.168.1.193"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    p = monitor(log); wait(log, lambda e: e.get("ev") == "boot" and e.get("reset") == "Sw" or (e.get("ev") == "net" and e.get("mode") == "Home"), 30); time.sleep(2); stop(p)
+    if ping:
+        ping.terminate()
+        if mode == "bbping": subprocess.run(["ssh", "-o", "BatchMode=yes", "blackbox", "pkill -x ping"], capture_output=True)
+    st = {e["step"]: (e["result"], e["took_ms"]) for e in carlog.events(log) if e["ev"] == "net_step"}
+    res.append(st.get("Router", ("none", 0)))
+    print(f"  {mode} {i+1}: router step {st.get('Router')}", flush=True)
+print(f"{mode}: {sum(1 for r in res if r[0]=='Ok')}/{n} ok")

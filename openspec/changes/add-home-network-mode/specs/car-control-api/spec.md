@@ -165,7 +165,7 @@ UDP Echo and the BLE Echo characteristic SHALL return payloads of at most 32 byt
 
 ### Requirement: BLE claim on first command
 
-The car SHALL accept up to two BLE connections. A connection SHALL claim on its first Setpoint or Control write, not on connect; reads, notifications and Echo SHALL NOT claim. A non-owner's Setpoint or Control write that cannot claim SHALL be rejected with an ATT error and change nothing. When BLE ownership ends, the car SHALL disconnect that central; other BLE connections stay.
+The car SHALL accept up to two BLE connections. A connection SHALL claim on its first Setpoint or Control write, not on connect; reads, notifications and Echo SHALL NOT claim. A Control write that cannot claim SHALL be rejected with an ATT error; a Setpoint write (without response) that cannot claim SHALL be ignored. Neither SHALL change anything. When BLE ownership ends, the car SHALL disconnect that central; other BLE connections stay.
 
 #### Scenario: Watching without claiming
 
@@ -176,8 +176,8 @@ The car SHALL accept up to two BLE connections. A connection SHALL claim on its 
 #### Scenario: Second central cannot claim while BLE owns
 
 - **GIVEN** a BLE owner and a second connected BLE central
-- **WHEN** the second central writes a setpoint or ARM
-- **THEN** the write is rejected with an ATT error and the owner, state and lease are unchanged
+- **WHEN** the second central writes a setpoint, then ARM
+- **THEN** the setpoint is ignored, ARM is rejected with an ATT error, and the owner, state and lease are unchanged
 
 #### Scenario: Owner released, watcher stays
 
