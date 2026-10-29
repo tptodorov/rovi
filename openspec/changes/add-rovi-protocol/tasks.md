@@ -11,7 +11,8 @@
 - [ ] 2.3 Switch `rovi-core`, firmware (with and without ROS) and sim car; record firmware size before/after; sim conformance and all workspace tests pass unchanged.
 - [ ] 2.4 Remove implementation variants I1–I10 (design D8): one model per concept with per-transport encodings and ROS text decoders; crate UUIDs in the firmware GATT service; one ROS topic table and a network `Publication` used by firmware and sim; typed sim BLE test transport. Add cross-transport equality tests.
 - [ ] 2.5 Rename the ROS network key `fallback=` to `reason=` (T10, approved) with a recorded vector change; update teleop, bench and conformance readers.
-- [ ] 2.6 Generate the transport-difference table in `docs/reference/protocol.md` from the crate's list of intentional differences.
+- [ ] 2.6 Apply the single client minimum (I11, approved): crate constant used by laptop and phone; first check that no sim scenario or test starts the car with a lease below 500 ms or a claim window below 1000 ms; update teleop tests and README.
+- [ ] 2.7 Generate the transport-difference table in `docs/reference/protocol.md` from the crate's list of intentional differences.
 
 ## 3. Python binding
 

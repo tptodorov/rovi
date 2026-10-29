@@ -25,7 +25,9 @@ Session logic (ARM, deadlines, recovery) is out of scope; the shared client ([#1
 
 ### Modified Capabilities
 
-None. [car-control-api](../../specs/car-control-api/spec.md) behavior and all byte layouts are unchanged; this change moves where they are defined.
+- `laptop-teleoperation`: the minimum accepted lease rises from 200 ms to the single client minimum shared with the phone (lease 500 ms, claim 1000 ms, nonzero reclaim), approved by Todor on 2026-10-29.
+
+[car-control-api](../../specs/car-control-api/spec.md) behavior is unchanged. Byte layouts are unchanged except the approved ROS network key rename (T10).
 
 ## Impact
 

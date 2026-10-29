@@ -55,7 +55,7 @@ Inventory from 2026-10-28 code review (`rovi-core`, `firmware/src`, `apps/simcar
 
 | # | Difference | Today | Aligned |
 | --- | --- | --- | --- |
-| I1 | Capabilities validation | `apps/client`: none; teleop: lease ≥ 200, claim/reclaim > 0; phone: lease ≥ 500, claim ≥ 1000, reclaim ≠ 0 | Crate decoder checks structure (version 1, finite positive geometry, finite non-negative limits, non-zero windows). Client minimums are named per-profile constants in the crate, not inline literals |
+| I1 | Capabilities validation | `apps/client`: none; teleop: lease ≥ 200, claim/reclaim > 0; phone: lease ≥ 500, claim ≥ 1000, reclaim ≠ 0 | Crate decoder checks structure (version 1, finite positive geometry, finite non-negative limits, non-zero windows); clients then apply the single minimum (I11) |
 | I2 | Status consistency (stopped ⇔ reason) | Phone checks at decode; teleop checks later in its session; `apps/client` never | Decoder rejects it |
 | I3 | Network reserved byte 3 | Phone rejects non-zero; Python ignores it | Decoder rejects it |
 | I4 | Names | Python `LeaseExpired`/`None`, phone `CarNetwork`/`'none'`, ROS `lease-expired`/`car-network` | One enum, ROS spelling (D7) |
@@ -65,6 +65,7 @@ Inventory from 2026-10-28 code review (`rovi-core`, `firmware/src`, `apps/simcar
 | I8 | ROS topic table, types and QoS | Duplicated in `firmware/src/ros.rs` and `apps/simcar/src/ros.rs` (~440 differing lines, endpoint indexes by position) | One topic table in the crate; endpoints by name |
 | I9 | Network republish (on change, else every 1 s) | Hand-written in both ROS adapters; Status and Capabilities use `rovi-core` `Publication` | A `rovi-core` network `Publication`, like the others |
 | I10 | Sim virtual BLE op codes | Ad-hoc framing in `vble.rs` and in the conformance suite | Test transport defined in the crate (sim-only, no radio, ADR-0002) |
+| I11 | Minimum windows a client accepts | Laptop lease ≥ 200 ms (from its 200 ms stream-gap bound); phone lease ≥ 500 ms, claim ≥ 1000 ms (unmeasured Bluefy margin) | **Behaviour change, approved by Todor on 2026-10-29:** one crate constant for every client: lease ≥ 500 ms, claim ≥ 1000 ms, reclaim > 0. The car advertises 1000/10000/5000 ms, so no accepted setup is affected. Modifies [laptop-teleoperation](../../specs/laptop-teleoperation/spec.md); the phone already uses these values |
 
 After I8–I9, the firmware and sim ROS adapters differ only in runtime glue (embassy vs std). Shared handler code goes into a common module where the runtimes allow.
 
@@ -84,7 +85,7 @@ After I8–I9, the firmware and sim ROS adapters differ only in runtime glue (em
 | T10 | ROS network key `fallback=` names the field the binary layout and code call `reason` | **Align** (protocol change, text only): rename to `reason=`. Only Rovi tools read it |
 | T11 | Status, Capabilities and Network delivery: BLE read/notify, UDP `INFO`/`HELLO_ACK` replies and unsolicited `STATUS`, ROS periodic topics | Keep; the conformance suite checks the same observable values on all three |
 
-T10 is the only contract change. Todor approved it on 2026-10-29 (“ok, i approve”, in reply to the T10 rename question); it ships as a recorded vector change. All other transport differences are documented in the crate's module docs and `docs/reference/protocol.md`, generated from one table.
+T10 is the only contract change. Todor approved it on 2026-10-29 (“ok, i approve”, in reply to the T10 rename question); it ships as a recorded vector change. Implementation variants I1–I10 change no behaviour; I11 tightens the laptop minimum. All other transport differences are documented in the crate's module docs and `docs/reference/protocol.md`, generated from one table.
 
 ## Alternatives
 

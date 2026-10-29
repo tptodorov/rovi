@@ -50,6 +50,15 @@ Each protocol concept (Setpoint, Command, Status, Capabilities, Network informat
 - **WHEN** the laptop client and the phone receive the same malformed Capabilities, Status or Network bytes
 - **THEN** both reject them with the same error kind
 
+### Requirement: Single client minimum windows
+
+The crate SHALL define one minimum for advertised windows that every client applies after decoding Capabilities: lease at least 500 ms, claim at least 1000 ms and nonzero reclaim. Clients SHALL NOT use their own minimums.
+
+#### Scenario: Short lease
+
+- **WHEN** a car advertises a 400 ms lease
+- **THEN** the laptop and the phone both refuse the connection with the same error, without ARM or nonzero setpoints
+
 ### Requirement: Generated golden vectors
 
 The crate SHALL generate a committed vector file of valid and malformed cases for every message. CI SHALL fail when the committed file differs from the generated one. Bytes for existing messages SHALL be identical to the protocol in force before extraction. A changed vector SHALL be accompanied by a recorded compatibility decision: compatible addition, or a protocol version change that decoders enforce.
