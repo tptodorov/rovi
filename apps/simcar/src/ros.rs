@@ -326,13 +326,13 @@ async fn serve(
     let capabilities_loop = async {
         let mut schedule = rovi_core::capabilities::Publication::default();
         let mut seq = 0i64;
-        let mut buf = [0; rovi_core::capabilities::CDR_MAX];
+        let mut buf = [0; rovi_protocol::capabilities::CDR_MAX];
         loop {
             let pending = {
                 let d = dev.lock().unwrap();
                 schedule
                     .due(ms(t0), d.arbiter().session(), d.arbiter().owner().is_some())
-                    .then(|| d.capabilities_snapshot().encode_cdr(&mut buf))
+                    .then(|| d.capabilities_snapshot().encode_cdr(&mut buf).ok())
                     .flatten()
             };
             if let Some(n) = pending {
@@ -465,7 +465,7 @@ async fn serve(
             async {
                 let mut seq = 0i64;
                 let mut schedule = rovi_core::status::Publication::default();
-                let mut buf = [0u8; rovi_core::status::CDR_MAX];
+                let mut buf = [0u8; rovi_protocol::status::CDR_MAX];
                 loop {
                     // A taken-over ROS owner hears it first (spec: Takeover notice).
                     let notice = d3
@@ -485,7 +485,7 @@ async fn serve(
                     }
                     let snapshot = d3.lock().unwrap().status_snapshot();
                     if schedule.due(ms(t0), snapshot) {
-                        if let Some(n) = snapshot.encode_cdr(&mut buf) {
+                        if let Ok(n) = snapshot.encode_cdr(&mut buf) {
                             seq += 1;
                             let att = Attachment {
                                 seq,

@@ -1,6 +1,6 @@
 # Car control protocol: one operation, three transports
 
-The same rules on every transport ([car-control-api](../../openspec/specs/car-control-api/spec.md), [network-mode](../../openspec/changes/add-home-network-mode/specs/network-mode/spec.md)); this page is the mapping. Byte layouts: [`rovi-core`](../../crates/rovi-core/src/) (`udp.rs`, `device.rs`, `status.rs`, `network.rs`). The [conformance suite](../../apps/simcar/scenarios/conformance.py) runs the shared rules over all three.
+The same rules on every transport ([car-control-api](../../openspec/specs/car-control-api/spec.md), [network-mode](../../openspec/changes/add-home-network-mode/specs/network-mode/spec.md)); this page is the mapping. Byte layouts and codecs: [`rovi-protocol`](../../crates/rovi-protocol/src/) ([ADR-0017](../adr/0017-one-rust-protocol-crate.md)), with generated [vectors](../../crates/rovi-protocol/vectors.json). The [conformance suite](../../apps/simcar/scenarios/conformance.py) runs the shared rules over all three.
 
 | Operation | BLE (GATT service `d47a0010-…`) | UDP (port 7777, `RV` v1 frames) | ROS 2 (node `/rovi`) |
 | --- | --- | --- | --- |

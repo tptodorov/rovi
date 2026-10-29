@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { capabilities, network, setpoint, status } from '../wire.js';
 
-const VECTORS = JSON.parse(readFileSync(new URL('../../../crates/rovi-core/tests/protocol-vectors.json', import.meta.url), 'utf8'));
+const VECTORS = JSON.parse(readFileSync(new URL('../../../crates/rovi-protocol/vectors.json', import.meta.url), 'utf8'));
 const bytes = hex => Uint8Array.from(Buffer.from(hex, 'hex'));
 const cases = (kind, message, encoding) => VECTORS[kind].filter(v => v.message === message && (!encoding || v.encoding === encoding));
 // Phone names (wire.js) for the vector's ROS spellings (design I4).

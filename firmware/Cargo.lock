@@ -1843,6 +1843,7 @@ name = "rovi-core"
 version = "0.1.0"
 dependencies = [
  "libm",
+ "rovi-protocol",
  "xxhash-rust",
 ]
 
@@ -1852,6 +1853,7 @@ version = "0.1.0"
 dependencies = [
  "rovi-core",
  "rovi-motor-control",
+ "rovi-protocol",
 ]
 
 [[package]]
@@ -1876,6 +1878,7 @@ dependencies = [
  "rovi-core",
  "rovi-drive",
  "rovi-motor-control",
+ "rovi-protocol",
  "smart-leds",
  "static_cell",
  "trouble-host",
@@ -1885,6 +1888,10 @@ dependencies = [
 
 [[package]]
 name = "rovi-motor-control"
+version = "0.1.0"
+
+[[package]]
+name = "rovi-protocol"
 version = "0.1.0"
 
 [[package]]

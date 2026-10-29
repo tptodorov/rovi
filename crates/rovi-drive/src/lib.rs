@@ -15,12 +15,9 @@
 #[cfg(test)]
 extern crate std;
 
-use rovi_core::{
-    arbiter::{Effects, State},
-    device::Device,
-    events::Fault,
-};
+use rovi_core::{arbiter::Effects, device::Device, events::Fault};
 use rovi_motor_control::{Driver, Error, Fault as MotorFault, MotorControl};
+use rovi_protocol::State;
 
 #[cfg(feature = "motor-bench")]
 pub mod bench;
@@ -124,13 +121,16 @@ impl<D: Driver> Drive<D> {
 mod tests {
     use super::*;
     use rovi_core::{
-        arbiter::{Config, State, StopReason},
+        arbiter::Config,
         kinematics::Geometry,
         rmw::{gid, Attachment},
-        setpoint::Setpoint,
-        udp::{self, Header, Kind},
     };
     use rovi_motor_control::{Config as MotorConfig, Pins, CAR_CHANNELS};
+    use rovi_protocol::{
+        setpoint::Setpoint,
+        udp::{self, Header, Kind},
+        StopReason,
+    };
     use std::{cell::RefCell, format, rc::Rc, vec::Vec};
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -444,7 +444,7 @@ mod tests {
         car.dev.on_ble_setpoint(1, c, &sp);
         assert_eq!(
             car.dev.on_ble_control(2, c, 1),
-            Err(rovi_core::arbiter::Error::NotReady)
+            Err(rovi_protocol::Error::NotReady)
         );
         assert_eq!(car.dev.ble_status(), [1, 0, 3]);
         car.tick(10);

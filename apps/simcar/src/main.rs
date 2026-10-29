@@ -11,10 +11,11 @@ mod net;
 mod ros;
 mod vble;
 
-use rovi_core::arbiter::{Config, Effects, State};
+use rovi_core::arbiter::{Config, Effects};
 use rovi_core::device::Device;
 use rovi_core::events::{self, Event, Record};
 use rovi_core::kinematics::Geometry;
+use rovi_protocol::State;
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};

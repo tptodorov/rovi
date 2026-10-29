@@ -1,15 +1,16 @@
 //! The device core: the arbiter plus kinematics, driven by UDP datagrams. The BLE and ROS
 //! adapters will feed the same arbiter. Time is passed in; the firmware shell owns the sockets.
 
-use crate::arbiter::{Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason};
-use crate::capabilities::Capabilities;
+use crate::arbiter::{Arbiter, Claimant, Config, Effects, Source};
 use crate::graph::Graph;
 use crate::kinematics::{self, Geometry};
-use crate::network::{Command, Mode, Network, Step};
+use crate::network::{Mode, Network, Step};
 use crate::rmw::Attachment;
-use crate::setpoint::Setpoint;
-use crate::status::Status;
-use crate::udp::{self, Header, Kind};
+use rovi_protocol::capabilities::Capabilities;
+use rovi_protocol::network::Command;
+use rovi_protocol::setpoint::Setpoint;
+use rovi_protocol::status::{Error, State, Status, StopReason};
+use rovi_protocol::udp::{self, Header, Kind};
 
 /// Bytes of the `HELLO_ACK` payload.
 pub const CAPABILITIES_LEN: usize = 27;
@@ -307,7 +308,11 @@ impl Device {
     }
 
     /// Starts in fallback after a mode-switch reset, keeping the reason the switch had.
-    pub fn start_network_fallback(&mut self, home_supported: bool, reason: crate::network::Reason) {
+    pub fn start_network_fallback(
+        &mut self,
+        home_supported: bool,
+        reason: rovi_protocol::network::Reason,
+    ) {
         self.network = Network::boot_fallback(home_supported, reason);
     }
 
@@ -967,6 +972,23 @@ fn ble(conn: BleConn) -> Claimant {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A ROS-style `TwistStamped` CDR with the given frame id (rovi-protocol only encodes empty).
+    fn with_frame(frame: &[u8], nanosec: u32, vx: f64) -> std::vec::Vec<u8> {
+        let mut b = std::vec::Vec::from([0u8, 1, 0, 0]);
+        b.extend_from_slice(&7i32.to_le_bytes());
+        b.extend_from_slice(&nanosec.to_le_bytes());
+        b.extend_from_slice(&(frame.len() as u32 + 1).to_le_bytes());
+        b.extend_from_slice(frame);
+        b.push(0);
+        while (b.len() - 4) % 8 != 0 {
+            b.push(0);
+        }
+        for v in [vx, 0.0, 0.0, 0.0, 0.0, 0.0] {
+            b.extend_from_slice(&v.to_le_bytes());
+        }
+        b
+    }
     use std::format;
 
     const GEOMETRY: Geometry = Geometry {
@@ -1638,7 +1660,6 @@ mod tests {
 
     #[test]
     fn an_unsupported_frame_neither_renews_the_lease_nor_uses_the_sequence() {
-        use crate::setpoint::tests::with_frame;
         let mut d = dev();
         let s = armed(&mut d); // setpoint seq 1 and ARM at t=0
         send(
@@ -1685,7 +1706,6 @@ mod tests {
 
     #[test]
     fn an_old_stamp_is_accepted_and_the_lease_runs_from_receive_time() {
-        use crate::setpoint::tests::with_frame;
         let mut d = dev();
         let s = armed(&mut d);
         send(
@@ -1957,7 +1977,7 @@ mod tests {
             cdr(0.5)[..40].to_vec(),
             std::vec::Vec::new(),
             out_of_plane.to_vec(),
-            crate::setpoint::tests::with_frame(b"map", 0, 0.5),
+            with_frame(b"map", 0, 0.5),
         ]
     }
 
@@ -2423,8 +2443,8 @@ mod tests {
         let mut d = dev();
         let snapshot = d.capabilities_snapshot();
         let binary = snapshot.encode();
-        let mut out = [0; crate::capabilities::CDR_MAX];
-        assert!(snapshot.encode_cdr(&mut out).is_some());
+        let mut out = [0; rovi_protocol::capabilities::CDR_MAX];
+        assert!(snapshot.encode_cdr(&mut out).is_ok());
         assert_eq!(d.arbiter().state(), State::Open);
         assert_eq!(d.wheels(0), [0.0; 4]);
         assert!(d.wifi_allowed() && d.radio_allowed(Source::Ble));
@@ -2451,7 +2471,7 @@ mod tests {
             0,
         )
         .unwrap();
-        let mut out = [0; crate::capabilities::CDR_MAX];
+        let mut out = [0; rovi_protocol::capabilities::CDR_MAX];
         let n = d.capabilities_snapshot().encode_cdr(&mut out).unwrap();
         let text = core::str::from_utf8(&out[8..n - 1]).unwrap();
         let limit = text
@@ -2655,7 +2675,7 @@ mod tests {
         d.on_ble_disconnect(1_005, c);
         assert_eq!(d.ble_status(), [0, 0, 0]);
         assert_eq!(d.status_snapshot().session, 0);
-        let mut out = [0; crate::status::CDR_MAX];
+        let mut out = [0; rovi_protocol::status::CDR_MAX];
         let n = d.status_cdr(&mut out);
         assert_eq!(
             &out[8..n - 1],
@@ -2689,7 +2709,7 @@ mod tests {
 
     // --- Takeover priority and hand-back (network-mode, ADR-0016) ---
 
-    use crate::network::{Command, Mode, Step};
+    use crate::network::{Mode, Step};
 
     fn home_dev() -> Device {
         let mut d = dev();
@@ -2890,7 +2910,10 @@ mod tests {
         assert_eq!(p[2], 0, "no error");
         assert_eq!(d.network().pending(), Some(Command::CarNetwork));
         send(&mut d, 20, A, Kind::Bye, s, 3, &[]);
-        assert_eq!(d.network().reason(), crate::network::Reason::Requested);
+        assert_eq!(
+            d.network().reason(),
+            rovi_protocol::network::Reason::Requested
+        );
     }
 
     #[test]

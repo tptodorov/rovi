@@ -11,4 +11,5 @@ motor-bench = []
 
 [dependencies]
 rovi-core = { path = "../rovi-core" }
+rovi-protocol = { path = "../rovi-protocol" }
 rovi-motor-control = { path = "../rovi-motor-control" }

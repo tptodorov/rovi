@@ -1,0 +1,9 @@
+[package]
+name = "rovi-protocol"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "Rovi wire protocol: every BLE, UDP and ROS car message as typed values with validating codecs (no_std, ADR-0017)"
+
+[dependencies]

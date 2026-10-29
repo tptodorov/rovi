@@ -84,9 +84,17 @@ impl Setpoint {
         })
     }
 
-    /// Encodes with an empty `frame_id`. Returns the length, or `None` if `out` is too small.
-    pub fn encode(&self, out: &mut [u8]) -> Option<usize> {
-        let out = out.get_mut(..MIN_LEN)?;
+    /// Encodes with an empty `frame_id`, refusing values the decoder would refuse. Writes
+    /// nothing on error.
+    pub fn encode(&self, out: &mut [u8]) -> Result<usize, crate::EncodeError> {
+        if !(self.vx.is_finite() && self.vy.is_finite() && self.wz.is_finite())
+            || self.nanosec > 999_999_999
+        {
+            return Err(crate::EncodeError::Invalid);
+        }
+        let out = out
+            .get_mut(..MIN_LEN)
+            .ok_or(crate::EncodeError::BufferTooSmall)?;
         out.fill(0);
         out[..4].copy_from_slice(&ENCAPSULATION);
         out[4..8].copy_from_slice(&self.sec.to_le_bytes());
@@ -96,12 +104,26 @@ impl Setpoint {
         out[20..28].copy_from_slice(&self.vx.to_le_bytes());
         out[28..36].copy_from_slice(&self.vy.to_le_bytes());
         out[60..68].copy_from_slice(&self.wz.to_le_bytes());
-        Some(MIN_LEN)
+        Ok(MIN_LEN)
+    }
+}
+
+impl DecodeError {
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Truncated => "truncated",
+            Self::BadEncapsulation => "bad-encapsulation",
+            Self::BadFrameId => "bad-frame-id",
+            Self::UnsupportedFrame => "unsupported-frame",
+            Self::BadStamp => "bad-stamp",
+            Self::OutOfPlane => "out-of-plane",
+            Self::NotFinite => "not-finite",
+        }
     }
 }
 
 #[cfg(test)]
-pub(crate) mod tests {
+mod tests {
     use super::*;
 
     // Captured from ROS 2 Jazzy (rmw_zenoh_cpp 0.2.10) `ros2 topic pub`. Padding bytes are not
@@ -193,7 +215,13 @@ pub(crate) mod tests {
             wz: 0.0,
         };
         let mut b = [0u8; MIN_LEN];
-        sp.encode(&mut b).unwrap();
+        assert_eq!(
+            sp.encode(&mut b),
+            Err(crate::EncodeError::Invalid),
+            "the encoder refuses it too"
+        );
+        Setpoint { vx: 0.0, ..sp }.encode(&mut b).unwrap();
+        b[20..28].copy_from_slice(&f64::NAN.to_le_bytes());
         assert_eq!(Setpoint::decode(&b), Err(DecodeError::NotFinite));
     }
 
@@ -207,7 +235,7 @@ pub(crate) mod tests {
             wz: 0.0,
         };
         let mut b = [0xAAu8; 80];
-        assert_eq!(sp.encode(&mut b), Some(MIN_LEN));
+        assert_eq!(sp.encode(&mut b), Ok(MIN_LEN));
         let (ros, _) = hex(EMPTY_FRAME);
         assert_eq!(&b[..17], &ros[..17]);
         assert_eq!(&b[20..MIN_LEN], &ros[20..MIN_LEN]);
@@ -224,11 +252,14 @@ pub(crate) mod tests {
             vy: 0.0,
             wz: 0.0,
         };
-        assert_eq!(sp.encode(&mut [0u8; MIN_LEN - 1]), None);
+        assert_eq!(
+            sp.encode(&mut [0u8; MIN_LEN - 1]),
+            Err(crate::EncodeError::BufferTooSmall)
+        );
     }
 
     /// A TwistStamped with `frame_id` = `frame` (no NUL) and `vx`; other components zero.
-    pub(crate) fn with_frame(frame: &[u8], nanosec: u32, vx: f64) -> std::vec::Vec<u8> {
+    fn with_frame(frame: &[u8], nanosec: u32, vx: f64) -> std::vec::Vec<u8> {
         let mut b = std::vec::Vec::from(ENCAPSULATION);
         b.extend_from_slice(&7i32.to_le_bytes());
         b.extend_from_slice(&nanosec.to_le_bytes());
