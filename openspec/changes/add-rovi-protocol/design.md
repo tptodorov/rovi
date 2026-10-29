@@ -84,7 +84,7 @@ After I8–I9, the firmware and sim ROS adapters differ only in runtime glue (em
 | T10 | ROS network key `fallback=` names the field the binary layout and code call `reason` | **Align** (protocol change, text only): rename to `reason=`. Only Rovi tools read it |
 | T11 | Status, Capabilities and Network delivery: BLE read/notify, UDP `INFO`/`HELLO_ACK` replies and unsolicited `STATUS`, ROS periodic topics | Keep; the conformance suite checks the same observable values on all three |
 
-T10 is the only proposed contract change. It requires Todor's explicit approval at acceptance (task 1.1). Without it, T10 stays as it is and is listed as a known difference. All other transport differences are documented in the crate's module docs and `docs/reference/protocol.md`, generated from one table.
+T10 is the only contract change. Todor approved it on 2026-10-29 (“ok, i approve”, in reply to the T10 rename question); it ships as a recorded vector change. All other transport differences are documented in the crate's module docs and `docs/reference/protocol.md`, generated from one table.
 
 ## Alternatives
 

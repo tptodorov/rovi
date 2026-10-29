@@ -4505,7 +4505,7 @@ Keep; the conformance suite checks the same observable values on all three</td>
 </tbody>
 </table>
 <p>
-T10 is the only proposed contract change. It requires Todor's explicit approval at acceptance (task 1.1). Without it, T10 stays as it is and is listed as a known difference. All other transport differences are documented in the crate's module docs and <code>docs/reference/protocol.md</code>, generated from one table.</p>
+T10 is the only contract change. Todor approved it on 2026-10-29 (“ok, i approve”, in reply to the T10 rename question); it ships as a recorded vector change. All other transport differences are documented in the crate's module docs and <code>docs/reference/protocol.md</code>, generated from one table.</p>
 <h2 id="openspec--changes--add-rovi-protocol--design--alternatives">Alternatives</h2><ul>
 <li>
 <strong>Schema language (protobuf, FlatBuffers, Cap'n Proto) with generated code.</strong> Rejected: existing layouts are fixed BLE/UDP byte formats and ROS CDR; a schema would need custom encodings or a protocol change, plus a generator in the firmware build. Rust types already give a single source.</li>
@@ -5139,7 +5139,7 @@ Archive after acceptance; close Q21 in <code>PLAN.md</code>.</li>
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-rovi-protocol/tasks.md">Markdown source ↗</a><div class="path">openspec/changes/add-rovi-protocol/tasks.md</div></header>
     <h1 id="openspec--changes--add-rovi-protocol--tasks--rovi-protocol-tasks">Rovi protocol tasks</h1><h2 id="openspec--changes--add-rovi-protocol--tasks--1-approval">1. Approval</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 1.1 Todor explicitly accepts the proposal; record the wording, the home-network byte contract it targets, and the decision on alignment T10 (rename ROS <code>fallback=</code> to <code>reason=</code>). Pass strict validation.</li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 1.1 Todor explicitly accepts the proposal; record the wording, the home-network byte contract it targets, and pass strict validation. The T10 rename (ROS <code>fallback=</code> → <code>reason=</code>) was approved on 2026-10-29; that approval alone does not authorize implementation.</li>
 </ul>
 <h2 id="openspec--changes--add-rovi-protocol--tasks--2-crate-extraction">2. Crate extraction</h2><ul>
 <li>
@@ -5151,7 +5151,7 @@ Archive after acceptance; close Q21 in <code>PLAN.md</code>.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.4 Remove implementation variants I1–I10 (design D8): one model per concept with per-transport encodings and ROS text decoders; crate UUIDs in the firmware GATT service; one ROS topic table and a network <code>Publication</code> used by firmware and sim; typed sim BLE test transport. Add cross-transport equality tests.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.5 If T10 was approved, rename the ROS network key with a recorded vector change and update its readers; otherwise document it as a known difference.</li>
+<input type="checkbox" disabled aria-label="Recorded task pending"> 2.5 Rename the ROS network key <code>fallback=</code> to <code>reason=</code> (T10, approved) with a recorded vector change; update teleop, bench and conformance readers.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.6 Generate the transport-difference table in <code>docs/reference/protocol.md</code> from the crate's list of intentional differences.</li>
 </ul>
