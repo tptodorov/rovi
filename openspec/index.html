@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>87 / 117</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>89 / 117</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -5368,11 +5368,11 @@ Archive after acceptance; close Q21 in <code>PLAN.md</code>.</li>
     <header class="doc-header"><span class="eyebrow">Change document</span><a href="changes/add-rovi-protocol/tasks.md">Markdown source ↗</a><div class="path">openspec/changes/add-rovi-protocol/tasks.md</div></header>
     <h1 id="openspec--changes--add-rovi-protocol--tasks--rovi-protocol-tasks">Rovi protocol tasks</h1><h2 id="openspec--changes--add-rovi-protocol--tasks--1-approval">1. Approval</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 1.1 Todor explicitly accepts the proposal; record the wording, the home-network byte contract it targets, and pass strict validation. The T10 rename (ROS <code>fallback=</code> → <code>reason=</code>) was approved on 2026-10-29; that approval alone does not authorize implementation.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 1.1 Todor explicitly accepts the proposal; record the wording, the home-network byte contract it targets, and pass strict validation. The T10 rename (ROS <code>fallback=</code> → <code>reason=</code>) was approved on 2026-10-29; that approval alone does not authorize implementation. Accepted 2026-10-29: after merging the proposal (#122), Todor was told “To start, say you accept <code>add-rovi-protocol</code>” and replied “continue”; recorded as acceptance, open to correction.</li>
 </ul>
 <h2 id="openspec--changes--add-rovi-protocol--tasks--2-crate-extraction">2. Crate extraction</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.1 Freeze golden vectors from current Rust tests and Python/JavaScript fixtures before moving code; add the generator and CI freshness check.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.1 Freeze golden vectors from current Rust tests and Python/JavaScript fixtures before moving code; add the generator and CI freshness check. Done: <code>crates/rovi-core/tests/protocol-vectors.json</code> (150 valid, 40 malformed), generated and freshness-checked by <code>crates/rovi-core/tests/protocol_vectors.rs</code>; Python (<code>apps/teleop/tests/test_vectors.py</code>) and phone (<code>apps/iphone/tests/vectors.test.mjs</code>) codecs pass it, with gaps I2 and I3 asserted as known. Moves to <code>crates/rovi-protocol</code> in 2.2.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Create <code>crates/rovi-protocol</code>; move wire types from <code>rovi-core</code>; add validating decoders, direction types and property tests; vectors byte-identical.</li>
 <li>
