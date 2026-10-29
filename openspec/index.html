@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>89 / 117</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>91 / 117</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -4961,13 +4961,13 @@ Setpoint</td>
 <td>
 Capabilities</td>
 <td>
-<a href="../crates/rovi-core/src/capabilities.rs#L42">Encoder</a>: u8 version, five f32 LE (radius, centre projection sum, max_vx/max_vy/max_wz), three u16 LE (lease/claim/reclaim ms), 27 bytes. Widen f32 values exactly; never round limits upward.</td>
+<a href="../crates/rovi-protocol/src/capabilities.rs">Encoder</a>: u8 version, five f32 LE (radius, centre projection sum, max_vx/max_vy/max_wz), three u16 LE (lease/claim/reclaim ms), 27 bytes. Widen f32 values exactly; never round limits upward.</td>
 </tr>
 <tr>
 <td>
 Status/control</td>
 <td>
-<a href="../crates/rovi-core/src/status.rs#L35">Encoder</a>: states 0 Open/1 Claimed/2 Armed/3 Stopped; reasons 0 none/1 Stop/2 LeaseExpired/3 OwnerLost/4 OutOfLimits; errors 0 none/1 Busy/2 NotOwner/3 NotReady/4 Invalid. Require reason=0 except Stopped, whose reason must be nonzero. ARM=1/STOP=2; refused writes use ATT Value Not Allowed.</td>
+<a href="../crates/rovi-protocol/src/status.rs">Encoder</a>: states 0 Open/1 Claimed/2 Armed/3 Stopped; reasons 0 none/1 Stop/2 LeaseExpired/3 OwnerLost/4 OutOfLimits; errors 0 none/1 Busy/2 NotOwner/3 NotReady/4 Invalid. Require reason=0 except Stopped, whose reason must be nonzero. ARM=1/STOP=2; refused writes use ATT Value Not Allowed.</td>
 </tr>
 <tr>
 <td>
@@ -5372,11 +5372,11 @@ Archive after acceptance; close Q21 in <code>PLAN.md</code>.</li>
 </ul>
 <h2 id="openspec--changes--add-rovi-protocol--tasks--2-crate-extraction">2. Crate extraction</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.1 Freeze golden vectors from current Rust tests and Python/JavaScript fixtures before moving code; add the generator and CI freshness check. Done: <code>crates/rovi-core/tests/protocol-vectors.json</code> (150 valid, 40 malformed), generated and freshness-checked by <code>crates/rovi-core/tests/protocol_vectors.rs</code>; Python (<code>apps/teleop/tests/test_vectors.py</code>) and phone (<code>apps/iphone/tests/vectors.test.mjs</code>) codecs pass it, with gaps I2 and I3 asserted as known. Moves to <code>crates/rovi-protocol</code> in 2.2.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.1 Freeze golden vectors from current Rust tests and Python/JavaScript fixtures before moving code; add the generator and CI freshness check. Done: <code>crates/rovi-protocol/vectors.json</code> (150 valid, 40 malformed), generated and freshness-checked by <code>crates/rovi-protocol/tests/vectors.rs</code>; Python (<code>apps/teleop/tests/test_vectors.py</code>) and phone (<code>apps/iphone/tests/vectors.test.mjs</code>) codecs pass it, with gaps I2 and I3 asserted as known.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.2 Create <code>crates/rovi-protocol</code>; move wire types from <code>rovi-core</code>; add validating decoders, direction types and property tests; vectors byte-identical.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.2 Create <code>crates/rovi-protocol</code>; move wire types from <code>rovi-core</code>; add validating decoders, direction types and property tests; vectors byte-identical. Done 2026-10-29: Setpoint and UDP framing moved; Status, Capabilities, Network information, BLE Control/UUIDs and typed <code>udp::ToCar</code>/<code>FromCar</code> added with validating binary and ROS-text decoders and named errors (<code>DecodeError::name</code>). Every valid vector decodes back to its value and each UDP frame only in its own direction; invalid vectors now record the decoder's error. Bytes unchanged (verified against the pre-move file); one malformed setpoint case was replaced because it hit <code>unsupported-frame</code> instead of the frame-id check it was named for. The car still parses UDP with <code>udp::parse</code> + <code>Kind</code>; moving <code>device</code> onto <code>ToCar</code> is part of 2.4.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.3 Switch <code>rovi-core</code>, firmware (with and without ROS) and sim car; record firmware size before/after; sim conformance and all workspace tests pass unchanged.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.3 Switch <code>rovi-core</code>, firmware (with and without ROS) and sim car; record firmware size before/after; sim conformance and all workspace tests pass unchanged. Done 2026-10-29: <code>rovi-core</code>, <code>rovi-drive</code>, firmware and sim car import wire types from <code>rovi-protocol</code> (no re-exports). Flash image (<code>espflash save-image</code>, vs <code>main</code> 7fa8f31): plain 738064 → 738272 bytes (+208), ROS 932464 → 931456 (−1008). Workspace 282 tests, motor-bench 14, sim UDP 14 and network 14 scenarios, Python and phone suites, firmware and sim clippy pass.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.4 Remove implementation variants I1–I10 (design D8): one model per concept with per-transport encodings and ROS text decoders; crate UUIDs in the firmware GATT service; one ROS topic table and a network <code>Publication</code> used by firmware and sim; typed sim BLE test transport. Add cross-transport equality tests.</li>
 <li>
@@ -6412,7 +6412,7 @@ Test boundary and completion evidence</th>
 <td>
 H1</td>
 <td>
-Codec tests: 72-byte zero/six-direction vectors, endian/CDR layout, u32 wrap, 27-byte capabilities/f32 limits, finite/geometry/window/version/length checks and all valid/invalid Status combinations. Compare <a href="../experiments/rovi-m8-setpoint-ros/sim/test_wire.py">wire vectors</a> and <a href="../crates/rovi-core/src/capabilities.rs">product encoder</a>.</td>
+Codec tests: 72-byte zero/six-direction vectors, endian/CDR layout, u32 wrap, 27-byte capabilities/f32 limits, finite/geometry/window/version/length checks and all valid/invalid Status combinations. Compare <a href="../experiments/rovi-m8-setpoint-ros/sim/test_wire.py">wire vectors</a> and <a href="../crates/rovi-protocol/src/capabilities.rs">product encoder</a>.</td>
 </tr>
 <tr>
 <td>

@@ -12,6 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 rovi-core = { path = "../../crates/rovi-core" }
+rovi-protocol = { path = "../../crates/rovi-protocol" }
 rovi-drive = { path = "../../crates/rovi-drive", optional = true }
 rovi-motor-control = { path = "../../crates/rovi-motor-control", optional = true }
 

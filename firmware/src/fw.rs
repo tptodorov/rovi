@@ -34,13 +34,14 @@ use esp_radio::wifi::{
     self, ap::AccessPointConfig, scan::ScanConfig, sta::StationConfig, AuthenticationMethodConfig,
     WifiController,
 };
-use rovi_core::arbiter::{Config, Effects, Source, State};
+use rovi_core::arbiter::{Config, Effects, Source};
 use rovi_core::device::{self, Device};
 use rovi_core::events::{self, Event, Fault};
 use rovi_core::kinematics::Geometry;
-use rovi_core::network::{self as netmode, Mode, Reason, Settings, SettingsError, Step};
+use rovi_core::network::{self as netmode, Mode, Settings, SettingsError, Step};
 use rovi_drive::Drive;
 use rovi_motor_control::{Config as MotorConfig, Driver, MotorControl, Pins, CAR_CHANNELS};
+use rovi_protocol::{Reason, State};
 use smart_leds::{SmartLedsWrite, RGB8};
 use trouble_host::prelude::*;
 

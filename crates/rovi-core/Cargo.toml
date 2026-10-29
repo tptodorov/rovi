@@ -5,8 +5,9 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 publish = false
-description = "Rovi device core: setpoint codecs, arbiter, kinematics, graph and device (host-tested no_std)"
+description = "Rovi device core: arbiter, kinematics, network mode, graph and device on top of rovi-protocol (host-tested no_std)"
 
 [dependencies]
+rovi-protocol = { path = "../rovi-protocol" }
 libm = "0.2"
 xxhash-rust = { version = "0.8", default-features = false, features = ["xxh3"] }
