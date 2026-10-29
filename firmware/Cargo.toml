@@ -14,6 +14,7 @@ bench = false
 
 [target.'cfg(target_arch = "xtensa")'.dependencies]
 rovi-core = { path = "../crates/rovi-core" }
+rovi-protocol = { path = "../crates/rovi-protocol" }
 rovi-drive = { path = "../crates/rovi-drive" }
 rovi-motor-control = { path = "../crates/rovi-motor-control" }
 embassy-executor = "0.10.0"

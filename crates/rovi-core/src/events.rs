@@ -4,9 +4,11 @@
 //! later and off the hot path. Integers only: no float formatting on the board. To add a property,
 //! add a field to the `Event` variant and one `write!` below; parsers ignore keys they don't know.
 
-use crate::arbiter::{Effects, Error, Source, State, StopReason};
-use crate::network::{Command, Mode, Reason, Step};
+use crate::arbiter::{Effects, Source};
+use crate::network::{Mode, Step};
 use core::fmt::{self, Write};
+use rovi_protocol::network::{Command, Reason};
+use rovi_protocol::status::{Error, State, StopReason};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Link {
@@ -313,8 +315,9 @@ impl<const N: usize> Write for LineBuf<N> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::arbiter::Error;
-    use crate::network::{Command, Mode, Reason, Step};
+    use crate::network::{Mode, Step};
+    use rovi_protocol::network::{Command, Reason};
+    use rovi_protocol::status::Error;
     use std::string::{String, ToString};
     use std::vec::Vec;
 
@@ -334,7 +337,7 @@ mod tests {
             10,
             who,
             1,
-            crate::setpoint::Setpoint {
+            rovi_protocol::setpoint::Setpoint {
                 sec: 0,
                 nanosec: 0,
                 vx: 0.0,

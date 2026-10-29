@@ -1,7 +1,8 @@
 //! One owner, latest setpoint wins, explicit arming, lease and windows (ADR-0004).
 //! Pure state machine: the caller passes the time in milliseconds and acts on the returned effects.
 
-use crate::setpoint::Setpoint;
+use rovi_protocol::setpoint::Setpoint;
+use rovi_protocol::status::{Error, State, StopReason};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Source {
@@ -40,25 +41,6 @@ impl Config {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum StopReason {
-    Stop,
-    LeaseExpired,
-    OwnerLost,
-    OutOfLimits,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Error {
-    /// Someone else owns the device.
-    Busy,
-    NotOwner,
-    /// Arming needs a valid lease, so a setpoint must have arrived recently.
-    NotReady,
-    /// A malformed or unknown command.
-    Invalid,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Applied {
     Applied,
     /// The sequence was not newer than the last one; nothing changed.
@@ -79,16 +61,6 @@ pub struct Effects {
     pub lease_late_ms: Option<u64>,
     /// A higher-priority controller took the car from this owner (ADR-0016): tell it so.
     pub preempted: Option<Claimant>,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum State {
-    Open,
-    /// Owner claimed, not armed.
-    Claimed,
-    Armed,
-    /// Safety stop latched, owner kept for the reclaim window.
-    Stopped(StopReason),
 }
 
 pub struct Arbiter {

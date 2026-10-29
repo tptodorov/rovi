@@ -11,7 +11,7 @@ from pathlib import Path
 from apps.client.wire import Capabilities, Status, ble_setpoint, cdr
 from apps.teleop.protocol import ClientError, capabilities, frame, network_text, parse
 
-VECTORS = json.loads((Path(__file__).resolve().parents[3] / "crates/rovi-core/tests/protocol-vectors.json").read_text())
+VECTORS = json.loads((Path(__file__).resolve().parents[3] / "crates/rovi-protocol/vectors.json").read_text())
 # Python names (apps/client/wire.py) for the vector's ROS spellings (I4).
 STATE = {"open": "Open", "claimed": "Claimed", "armed": "Armed", "stopped": "Stopped"}
 NAME = {"none": None, "stop": "Stop", "lease-expired": "LeaseExpired", "owner-lost": "OwnerLost",
