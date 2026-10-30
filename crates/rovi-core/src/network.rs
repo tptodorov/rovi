@@ -200,6 +200,26 @@ enum Cause {
     LinkLost,
 }
 
+/// When to publish network information on ROS: on change, else every second (design I9).
+/// Takes the binary information so the comparison is exactly what clients see.
+#[derive(Default)]
+pub struct Publication {
+    last: Option<(u64, [u8; rovi_protocol::network::LEN])>,
+}
+
+impl Publication {
+    pub fn due(&mut self, now: u64, info: [u8; rovi_protocol::network::LEN]) -> bool {
+        if self
+            .last
+            .is_some_and(|(time, last)| last == info && now.saturating_sub(time) < 1_000)
+        {
+            return false;
+        }
+        self.last = Some((now, info));
+        true
+    }
+}
+
 #[derive(Debug)]
 pub struct Network {
     /// Firmware built with home settings and ROS 2.
@@ -753,5 +773,16 @@ mod tests {
         assert_eq!(n.mode(), Mode::Attempting(Step::Scan));
         n.tick(100_000 + SCAN_BUDGET_MS);
         assert_eq!((n.mode(), n.reason()), (Mode::Fallback, Reason::Scan));
+    }
+
+    #[test]
+    fn network_information_publishes_on_change_and_every_second() {
+        let (a, b) = ([2, 0, 0, 0, 1, 2, 3, 4], [0, 0, 2, 0, 0, 0, 0, 0]);
+        let mut p = Publication::default();
+        assert!(p.due(0, a));
+        assert!(!p.due(999, a));
+        assert!(p.due(1_000, a));
+        assert!(p.due(1_001, b), "a change publishes at once");
+        assert!(!p.due(1_500, b));
     }
 }
