@@ -3,7 +3,7 @@
 //! tokens and maps each gid back to its node. Controllers are then told apart by node, not by
 //! entity: `/cmd_vel` and `/rovi/arm` are separate publishers of one node.
 
-use crate::rmw::gid;
+use rovi_protocol::ros::gid;
 
 /// A node identity: XXH3-128 of `<zid>/<nid>` from the liveliness key.
 pub type NodeId = u128;

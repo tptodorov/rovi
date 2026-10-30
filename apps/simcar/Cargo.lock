@@ -957,6 +957,9 @@ version = "0.1.0"
 [[package]]
 name = "rovi-protocol"
 version = "0.1.0"
+dependencies = [
+ "xxhash-rust",
+]
 
 [[package]]
 name = "rovi-simcar"

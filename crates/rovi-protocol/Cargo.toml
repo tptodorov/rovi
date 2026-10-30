@@ -7,3 +7,5 @@ publish = false
 description = "Rovi wire protocol: every BLE, UDP and ROS car message as typed values with validating codecs (no_std, ADR-0017)"
 
 [dependencies]
+# rmw_zenoh entity gids (ros.rs).
+xxhash-rust = { version = "0.8", default-features = false, features = ["xxh3"] }

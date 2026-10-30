@@ -120,13 +120,10 @@ impl<D: Driver> Drive<D> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rovi_core::{
-        arbiter::Config,
-        kinematics::Geometry,
-        rmw::{gid, Attachment},
-    };
+    use rovi_core::{arbiter::Config, kinematics::Geometry};
     use rovi_motor_control::{Config as MotorConfig, Pins, CAR_CHANNELS};
     use rovi_protocol::{
+        ros::{gid, Attachment},
         setpoint::Setpoint,
         udp::{self, Header, Kind},
         StopReason,

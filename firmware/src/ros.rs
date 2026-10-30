@@ -15,13 +15,11 @@ use embassy_time::{with_timeout, Duration, Timer};
 use esp_println::println;
 use rovi_core::device::Device;
 use rovi_core::events::{Event, Link as RosLink};
-use rovi_core::rmw::{self, Attachment, Endpoint as Kind, Topic};
+use rovi_protocol::ros::{self, Attachment, DOMAIN, NODE};
 use static_cell::StaticCell;
 use zenoh_embassy::EmbassyLinkManager;
 use zenoh_nostd::session::*;
 
-const DOMAIN: u32 = 0;
-const NODE: &str = "rovi";
 /// TCP, which a stock `rmw_zenohd` listens on. Over UDP the router's listener can stop accepting
 /// every peer after a stall (eclipse-zenoh/zenoh#2849), so the car could not rejoin (ADR-0012).
 pub const ROUTER: &str = match option_env!("ROVI_ZENOH_ROUTER") {
@@ -209,94 +207,30 @@ async fn declare_and_serve(
         mode,
         release,
     } = *chans;
-    let mode_t = Topic {
-        name: "rovi/mode",
-        ty: rmw::UINT8.0,
-        hash: rmw::UINT8.1,
-    };
-    let release_t = Topic {
-        name: "rovi/release",
-        ty: rmw::EMPTY.0,
-        hash: rmw::EMPTY.1,
-    };
-    let network_t = Topic {
-        name: "rovi/network",
-        ty: rmw::STRING.0,
-        hash: rmw::STRING.1,
-    };
-    let cmd_vel = Topic {
-        name: "cmd_vel",
-        ty: rmw::TWIST_STAMPED.0,
-        hash: rmw::TWIST_STAMPED.1,
-    };
-    let arm_t = Topic {
-        name: "rovi/arm",
-        ty: rmw::BOOL.0,
-        hash: rmw::BOOL.1,
-    };
-    let echo_t = Topic {
-        name: "rovi/echo",
-        ty: rmw::INT64.0,
-        hash: rmw::INT64.1,
-    };
-    let echo_reply_t = Topic {
-        name: "rovi/echo_reply",
-        ty: rmw::INT64.0,
-        hash: rmw::INT64.1,
-    };
-    let status_t = Topic {
-        name: "rovi/status",
-        ty: rmw::STRING.0,
-        hash: rmw::STRING.1,
-    };
-
-    let capabilities_t = Topic {
-        name: "rovi/capabilities",
-        ty: rmw::STRING.0,
-        hash: rmw::STRING.1,
-    };
-
-    let node = rmw::node_token(DOMAIN, zid, NODE).unwrap();
+    let node = ros::node_token(DOMAIN, zid, NODE).unwrap();
     let _node = session
         .declare_token(zenoh::keyexpr::new(node.as_str())?)
         .await?;
-    let eps = [
-        (1, Kind::Subscription, &cmd_vel, rmw::QOS_BEST_EFFORT_1),
-        (2, Kind::Subscription, &arm_t, rmw::QOS_BEST_EFFORT_5),
-        (3, Kind::Publisher, &status_t, rmw::QOS_DEFAULT_10),
-        (4, Kind::Subscription, &echo_t, rmw::QOS_BEST_EFFORT_1),
-        (5, Kind::Publisher, &echo_reply_t, rmw::QOS_BEST_EFFORT_1),
-        (
-            6,
-            Kind::Publisher,
-            &capabilities_t,
-            rmw::QOS_RELIABLE_VOLATILE_1,
-        ),
-        (7, Kind::Subscription, &mode_t, rmw::QOS_DEFAULT_10),
-        (8, Kind::Subscription, &release_t, rmw::QOS_DEFAULT_10),
-        (9, Kind::Publisher, &network_t, rmw::QOS_RELIABLE_VOLATILE_1),
-    ]
-    .map(|(id, kind, topic, qos)| {
-        rmw::endpoint_token(DOMAIN, zid, id, kind, NODE, topic, qos).unwrap()
-    });
+    let eps = ros::ENDPOINTS.map(|e| e.token(zid).unwrap());
     for t in &eps {
         let _ = session
             .declare_token(zenoh::keyexpr::new(t.as_str())?)
             .await?;
     }
-    let status_gid = rmw::gid(eps[2].as_str());
-    let echo_gid = rmw::gid(eps[4].as_str());
-    let capabilities_gid = rmw::gid(eps[5].as_str());
-    let network_gid = rmw::gid(eps[8].as_str());
+    let gid = |e: &ros::Endpoint| ros::gid(eps[e.id as usize - 1].as_str());
+    let status_gid = gid(&ros::STATUS);
+    let echo_gid = gid(&ros::ECHO_REPLY);
+    let capabilities_gid = gid(&ros::CAPABILITIES);
+    let network_gid = gid(&ros::NETWORK);
 
-    let key = |t: &Topic| leak(rmw::topic_key(DOMAIN, t).unwrap().as_str().into());
+    let key = |e: &ros::Endpoint| leak(e.key().unwrap().as_str().into());
     let cmd_sub = session
-        .declare_subscriber(zenoh::keyexpr::new(key(&cmd_vel))?)
+        .declare_subscriber(zenoh::keyexpr::new(key(&ros::CMD_VEL))?)
         .channel(cmd.dyn_sender(), cmd.dyn_receiver())
         .finish()
         .await?;
     let arm_sub = session
-        .declare_subscriber(zenoh::keyexpr::new(key(&arm_t))?)
+        .declare_subscriber(zenoh::keyexpr::new(key(&ros::ARM))?)
         .channel(arm.dyn_sender(), arm.dyn_receiver())
         .finish()
         .await?;
@@ -308,34 +242,34 @@ async fn declare_and_serve(
         .finish()
         .await?;
     let echo_sub = session
-        .declare_subscriber(zenoh::keyexpr::new(key(&echo_t))?)
+        .declare_subscriber(zenoh::keyexpr::new(key(&ros::ECHO))?)
         .channel(echo.dyn_sender(), echo.dyn_receiver())
         .finish()
         .await?;
     let echo_pub = session
-        .declare_publisher(zenoh::keyexpr::new(key(&echo_reply_t))?)
+        .declare_publisher(zenoh::keyexpr::new(key(&ros::ECHO_REPLY))?)
         .finish()
         .await?;
     let status_pub = session
-        .declare_publisher(zenoh::keyexpr::new(key(&status_t))?)
+        .declare_publisher(zenoh::keyexpr::new(key(&ros::STATUS))?)
         .finish()
         .await?;
     let capabilities_pub = session
-        .declare_publisher(zenoh::keyexpr::new(key(&capabilities_t))?)
+        .declare_publisher(zenoh::keyexpr::new(key(&ros::CAPABILITIES))?)
         .finish()
         .await?;
     let mode_sub = session
-        .declare_subscriber(zenoh::keyexpr::new(key(&mode_t))?)
+        .declare_subscriber(zenoh::keyexpr::new(key(&ros::MODE))?)
         .channel(mode.dyn_sender(), mode.dyn_receiver())
         .finish()
         .await?;
     let release_sub = session
-        .declare_subscriber(zenoh::keyexpr::new(key(&release_t))?)
+        .declare_subscriber(zenoh::keyexpr::new(key(&ros::RELEASE))?)
         .channel(release.dyn_sender(), release.dyn_receiver())
         .finish()
         .await?;
     let network_pub = session
-        .declare_publisher(zenoh::keyexpr::new(key(&network_t))?)
+        .declare_publisher(zenoh::keyexpr::new(key(&ros::NETWORK))?)
         .finish()
         .await?;
     println!("ros node /{} up, zid {}, router {}", NODE, zid, router);
@@ -364,14 +298,15 @@ async fn declare_and_serve(
         },
         async {
             // Network information: every second and on change.
-            let (mut seq, mut last, mut sent_at) = (0i64, [0u8; 8], 0u64);
+            let mut seq = 0i64;
+            let mut schedule = rovi_core::network::Publication::default();
             let mut buf = [0u8; 128];
             loop {
                 let (info, n) = {
                     let d = dev.borrow();
                     (d.network_info(), d.network_cdr(&mut buf))
                 };
-                if n > 0 && (info != last || now() >= sent_at + 1_000) {
+                if n > 0 && schedule.due(now(), info) {
                     seq += 1;
                     let att = Attachment {
                         seq,
@@ -380,7 +315,6 @@ async fn declare_and_serve(
                     }
                     .encode();
                     let _ = network_pub.put(&buf[..n]).attachment(&att).finish().await;
-                    (last, sent_at) = (info, now());
                 }
                 Timer::after_millis(10).await;
             }

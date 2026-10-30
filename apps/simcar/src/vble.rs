@@ -3,24 +3,15 @@
 //! firmware does, so BLE rules are tested in the sim. Development evidence only (ADR-0002): no
 //! radio, MTU, connection interval or coexistence behaviour is modelled.
 //!
-//! Requests (first byte) and replies:
-//!
-//! | op | request | reply |
-//! | --- | --- | --- |
-//! | 1 | connect | `0x81 ok` (0 when the car is not advertising or both slots are taken) |
-//! | 2 | Setpoint write: `seq u32 LE` + CDR | none (write without response) |
-//! | 3 | Control write: one byte | `0x83 att` (0 accepted, `0x13` rejected) |
-//! | 4 | read: 1 Status, 2 Capabilities, 3 Network | `0x84 char bytes...` |
-//! | 5 | Echo write | `0x85 bytes...` |
-//! | 6 | disconnect | `0x86` |
-//!
-//! The car sends `0x87` when it drops a central, as the firmware disconnects a BLE owner that
-//! lost the car.
+//! The datagram format is `rovi_protocol::ble::sim` (`Request`/`Reply`); the car sends
+//! `Reply::Dropped` when it drops a central, as the firmware disconnects a BLE owner that lost
+//! the car.
 
 use crate::{log, log_effects, ms, Shared};
 use rovi_core::arbiter::Source;
 use rovi_core::device::{BleConn, BLE_SLOTS};
 use rovi_core::events::Event;
+use rovi_protocol::ble::sim::{Characteristic, Reply, Request, ATT_VALUE_NOT_ALLOWED};
 use std::collections::HashMap;
 use std::net::{SocketAddr, UdpSocket};
 use std::time::{Duration, Instant};
@@ -73,7 +64,7 @@ pub fn run(dev: Shared, t0: Instant, port: u16) -> std::io::Result<()> {
                     t0,
                 );
                 log_effects(fx, t0);
-                sock.send_to(&[0x87], addr)?;
+                sock.send_to(&encode(Reply::Dropped).unwrap_or_default(), addr)?;
             }
         }
     }
@@ -88,8 +79,8 @@ fn request(
     data: &[u8],
 ) -> Option<Vec<u8>> {
     let now = ms(t0);
-    let (&op, body) = data.split_first()?;
-    if op == 1 {
+    let request = Request::decode(data).ok()?;
+    if request == Request::Connect {
         let mut d = dev.lock().unwrap();
         let ok = !centrals.contains_key(&from)
             && centrals.len() < BLE_SLOTS
@@ -106,18 +97,19 @@ fn request(
                 t0,
             );
         }
-        return Some(vec![0x81, ok as u8]);
+        return encode(Reply::Connected(ok));
     }
     let conn = centrals.get(&from)?.conn;
     let mut d = dev.lock().unwrap();
-    let reply = match op {
-        2 => {
-            let fx = d.on_ble_setpoint(now, conn, body);
+    let reply = match request {
+        Request::Connect => unreachable!("handled above"),
+        Request::Setpoint(value) => {
+            let fx = d.on_ble_setpoint(now, conn, value);
             log_effects(fx, t0);
             None
         }
-        3 => {
-            let result = d.on_ble_control(now, conn, *body.first()?);
+        Request::Control(code) => {
+            let result = d.on_ble_control(now, conn, code);
             if let Some((source, cmd, error)) = d.take_mode_log() {
                 log(Event::ModeCmd { source, cmd, error }, t0);
             }
@@ -126,23 +118,20 @@ fn request(
                     log_effects(fx, t0);
                     0
                 }
-                Err(_) => 0x13,
+                Err(_) => ATT_VALUE_NOT_ALLOWED,
             };
-            Some(vec![0x83, att])
+            encode(Reply::Control(att))
         }
-        4 => {
-            let value: Vec<u8> = match body.first()? {
-                1 => d.ble_status().to_vec(),
-                2 => d.capabilities().to_vec(),
-                3 => d.network_info().to_vec(),
-                _ => return None,
+        Request::Read(c) => {
+            let value: Vec<u8> = match c {
+                Characteristic::Status => d.ble_status().to_vec(),
+                Characteristic::Capabilities => d.capabilities().to_vec(),
+                Characteristic::Network => d.network_info().to_vec(),
             };
-            let mut r = vec![0x84, body[0]];
-            r.extend(value);
-            Some(r)
+            encode(Reply::Read(c, &value))
         }
-        5 => rovi_core::device::echo(body).map(|e| [&[0x85u8][..], e].concat()),
-        6 => {
+        Request::Echo(body) => rovi_core::device::echo(body).and_then(|e| encode(Reply::Echo(e))),
+        Request::Disconnect => {
             let fx = d.on_ble_disconnect(now, conn);
             log(
                 Event::Ble {
@@ -154,9 +143,8 @@ fn request(
             log_effects(fx, t0);
             drop(d);
             centrals.remove(&from);
-            return Some(vec![0x86]);
+            return encode(Reply::Disconnected);
         }
-        _ => None,
     };
     if d.ble_owns(conn) {
         if let Some(c) = centrals.get_mut(&from) {
@@ -164,4 +152,9 @@ fn request(
         }
     }
     reply
+}
+
+fn encode(reply: Reply) -> Option<Vec<u8>> {
+    let mut b = [0u8; 64];
+    reply.encode(&mut b).ok().map(|n| b[..n].to_vec())
 }

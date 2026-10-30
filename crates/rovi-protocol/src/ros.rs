@@ -1,45 +1,12 @@
-//! The `rmw_zenoh` (Jazzy) wire contract the car implements for ROS 2: topic keys, liveliness
-//! tokens, the entity gid and the 33-byte sample attachment (S2 spike, M8 design).
+//! The `rmw_zenoh` (Jazzy) wire contract the car implements for ROS 2: the car's topic table,
+//! topic keys, liveliness tokens, the entity gid and the 33-byte sample attachment (S2 spike,
+//! M8 design).
 
-use core::fmt::{self, Write};
+use crate::text::Text;
+use core::fmt::Write;
 
-/// A fixed-capacity key expression, built without an allocator.
-#[derive(Clone, Copy)]
-pub struct Key<const N: usize> {
-    buf: [u8; N],
-    len: usize,
-}
-
-impl<const N: usize> Default for Key<N> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<const N: usize> Key<N> {
-    pub fn new() -> Self {
-        Self {
-            buf: [0; N],
-            len: 0,
-        }
-    }
-
-    pub fn as_str(&self) -> &str {
-        core::str::from_utf8(&self.buf[..self.len]).unwrap_or("")
-    }
-}
-
-impl<const N: usize> Write for Key<N> {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        let end = self.len + s.len();
-        self.buf
-            .get_mut(self.len..end)
-            .ok_or(fmt::Error)?
-            .copy_from_slice(s.as_bytes());
-        self.len = end;
-        Ok(())
-    }
-}
+/// A fixed-capacity key expression.
+pub type Key<const N: usize> = Text<N>;
 
 /// A ROS 2 topic with its type, as `rmw_zenoh` names it.
 #[derive(Clone, Copy, Debug)]
@@ -86,21 +53,103 @@ pub const QOS_DEFAULT_10: &str = "::,10:,:,:,,";
 pub const QOS_RELIABLE_VOLATILE_1: &str = "::,1:,:,:,,";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Endpoint {
+pub enum EndpointKind {
     Publisher,
     Subscription,
 }
 
+/// The car's ROS 2 node (`/rovi`) in domain 0.
+pub const DOMAIN: u32 = 0;
+pub const NODE: &str = "rovi";
+
+/// One of the car's publishers or subscriptions. `id` is its liveliness entity id.
+#[derive(Clone, Copy, Debug)]
+pub struct Endpoint {
+    pub id: u32,
+    pub kind: EndpointKind,
+    pub topic: Topic,
+    pub qos: &'static str,
+}
+
+const fn endpoint(
+    id: u32,
+    kind: EndpointKind,
+    name: &'static str,
+    ty: (&'static str, &'static str),
+    qos: &'static str,
+) -> Endpoint {
+    Endpoint {
+        id,
+        kind,
+        topic: Topic {
+            name,
+            ty: ty.0,
+            hash: ty.1,
+        },
+        qos,
+    }
+}
+
+use EndpointKind::{Publisher, Subscription};
+pub const CMD_VEL: Endpoint =
+    endpoint(1, Subscription, "cmd_vel", TWIST_STAMPED, QOS_BEST_EFFORT_1);
+pub const ARM: Endpoint = endpoint(2, Subscription, "rovi/arm", BOOL, QOS_BEST_EFFORT_5);
+pub const STATUS: Endpoint = endpoint(3, Publisher, "rovi/status", STRING, QOS_DEFAULT_10);
+pub const ECHO: Endpoint = endpoint(4, Subscription, "rovi/echo", INT64, QOS_BEST_EFFORT_1);
+pub const ECHO_REPLY: Endpoint =
+    endpoint(5, Publisher, "rovi/echo_reply", INT64, QOS_BEST_EFFORT_1);
+pub const CAPABILITIES: Endpoint = endpoint(
+    6,
+    Publisher,
+    "rovi/capabilities",
+    STRING,
+    QOS_RELIABLE_VOLATILE_1,
+);
+pub const MODE: Endpoint = endpoint(7, Subscription, "rovi/mode", UINT8, QOS_DEFAULT_10);
+pub const RELEASE: Endpoint = endpoint(8, Subscription, "rovi/release", EMPTY, QOS_DEFAULT_10);
+pub const NETWORK: Endpoint = endpoint(
+    9,
+    Publisher,
+    "rovi/network",
+    STRING,
+    QOS_RELIABLE_VOLATILE_1,
+);
+
+/// The car's whole ROS interface, in liveliness id order (the one topic table, design I8).
+pub const ENDPOINTS: [Endpoint; 9] = [
+    CMD_VEL,
+    ARM,
+    STATUS,
+    ECHO,
+    ECHO_REPLY,
+    CAPABILITIES,
+    MODE,
+    RELEASE,
+    NETWORK,
+];
+
+impl Endpoint {
+    /// This endpoint's liveliness token on the car's node.
+    pub fn token(&self, zid: &str) -> Option<Key<256>> {
+        endpoint_token(DOMAIN, zid, self.id, self.kind, NODE, &self.topic, self.qos)
+    }
+
+    /// The data key samples are put on.
+    pub fn key(&self) -> Option<Key<192>> {
+        topic_key(DOMAIN, &self.topic)
+    }
+}
+
 /// The data key: `<domain>/<topic>/<type>/<hash>`.
 pub fn topic_key(domain: u32, topic: &Topic) -> Option<Key<192>> {
-    let mut k = Key::new();
+    let mut k = Key::default();
     write!(k, "{domain}/{}/{}/{}", topic.name, topic.ty, topic.hash).ok()?;
     Some(k)
 }
 
 /// The liveliness token of node `name` (the node entity has id 0).
 pub fn node_token(domain: u32, zid: &str, name: &str) -> Option<Key<128>> {
-    let mut k = Key::new();
+    let mut k = Key::default();
     write!(k, "@ros2_lv/{domain}/{zid}/0/0/NN/%/%/{name}").ok()?;
     Some(k)
 }
@@ -111,15 +160,15 @@ pub fn endpoint_token(
     domain: u32,
     zid: &str,
     id: u32,
-    endpoint: Endpoint,
+    endpoint: EndpointKind,
     node: &str,
     topic: &Topic,
     qos: &str,
 ) -> Option<Key<256>> {
-    let mut k = Key::new();
+    let mut k = Key::default();
     let kind = match endpoint {
-        Endpoint::Publisher => "MP",
-        Endpoint::Subscription => "MS",
+        EndpointKind::Publisher => "MP",
+        EndpointKind::Subscription => "MS",
     };
     write!(k, "@ros2_lv/{domain}/{zid}/0/{id}/{kind}/%/%/{node}/%").ok()?;
     for c in topic.name.chars() {
@@ -196,7 +245,7 @@ mod tests {
             0,
             ZID,
             1,
-            Endpoint::Subscription,
+            EndpointKind::Subscription,
             "rovi",
             &CMD_VEL,
             QOS_BEST_EFFORT_1,
@@ -216,7 +265,7 @@ mod tests {
             0,
             ZID,
             2,
-            Endpoint::Subscription,
+            EndpointKind::Subscription,
             "rovi",
             &arm,
             QOS_BEST_EFFORT_5,
@@ -236,8 +285,16 @@ mod tests {
             ty: STRING.0,
             hash: STRING.1,
         };
-        let t =
-            endpoint_token(0, ZID, 3, Endpoint::Publisher, "rovi", &st, QOS_DEFAULT_10).unwrap();
+        let t = endpoint_token(
+            0,
+            ZID,
+            3,
+            EndpointKind::Publisher,
+            "rovi",
+            &st,
+            QOS_DEFAULT_10,
+        )
+        .unwrap();
         assert!(t
             .as_str()
             .contains("/0/3/MP/%/%/rovi/%rovi%status/std_msgs::msg::dds_::String_/"));
@@ -309,7 +366,7 @@ mod tests {
             0,
             ZID,
             4,
-            Endpoint::Subscription,
+            EndpointKind::Subscription,
             "rovi",
             &echo,
             QOS_BEST_EFFORT_1,
@@ -320,7 +377,7 @@ mod tests {
             0,
             ZID,
             5,
-            Endpoint::Publisher,
+            EndpointKind::Publisher,
             "rovi",
             &reply,
             QOS_BEST_EFFORT_1,
@@ -342,7 +399,7 @@ mod tests {
             0,
             ZID,
             6,
-            Endpoint::Publisher,
+            EndpointKind::Publisher,
             "rovi",
             &topic,
             QOS_RELIABLE_VOLATILE_1,
@@ -357,5 +414,19 @@ mod tests {
         assert!(key
             .as_str()
             .starts_with("0/rovi/capabilities/std_msgs::msg::dds_::String_/"));
+    }
+
+    #[test]
+    fn the_endpoint_table_is_in_liveliness_id_order_and_unique() {
+        for (i, e) in ENDPOINTS.iter().enumerate() {
+            assert_eq!(e.id as usize, i + 1, "{}", e.topic.name);
+            assert!(ENDPOINTS[..i].iter().all(|o| o.topic.name != e.topic.name));
+        }
+        assert!(STATUS
+            .token(ZID)
+            .unwrap()
+            .as_str()
+            .contains("/0/3/MP/%/%/rovi/%rovi%status/std_msgs::msg::dds_::String_/"));
+        assert_eq!(super::CMD_VEL.key().unwrap().as_str(), "0/cmd_vel/geometry_msgs::msg::dds_::TwistStamped_/RIHS01_5f0fcd4f81d5d06ad9b4c4c63e3ea51b82d6ae4d0558f1d475229b1121db6f64");
     }
 }
