@@ -10,6 +10,7 @@ extern crate std;
 pub mod ble;
 pub mod capabilities;
 pub mod network;
+pub mod ros;
 pub mod setpoint;
 pub mod status;
 pub mod text;

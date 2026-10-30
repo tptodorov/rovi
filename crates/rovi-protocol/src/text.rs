@@ -6,6 +6,7 @@ use core::fmt::{self, Write};
 const ENCAPSULATION: [u8; 4] = [0x00, 0x01, 0x00, 0x00]; // CDR little-endian
 
 /// A fixed-capacity string for building text without an allocator.
+#[derive(Clone, Copy)]
 pub struct Text<const N: usize> {
     buf: [u8; N],
     len: usize,
