@@ -1,5 +1,5 @@
 // Diagnostic only. This module has no session, transport or command encoder.
-import { angleDelta, scaleAngle } from './angles.82fbd45f4050.js';
+import { angleDelta, scaleAngle } from './angles.712ef024b110.js';
 export { angleDelta, scaleAngle };
 export const STALE_MS = 250;
 const finite = value => typeof value === 'number' && Number.isFinite(value);

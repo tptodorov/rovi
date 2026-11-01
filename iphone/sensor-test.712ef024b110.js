@@ -1,4 +1,4 @@
-import { SensorProbe } from './sensor-model.82fbd45f4050.js';
+import { SensorProbe } from './sensor-model.712ef024b110.js';
 
 const probe = new SensorProbe(), byId = id => document.getElementById(id), now = () => performance.now();
 const active = () => !document.hidden && document.hasFocus();

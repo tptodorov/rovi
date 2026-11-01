@@ -1,4 +1,4 @@
-import { SERVICE, UUID, NETWORK_UUID } from './wire.82fbd45f4050.js';
+import { SERVICE, UUID, NETWORK_UUID } from './wire.712ef024b110.js';
 
 export function supportError(bluetooth, protocol) {
   if (protocol !== 'https:') return 'Open the HTTPS controller page in Bluefy.';
