@@ -1,0 +1,11 @@
+test_reads_and_echo_agree_with_udp (__main__.BleRules.test_reads_and_echo_agree_with_udp) ... ok
+test_claim_busy_not_owner_and_release (__main__.UdpRules.test_claim_busy_not_owner_and_release) ... ok
+test_echo_returns_the_payload_and_drops_oversized (__main__.UdpRules.test_echo_returns_the_payload_and_drops_oversized) ... ok
+test_info_is_valid_and_meets_the_client_minimum (__main__.UdpRules.test_info_is_valid_and_meets_the_client_minimum) ... ok
+test_malformed_frames_get_no_reply_and_do_not_claim (__main__.UdpRules.test_malformed_frames_get_no_reply_and_do_not_claim) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 7.874s
+
+OK
+{"target": "device", "car": "192.168.1.193:7777"}

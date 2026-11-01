@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>97 / 118</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>98 / 118</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -5392,7 +5392,7 @@ Archive after acceptance; close Q21 in <code>PLAN.md</code>.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.2 Switch conformance, <code>apps/client</code>, teleop and bench scripts to the extension; remove hand-written codecs; sim conformance and teleop tests pass. Done 2026-11-01: <code>apps/client/wire.py</code> and teleop <code>protocol.py</code>/<code>ble.py</code> delegate all layouts, validation, UUIDs and Control codes to <code>rovi_protocol</code> (I1–I3, I5, I6 closed; teleop keeps its 200 ms lease rule until 2.6). <code>parse</code> checks the header with the crate (<code>udp::split</code>), and each payload goes through its crate-backed decoder, so a truncated HELLO_ACK stays malformed framing while bad capabilities stay fatal. The scenario harnesses validate every car reply with the crate. They still send raw bytes on purpose to probe the car, and the virtual-BLE datagrams stay raw. <code>bindings/python/module.sh</code> provides the module to the ROS containers. Passing locally: teleop (79), bench (47), scenario unit tests, sim UDP and network scenarios, Docker conformance and capabilities, and the CI bench probes (read-only, stops, UDP/ROS sharing, lease timing, Wi-Fi soak).</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.3 Add the <code>device</code> conformance target; announce, get Todor's go, run observational rules with motor power off over UDP and BLE; record evidence.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.3 Add the <code>device</code> conformance target; announce, get Todor's go, run observational rules with motor power off over UDP and BLE; record evidence. Done 2026-11-01: <code>apps/simcar/scenarios/observe.py</code> runs non-arming rules (INFO, Echo, malformed rejection, claim/BUSY/not-owner/release over UDP; BLE reads and Echo agreeing with UDP) against the sim car in CI and the real car with <code>ROVI_OBSERVE=device</code>. On the car with the top-of-stack firmware, motor power off: 5/5 pass, no arm events (<a href="../firmware/bench/2026-11-01-protocol-observe/notes.md">evidence</a>). Todor waived the &quot;go&quot; for read-only runs on 2026-11-01.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 3.4 Announce and get a separate go for the motion rules stand batch; record results.</li>
 <li>

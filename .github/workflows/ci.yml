@@ -116,6 +116,14 @@ jobs:
         run: python3 apps/simcar/scenarios/udp_scenarios.py
       - name: Network-mode scenarios against the sim car (UDP and virtual BLE)
         run: python3 apps/simcar/scenarios/network_scenarios.py
+      - name: Observational conformance against the sim car (add-rovi-protocol 3.3)
+        run: |
+          log=$(mktemp)
+          ROVI_SIM_HOME=1 apps/simcar/target/debug/simcar 17830 1000 10000 5000 </dev/null >"$log" 2>&1 &
+          car=$!
+          trap 'kill "$car" 2>/dev/null || true; rm -f "$log"' EXIT
+          sleep 0.5
+          cd apps/simcar/scenarios && ROVI_TARGET=127.0.0.1:17830 ROVI_OBSERVE=sim python3 observe.py
       - name: Python unit tests
         env:
           MPLBACKEND: Agg
