@@ -1,0 +1,40 @@
+{"at": 1793557823.5888784, "network": "mode=home pending=none reason=none ip=192.168.1.193"}
+{"at": 1793557824.3007653, "status": "state=open reason=none error=none session=0"}
+{"at": 1793557824.7056155, "command": {"op": "info"}}
+{"at": 1793557824.716235, "command": {"op": "stream"}}
+{"at": 1793557824.7288709, "status": "state=armed reason=none error=none session=3036926583"}
+{"at": 1793557824.7702234, "command": {"op": "drive"}}
+{"at": 1793557825.9756048, "command": {"op": "drive"}}
+{"at": 1793557826.188004, "status": "state=stopped reason=owner-lost error=none session=3036926583"}
+{"at": 1793557826.1886594, "status": "state=claimed reason=none error=none session=3036926584"}
+{"at": 1793557826.6758707, "status": "state=armed reason=none error=none session=3036926584"}
+{"at": 1793557827.2873883, "status": "state=stopped reason=stop error=none session=3036926584"}
+{"at": 1793557827.3019924, "status": "state=claimed reason=none error=none session=3036926585"}
+{"at": 1793557827.3433707, "command": {"op": "drive"}}
+{"at": 1793557828.5522425, "command": {"op": "arm"}}
+{"at": 1793557828.563182, "command": {"op": "drive"}}
+{"at": 1793557828.6215994, "status": "state=armed reason=none error=none session=3036926585"}
+{"at": 1793557833.0620434, "command": {"op": "drive"}}
+{"at": 1793557838.1372368, "status": "state=stopped reason=owner-lost error=none session=3036926585"}
+{"at": 1793557838.1377504, "status": "state=stopped reason=stop error=none session=3036926586"}
+{"at": 1793557838.152538, "network": "mode=home pending=none reason=none ip=0.0.0.0"}
+{"at": 1793557838.1618822, "status": "state=armed reason=none error=none session=3036926586"}
+{"at": 1793557838.2354844, "command": {"op": "drive"}}
+{"at": 1793557838.2637315, "network": "mode=home pending=none reason=none ip=192.168.1.193"}
+{"at": 1793557838.3365383, "status": "state=open reason=none error=none session=0"}
+{"at": 1793557838.3648422, "status": "state=armed reason=none error=none session=3036926587"}
+{"at": 1793557841.3942869, "command": {"op": "drive"}}
+{"at": 1793557846.1100323, "status": "state=stopped reason=owner-lost error=none session=3036926587"}
+{"at": 1793557846.1106005, "status": "state=open reason=none error=none session=0"}
+{"at": 1793557846.1316943, "network": "mode=home pending=none reason=none ip=0.0.0.0"}
+{"at": 1793557846.14265, "status": "state=claimed reason=none error=none session=3036926589"}
+{"at": 1793557846.1530354, "command": {"op": "drive"}}
+{"at": 1793557846.2295785, "network": "mode=home pending=none reason=none ip=192.168.1.193"}
+{"at": 1793557847.3581054, "command": {"op": "arm"}}
+{"at": 1793557847.3690758, "command": {"op": "drive"}}
+{"at": 1793557847.3744326, "status": "state=armed reason=none error=none session=3036926589"}
+{"at": 1793557848.5733447, "command": {"op": "stop"}}
+{"at": 1793557848.587988, "status": "state=stopped reason=stop error=none session=3036926589"}
+{"at": 1793557848.8809583, "command": {"op": "release"}}
+{"at": 1793557848.8988225, "status": "state=open reason=none error=none session=0"}
+{"at": 1793557848.9410365, "command": {"op": "exit"}}

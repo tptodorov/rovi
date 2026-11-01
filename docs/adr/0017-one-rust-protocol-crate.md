@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # One Rust protocol crate is the wire contract for every participant
@@ -11,7 +11,7 @@ The car, the sim car, the laptop tools, the conformance suite and the phone each
 * Generated golden vectors are committed and checked in CI; changing bytes needs an explicit compatibility decision.
 * One conformance suite runs through the shared types on the sim car and on the real car.
 
-Details: [`add-rovi-protocol`](../../openspec/changes/add-rovi-protocol/design.md).
+Details: [`add-rovi-protocol`](../../openspec/changes/archive/2026-11-01-add-rovi-protocol/design.md).
 
 ## Considered options
 

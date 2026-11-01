@@ -7,7 +7,7 @@ Lets a laptop operator control the existing car UDP API interactively with expli
 
 ### Requirement: Explicit connection without motion
 
-The client SHALL require an interactive terminal and exactly one transport: explicit UDP IPv4:port or BLE discovery with optional MAC. Each UDP attempt SHALL validate HELLO's nonzero session/capabilities and use fresh control sequences. BLE SHALL validate GATT/capabilities before controls. All connections SHALL start disarmed at zero. BUSY/unavailable targets SHALL retry without motion; invalid capabilities or leases below 200 ms SHALL fail.
+The client SHALL require an interactive terminal and exactly one transport: explicit UDP IPv4:port or BLE discovery with optional MAC. Each UDP attempt SHALL validate HELLO's nonzero session/capabilities and use fresh control sequences. BLE SHALL validate GATT/capabilities before controls. All connections SHALL start disarmed at zero. BUSY/unavailable targets SHALL retry without motion. Invalid capabilities, lease <500 ms, claim <1000 ms or zero reclaim SHALL fail.
 
 #### Scenario: Connection starts disarmed
 
@@ -18,7 +18,7 @@ The client SHALL require an interactive terminal and exactly one transport: expl
 
 - **WHEN** UDP returns BUSY, its one-second handshake expires, or BLE discovery/connect fails
 - **THEN** the client retries with no ARM or nonzero setpoint
-- **AND** invalid capabilities or an unsupported lease terminate through cleanup
+- **AND** invalid capabilities or windows below the shared client minimum terminate through cleanup
 
 #### Scenario: Old handshake cannot reconnect
 
