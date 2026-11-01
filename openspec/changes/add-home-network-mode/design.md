@@ -44,7 +44,7 @@ Same rule everywhere (owner, disarmed, pending until release), parsed in `rovi-c
 | UDP | Kind 10, payload `1`/`2`, reply `STATUS` | Kind 11, any peer, like Echo |
 | ROS | `/rovi/mode` `std_msgs/UInt8` from the owner node | `/rovi/network` `std_msgs/String` logfmt, ≥1 Hz and on change |
 
-Network information is `mode=… pending=… fallback=… ip=…` (BLE/UDP: a fixed 8-byte binary form: mode, pending, reason, reserved, IPv4). UDP is available in home mode with no extra code because the UDP task binds to whichever stack is active; trust is the home network ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) superseded for station mode).
+Network information is `mode=… pending=… reason=… ip=…` (the key was `fallback=` until [`add-rovi-protocol`](../add-rovi-protocol/design.md) T10) (BLE/UDP: a fixed 8-byte binary form: mode, pending, reason, reserved, IPv4). UDP is available in home mode with no extra code because the UDP task binds to whichever stack is active; trust is the home network ([ADR-0008](../../../docs/adr/0008-local-link-security-baseline.md) superseded for station mode).
 
 ### D7. Budgets
 

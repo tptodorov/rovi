@@ -1,7 +1,11 @@
-"""Version-one framing and one UDP connection attempt; no socket effects."""
-import math
+"""Version-one framing and one UDP connection attempt; no socket effects.
+
+Frames are encoded and validated by the `rovi_protocol` binding (ADR-0017); this module keeps the
+client's session rules only."""
 import struct
-from apps.client.wire import Capabilities, Status, cdr
+
+import rovi_protocol as rp
+from apps.client.wire import Capabilities, Status
 
 HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY, ECHO, MODE, INFO = range(1, 12)
 # ADR-0016 mode command values and network-information names (8 bytes: mode, pending, reason, 0, IPv4).
@@ -14,11 +18,13 @@ NET_REASONS = ("none", "no-settings", "scan", "join", "dhcp", "router", "link-lo
 def network_text(info):
     """The car's network information as one logfmt line, as the ROS topic prints it."""
     try:
-        mode, pending, reason = NET_MODES[info[0]], NET_PENDING[info[1]], NET_REASONS[info[2]]
-    except IndexError:
+        n = rp.network_decode(bytes(info))
+    except rp.DecodeError:
         return "network information not understood"
-    return f"mode={mode} pending={pending} fallback={reason} ip={'.'.join(map(str, info[4:8]))}"
+    return f"mode={n['mode']} pending={n['pending']} reason={n['reason']} ip={n['ip']}"
 HEADER = struct.Struct("<2sBBII")
+COMMAND = {HOME: "home", CAR_NETWORK: "car-network"}
+
 
 class ClientError(Exception):
     """A fatal client error that exits through cleanup."""
@@ -29,36 +35,31 @@ class LinkError(ClientError):
 
 
 def frame(kind, session, sequence, payload=b""):
+    """A raw frame, unchecked: for tests that need arbitrary or malformed input. The client sends
+    only `encode` frames."""
     return HEADER.pack(b"RV", 1, kind, session, sequence) + payload
 
 
+def encode(session, sequence, message):
+    """A client frame, encoded and checked by the crate."""
+    return rp.udp_encode_to_car({"session": session, "seq": sequence, "message": message})
+
+
 def parse(data):
-    if len(data) < HEADER.size:
-        raise ValueError("short header")
-    magic, version, kind, session, sequence = HEADER.unpack_from(data)
-    payload = data[HEADER.size:]
-    lengths = {HELLO: 0, ACK: 27, SETPOINT: 68, ARM: 0, STOP: 0, BYE: 0, STATUS: 3, BUSY: 0,
-               MODE: 1, INFO: 38}
-    if magic != b"RV" or version != 1 or kind not in range(1, 12):
-        raise ValueError("unknown frame")
-    if kind == INFO:  # an empty query, or the 38-byte answer
-        if len(payload) not in (0, lengths[INFO]):
-            raise ValueError("invalid payload length")
-    elif (kind == ECHO and len(payload) > 32) or (kind != ECHO and len(payload) != lengths[kind]):
-        raise ValueError("invalid payload length")
-    return kind, session, sequence, payload
+    """`(kind, session, sequence, payload)` of a frame whose header the crate accepts; each
+    payload is then checked by its own decoder. ValueError (`rovi_protocol.DecodeError`)
+    otherwise."""
+    return rp.udp_split(bytes(data))
 
 
 def capabilities(payload):
-    caps = Capabilities.decode(payload)
-    geometry = (caps.wheels_radius, caps.center_projection_sum)
-    limits = (caps.max_vx, caps.max_vy, caps.max_wz)
-    if (caps.version != 1 or not all(math.isfinite(x) and x > 0 for x in geometry)
-            or not all(math.isfinite(x) and x >= 0 for x in limits)
-            or not all(x > 0 for x in (caps.claim_ms, caps.reclaim_ms))):
-        raise ClientError("invalid capabilities")
-    if caps.lease_ms < 200:
-        raise ClientError("unsupported lease: need at least 200 ms")
+    try:
+        caps = Capabilities.decode(payload)
+    except rp.DecodeError as e:
+        raise ClientError(f"invalid capabilities ({e})") from None
+    if not rp.meets_client_minimum(caps._asdict()):
+        raise ClientError(f"unsupported windows: need a lease of at least {rp.MIN_LEASE_MS} ms "
+                          f"and a claim window of at least {rp.MIN_CLAIM_MS} ms")
     return caps
 
 
@@ -89,32 +90,36 @@ class Session:
         self.started = True
         q = self.next_sequence()
         self.hello = (q, now + 1000)
-        return frame(HELLO, 0, q)
+        return encode(0, q, {"kind": "hello"})
 
     def setpoint(self, vector):
         self.setpoint_sequence = (self.setpoint_sequence + 1) & 0xffffffff
-        return frame(SETPOINT, self.session, self.setpoint_sequence, cdr(*vector))
+        vx, vy, wz = vector
+        setpoint = {"vx": vx, "vy": vy, "wz": wz}
+        return encode(self.session, self.setpoint_sequence, {"kind": "setpoint", "setpoint": setpoint})
 
     def control(self, kind, now, payload=b""):
         if not self.caps or not ((kind in (ARM, STOP) and not payload) or (kind == MODE and len(payload) == 1)):
             raise ClientError("no valid control session")
         q = self.next_sequence()
         self.pending = (kind, q, now + 500)
-        return frame(kind, self.session, q, payload)
+        message = {ARM: {"kind": "arm"}, STOP: {"kind": "stop"}}.get(kind) \
+            or {"kind": "mode", "command": COMMAND.get(payload[0], "")}
+        return encode(self.session, q, message)
 
     def info(self, now):
         """An INFO query (any peer may ask; the reply carries session 0)."""
         self.info_q = self.next_sequence()
-        return frame(INFO, 0, self.info_q)
+        return encode(0, self.info_q, {"kind": "info"})
 
     def echo(self, now):
         q = self.next_sequence()
         nonce = struct.pack("<QI", now, q)
         self.echoes[q] = (nonce, now + 500)
-        return frame(ECHO, self.session, q, nonce)
+        return encode(self.session, q, {"kind": "echo", "data": nonce})
 
     def bye(self):
-        return frame(BYE, self.session, self.next_sequence())
+        return encode(self.session, self.next_sequence(), {"kind": "bye"})
 
     def check(self, now):
         if self.hello and now >= self.hello[1]:
@@ -134,8 +139,8 @@ class Session:
                 return None
             if kind == BUSY:
                 raise LinkError("car is busy")
-            if kind != ACK:
-                return None
+            if kind != ACK or len(payload) != rp.CAPABILITIES_LEN:
+                return None  # a truncated ACK is malformed framing, not capabilities
             if not session:
                 raise ClientError("invalid zero session")
             # Retain the returned session for best-effort cleanup even if caps fail validation.
@@ -146,10 +151,11 @@ class Session:
         if kind == INFO and self.info_q is not None and q == self.info_q:
             self.info_q = None
             try:
-                status = Status.decode(payload[27:30])
+                info = rp.udp_decode_from_car(bytes(data))["message"]
             except ValueError:
                 return None
-            return ('info', status, payload[30:38])
+            status = Status.decode(rp.status_encode(info["status"]))
+            return ('info', status, rp.network_encode(info["network"]))
         if not self.caps or session != self.session:
             return None
         if kind == ECHO:

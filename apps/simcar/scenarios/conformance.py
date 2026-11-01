@@ -7,6 +7,7 @@ only: no radio is modelled (ADR-0002).
 Transport differences that are part of the contract, not gaps: ROS arms on its own stream
 (ADR-0011); BLE claims on its first write; UDP and BLE release with BYE / disconnect, ROS with
 /rovi/release."""
+import rovi_protocol as rp
 import os, socket, struct, threading, time, unittest
 
 import carlog
@@ -27,9 +28,9 @@ def observe_udp():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.settimeout(0.5)
     try:
-        s.sendto(b"RV\x01\x0b" + struct.pack("<II", 0, 1), (HOST, PORT))
-        p = s.recvfrom(256)[0][12:]
-        return tuple(p[27:30]), tuple(p[30:38])
+        s.sendto(rp.udp_encode_to_car({"session": 0, "seq": 1, "message": {"kind": "info"}}), (HOST, PORT))
+        info = rp.udp_decode_from_car(s.recvfrom(256)[0])["message"]
+        return tuple(rp.status_encode(info["status"])), tuple(rp.network_encode(info["network"]))
     finally:
         s.close()
 
@@ -70,14 +71,15 @@ class Udp:
     def _reply(self):
         while True:
             d = self.s.recvfrom(256)[0]
-            if struct.unpack_from("<I", d, 8)[0] == self.seq:
+            rp.udp_decode_from_car(d)  # every car reply must be valid under the crate
+            if rp.udp_split(d)[2] == self.seq:
                 return d
 
     def claim(self):
         self._send(1)
         d = self._reply()
-        assert d[3] == 2, d
-        self.session = struct.unpack_from("<I", d, 4)[0]
+        kind, self.session, _, _ = rp.udp_split(d)
+        assert kind == 2, d
 
     def setpoint(self, vx):
         self._send(3, cdr(vx))

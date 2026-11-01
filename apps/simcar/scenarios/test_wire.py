@@ -2,12 +2,14 @@ import pathlib, re, struct, unittest
 
 import wire
 
-SRC = pathlib.Path(__file__).resolve().parents[3] / "crates/rovi-core/src"
+ROOT = pathlib.Path(__file__).resolve().parents[3]
+SRC = ROOT / "crates/rovi-core/src"
+PROTOCOL = ROOT / "crates/rovi-protocol/src"
 
 
 def golden(name):
     """A CDR golden vector captured from ROS 2 Jazzy, read from the Rust tests in src/setpoint.rs."""
-    return bytes.fromhex(re.search(rf'const {name}: &str = "([0-9a-f]+)"', (SRC / "setpoint.rs").read_text()).group(1))
+    return bytes.fromhex(re.search(rf'const {name}: &str = "([0-9a-f]+)"', (ROOT / "crates/rovi-protocol/src/setpoint.rs").read_text()).group(1))
 
 
 class Setpoint(unittest.TestCase):
@@ -45,7 +47,7 @@ class Status(unittest.TestCase):
 
     def test_codes_match_the_firmware(self):
         src = (SRC / "device.rs").read_text()
-        self.assertEqual(int(re.search(r"STATUS_LEN: usize = (\d+)", src).group(1)), 3)
+        self.assertEqual(int(re.search(r"pub const LEN: usize = (\d+)", (PROTOCOL / "status.rs").read_text()).group(1)), 3)
         for name, code in re.findall(r"StopReason::(\w+) => (\d+)", src):
             self.assertEqual(wire.REASONS[int(code)], name)
         for name, code in re.findall(r"Some\(Error::(\w+)\) => (\d+)", src):
@@ -65,8 +67,8 @@ class Capabilities(unittest.TestCase):
             wire.Capabilities.decode(b[:-1])
 
     def test_length_matches_the_firmware(self):
-        src = (SRC / "device.rs").read_text()
-        self.assertEqual(int(re.search(r"CAPABILITIES_LEN: usize = (\d+)", src).group(1)), wire.Capabilities.LEN)
+        src = (PROTOCOL / "capabilities.rs").read_text()
+        self.assertEqual(int(re.search(r"pub const LEN: usize = (\d+)", src).group(1)), wire.Capabilities.LEN)
 
 
 if __name__ == "__main__":

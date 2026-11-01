@@ -1,0 +1,4 @@
+BLE {"address": "FE:E4:05:1A:9F:FF", "characteristics": ["d47a0011-45b2-4d19-8db0-6bd87e9c0001", "d47a0012-45b2-4d19-8db0-6bd87e9c0001", "d47a0013-45b2-4d19-8db0-6bd87e9c0001", "d47a0014-45b2-4d19-8db0-6bd87e9c0001", "d47a0015-45b2-4d19-8db0-6bd87e9c0001", "d47a0016-45b2-4d19-8db0-6bd87e9c0001"], "capabilities": [1, 0.029999999329447746, 0.1274999976158142, 1.0, 1.0, 3.0, 1000, 10000, 5000], "status": ["open", 0, 0], "network": {"mode": "home", "pending": 0, "reason": 0, "ip": "192.168.1.193"}}
+UDP INFO {"capabilities": [1, 0.029999999329447746, 0.1274999976158142, 1.0, 1.0, 3.0, 1000, 10000, 5000], "status": ["open", 0, 0], "network": {"mode": "home", "pending": 0, "reason": 0, "ip": "192.168.1.193"}}
+malformed HELLO: no reply | state after: ('open', 0, 0)
+PASS

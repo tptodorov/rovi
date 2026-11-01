@@ -34,13 +34,14 @@ use esp_radio::wifi::{
     self, ap::AccessPointConfig, scan::ScanConfig, sta::StationConfig, AuthenticationMethodConfig,
     WifiController,
 };
-use rovi_core::arbiter::{Config, Effects, Source, State};
+use rovi_core::arbiter::{Config, Effects, Source};
 use rovi_core::device::{self, Device};
 use rovi_core::events::{self, Event, Fault};
 use rovi_core::kinematics::Geometry;
-use rovi_core::network::{self as netmode, Mode, Reason, Settings, SettingsError, Step};
+use rovi_core::network::{self as netmode, Mode, Settings, SettingsError, Step};
 use rovi_drive::Drive;
 use rovi_motor_control::{Config as MotorConfig, Driver, MotorControl, Pins, CAR_CHANNELS};
+use rovi_protocol::{Reason, State};
 use smart_leds::{SmartLedsWrite, RGB8};
 use trouble_host::prelude::*;
 
@@ -60,7 +61,7 @@ fn random_bytes(bytes: &mut [u8]) -> Result<(), getrandom::Error> {
     Ok(())
 }
 
-const UDP_PORT: u16 = 7777;
+const UDP_PORT: u16 = rovi_protocol::udp::PORT;
 /// Scans per home attempt before the scan step fails (the core's 1.5 s budget still applies).
 const SCAN_TRIES: usize = 3;
 /// Association attempts per home attempt before the join step fails (the core's budget still applies).
@@ -145,24 +146,24 @@ fn ros_up() -> bool {
 struct RoviServer {
     rovi: RoviService,
 }
-#[gatt_service(uuid = "d47a0010-45b2-4d19-8db0-6bd87e9c0001")]
+#[gatt_service(uuid = rovi_protocol::ble::id::SERVICE)]
 struct RoviService {
-    #[characteristic(uuid = "d47a0011-45b2-4d19-8db0-6bd87e9c0001", write_without_response, value = [0; 72])]
-    setpoint: [u8; 72],
+    #[characteristic(uuid = rovi_protocol::ble::id::SETPOINT, write_without_response, value = [0; rovi_protocol::ble::SETPOINT_LEN])]
+    setpoint: [u8; rovi_protocol::ble::SETPOINT_LEN],
     /// 1 = ARM, 2 = STOP, 3 = Home, 4 = Car network.
-    #[characteristic(uuid = "d47a0012-45b2-4d19-8db0-6bd87e9c0001", write, value = 0)]
+    #[characteristic(uuid = rovi_protocol::ble::id::CONTROL, write, value = 0)]
     control: u8,
-    #[characteristic(uuid = "d47a0013-45b2-4d19-8db0-6bd87e9c0001", read, value = [0; 27])]
-    capabilities: [u8; 27],
+    #[characteristic(uuid = rovi_protocol::ble::id::CAPABILITIES, read, value = [0; rovi_protocol::capabilities::LEN])]
+    capabilities: [u8; rovi_protocol::capabilities::LEN],
     /// State, stop reason, last error.
-    #[characteristic(uuid = "d47a0014-45b2-4d19-8db0-6bd87e9c0001", read, notify, value = [0; 3])]
-    status: [u8; 3],
+    #[characteristic(uuid = rovi_protocol::ble::id::STATUS, read, notify, value = [0; rovi_protocol::status::LEN])]
+    status: [u8; rovi_protocol::status::LEN],
     /// Latency echo: up to 32 bytes written come back unchanged as a notification.
-    #[characteristic(uuid = "d47a0015-45b2-4d19-8db0-6bd87e9c0001", write_without_response, notify, value = [0; 32])]
-    echo: [u8; 32],
+    #[characteristic(uuid = rovi_protocol::ble::id::ECHO, write_without_response, notify, value = [0; rovi_protocol::ECHO_MAX])]
+    echo: [u8; rovi_protocol::ECHO_MAX],
     /// Network information: mode, pending command, fallback reason, 0, station IPv4.
-    #[characteristic(uuid = "d47a0016-45b2-4d19-8db0-6bd87e9c0001", read, notify, value = [0; 8])]
-    network: [u8; 8],
+    #[characteristic(uuid = rovi_protocol::ble::id::NETWORK, read, notify, value = [0; rovi_protocol::network::LEN])]
+    network: [u8; rovi_protocol::network::LEN],
 }
 
 async fn until(mut cond: impl FnMut() -> bool) {
@@ -600,7 +601,7 @@ async fn main(_spawner: Spawner) -> ! {
                             reply.send().await;
                         }
                     } else if handle == server.rovi.echo.handle {
-                        let mut data = [0u8; device::ECHO_MAX];
+                        let mut data = [0u8; rovi_protocol::ECHO_MAX];
                         let reply_len = w.with_data(|off, b| device::ble_echo(off, b, &mut data));
                         if let Ok(reply) = w.accept() {
                             reply.send().await;

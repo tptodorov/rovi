@@ -1,0 +1,12 @@
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "rovi-protocol"
+version = "0.1.0"
+description = "Rovi wire protocol codecs, bound from the rovi-protocol Rust crate"
+requires-python = ">=3.11"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]

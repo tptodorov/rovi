@@ -1,13 +1,14 @@
 # Laptop keyboard teleoperation
 
-Linux, Python 3.10+ and the normal M6 firmware. No installation or extra Python
-package is needed for UDP. From the repository root, after joining the car AP:
+Linux, Python 3.11+ and the normal M6 firmware. Messages are encoded and checked by the
+`rovi_protocol` module (the [Python binding](../../bindings/python) of `rovi-protocol`), which the
+project Nix shell provides. From the repository root, after joining the car AP:
 
 ```sh
-python3 -m apps.teleop --target 192.168.4.1:7777
+nix-shell --run 'python3 -m apps.teleop --target 192.168.4.1:7777'
 ```
 
-For BLE, use Bleak from the existing project Nix shell. No Wi-Fi join is needed:
+For BLE, the same shell also provides Bleak. No Wi-Fi join is needed:
 
 ```sh
 nix-shell --run 'python3 -m apps.teleop --ble'
@@ -58,7 +59,8 @@ then retries the connection after a one-second pause. It keeps trying through
 an unavailable or BUSY car until you quit. The old ownership window may need
 to expire before a new claim succeeds. It does not change Wi-Fi association;
 the laptop must still be joined to the car AP. A send-loop gap of 200 ms,
-terminal failure, invalid capabilities or a lease below 200 ms still ends the run.
+terminal failure, invalid capabilities, or a lease below 500 ms or claim window below 1000 ms
+(the single client minimum shared with the phone) still ends the run.
 These are host policies, not measured wheel-stop bounds.
 
 After a fresh claim and matching Echo, the client reports `Reconnected disarmed`.

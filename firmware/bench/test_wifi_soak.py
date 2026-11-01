@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import ANY, Mock, call, patch
 
 import wifi_soak as probe
+from apps.teleop.protocol import frame  # raw builder for crafted replies
 
 
 class EchoPeer:
@@ -55,11 +56,11 @@ class WifiSoak(unittest.TestCase):
 
     def test_only_matching_echo_counts(self):
         def replies(packet):
-            return [b'bad', probe.frame(probe.ECHO, 1, 42, packet[12:]),
-                    probe.frame(probe.ECHO, 0, 41, packet[12:]),
-                    probe.frame(probe.ECHO, 0, 42, b'old nonce'), packet]
+            return [b'bad', frame(probe.ECHO, 1, 42, packet[12:]),
+                    frame(probe.ECHO, 0, 41, packet[12:]),
+                    frame(probe.ECHO, 0, 42, b'old nonce'), packet]
         self.assertTrue(self.request(replies)['ok'])
-        self.assertFalse(self.request(lambda p: [probe.frame(probe.ECHO, 0, 41, p[12:])])['ok'])
+        self.assertFalse(self.request(lambda p: [frame(probe.ECHO, 0, 41, p[12:])])['ok'])
 
     def test_loss_then_recovery_is_retained_without_claim_or_rejoin(self):
         received = 0

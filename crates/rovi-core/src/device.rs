@@ -1,27 +1,23 @@
 //! The device core: the arbiter plus kinematics, driven by UDP datagrams. The BLE and ROS
 //! adapters will feed the same arbiter. Time is passed in; the firmware shell owns the sockets.
 
-use crate::arbiter::{Arbiter, Claimant, Config, Effects, Error, Source, State, StopReason};
-use crate::capabilities::Capabilities;
+use crate::arbiter::{Arbiter, Claimant, Config, Effects, Source};
 use crate::graph::Graph;
 use crate::kinematics::{self, Geometry};
-use crate::network::{Command, Mode, Network, Step};
-use crate::rmw::Attachment;
-use crate::setpoint::Setpoint;
-use crate::status::Status;
-use crate::udp::{self, Header, Kind};
+use crate::network::{Mode, Network, Step};
+use rovi_protocol::capabilities::Capabilities;
+use rovi_protocol::network::Command;
+use rovi_protocol::ros::Attachment;
+use rovi_protocol::setpoint::Setpoint;
+use rovi_protocol::status::{Error, State, Status, StopReason};
+use rovi_protocol::udp::{self, Frame, FromCar, Header, Kind, ToCar};
 
-/// Bytes of the `HELLO_ACK` payload.
-pub const CAPABILITIES_LEN: usize = 27;
-/// Bytes of the `STATUS` payload: state, stop reason, last error.
-pub const STATUS_LEN: usize = 3;
-/// Bytes of the UDP `INFO` payload: capabilities, status, network information.
-pub const INFO_LEN: usize = CAPABILITIES_LEN + STATUS_LEN + 8;
+use rovi_protocol::capabilities::LEN as CAPABILITIES_LEN;
+use rovi_protocol::status::LEN as STATUS_LEN;
+use rovi_protocol::ECHO_MAX;
+
 /// BLE connections the device tracks: one owner and one watcher (ADR-0016).
 pub const BLE_SLOTS: usize = 2;
-/// Largest echo payload (UDP `ECHO`, BLE Echo characteristic).
-pub const ECHO_MAX: usize = 32;
-
 /// The latency echo: the payload to send back unchanged, or `None` if it is too long. Stateless:
 /// any peer may echo, owner or not, and it never touches the arbiter or the lease.
 pub fn echo(data: &[u8]) -> Option<&[u8]> {
@@ -307,7 +303,11 @@ impl Device {
     }
 
     /// Starts in fallback after a mode-switch reset, keeping the reason the switch had.
-    pub fn start_network_fallback(&mut self, home_supported: bool, reason: crate::network::Reason) {
+    pub fn start_network_fallback(
+        &mut self,
+        home_supported: bool,
+        reason: rovi_protocol::network::Reason,
+    ) {
         self.network = Network::boot_fallback(home_supported, reason);
     }
 
@@ -490,70 +490,69 @@ impl Device {
             id: peer,
         };
         let ours = h.session == self.arbiter.session();
-        let reply = |kind, session, payload: &[u8], out: &mut [u8]| {
-            udp::write(
-                out,
-                Header {
-                    kind,
-                    session,
-                    seq: h.seq,
-                },
-                payload,
-            )
+        let Ok(frame) = Frame::<ToCar>::decode(datagram) else {
+            // An owner's malformed ARM/STOP/MODE reports invalid; other malformed frames are
+            // discarded (spec *Input validation before state changes*).
+            return match h.kind {
+                Kind::Arm | Kind::Stop if ours => self.control_reply(now, who, None, h, out),
+                Kind::Mode if ours => {
+                    let result = self.mode_command(who, payload);
+                    self.result_reply(result, h, out)
+                }
+                _ => Reply::default(),
+            };
+        };
+        let send = |message: FromCar, session, out: &mut [u8]| {
+            Frame {
+                session,
+                seq: h.seq,
+                message,
+            }
+            .encode(out)
             .unwrap_or(0)
         };
-        match h.kind {
-            Kind::Echo => Reply {
-                len: echo(payload).map_or(0, |p| udp::write(out, h, p).unwrap_or(0)),
+        match frame.message {
+            ToCar::Echo(p) => Reply {
+                len: send(FromCar::Echo(p), h.session, out),
                 ..Reply::default()
             },
-            Kind::Info => {
-                let mut info = [0u8; INFO_LEN];
-                info[..CAPABILITIES_LEN].copy_from_slice(&self.capabilities());
-                info[CAPABILITIES_LEN..CAPABILITIES_LEN + STATUS_LEN]
-                    .copy_from_slice(&self.status());
-                info[CAPABILITIES_LEN + STATUS_LEN..].copy_from_slice(&self.network_info());
+            ToCar::Info => {
+                let info = udp::Info {
+                    capabilities: self.capabilities_snapshot(),
+                    status: self.status_snapshot(),
+                    network: self.network.info(self.station_ip),
+                };
                 Reply {
-                    len: reply(Kind::Info, 0, &info, out),
+                    len: send(FromCar::Info(info), 0, out),
                     ..Reply::default()
                 }
             }
-            Kind::Hello => match self.claim(now, who) {
+            ToCar::Hello => match self.claim(now, who) {
                 Ok(effects) => {
                     if effects.claimed.is_some() {
                         self.owner_error = None;
                     }
-                    let caps = self.capabilities();
-                    let len = reply(Kind::HelloAck, self.arbiter.session(), &caps, out);
+                    let caps = FromCar::HelloAck(self.capabilities_snapshot());
+                    let len = send(caps, self.arbiter.session(), out);
                     Reply { len, effects }
                 }
                 Err(_) => Reply {
-                    len: reply(Kind::Busy, self.arbiter.session(), &[], out),
+                    len: send(FromCar::Busy, self.arbiter.session(), out),
                     ..Reply::default()
                 },
             },
             // Input from another session or a non-owner is dropped without a reply.
-            Kind::Setpoint if ours => match Setpoint::decode(payload) {
-                Ok(sp) => match self.arbiter.setpoint(now, who, h.seq, sp) {
-                    Ok((_, effects)) => Reply { len: 0, effects },
-                    Err(_) => Reply::default(),
-                },
+            ToCar::Setpoint(sp) if ours => match self.arbiter.setpoint(now, who, h.seq, sp) {
+                Ok((_, effects)) => Reply { len: 0, effects },
                 Err(_) => Reply::default(),
             },
-            Kind::Arm | Kind::Stop if ours => {
-                let command = payload.is_empty().then_some(h.kind == Kind::Arm);
-                match self.control(now, who, command) {
-                    Ok(effects) => self.status_reply(effects, h, out),
-                    Err(Error::NotOwner) => Reply::default(),
-                    Err(_) => self.status_reply(Effects::default(), h, out),
-                }
+            ToCar::Arm if ours => self.control_reply(now, who, Some(true), h, out),
+            ToCar::Stop if ours => self.control_reply(now, who, Some(false), h, out),
+            ToCar::Mode(c) if ours => {
+                let result = self.mode_command(who, &[c.code()]);
+                self.result_reply(result, h, out)
             }
-            Kind::Mode if ours => match self.mode_command(who, payload) {
-                Ok(effects) => self.status_reply(effects, h, out),
-                Err(Error::NotOwner) => Reply::default(),
-                Err(_) => self.status_reply(Effects::default(), h, out),
-            },
-            Kind::Bye if ours => match self.arbiter.release(now, who) {
+            ToCar::Bye if ours => match self.arbiter.release(now, who) {
                 Ok(effects) => Reply {
                     len: 0,
                     effects: self.ended(now, Some(who), effects),
@@ -561,6 +560,27 @@ impl Device {
                 Err(_) => Reply::default(),
             },
             _ => Reply::default(),
+        }
+    }
+
+    fn control_reply(
+        &mut self,
+        now: u64,
+        who: Claimant,
+        command: Option<bool>,
+        h: Header,
+        out: &mut [u8],
+    ) -> Reply {
+        let result = self.control(now, who, command);
+        self.result_reply(result, h, out)
+    }
+
+    /// Owner commands get a Status reply; a non-owner gets none.
+    fn result_reply(&mut self, result: Result<Effects, Error>, h: Header, out: &mut [u8]) -> Reply {
+        match result {
+            Ok(effects) => self.status_reply(effects, h, out),
+            Err(Error::NotOwner) => Reply::default(),
+            Err(_) => self.status_reply(Effects::default(), h, out),
         }
     }
 
@@ -900,7 +920,7 @@ impl Device {
     /// The same canonical values for every transport, readable without claiming the device.
     pub fn capabilities_snapshot(&self) -> Capabilities {
         Capabilities {
-            version: udp::VERSION,
+            version: rovi_protocol::capabilities::VERSION,
             wheels_radius: self.geometry.wheels_radius as f32,
             center_projection_sum: self.geometry.center_projection_sum as f32,
             max_vx: self.cfg.max_vx as f32,
@@ -967,6 +987,23 @@ fn ble(conn: BleConn) -> Claimant {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A ROS-style `TwistStamped` CDR with the given frame id (rovi-protocol only encodes empty).
+    fn with_frame(frame: &[u8], nanosec: u32, vx: f64) -> std::vec::Vec<u8> {
+        let mut b = std::vec::Vec::from([0u8, 1, 0, 0]);
+        b.extend_from_slice(&7i32.to_le_bytes());
+        b.extend_from_slice(&nanosec.to_le_bytes());
+        b.extend_from_slice(&(frame.len() as u32 + 1).to_le_bytes());
+        b.extend_from_slice(frame);
+        b.push(0);
+        while (b.len() - 4) % 8 != 0 {
+            b.push(0);
+        }
+        for v in [vx, 0.0, 0.0, 0.0, 0.0, 0.0] {
+            b.extend_from_slice(&v.to_le_bytes());
+        }
+        b
+    }
     use std::format;
 
     const GEOMETRY: Geometry = Geometry {
@@ -1070,6 +1107,78 @@ mod tests {
         assert_eq!(p[0], udp::VERSION);
         assert_eq!(f32::from_le_bytes(p[1..5].try_into().unwrap()), 0.05);
         assert_eq!(u16::from_le_bytes(p[21..23].try_into().unwrap()), 1_000);
+    }
+
+    /// Spec *One model per concept*: BLE, UDP `INFO` and ROS report equal values (ROS Status
+    /// also carries the session, design T6).
+    fn assert_transports_agree(d: &mut Device, now: u64) {
+        // INFO is observational: a watcher's query changes nothing.
+        let (r, _) = send(d, now, 0xFFFF, Kind::Info, 0, 77, &[]);
+        let (h, p) = r.unwrap();
+        let mut b = [0u8; 128];
+        let n = udp::write(&mut b, h, &p[..udp::INFO_LEN]).unwrap();
+        let info = match Frame::<FromCar>::decode(&b[..n]).unwrap().message {
+            FromCar::Info(i) => i,
+            m => panic!("{m:?}"),
+        };
+        let ble = Status::decode(&d.ble_status()).unwrap();
+        let mut cdr = [0u8; 384];
+        let n = d.status_cdr(&mut cdr);
+        let ros = Status::decode_cdr(&cdr[..n]).unwrap();
+        assert_eq!(info.status, ble);
+        assert_eq!(Status { session: 0, ..ros }, ble);
+        let net = rovi_protocol::NetworkInfo::decode(&d.network_info()).unwrap();
+        let n = d.network_cdr(&mut cdr);
+        let ros_net = rovi_protocol::NetworkInfo::decode_cdr(&cdr[..n]).unwrap();
+        assert_eq!((info.network, ros_net), (net, net));
+        let caps = Capabilities::decode(&d.capabilities()).unwrap();
+        let n = d.capabilities_snapshot().encode_cdr(&mut cdr).unwrap();
+        let ros_caps = Capabilities::decode_cdr(&cdr[..n]).unwrap();
+        assert_eq!((info.capabilities, ros_caps), (caps, caps));
+    }
+
+    #[test]
+    fn every_transport_reports_the_same_status_network_and_capabilities() {
+        let mut d = dev();
+        d.set_station_ip(Some([192, 168, 1, 7]));
+        assert_transports_agree(&mut d, 0);
+        let s = armed(&mut d);
+        assert_transports_agree(&mut d, 0);
+        send(&mut d, 1, A, Kind::Stop, s, 3, &[]);
+        assert_transports_agree(&mut d, 1);
+        send(&mut d, 2, A, Kind::Arm, s, 4, &[1]);
+        assert_transports_agree(&mut d, 2);
+    }
+
+    #[test]
+    fn malformed_hello_or_info_is_discarded_without_claiming() {
+        // Spec *Input validation before state changes*: malformed framing SHALL NOT claim.
+        let mut d = dev();
+        let (r, fx) = send(&mut d, 0, A, Kind::Hello, 0, 1, &[1]);
+        assert!(r.is_none());
+        assert_eq!(fx.claimed, None);
+        assert_eq!(d.arbiter().owner(), None);
+        let (r, _) = send(&mut d, 0, B, Kind::Info, 0, 2, &[1]);
+        assert!(r.is_none());
+    }
+
+    #[test]
+    fn an_owners_malformed_control_reports_invalid() {
+        let mut d = dev();
+        let s = armed(&mut d);
+        for (kind, payload) in [
+            (Kind::Arm, &[1u8][..]),
+            (Kind::Stop, &[0]),
+            (Kind::Mode, &[3]),
+            (Kind::Mode, &[]),
+        ] {
+            let (r, _) = send(&mut d, 1, A, kind, s, 9, payload);
+            let (h, p) = r.unwrap();
+            assert_eq!((h.kind, h.seq), (Kind::Status, 9), "{kind:?}");
+            assert_eq!(p[2], Error::Invalid.code(), "{kind:?}");
+        }
+        let (r, _) = send(&mut d, 1, B, Kind::Arm, s, 9, &[1]);
+        assert!(r.is_none(), "a non-owner gets no reply");
     }
 
     #[test]
@@ -1240,7 +1349,7 @@ mod tests {
         Attachment {
             seq,
             timestamp: 0,
-            gid: crate::rmw::gid(&key),
+            gid: rovi_protocol::ros::gid(&key),
         }
         .encode()
     }
@@ -1595,7 +1704,7 @@ mod tests {
         let late = Attachment {
             seq: 2,
             timestamp: 0,
-            gid: crate::rmw::gid(key),
+            gid: rovi_protocol::ros::gid(key),
         }
         .encode();
         assert_eq!(d.ros_publisher_known(&late), Some(false));
@@ -1638,7 +1747,6 @@ mod tests {
 
     #[test]
     fn an_unsupported_frame_neither_renews_the_lease_nor_uses_the_sequence() {
-        use crate::setpoint::tests::with_frame;
         let mut d = dev();
         let s = armed(&mut d); // setpoint seq 1 and ARM at t=0
         send(
@@ -1685,7 +1793,6 @@ mod tests {
 
     #[test]
     fn an_old_stamp_is_accepted_and_the_lease_runs_from_receive_time() {
-        use crate::setpoint::tests::with_frame;
         let mut d = dev();
         let s = armed(&mut d);
         send(
@@ -1957,7 +2064,7 @@ mod tests {
             cdr(0.5)[..40].to_vec(),
             std::vec::Vec::new(),
             out_of_plane.to_vec(),
-            crate::setpoint::tests::with_frame(b"map", 0, 0.5),
+            with_frame(b"map", 0, 0.5),
         ]
     }
 
@@ -2423,8 +2530,8 @@ mod tests {
         let mut d = dev();
         let snapshot = d.capabilities_snapshot();
         let binary = snapshot.encode();
-        let mut out = [0; crate::capabilities::CDR_MAX];
-        assert!(snapshot.encode_cdr(&mut out).is_some());
+        let mut out = [0; rovi_protocol::capabilities::CDR_MAX];
+        assert!(snapshot.encode_cdr(&mut out).is_ok());
         assert_eq!(d.arbiter().state(), State::Open);
         assert_eq!(d.wheels(0), [0.0; 4]);
         assert!(d.wifi_allowed() && d.radio_allowed(Source::Ble));
@@ -2451,7 +2558,7 @@ mod tests {
             0,
         )
         .unwrap();
-        let mut out = [0; crate::capabilities::CDR_MAX];
+        let mut out = [0; rovi_protocol::capabilities::CDR_MAX];
         let n = d.capabilities_snapshot().encode_cdr(&mut out).unwrap();
         let text = core::str::from_utf8(&out[8..n - 1]).unwrap();
         let limit = text
@@ -2655,7 +2762,7 @@ mod tests {
         d.on_ble_disconnect(1_005, c);
         assert_eq!(d.ble_status(), [0, 0, 0]);
         assert_eq!(d.status_snapshot().session, 0);
-        let mut out = [0; crate::status::CDR_MAX];
+        let mut out = [0; rovi_protocol::status::CDR_MAX];
         let n = d.status_cdr(&mut out);
         assert_eq!(
             &out[8..n - 1],
@@ -2689,7 +2796,7 @@ mod tests {
 
     // --- Takeover priority and hand-back (network-mode, ADR-0016) ---
 
-    use crate::network::{Command, Mode, Step};
+    use crate::network::{Mode, Step};
 
     fn home_dev() -> Device {
         let mut d = dev();
@@ -2890,7 +2997,10 @@ mod tests {
         assert_eq!(p[2], 0, "no error");
         assert_eq!(d.network().pending(), Some(Command::CarNetwork));
         send(&mut d, 20, A, Kind::Bye, s, 3, &[]);
-        assert_eq!(d.network().reason(), crate::network::Reason::Requested);
+        assert_eq!(
+            d.network().reason(),
+            rovi_protocol::network::Reason::Requested
+        );
     }
 
     #[test]
@@ -3035,7 +3145,7 @@ mod tests {
             [2, 0, 0]
         );
         assert_eq!(
-            p[CAPABILITIES_LEN + STATUS_LEN..INFO_LEN],
+            p[CAPABILITIES_LEN + STATUS_LEN..udp::INFO_LEN],
             [2, 0, 0, 0, 10, 0, 0, 7]
         );
         assert_eq!(fx, Effects::default());

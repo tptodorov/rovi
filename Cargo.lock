@@ -13,6 +13,7 @@ name = "rovi-core"
 version = "0.1.0"
 dependencies = [
  "libm",
+ "rovi-protocol",
  "xxhash-rust",
 ]
 
@@ -22,11 +23,19 @@ version = "0.1.0"
 dependencies = [
  "rovi-core",
  "rovi-motor-control",
+ "rovi-protocol",
 ]
 
 [[package]]
 name = "rovi-motor-control"
 version = "0.1.0"
+
+[[package]]
+name = "rovi-protocol"
+version = "0.1.0"
+dependencies = [
+ "xxhash-rust",
+]
 
 [[package]]
 name = "xxhash-rust"

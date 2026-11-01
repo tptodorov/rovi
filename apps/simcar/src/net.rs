@@ -11,7 +11,8 @@
 
 use crate::{log, ms, Shared};
 use rovi_core::events::Event;
-use rovi_core::network::{Mode, Reason, Step};
+use rovi_core::network::{Mode, Step};
+use rovi_protocol::Reason;
 use std::io::BufRead;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;

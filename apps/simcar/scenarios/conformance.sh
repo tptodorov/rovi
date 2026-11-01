@@ -11,8 +11,9 @@ log=$(mktemp /tmp/rovi-conformance.XXXX)
 car=
 trap 'kill $car 2>/dev/null || true; docker rm -f $name >/dev/null 2>&1 || true; rm -f "$log"' EXIT
 # Router on its own port (as firmware/bench/ros_stops.sh does), so a bench router is not disturbed.
+pymodule=$("$here/../../.."/bindings/python/module.sh)  # rovi_protocol for the container's Python
 docker run -d --rm --name $name --net host -e ROVI_ROUTER_PORT=$router \
-  -v "$here:/repo/apps/simcar/scenarios:ro" -v "$here/../../client:/repo/apps/client:ro" -v "$log:$log:ro" rovi-ros-sim bash -c 'set -e
+  -v "$here:/repo/apps/simcar/scenarios:ro" -v "$here/../../client:/repo/apps/client:ro" -v "$pymodule:/pymodule:ro" -e PYTHONPATH=/pymodule -v "$log:$log:ro" rovi-ros-sim bash -c 'set -e
     source /opt/ros/jazzy/setup.bash
     cfg=/opt/ros/jazzy/share/rmw_zenoh_cpp/config
     sed "s#tcp/\\[::\\]:7447#tcp/[::]:$ROVI_ROUTER_PORT#g" "$cfg/DEFAULT_RMW_ZENOH_ROUTER_CONFIG.json5" > /tmp/router.json5

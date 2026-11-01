@@ -4,6 +4,8 @@
 //! DHCP, router) and reports its outcome; this module decides the mode, the budgets and what a
 //! mode command or the end of an ownership does (`openspec/specs/network-mode`).
 
+use rovi_protocol::network::{Command, NetMode, NetworkInfo, Reason};
+
 /// Longest scan for the configured network before falling back.
 pub const SCAN_BUDGET_MS: u64 = 1_500;
 /// Join + DHCP + router, counted from the moment the network is found. 8 s: the board took
@@ -24,39 +26,6 @@ pub enum Step {
     Join,
     Dhcp,
     Router,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Reason {
-    None,
-    NoSettings,
-    Scan,
-    Join,
-    Dhcp,
-    Router,
-    LinkLost,
-    Requested,
-}
-
-impl Reason {
-    /// The reason from its network-information code (also the firmware's reset flag).
-    pub fn from_code(code: u8) -> Option<Self> {
-        Some(match code {
-            0 => Self::None,
-            1 => Self::NoSettings,
-            2 => Self::Scan,
-            3 => Self::Join,
-            4 => Self::Dhcp,
-            5 => Self::Router,
-            6 => Self::LinkLost,
-            7 => Self::Requested,
-            _ => return None,
-        })
-    }
-
-    pub fn code(self) -> u8 {
-        reason_code(self)
-    }
 }
 
 /// Build-time home settings: all three or none (spec *Build-time home settings*).
@@ -222,13 +191,6 @@ const fn ipv4_ok(b: &[u8], start: usize, end: usize) -> bool {
     part == 4
 }
 
-/// A mode command: pending until the commanding owner's ownership ends.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Command {
-    Home,
-    CarNetwork,
-}
-
 /// Why a home-mode attempt started; decides the fallback reason when it fails.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Cause {
@@ -238,89 +200,23 @@ enum Cause {
     LinkLost,
 }
 
-/// What every transport reports about the network: BLE Network characteristic, UDP `INFO`,
-/// ROS `/rovi/network`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Info {
-    pub mode: Mode,
-    pub pending: Option<Command>,
-    pub reason: Reason,
-    /// Station IPv4; 0.0.0.0 without one.
-    pub ip: [u8; 4],
+/// When to publish network information on ROS: on change, else every second (design I9).
+/// Takes the binary information so the comparison is exactly what clients see.
+#[derive(Default)]
+pub struct Publication {
+    last: Option<(u64, [u8; rovi_protocol::network::LEN])>,
 }
 
-impl Info {
-    /// `[mode, pending, reason, 0, ip0, ip1, ip2, ip3]`.
-    pub fn encode(self) -> [u8; 8] {
-        let mode = match self.mode {
-            Mode::Fallback => 0,
-            Mode::Attempting(_) => 1,
-            Mode::Home => 2,
-        };
-        let pending = match self.pending {
-            None => 0,
-            Some(Command::Home) => 1,
-            Some(Command::CarNetwork) => 2,
-        };
-        let [a, b, c, d] = self.ip;
-        [mode, pending, reason_code(self.reason), 0, a, b, c, d]
-    }
-
-    /// The `/rovi/network` sample: a CDR `std_msgs/String` in logfmt.
-    pub fn encode_cdr(self, out: &mut [u8]) -> Option<usize> {
-        use core::fmt::Write;
-        let mode = match self.mode {
-            Mode::Fallback => "fallback",
-            Mode::Attempting(_) => "attempting",
-            Mode::Home => "home",
-        };
-        let pending = match self.pending {
-            None => "none",
-            Some(Command::Home) => "home",
-            Some(Command::CarNetwork) => "car-network",
-        };
-        let [a, b, c, d] = self.ip;
-        let mut text = crate::rmw::Key::<96>::new();
-        write!(
-            text,
-            "mode={mode} pending={pending} fallback={} ip={a}.{b}.{c}.{d}",
-            reason_name(self.reason)
-        )
-        .ok()?;
-        let bytes = text.as_str().as_bytes();
-        let n = 9 + bytes.len();
-        let out = out.get_mut(..n)?;
-        out[..4].copy_from_slice(&[0, 1, 0, 0]);
-        out[4..8].copy_from_slice(&(bytes.len() as u32 + 1).to_le_bytes());
-        out[8..n - 1].copy_from_slice(bytes);
-        out[n - 1] = 0;
-        Some(n)
-    }
-}
-
-fn reason_code(r: Reason) -> u8 {
-    match r {
-        Reason::None => 0,
-        Reason::NoSettings => 1,
-        Reason::Scan => 2,
-        Reason::Join => 3,
-        Reason::Dhcp => 4,
-        Reason::Router => 5,
-        Reason::LinkLost => 6,
-        Reason::Requested => 7,
-    }
-}
-
-fn reason_name(r: Reason) -> &'static str {
-    match r {
-        Reason::None => "none",
-        Reason::NoSettings => "no-settings",
-        Reason::Scan => "scan",
-        Reason::Join => "join",
-        Reason::Dhcp => "dhcp",
-        Reason::Router => "router",
-        Reason::LinkLost => "link-lost",
-        Reason::Requested => "requested",
+impl Publication {
+    pub fn due(&mut self, now: u64, info: [u8; rovi_protocol::network::LEN]) -> bool {
+        if self
+            .last
+            .is_some_and(|(time, last)| last == info && now.saturating_sub(time) < 1_000)
+        {
+            return false;
+        }
+        self.last = Some((now, info));
+        true
     }
 }
 
@@ -378,9 +274,13 @@ impl Network {
         self.home_supported
     }
 
-    pub fn info(&self, ip: [u8; 4]) -> Info {
-        Info {
-            mode: self.mode,
+    pub fn info(&self, ip: [u8; 4]) -> NetworkInfo {
+        NetworkInfo {
+            mode: match self.mode {
+                Mode::Fallback => NetMode::Fallback,
+                Mode::Attempting(_) => NetMode::Attempting,
+                Mode::Home => NetMode::Home,
+            },
             pending: self.pending,
             reason: self.reason,
             ip,
@@ -522,7 +422,7 @@ mod tests {
             .info([192, 168, 1, 50])
             .encode_cdr(&mut out)
             .unwrap();
-        let text = b"mode=home pending=none fallback=none ip=192.168.1.50";
+        let text = b"mode=home pending=none reason=none ip=192.168.1.50";
         assert_eq!(out[..4], [0, 1, 0, 0]);
         assert_eq!(out[4..8], (text.len() as u32 + 1).to_le_bytes());
         assert_eq!(&out[8..n - 1], text);
@@ -532,7 +432,7 @@ mod tests {
         let len = n2.info([0; 4]).encode_cdr(&mut out).unwrap();
         assert_eq!(
             &out[8..len - 1],
-            b"mode=fallback pending=car-network fallback=scan ip=0.0.0.0"
+            b"mode=fallback pending=car-network reason=scan ip=0.0.0.0"
         );
     }
 
@@ -548,7 +448,7 @@ mod tests {
             Reason::LinkLost,
             Reason::Requested,
         ] {
-            assert_eq!(Reason::from_code(reason_code(r)), Some(r));
+            assert_eq!(Reason::from_code(r.code()), Some(r));
         }
         assert_eq!(Reason::from_code(8), None);
     }
@@ -873,5 +773,16 @@ mod tests {
         assert_eq!(n.mode(), Mode::Attempting(Step::Scan));
         n.tick(100_000 + SCAN_BUDGET_MS);
         assert_eq!((n.mode(), n.reason()), (Mode::Fallback, Reason::Scan));
+    }
+
+    #[test]
+    fn network_information_publishes_on_change_and_every_second() {
+        let (a, b) = ([2, 0, 0, 0, 1, 2, 3, 4], [0, 0, 2, 0, 0, 0, 0, 0]);
+        let mut p = Publication::default();
+        assert!(p.due(0, a));
+        assert!(!p.due(999, a));
+        assert!(p.due(1_000, a));
+        assert!(p.due(1_001, b), "a change publishes at once");
+        assert!(!p.due(1_500, b));
     }
 }

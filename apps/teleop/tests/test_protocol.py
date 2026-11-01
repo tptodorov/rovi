@@ -44,13 +44,13 @@ class ProtocolTests(unittest.TestCase):
         event = s.receive(frame(INFO, 0, q, reply), 11)
         self.assertEqual(event[0], 'info')
         self.assertEqual(event[1], Status('Armed', None, None))
-        self.assertEqual(network_text(event[2]), 'mode=home pending=none fallback=none ip=192.168.1.50')
+        self.assertEqual(network_text(event[2]), 'mode=home pending=none reason=none ip=192.168.1.50')
         self.assertIsNone(s.receive(frame(INFO, 0, q, reply), 12), 'answered once')
 
     def test_network_text_names_every_code(self):
         self.assertEqual(network_text(bytes([0, 2, 7, 0, 0, 0, 0, 0])),
-                         'mode=fallback pending=car-network fallback=requested ip=0.0.0.0')
-        self.assertEqual(network_text(bytes([1, 1, 6, 0, 0, 0, 0, 0]))[:40], 'mode=attempting pending=home fallback=li')
+                         'mode=fallback pending=car-network reason=requested ip=0.0.0.0')
+        self.assertEqual(network_text(bytes([1, 1, 6, 0, 0, 0, 0, 0]))[:40], 'mode=attempting pending=home reason=link')
         self.assertEqual(network_text(b'\x09' * 8), 'network information not understood')
 
     def test_invalid_frames_do_not_refresh_deadline(self):
@@ -116,7 +116,11 @@ class ProtocolTests(unittest.TestCase):
                 payload=struct.pack('<B5f3H',1,*values,1000,10000,5000)
                 with self.subTest(index=index,invalid=invalid), self.assertRaises(ClientError):
                     s.receive(frame(ACK,42,q,payload),1)
-        for windows in [(199,10000,5000),(1000,0,5000),(1000,10000,0)]:
+        # One minimum for every client (add-rovi-protocol I11): lease >= 500, claim >= 1000.
+        for windows in [(199,10000,5000),(499,10000,5000),(1000,999,5000),(1000,0,5000),(1000,10000,0)]:
             s=Session();q=parse(s.start(0))[2]
             payload=struct.pack('<B5f3H',1,.03,.1275,1,1,3,*windows)
             with self.subTest(windows=windows), self.assertRaises(ClientError):s.receive(frame(ACK,42,q,payload),1)
+        s=Session();q=parse(s.start(0))[2]
+        payload=struct.pack('<B5f3H',1,.03,.1275,1,1,3,500,1000,1)
+        self.assertEqual(s.receive(frame(ACK,42,q,payload),1)[0],'claimed','the minimum itself is accepted')
