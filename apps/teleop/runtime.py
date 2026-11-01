@@ -76,6 +76,8 @@ class Client:
         self.recovering = False
         self.alerted = False
         self.discard_keys = False
+        # Printed only after the discard, so a key typed after reading it always counts (#124).
+        self.after_discard = []
         # ADR-0016: Home or Car network, sent again on every claim (a command belongs to its session).
         self.mode = {'home': HOME, 'car': CAR_NETWORK, None: None}[mode]
 
@@ -92,20 +94,21 @@ class Client:
         if event[0] == 'claimed':
             self.policy = Policy(event[1])
             self.discard_keys = True
+            say = self.after_discard.append
             self.send(self.session.info(now))
             if self.mode:
                 self.send(self.session.control(MODE,now,bytes([self.mode])))
             if self.recovering:
-                self.emit(f'Claimed disarmed session={self.session.session} capabilities={dict(event[1]._asdict())}; verifying Echo')
+                say(f'Claimed disarmed session={self.session.session} capabilities={dict(event[1]._asdict())}; verifying Echo')
             else:
                 self.connected_once = True
-                self.emit(f'Connected disarmed session={self.session.session} capabilities={dict(event[1]._asdict())}')
+                say(f'Connected disarmed session={self.session.session} capabilities={dict(event[1]._asdict())}')
         elif event[0] == 'echo' and self.recovering:
             self.recovering = self.alerted = False
             self.discard_keys = True
             label = 'Reconnected' if self.connected_once else 'Connected'
             self.connected_once = True
-            self.emit(f'{label} disarmed session={self.session.session}; press R to arm')
+            self.after_discard.append(f'{label} disarmed session={self.session.session}; press R to arm')
         elif event[0] == 'info':
             self.emit(f'Car network: {network_text(event[2])}')
         elif event[0] == 'status' and event[2] == MODE:
@@ -203,6 +206,9 @@ class Client:
                         self.send(self.session.setpoint(ZERO))
                         self.send(self.session.control(ARM,self.clock()))
                 self.discard_keys = False
+                for line in self.after_discard:
+                    self.emit(line)
+                self.after_discard.clear()
             if not self.policy:
                 continue
             now = self.clock()
