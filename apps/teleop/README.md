@@ -59,7 +59,8 @@ then retries the connection after a one-second pause. It keeps trying through
 an unavailable or BUSY car until you quit. The old ownership window may need
 to expire before a new claim succeeds. It does not change Wi-Fi association;
 the laptop must still be joined to the car AP. A send-loop gap of 200 ms,
-terminal failure, invalid capabilities or a lease below 200 ms still ends the run.
+terminal failure, invalid capabilities, or a lease below 500 ms or claim window below 1000 ms
+(the single client minimum shared with the phone) still ends the run.
 These are host policies, not measured wheel-stop bounds.
 
 After a fresh claim and matching Echo, the client reports `Reconnected disarmed`.

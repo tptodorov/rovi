@@ -116,7 +116,11 @@ class ProtocolTests(unittest.TestCase):
                 payload=struct.pack('<B5f3H',1,*values,1000,10000,5000)
                 with self.subTest(index=index,invalid=invalid), self.assertRaises(ClientError):
                     s.receive(frame(ACK,42,q,payload),1)
-        for windows in [(199,10000,5000),(1000,0,5000),(1000,10000,0)]:
+        # One minimum for every client (add-rovi-protocol I11): lease >= 500, claim >= 1000.
+        for windows in [(199,10000,5000),(499,10000,5000),(1000,999,5000),(1000,0,5000),(1000,10000,0)]:
             s=Session();q=parse(s.start(0))[2]
             payload=struct.pack('<B5f3H',1,.03,.1275,1,1,3,*windows)
             with self.subTest(windows=windows), self.assertRaises(ClientError):s.receive(frame(ACK,42,q,payload),1)
+        s=Session();q=parse(s.start(0))[2]
+        payload=struct.pack('<B5f3H',1,.03,.1275,1,1,3,500,1000,1)
+        self.assertEqual(s.receive(frame(ACK,42,q,payload),1)[0],'claimed','the minimum itself is accepted')

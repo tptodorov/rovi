@@ -57,8 +57,9 @@ def capabilities(payload):
         caps = Capabilities.decode(payload)
     except rp.DecodeError as e:
         raise ClientError(f"invalid capabilities ({e})") from None
-    if caps.lease_ms < 200:
-        raise ClientError("unsupported lease: need at least 200 ms")
+    if not rp.meets_client_minimum(caps._asdict()):
+        raise ClientError(f"unsupported windows: need a lease of at least {rp.MIN_LEASE_MS} ms "
+                          f"and a claim window of at least {rp.MIN_CLAIM_MS} ms")
     return caps
 
 

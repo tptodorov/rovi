@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>94 / 118</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>95 / 118</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -5382,7 +5382,7 @@ Archive after acceptance; close Q21 in <code>PLAN.md</code>.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.5 Rename the ROS network key <code>fallback=</code> to <code>reason=</code> (T10, approved) with a recorded vector change; update teleop, bench and conformance readers.</li>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 2.6 Apply the single client minimum (I11, approved): crate constant used by laptop and phone; first check that no sim scenario or test starts the car with a lease below 500 ms or a claim window below 1000 ms; update teleop tests and README.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 2.6 Apply the single client minimum (I11, approved): crate constant used by laptop and phone; first check that no sim scenario or test starts the car with a lease below 500 ms or a claim window below 1000 ms; update teleop tests and README. Done 2026-11-01: no teleop test or simulator run uses windows below the minimum (all use 1000/10000/5000 ms). Teleop now refuses through <code>rovi_protocol.meets_client_minimum</code> (failing-first test: 499 ms lease and 999 ms claim were accepted before); the phone already used these values and moves onto the crate in 4.2.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 2.7 Generate the transport-difference table in <code>docs/reference/protocol.md</code> from the crate's list of intentional differences.</li>
 </ul>
