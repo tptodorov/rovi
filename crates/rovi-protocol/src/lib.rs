@@ -14,6 +14,7 @@ pub mod ros;
 pub mod setpoint;
 pub mod status;
 pub mod text;
+pub mod transports;
 pub mod udp;
 
 pub use capabilities::Capabilities;

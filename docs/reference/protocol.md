@@ -17,6 +17,25 @@ The same rules on every transport ([car-control-api](../../openspec/specs/car-co
 | Takeover notice | — (BLE is never taken over) | unsolicited `STATUS` stopped/owner-lost to the old session | `/rovi/status` stopped/owner-lost |
 | Echo (link probe) | Echo `d47a0015` | `ECHO` (9), any peer | `/rovi/echo` → `/rovi/echo_reply` |
 
+## Intentional differences
+
+Everything else is the same on every transport. The list lives in [`transports.rs`](../../crates/rovi-protocol/src/transports.rs); `cargo test -p rovi-protocol --test docs` keeps this table in step (`ROVI_BLESS_DOCS=1` rewrites it).
+
+<!-- generated: rovi-protocol transports::table -->
+| # | Difference | Why it stays |
+| --- | --- | --- |
+| T1 | Claim: BLE connects and claims on its first write; UDP sends `HELLO`; ROS claims on the first `cmd_vel` from a node in the graph | Each transport's own session model (ADR-0013, ADR-0016) |
+| T2 | Release: BLE disconnects; UDP sends `BYE`; ROS publishes `/rovi/release` | Same as T1 |
+| T3 | ROS arms on its own stream; BLE and UDP need an explicit ARM | Stock ROS tools publish only `cmd_vel` (ADR-0011) |
+| T4 | Sequences: u32 serial on BLE and UDP; the ROS attachment's i64, per publisher | ROS defines its attachment |
+| T5 | No takeover notice on BLE | BLE is never taken over |
+| T6 | ROS Status text carries `session=`; binary Status does not | ROS has no handshake that returns a session; bench tools use it |
+| T7 | Echo: up to 32 bytes on BLE and UDP; `std_msgs/Int64` on ROS | The ROS-native type |
+| T8 | Mode command: BLE Control 3 / 4; UDP `MODE` and ROS `UInt8` 1 / 2 | Renumbering would break the accepted phone/firmware pairing for no gain; one `Command` type maps both |
+| T9 | Status, Capabilities and network information are logfmt text on ROS, binary elsewhere | Readable in ROS tools; both forms come from the same type |
+| T11 | Delivery: BLE read/notify; UDP `INFO`/`HELLO_ACK` replies and unsolicited `STATUS`; ROS topics republished about once a second | Each transport's way to deliver state; the conformance suite checks the values agree |
+<!-- end generated -->
+
 ## Takeover and modes
 
 * Takeover rank: BLE > UDP > ROS. UDP takes the car from ROS in both modes; BLE takes it from UDP or ROS in home mode only. The new owner starts disarmed ([ADR-0016](../adr/0016-home-network-mode-with-ble-override.md)).
