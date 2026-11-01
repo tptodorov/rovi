@@ -479,7 +479,7 @@ footer {
 <p class="side-note">Built from the repository’s Markdown.<br>No server or internet needed.</p></aside>
 <main><header id="overview"><span class="eyebrow">From requirements to understanding</span><h1>How Rovi should behave.</h1>
 <p class="lede">Read the intent first. Open a scenario for a concrete example. Follow the verification map to see how the behavior must be checked.</p>
-<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>92 / 117</b> tasks checked in source</div></div></header>
+<div class="metrics"><div><b>210</b> requirements</div><div><b>386</b> scenarios</div><div><b>93 / 117</b> tasks checked in source</div></div></header>
 <div class="overview"><h2>Home network mode</h2>
       <div class="notice"><p>
 <strong>Status:</strong> accepted for implementation on 2026-10-22 (Todor: “merge them and continue with next steps”, PR #107). No flash or motor run is authorized; each board step is announced separately.</p>
@@ -5388,7 +5388,7 @@ Archive after acceptance; close Q21 in <code>PLAN.md</code>.</li>
 </ul>
 <h2 id="openspec--changes--add-rovi-protocol--tasks--3-python-binding">3. Python binding</h2><ul>
 <li>
-<input type="checkbox" disabled aria-label="Recorded task pending"> 3.1 Add the PyO3 extension and its Nix/CI build; pass the vector suite through it.</li>
+<input type="checkbox" disabled aria-label="Recorded task complete" checked> 3.1 Add the PyO3 extension and its Nix/CI build; pass the vector suite through it. Done 2026-11-01: <code>bindings/python</code> (PyO3 0.29, abi3 ≥ 3.11, own lockfile) exposes every codec with values as dicts in the vectors' spellings and <code>DecodeError</code>/<code>EncodeError</code> carrying the crate's kind name; no session policy. <code>shell.nix</code> builds it (<code>import rovi_protocol</code> in <code>nix-shell</code>); CI builds the wheel with maturin, runs clippy and the parity tests. All 150 valid vectors round-trip and all 40 invalid ones raise the crate's error kind. <code>udp::PORT</code> added and used by firmware and sim.</li>
 <li>
 <input type="checkbox" disabled aria-label="Recorded task pending"> 3.2 Switch conformance, <code>apps/client</code>, teleop and bench scripts to the extension; remove hand-written codecs; sim conformance and teleop tests pass.</li>
 <li>

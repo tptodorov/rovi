@@ -5,6 +5,8 @@
 //! [`parse`]/[`write`] handle the header only; [`ToCar`] and [`FromCar`] are the typed messages
 //! each side sends (design D3), with payload validation.
 
+/// The car listens here (AP and home network).
+pub const PORT: u16 = 7777;
 pub const VERSION: u8 = 1;
 pub const HEADER_LEN: usize = 12;
 const MAGIC: [u8; 2] = *b"RV";

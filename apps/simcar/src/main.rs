@@ -184,7 +184,7 @@ fn session_seed() -> u32 {
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let num = |i: usize, default: u64| args.get(i).and_then(|s| s.parse().ok()).unwrap_or(default);
-    let port = num(0, 7777) as u16;
+    let port = num(0, rovi_protocol::udp::PORT.into()) as u16;
     let cfg = Config {
         lease_ms: num(1, Config::DEFAULT.lease_ms),
         claim_window_ms: num(2, Config::DEFAULT.claim_window_ms),

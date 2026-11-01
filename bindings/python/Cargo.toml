@@ -1,0 +1,18 @@
+[package]
+name = "rovi-protocol-py"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "Python binding of rovi-protocol (ADR-0017): the same codecs, no session policy"
+
+# Own workspace and lockfile, like the apps: PyO3 does not belong in the no_std crates.
+[workspace]
+
+[lib]
+name = "rovi_protocol"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py311"] }
+protocol = { package = "rovi-protocol", path = "../../crates/rovi-protocol" }

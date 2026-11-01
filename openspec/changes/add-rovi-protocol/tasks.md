@@ -16,7 +16,7 @@
 
 ## 3. Python binding
 
-- [ ] 3.1 Add the PyO3 extension and its Nix/CI build; pass the vector suite through it.
+- [x] 3.1 Add the PyO3 extension and its Nix/CI build; pass the vector suite through it. Done 2026-11-01: `bindings/python` (PyO3 0.29, abi3 ≥ 3.11, own lockfile) exposes every codec with values as dicts in the vectors' spellings and `DecodeError`/`EncodeError` carrying the crate's kind name; no session policy. `shell.nix` builds it (`import rovi_protocol` in `nix-shell`); CI builds the wheel with maturin, runs clippy and the parity tests. All 150 valid vectors round-trip and all 40 invalid ones raise the crate's error kind. `udp::PORT` added and used by firmware and sim.
 - [ ] 3.2 Switch conformance, `apps/client`, teleop and bench scripts to the extension; remove hand-written codecs; sim conformance and teleop tests pass.
 - [ ] 3.3 Add the `device` conformance target; announce, get Todor's go, run observational rules with motor power off over UDP and BLE; record evidence.
 - [ ] 3.4 Announce and get a separate go for the motion rules stand batch; record results.

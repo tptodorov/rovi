@@ -61,7 +61,7 @@ fn random_bytes(bytes: &mut [u8]) -> Result<(), getrandom::Error> {
     Ok(())
 }
 
-const UDP_PORT: u16 = 7777;
+const UDP_PORT: u16 = rovi_protocol::udp::PORT;
 /// Scans per home attempt before the scan step fails (the core's 1.5 s budget still applies).
 const SCAN_TRIES: usize = 3;
 /// Association attempts per home attempt before the join step fails (the core's budget still applies).

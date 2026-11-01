@@ -61,6 +61,7 @@ jobs:
             experiments/rovi-m8-setpoint-ros/sim/simcar
             .
             apps/simcar
+            bindings/python
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -108,6 +109,13 @@ jobs:
         run: python3 apps/simcar/scenarios/udp_scenarios.py
       - name: Network-mode scenarios against the sim car (UDP and virtual BLE)
         run: python3 apps/simcar/scenarios/network_scenarios.py
+      - name: Python protocol binding (rovi-protocol, ADR-0017)
+        run: |
+          pip install "maturin>=1.7,<2"
+          cargo clippy --locked --manifest-path bindings/python/Cargo.toml -- -D warnings
+          maturin build --locked --release -m bindings/python/Cargo.toml -o "$RUNNER_TEMP/rovi-protocol"
+          pip install "$RUNNER_TEMP"/rovi-protocol/*.whl
+          python3 -m unittest discover -s bindings/python/tests
       - name: Python unit tests
         env:
           MPLBACKEND: Agg
