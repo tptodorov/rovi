@@ -23,6 +23,33 @@ class RuntimeTests(unittest.TestCase):
         q=parse(c.session.start(0))[2];c.receive(frame(ACK,42,q,CAPS),1)
         return c,clock,sock,output
 
+    def test_a_key_typed_after_connected_is_not_discarded(self):
+        # Issue #124: keys buffered before the claim are dropped, but one typed after the
+        # operator sees "Connected disarmed" must count, however late the loop reads it.
+        clock=Clock();sock=Sock();output=[];typed=[]
+        c=Client(('127.0.0.1',7777),sock,0,output.append,clock=clock,wait=clock.wait)
+        c.keys=lambda:b''.join(typed.pop(0) for _ in range(len(typed)))
+        def emit(line):
+            output.append(line)
+            if line.startswith('Connected disarmed'):typed.append(b'r')
+        c.emit=emit
+        replies=[]
+        def recvfrom(_n):
+            hello=next((x for x in sock.sent if x[0]==1),None)
+            if hello and not replies:
+                replies.append(1);return frame(ACK,42,hello[2],CAPS),('127.0.0.1',7777)
+            raise BlockingIOError
+        sock.recvfrom=recvfrom
+        steps=[0]
+        def wait(readers,timeout):
+            steps[0]+=1
+            if steps[0]>5:raise KeyboardInterrupt
+            clock.wait(readers,timeout)
+            return readers if typed else readers[:1]
+        c.wait=wait
+        with self.assertRaises(KeyboardInterrupt):c.run_session()
+        self.assertIn(ARM,[x[0] for x in sock.sent],'the R typed after "Connected disarmed" was dropped')
+
     def test_cleanup_attempts_every_send_despite_failures(self):
         for fail in [(SETPOINT,),(STOP,),(SETPOINT,STOP),(BYE,)]:
             c,clock,sock,out=self.client(fail)
