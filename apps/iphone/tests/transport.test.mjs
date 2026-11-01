@@ -7,7 +7,7 @@ import { fakeBle, pending } from './fake-ble.js';
 test('picker uses name-only advertisement and optional service without claiming', async () => {
   const fake = fakeBle();
   assert.equal(await pickDevice(fake.bluetooth, 'https:'), fake.device);
-  assert.deepEqual(fake.calls, [['picker', { filters: [{ name: 'Rovi M8' }], optionalServices: [SERVICE] }]]);
+  assert.deepEqual(fake.calls, [['picker', { filters: [{ name: 'Rovi' }], optionalServices: [SERVICE] }]]);
   assert.throws(() => pickDevice(fake.bluetooth, 'http:'), /HTTPS/);
   assert.throws(() => pickDevice({}, 'https:'), /Bluefy/);
 });

@@ -9,7 +9,7 @@ export function supportError(bluetooth, protocol) {
 export function pickDevice(bluetooth, protocol) {
   const error = supportError(bluetooth, protocol);
   if (error) throw new Error(error);
-  return bluetooth.requestDevice({ filters: [{ name: 'Rovi M8' }], optionalServices: [SERVICE] });
+  return bluetooth.requestDevice({ filters: [{ name: 'Rovi' }], optionalServices: [SERVICE] });
 }
 
 const copy = data => new Uint8Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));

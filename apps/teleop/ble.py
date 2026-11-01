@@ -17,7 +17,7 @@ except ImportError:  # UDP and fake-GATT tests do not require Bleak.
 
 SERVICE, SETPOINT, CONTROL, CAPS, STATUS, ECHO, NETWORK = (rp.BLE_UUIDS[k] for k in (
     'service','setpoint','control','capabilities','status','echo','network'))
-NAME = 'Rovi M8'
+NAME = 'Rovi'
 
 
 async def discover(address):
@@ -32,7 +32,7 @@ async def discover(address):
     if not matches:
         raise LinkError('BLE target not advertising; it may be owned by another controller')
     if len(matches) != 1:
-        raise ClientError('multiple Rovi M8 devices found; use --ble MAC')
+        raise ClientError('multiple Rovi devices found; use --ble MAC')
     return BleakClient(matches[0],timeout=5)
 
 

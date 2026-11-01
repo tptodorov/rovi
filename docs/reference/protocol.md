@@ -2,6 +2,8 @@
 
 The same rules on every transport ([car-control-api](../../openspec/specs/car-control-api/spec.md), [network-mode](../../openspec/changes/add-home-network-mode/specs/network-mode/spec.md)); this page is the mapping. Byte layouts and codecs: [`rovi-protocol`](../../crates/rovi-protocol/src/) ([ADR-0017](../adr/0017-one-rust-protocol-crate.md)), with generated [vectors](../../crates/rovi-protocol/vectors.json). The [conformance suite](../../apps/simcar/scenarios/conformance.py) runs the shared rules over all three.
 
+The product car's BLE device name and car AP SSID are both `Rovi`. BLE discovery matches that name and checks the service UUID after connecting; the service UUID is absent from the advertisement.
+
 | Operation | BLE (GATT service `d47a0010-…`) | UDP (port 7777, `RV` v1 frames) | ROS 2 (node `/rovi`) |
 | --- | --- | --- | --- |
 | Watch (no claim) | Connect; read/notify Status, Capabilities, Network; Echo | `INFO` (11) from any peer: capabilities + Status + network | Subscribe `/rovi/status`, `/rovi/capabilities`, `/rovi/network` |

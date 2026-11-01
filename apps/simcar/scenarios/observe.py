@@ -10,7 +10,7 @@ Echo agreeing with UDP.
     ROVI_TARGET=<car ip>:7777 ROVI_OBSERVE=device python3 observe.py  # real car, Bleak for BLE
 
 The sim target reaches its virtual BLE on the UDP port + 1 (apps/simcar/src/vble.rs); the device
-target finds the car by name "Rovi M8" and checks the service UUID in its GATT table.
+target finds the car by name "Rovi" and checks the service UUID in its GATT table.
 """
 import asyncio
 import json
@@ -102,8 +102,8 @@ class DeviceBle:
 
     async def connect(self):
         from bleak import BleakClient, BleakScanner
-        dev = await BleakScanner.find_device_by_name("Rovi M8", timeout=20)
-        assert dev, "Rovi M8 is not advertising"
+        dev = await BleakScanner.find_device_by_name("Rovi", timeout=20)
+        assert dev, "Rovi is not advertising"
         self.c = BleakClient(dev)
         await self.c.connect()
         assert self.c.services.get_service(rp.BLE_UUIDS["service"]), "Rovi service UUID missing"

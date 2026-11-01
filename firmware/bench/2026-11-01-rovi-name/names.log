@@ -1,0 +1,5 @@
+Disarmed mode change: car-network
+Laptop BLE discovery, GAP and Network: {"mode": "fallback", "pending": "none", "reason": "requested", "ip": "0.0.0.0"}
+Wi-Fi scan: Rovi present; old Rovi M8 absent
+Disarmed mode change: home
+Restored Home: {"mode": "home", "pending": "none", "reason": "none", "ip": "192.168.1.193"}

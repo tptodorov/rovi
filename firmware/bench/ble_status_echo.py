@@ -18,7 +18,7 @@ ECHO = "d47a0015-45b2-4d19-8db0-6bd87e9c0001"
 
 async def check():
     # Firmware advertises its name in scan response, without the service UUID.
-    device = await BleakScanner.find_device_by_name("Rovi M8", timeout=10)
+    device = await BleakScanner.find_device_by_name("Rovi", timeout=10)
     assert device is not None, "Rovi not found"
     async with BleakClient(device) as client:
         assert client.services.get_service(SERVICE) is not None

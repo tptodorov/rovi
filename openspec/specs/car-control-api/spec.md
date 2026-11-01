@@ -496,3 +496,12 @@ The adapter SHALL retain sequence high-water marks for every accepted owner publ
 - **GIVEN** an owner publisher whose last accepted sequence is 100
 - **WHEN** unrelated graph announcements fill the table and that publisher repeats sequence 99
 - **THEN** sequence 99 is rejected and cannot renew the lease
+
+### Requirement: Advertised car name
+
+The car SHALL advertise exactly `Rovi` as its BLE device name and in its BLE scan response, and SHALL use exactly `Rovi` as its car AP SSID.
+
+#### Scenario: A client finds the car by name
+
+- **WHEN** the car is free and running its car network
+- **THEN** a BLE scan shows a device named `Rovi` and a Wi-Fi scan shows the network `Rovi`

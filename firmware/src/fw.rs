@@ -198,7 +198,7 @@ fn reset_name() -> &'static str {
 fn ap_config(password: &'static str) -> wifi::Config {
     wifi::Config::AccessPoint(
         AccessPointConfig::default()
-            .with_ssid("Rovi M8".try_into().unwrap())
+            .with_ssid("Rovi".try_into().unwrap())
             .with_channel(1)
             .with_max_connections(1)
             .with_authentication(AuthenticationMethodConfig::Wpa2Personal(
@@ -401,7 +401,7 @@ async fn main(_spawner: Spawner) -> ! {
     let mut ble_runner = stack.runner();
     let peripheral = stack.peripheral();
     let server = RoviServer::new_with_config(GapConfig::Peripheral(PeripheralConfig {
-        name: "Rovi M8",
+        name: "Rovi",
         appearance: &appearance::UNKNOWN,
     }))
     .unwrap();
@@ -434,7 +434,7 @@ async fn main(_spawner: Spawner) -> ! {
         );
     } else {
         println!(
-            "M8 board-only AP=Rovi M8 udp=192.168.4.1:{} WPA2 channel=1 lease_ms={}",
+            "Rovi AP=Rovi udp=192.168.4.1:{} WPA2 channel=1 lease_ms={}",
             UDP_PORT,
             Config::DEFAULT.lease_ms
         );
@@ -506,11 +506,9 @@ async fn main(_spawner: Spawner) -> ! {
     )
     .unwrap();
     let mut scan_data = [0; 31];
-    let scan_len = AdStructure::encode_slice(
-        &[AdStructure::CompleteLocalName(b"Rovi M8")],
-        &mut scan_data,
-    )
-    .unwrap();
+    let scan_len =
+        AdStructure::encode_slice(&[AdStructure::CompleteLocalName(b"Rovi")], &mut scan_data)
+            .unwrap();
     let advertising = Mutex::<NoopRawMutex, _>::new(peripheral);
     let slot = async || loop {
         // Quiet during a home attempt too (the core's rule): advertising slows the scan.

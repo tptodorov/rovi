@@ -1,4 +1,5 @@
 """Probe safeguards and disconnect checks; mocks do not establish board behavior."""
+import sys
 import unittest
 from pathlib import Path
 import tempfile
@@ -6,6 +7,15 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import ble_stop_checks as probe
+
+
+class CarName(unittest.IsolatedAsyncioTestCase):
+    async def test_frozen_client_scans_for_the_product_car_name(self):
+        find = AsyncMock(return_value=None)
+        bleak = SimpleNamespace(BleakScanner=SimpleNamespace(find_device_by_name=find))
+        with patch.dict(sys.modules, {"bleak": bleak}):
+            await probe.ble_client.find()
+        self.assertEqual(find.await_args.args[0], "Rovi")
 
 
 class Cleanup(unittest.IsolatedAsyncioTestCase):

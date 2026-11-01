@@ -8,6 +8,7 @@ import signal
 import socket
 import sys
 import termios
+from .ble import NAME
 from .protocol import ClientError
 from .runtime import Client, console, terminal
 
@@ -28,7 +29,7 @@ def interrupted(signum, _frame):
 
 
 def ble_address(value):
-    if value=='Rovi M8' or re.fullmatch(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}',value):
+    if value==NAME or re.fullmatch(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}',value):
         return value
     raise argparse.ArgumentTypeError('BLE target must be a MAC address')
 
@@ -37,7 +38,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog='python3 -m apps.teleop',description='Gentle UDP or BLE keyboard teleoperation. Reconnects disarmed; press R to arm.')
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument('--target',type=target,metavar='IPV4:PORT')
-    mode.add_argument('--ble',type=ble_address,nargs='?',const='Rovi M8',metavar='MAC',help='BLE mode; discover one Rovi M8 or pin its MAC')
+    mode.add_argument('--ble',type=ble_address,nargs='?',const=NAME,metavar='MAC',help='BLE mode; discover one Rovi or pin its MAC')
     parser.add_argument('--mode',choices=('home','car'),
                         help='after connecting, ask the car to join its home network (home) or run its own car network (car) '
                              'once this controller releases it; the car must be disarmed (ADR-0016)')
