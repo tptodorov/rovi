@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f3f5ef">
   <meta name="rovi-build" content="source-checkout">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Rovi · Controller</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -15,7 +15,7 @@
   <main>
     <header class="app-header">
       <div class="identity"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="9" y="5" width="14" height="22" rx="5"/><path d="M12 10h8M13 23h6M5 7v6m0 6v6M27 7v6m0 6v6"/></svg><div><h1 translate="no">rovi</h1><p>CAR CONTROLLER</p></div></div>
-      <div class="connection-actions"><button id="connect" class="connect-button" type="button">Connect <span aria-hidden="true">↗</span></button><button id="disconnect" class="quiet-button" type="button" hidden disabled>Disconnect</button></div>
+      <div class="connection-actions"><button id="connect" class="connect-button" type="button" disabled>Connect <span aria-hidden="true">↗</span></button><button id="disconnect" class="quiet-button" type="button" hidden disabled>Disconnect</button></div>
     </header>
 
     <fieldset class="mode-switch" id="control-mode">

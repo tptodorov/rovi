@@ -79,6 +79,10 @@ impl Command {
             Self::CarNetwork => "car-network",
         }
     }
+
+    pub fn from_name(name: &str) -> Option<Self> {
+        COMMANDS.into_iter().find(|c| c.name() == name)
+    }
 }
 
 impl Reason {
@@ -181,6 +185,16 @@ impl NetworkInfo {
             f.next("ip")?,
         );
         f.end()?;
+        Self::from_names(mode, pending, reason, ip)
+    }
+
+    /// The information these names spell, with a canonical dotted IPv4.
+    pub fn from_names(
+        mode: &str,
+        pending: &str,
+        reason: &str,
+        ip: &str,
+    ) -> Result<Self, DecodeError> {
         let mode = *MODES
             .iter()
             .find(|m| m.name() == mode)

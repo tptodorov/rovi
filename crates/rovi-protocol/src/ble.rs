@@ -50,6 +50,23 @@ impl Control {
         }
     }
 
+    /// `arm`, `stop`, `home` or `car-network`.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Arm => "arm",
+            Self::Stop => "stop",
+            Self::Mode(c) => c.name(),
+        }
+    }
+
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "arm" => Some(Self::Arm),
+            "stop" => Some(Self::Stop),
+            other => Command::from_name(other).map(Self::Mode),
+        }
+    }
+
     pub fn decode(b: &[u8]) -> Result<Self, DecodeError> {
         match *b {
             [1] => Ok(Self::Arm),

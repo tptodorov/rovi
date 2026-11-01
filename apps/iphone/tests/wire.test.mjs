@@ -48,5 +48,5 @@ test('Status validates all codes and rejects inconsistent state/reason pairs', (
     else assert.throws(() => status(bytes));
   }
   for (const bytes of [[4, 0, 0], [3, 5, 0], [1, 0, 5], [1, 0]]) assert.throws(() => status(Uint8Array.from(bytes)));
-  assert.deepEqual(status(Uint8Array.of(3, 2, 0)), { state: 'Stopped', reason: 'LeaseExpired', error: 'none' });
+  assert.deepEqual(status(Uint8Array.of(3, 2, 0)), { state: 'stopped', reason: 'lease-expired', error: 'none' });
 });

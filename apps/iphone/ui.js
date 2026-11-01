@@ -1,4 +1,4 @@
-import { DIRECTIONS, ZERO } from './wire.js';
+import { DIRECTIONS, protocolError, ZERO } from './wire.js';
 import { angleDelta } from './angles.js';
 
 export function mount(session) {
@@ -7,8 +7,8 @@ export function mount(session) {
   const modes = [...document.querySelectorAll('[name="control-mode"]')];
   const buttons = [...document.querySelectorAll('[data-direction]')];
   const drive = byId('physical-drive');
-  byId('network-home').addEventListener('click', () => session.setNetwork('Home'));
-  byId('network-car').addEventListener('click', () => session.setNetwork('CarNetwork'));
+  byId('network-home').addEventListener('click', () => session.setNetwork('home'));
+  byId('network-car').addEventListener('click', () => session.setNetwork('car-network'));
   const pointers = new Map();
   const active = () => document.visibilityState === 'visible' && document.hasFocus();
   session.active = active;
@@ -142,7 +142,7 @@ export function mount(session) {
     document.body.dataset.driving = String(session.localArm && (physicalMode ? physical.driving : session.hold.current !== null));
     document.body.dataset.mode = session.mode;
     byId('connect').hidden = session.phase !== 'disconnected';
-    byId('connect').disabled = session.phase !== 'disconnected';
+    byId('connect').disabled = session.phase !== 'disconnected' || Boolean(protocolError());
     byId('disconnect').hidden = session.phase === 'disconnected';
     byId('disconnect').disabled = session.phase === 'disconnected' || session.phase === 'closing';
     byId('arm').hidden = physicalMode && session.localArm;
@@ -151,9 +151,9 @@ export function mount(session) {
     byId('stop').disabled = !session.transport?.connected || session.phase === 'closing';
     text('local-arm', session.localArm ? 'Armed' : 'Disarmed');
     const network = session.networkInfo;
-    const networkNames = { Home: 'Home Wi-Fi', Fallback: 'Car network', Attempting: 'Joining Home Wi-Fi', CarNetwork: 'Car network', none: 'none' };
-    const fallbackNames = { none: 'none', NoSettings: 'not configured', Scan: 'home Wi-Fi not found', Join: 'could not join home Wi-Fi', Dhcp: 'no home address', Router: 'ROS router unavailable', LinkLost: 'home Wi-Fi lost', Requested: 'requested' };
-    const canChangeNetwork = ready && !session.localArm && session.reported?.state !== 'Armed' && !session.control && Boolean(network);
+    const networkNames = { home: 'Home Wi-Fi', fallback: 'Car network', attempting: 'Joining Home Wi-Fi', 'car-network': 'Car network', none: 'none' };
+    const fallbackNames = { none: 'none', 'no-settings': 'not configured', scan: 'home Wi-Fi not found', join: 'could not join home Wi-Fi', dhcp: 'no home address', router: 'ROS router unavailable', 'link-lost': 'home Wi-Fi lost', requested: 'requested' };
+    const canChangeNetwork = ready && !session.localArm && session.reported?.state !== 'armed' && !session.control && Boolean(network);
     byId('network-home').disabled = !canChangeNetwork;
     byId('network-car').disabled = !canChangeNetwork;
     text('network-info', network ? `${ready ? '' : 'Last reported: '}${networkNames[network.mode]} · Pending: ${networkNames[network.pending]} · Last fallback: ${fallbackNames[network.reason]} · ${network.ip === '0.0.0.0' ? 'Home address unavailable' : `Home address: ${network.ip}`}` : 'Network information unavailable');

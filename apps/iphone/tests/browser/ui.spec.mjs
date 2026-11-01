@@ -6,6 +6,7 @@ test.beforeEach(async ({ page }) => {
     contentType: 'text/javascript', body: await readFile(new URL('../ui-session.js', import.meta.url), 'utf8'),
   }));
   await page.goto('/');
+  await page.waitForFunction(() => window.fixture);  // set after the protocol module loads
 });
 
 test('hold/release and sliding outside cannot replay a direction', async ({ page }) => {

@@ -10,6 +10,10 @@ six directions/stops confirmed, ATT MTU 247 on iPhone 11 Pro/Bluefy, and
 STOP-while-holding fixed and rechecked. [Acceptance and limits](../../openspec/changes/archive/2026-10-21-add-iphone-ble-client/tasks.md#4-phone-and-physical-acceptance)
 retain the unexplained early drops, P2 closure decision and skipped VoiceOver check.
 
+## Protocol module
+
+All car messages go through the `rovi_protocol` WebAssembly module ([`bindings/wasm`](../../bindings/wasm), ADR-0017), generated here by `npm run protocol` (run by `npm test` and `npm run build`) from the project `nix-shell`. `wire.js` adapts it; there is no JavaScript fallback codec, so if the module cannot load, Connect stays disabled and the page says why.
+
 ## Commands
 
 From this directory:

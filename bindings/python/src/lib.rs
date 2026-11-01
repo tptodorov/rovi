@@ -7,8 +7,8 @@
 
 use protocol::ble::{self, Control};
 use protocol::capabilities;
-use protocol::network::{self, Command, NetMode, NetworkInfo, Reason};
-use protocol::status::{self, Error, State, Status, StopReason};
+use protocol::network::{self, Command, NetworkInfo};
+use protocol::status::{self, Status};
 use protocol::udp::{self, Frame, FromCar, Info, ToCar};
 use protocol::{Capabilities, Setpoint};
 use pyo3::create_exception;
@@ -49,91 +49,34 @@ where
     item.extract::<T>().map_err(Into::into)
 }
 
-// Names: the crate's spellings, matched back over every variant.
-
-const STOP_REASONS: [StopReason; 4] = [
-    StopReason::Stop,
-    StopReason::LeaseExpired,
-    StopReason::OwnerLost,
-    StopReason::OutOfLimits,
-];
-const ERRORS: [Error; 4] = [
-    Error::Busy,
-    Error::NotOwner,
-    Error::NotReady,
-    Error::Invalid,
-];
-const MODES: [NetMode; 3] = [NetMode::Fallback, NetMode::Attempting, NetMode::Home];
-const COMMANDS: [Command; 2] = [Command::Home, Command::CarNetwork];
-const REASONS: [Reason; 8] = [
-    Reason::None,
-    Reason::NoSettings,
-    Reason::Scan,
-    Reason::Join,
-    Reason::Dhcp,
-    Reason::Router,
-    Reason::LinkLost,
-    Reason::Requested,
-];
-
-fn find<T: Copy>(all: &[T], name: fn(T) -> &'static str, what: &str, s: &str) -> PyResult<T> {
-    all.iter()
-        .copied()
-        .find(|v| name(*v) == s)
-        .ok_or_else(|| bad(what, s))
-}
-
-fn optional<T: Copy>(
-    all: &[T],
-    name: fn(T) -> &'static str,
-    what: &str,
-    s: &str,
-) -> PyResult<Option<T>> {
-    if s == "none" {
-        Ok(None)
-    } else {
-        find(all, name, what, s).map(Some)
-    }
+fn command(name: &str) -> PyResult<Command> {
+    Command::from_name(name).ok_or_else(|| bad("command", name))
 }
 
 // Status
 
 fn status_dict<'py>(py: Python<'py>, s: Status) -> PyResult<Bound<'py, PyDict>> {
     let d = PyDict::new(py);
-    d.set_item("state", s.state.name())?;
-    d.set_item(
-        "reason",
-        match s.state {
-            State::Stopped(r) => r.name(),
-            _ => "none",
-        },
-    )?;
-    d.set_item("error", s.error.map_or("none", Error::name))?;
+    let (state, reason, error) = s.names();
+    d.set_item("state", state)?;
+    d.set_item("reason", reason)?;
+    d.set_item("error", error)?;
     d.set_item("session", s.session)?;
     Ok(d)
 }
 
 fn status_value(d: &Bound<'_, PyDict>) -> PyResult<Status> {
-    let state: String = get(d, "state")?;
-    let reason: String = get(d, "reason")?;
-    let reason = optional(&STOP_REASONS, StopReason::name, "reason", &reason)?;
-    let state = match (state.as_str(), reason) {
-        ("open", None) => State::Open,
-        ("claimed", None) => State::Claimed,
-        ("armed", None) => State::Armed,
-        ("stopped", Some(r)) => State::Stopped(r),
-        _ => return Err(EncodeError::new_err("inconsistent state and reason")),
-    };
-    let error: String = get(d, "error")?;
     let session = match d.get_item("session")? {
         Some(v) => v.extract()?,
         None => 0,
     };
-    Ok(Status {
-        state,
-        error: optional(&ERRORS, Error::name, "error", &error)?,
+    Status::from_names(
+        &get::<String>(d, "state")?,
+        &get::<String>(d, "reason")?,
+        &get::<String>(d, "error")?,
         session,
-    })
+    )
+    .map_err(|e| EncodeError::new_err(e.name()))
 }
 
 /// Binary Status (BLE characteristic, UDP `STATUS`): session decodes as 0.
@@ -243,23 +186,13 @@ fn network_dict<'py>(py: Python<'py>, i: NetworkInfo) -> PyResult<Bound<'py, PyD
 }
 
 fn network_value(d: &Bound<'_, PyDict>) -> PyResult<NetworkInfo> {
-    let (mode, pending, reason, ip): (String, String, String, String) = (
-        get(d, "mode")?,
-        get(d, "pending")?,
-        get(d, "reason")?,
-        get(d, "ip")?,
-    );
-    let octets: Vec<u8> = ip
-        .split('.')
-        .map(str::parse)
-        .collect::<Result<_, _>>()
-        .map_err(|_| bad("ip", &ip))?;
-    Ok(NetworkInfo {
-        mode: find(&MODES, NetMode::name, "mode", &mode)?,
-        pending: optional(&COMMANDS, Command::name, "pending", &pending)?,
-        reason: find(&REASONS, Reason::name, "reason", &reason)?,
-        ip: octets.try_into().map_err(|_| bad("ip", &ip))?,
-    })
+    NetworkInfo::from_names(
+        &get::<String>(d, "mode")?,
+        &get::<String>(d, "pending")?,
+        &get::<String>(d, "reason")?,
+        &get::<String>(d, "ip")?,
+    )
+    .map_err(|e| EncodeError::new_err(e.name()))
 }
 
 #[pyfunction]
@@ -364,27 +297,15 @@ fn ble_setpoint_encode<'py>(
 
 // BLE Control
 
-fn control_name(c: Control) -> &'static str {
-    match c {
-        Control::Arm => "arm",
-        Control::Stop => "stop",
-        Control::Mode(c) => c.name(),
-    }
-}
-
 /// One Control byte as `arm`, `stop`, `home` or `car-network`.
 #[pyfunction]
 fn control_decode(b: &[u8]) -> PyResult<&'static str> {
-    Control::decode(b).map(control_name).map_err(decode_err)
+    Control::decode(b).map(Control::name).map_err(decode_err)
 }
 
 #[pyfunction]
 fn control_encode<'py>(py: Python<'py>, name: &str) -> PyResult<Bound<'py, PyBytes>> {
-    let c = match name {
-        "arm" => Control::Arm,
-        "stop" => Control::Stop,
-        other => Control::Mode(find(&COMMANDS, Command::name, "control", other)?),
-    };
+    let c = Control::from_name(name).ok_or_else(|| bad("control", name))?;
     Ok(bytes(py, &[c.code()]))
 }
 
@@ -474,12 +395,7 @@ fn udp_encode_to_car<'py>(
         "stop" => ToCar::Stop,
         "bye" => ToCar::Bye,
         "echo" => ToCar::Echo(data.as_deref().unwrap_or(&[])),
-        "mode" => ToCar::Mode(find(
-            &COMMANDS,
-            Command::name,
-            "command",
-            &get::<String>(&m, "command")?,
-        )?),
+        "mode" => ToCar::Mode(command(&get::<String>(&m, "command")?)?),
         "info" => ToCar::Info,
         other => return Err(bad("kind", other)),
     };

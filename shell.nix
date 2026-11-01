@@ -47,6 +47,7 @@ pkgs.mkShell {
     ]))
     pkgs.rustup
     pkgs.v4l-utils
+    pkgs.wasm-bindgen-cli # the phone protocol module; version pinned in bindings/wasm/Cargo.toml
   ];
 
 }
