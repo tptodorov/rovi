@@ -22,6 +22,8 @@ sys.path.insert(
 import ble_client
 import carlog
 
+ble_client.NAME = "Rovi"  # the frozen client scans for the M8 firmware's name
+
 
 async def expect(car, state, reason=None, error=None):
     status = await car.status()

@@ -3,7 +3,7 @@
 First authorized baseline completed 2026-10-20: [4,385 Echo replies, zero loss](2026-10-20-wifi-soak/notes.md). #23 remains open; the original ROS workload was not replayed. Each future run needs its own announced go.
 
 Investigates [#23](https://github.com/tptodorov/rovi/issues/23): the laptop
-remained associated with Rovi M8 while all traffic stopped after roughly ten
+remained associated with the car AP while all traffic stopped after roughly ten
 minutes. Cause is unknown. A clean observation does not close the issue.
 
 The recorder sends only stateless UDP Echo frames with session zero. It never

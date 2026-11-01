@@ -24,7 +24,7 @@ from bleak import BleakClient, BleakScanner
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps/simcar/scenarios"))
 import carlog
 
-NAME, PROFILE, TARGET = "Rovi M8", "rovi-m8", "192.168.4.1:7777"
+NAME, PROFILE, TARGET = "Rovi", "rovi-m8", "192.168.4.1:7777"
 SERVICE = "d47a0010-45b2-4d19-8db0-6bd87e9c0001"
 SETPOINT = "d47a0011-45b2-4d19-8db0-6bd87e9c0001"
 SCAN_SECONDS = 8

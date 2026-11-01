@@ -14,7 +14,7 @@ For BLE, the same shell also provides Bleak. No Wi-Fi join is needed:
 nix-shell --run 'python3 -m apps.teleop --ble'
 ```
 
-Bare `--ble` scans for one advertising `Rovi M8`. If several match, pin the car
+Bare `--ble` scans for one advertising `Rovi`. If several match, pin the car
 with `--ble AA:BB:CC:DD:EE:FF`. BLE and `--target` are mutually exclusive.
 After name discovery, retries stay pinned to that car's MAC. They cannot roam
 to another car with the same name. The client claims with an acknowledged STOP

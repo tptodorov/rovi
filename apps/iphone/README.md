@@ -37,6 +37,11 @@ From this directory:
 
 Open the URL in **Bluefy**, not Safari: Safari has no Web Bluetooth.
 
+Choose & Connect lists devices advertising exactly `Rovi`. Release this page and
+the renamed firmware together: the old page and new firmware cannot find each
+other by name, and the new page requires the renamed firmware. If a host caches
+the old name, let it discover a fresh advertisement before reconnecting.
+
 No test touches a BLE device. Runtime assets use no third-party scripts or command server.
 
 ## Layout

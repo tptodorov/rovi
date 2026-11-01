@@ -10,6 +10,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 from apps.teleop.ble import BleClient, BleakError, NAME, SERVICE, SETPOINT, CONTROL, CAPS, STATUS, ECHO, NETWORK, discover
+from apps.teleop.__main__ import ble_address
 from apps.teleop.protocol import ClientError, LinkError
 from apps.teleop.tests.test_protocol import CAPS as CAPS_VALUE
 from apps.teleop.tests.test_terminal import Terminal, ROOT
@@ -272,6 +273,10 @@ class BleTests(unittest.IsolatedAsyncioTestCase):
 
 
 class DiscoveryTests(unittest.IsolatedAsyncioTestCase):
+    def test_car_name(self):
+        self.assertEqual(NAME,'Rovi')
+        self.assertEqual(ble_address(NAME),'Rovi')
+
     async def test_ambiguous_name_fails_and_mac_selects_exactly_one_device(self):
         a=SimpleNamespace(address='AA:00:00:00:00:01',name=NAME)
         b=SimpleNamespace(address='AA:00:00:00:00:02',name=NAME)
