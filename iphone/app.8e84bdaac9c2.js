@@ -1,6 +1,6 @@
-import { Session } from './session.712ef024b110.js';
-import { mount } from './ui.712ef024b110.js';
-import { protocolError } from './wire.712ef024b110.js';
+import { Session } from './session.8e84bdaac9c2.js';
+import { mount } from './ui.8e84bdaac9c2.js';
+import { protocolError } from './wire.8e84bdaac9c2.js';
 
 const session = new Session({ bluetooth: navigator.bluetooth, protocol: location.protocol });
 if (protocolError()) session.message = protocolError();

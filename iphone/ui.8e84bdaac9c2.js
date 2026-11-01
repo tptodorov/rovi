@@ -1,5 +1,5 @@
-import { DIRECTIONS, protocolError, ZERO } from './wire.712ef024b110.js';
-import { angleDelta } from './angles.712ef024b110.js';
+import { DIRECTIONS, protocolError, ZERO } from './wire.8e84bdaac9c2.js';
+import { angleDelta } from './angles.8e84bdaac9c2.js';
 
 export function mount(session) {
   const byId = id => document.getElementById(id);

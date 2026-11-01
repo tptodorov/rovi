@@ -1,4 +1,4 @@
-import { SERVICE, UUID, NETWORK_UUID } from './wire.712ef024b110.js';
+import { SERVICE, UUID, NETWORK_UUID } from './wire.8e84bdaac9c2.js';
 
 export function supportError(bluetooth, protocol) {
   if (protocol !== 'https:') return 'Open the HTTPS controller page in Bluefy.';
@@ -9,7 +9,7 @@ export function supportError(bluetooth, protocol) {
 export function pickDevice(bluetooth, protocol) {
   const error = supportError(bluetooth, protocol);
   if (error) throw new Error(error);
-  return bluetooth.requestDevice({ filters: [{ name: 'Rovi M8' }], optionalServices: [SERVICE] });
+  return bluetooth.requestDevice({ filters: [{ name: 'Rovi' }], optionalServices: [SERVICE] });
 }
 
 const copy = data => new Uint8Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));

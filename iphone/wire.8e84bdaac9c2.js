@@ -3,8 +3,8 @@
 // when it cannot load, `protocolError()` explains why and the page keeps Connect disabled.
 let rp = null, loadError = null;
 try {
-  const module = await import('./rovi_protocol.712ef024b110.js');
-  const wasm = new URL('./rovi_protocol_bg.712ef024b110.wasm', import.meta.url);
+  const module = await import('./rovi_protocol.8e84bdaac9c2.js');
+  const wasm = new URL('./rovi_protocol_bg.8e84bdaac9c2.wasm', import.meta.url);
   // Node tests have no file: fetch; browsers stream the pinned asset.
   const source = wasm.protocol === 'file:' ? await (await import('node:fs/promises')).readFile(wasm) : wasm;
   await module.default({ module_or_path: source });
