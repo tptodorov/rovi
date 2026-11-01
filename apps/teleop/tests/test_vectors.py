@@ -1,7 +1,7 @@
-"""The Python codecs against the frozen protocol vectors (add-rovi-protocol task 2.1).
+"""The client adapters (apps/client/wire.py, apps/teleop/protocol.py) against the protocol vectors.
 
-KNOWN_GAPS lists today's differences from the vectors (design D8). Each one must stay a gap
-until rovi-protocol replaces the codec; a gap that disappears fails here so the list shrinks."""
+They delegate to the `rovi_protocol` binding (task 3.2), so every malformed case is refused; the
+binding's own parity suite is bindings/python/tests."""
 import json
 import math
 import struct
@@ -10,6 +10,7 @@ from pathlib import Path
 
 from apps.client.wire import Capabilities, Status, ble_setpoint, cdr
 from apps.teleop.protocol import ClientError, capabilities, frame, network_text, parse
+import rovi_protocol as rp
 
 VECTORS = json.loads((Path(__file__).resolve().parents[3] / "crates/rovi-protocol/vectors.json").read_text())
 # Python names (apps/client/wire.py) for the vector's ROS spellings (I4).
@@ -17,12 +18,6 @@ STATE = {"open": "Open", "claimed": "Claimed", "armed": "Armed", "stopped": "Sto
 NAME = {"none": None, "stop": "Stop", "lease-expired": "LeaseExpired", "owner-lost": "OwnerLost",
         "out-of-limits": "OutOfLimits", "busy": "Busy", "not-owner": "NotOwner", "not-ready": "NotReady",
         "invalid": "Invalid"}
-KNOWN_GAPS = {
-    # I2: apps/client Status.decode does not check that only Stopped carries a reason.
-    ("status", "stopped-without-reason"), ("status", "reason-while-not-stopped"),
-    # I3: network_text ignores the reserved byte.
-    ("network", "reserved-nonzero"),
-}
 
 
 def cases(kind, message, encoding=None):
@@ -89,10 +84,7 @@ class Invalid(unittest.TestCase):
     def check(self, message, decode):
         for v in cases("invalid", message, "binary"):
             with self.subTest(v["name"]):
-                if (message, v["name"]) in KNOWN_GAPS:
-                    self.assertFalse(self.rejects(v, decode), "gap closed: remove it from KNOWN_GAPS")
-                else:
-                    self.assertTrue(self.rejects(v, decode))
+                self.assertTrue(self.rejects(v, decode))
 
     def test_status(self):
         self.check("status", Status.decode)
@@ -106,8 +98,12 @@ class Invalid(unittest.TestCase):
                 raise ValueError(b.hex())
         self.check("network", decode)
 
-    def test_udp_frames(self):
-        self.check("udp-frame", parse)
+    def test_udp_headers(self):
+        # parse() checks the header; payloads are refused by their own decoders above.
+        for v in cases("invalid", "udp-frame", "binary"):
+            if v["error"] != "length" or len(v["hex"]) < 24:
+                with self.subTest(v["name"]):
+                    self.assertTrue(self.rejects(v, parse))
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ from .policy import Policy, ZERO
 from .protocol import ARM, STOP, ClientError, LinkError, capabilities, network_text
 from .runtime import milliseconds, read_keys
 from apps.client.wire import Status, ble_setpoint
+import rovi_protocol as rp
 
 try:
     from bleak.exc import BleakError
@@ -14,10 +15,8 @@ except ImportError:  # UDP and fake-GATT tests do not require Bleak.
     class BleakError(Exception):
         pass
 
-SERVICE = 'd47a0010-45b2-4d19-8db0-6bd87e9c0001'
-SETPOINT, CONTROL, CAPS, STATUS, ECHO, NETWORK = [
-    f'd47a00{i:02x}-45b2-4d19-8db0-6bd87e9c0001' for i in range(0x11,0x17)
-]
+SERVICE, SETPOINT, CONTROL, CAPS, STATUS, ECHO, NETWORK = (rp.BLE_UUIDS[k] for k in (
+    'service','setpoint','control','capabilities','status','echo','network'))
 NAME = 'Rovi M8'
 
 
@@ -139,7 +138,7 @@ class BleClient:
             if kind==ARM and epoch != self.epoch:
                 return
             try:
-                await asyncio.wait_for(self.peer.write_gatt_char(CONTROL,bytes([1 if kind==ARM else 2]),response=True),.18)
+                await asyncio.wait_for(self.peer.write_gatt_char(CONTROL,rp.control_encode('arm' if kind==ARM else 'stop'),response=True),.18)
             except BleakError as exc:
                 if not self.peer.is_connected:
                     raise LinkError(f'BLE control disconnected: {exc}') from exc
@@ -184,8 +183,8 @@ class BleClient:
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             mtu = max(self.peer.mtu_size,char.max_write_without_response_size+3)
-        if mtu < 75:
-            raise ClientError(f'BLE ATT MTU {mtu} cannot carry a 72-byte setpoint')
+        if mtu < rp.BLE_SETPOINT_LEN + 3:  # ATT write header
+            raise ClientError(f'BLE ATT MTU {mtu} cannot carry a {rp.BLE_SETPOINT_LEN}-byte setpoint')
         try:
             caps = capabilities(await self.io(self.peer.read_gatt_char(CAPS),1))
         except ValueError as exc:
@@ -196,7 +195,7 @@ class BleClient:
         # connection only watches), and the response tells a claim from a car another controller
         # owns. Older firmware has already claimed on connect; STOP keeps it disarmed either way.
         try:
-            await asyncio.wait_for(self.peer.write_gatt_char(CONTROL,bytes([2]),response=True),1)
+            await asyncio.wait_for(self.peer.write_gatt_char(CONTROL,rp.control_encode('stop'),response=True),1)
         except BleakError as exc:
             if not self.peer.is_connected:
                 raise LinkError(f'BLE claim disconnected: {exc}') from exc
@@ -210,7 +209,7 @@ class BleClient:
         if self.mode:
             name = 'home' if self.mode=='home' else 'car-network'
             try:
-                await asyncio.wait_for(self.peer.write_gatt_char(CONTROL,bytes([3 if self.mode=='home' else 4]),response=True),1)
+                await asyncio.wait_for(self.peer.write_gatt_char(CONTROL,rp.control_encode('home' if self.mode=='home' else 'car-network'),response=True),1)
                 self.emit(f'Mode {name} pending; it applies when this controller releases the car (quit)')
             except BleakError as exc:
                 if not self.peer.is_connected:

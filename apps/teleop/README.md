@@ -1,13 +1,14 @@
 # Laptop keyboard teleoperation
 
-Linux, Python 3.10+ and the normal M6 firmware. No installation or extra Python
-package is needed for UDP. From the repository root, after joining the car AP:
+Linux, Python 3.11+ and the normal M6 firmware. Messages are encoded and checked by the
+`rovi_protocol` module (the [Python binding](../../bindings/python) of `rovi-protocol`), which the
+project Nix shell provides. From the repository root, after joining the car AP:
 
 ```sh
-python3 -m apps.teleop --target 192.168.4.1:7777
+nix-shell --run 'python3 -m apps.teleop --target 192.168.4.1:7777'
 ```
 
-For BLE, use Bleak from the existing project Nix shell. No Wi-Fi join is needed:
+For BLE, the same shell also provides Bleak. No Wi-Fi join is needed:
 
 ```sh
 nix-shell --run 'python3 -m apps.teleop --ble'

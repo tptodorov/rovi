@@ -13,7 +13,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from apps.teleop.__main__ import target
-from apps.teleop.protocol import ECHO, frame, parse
+from apps.teleop.protocol import ECHO, encode, parse
 
 
 def timestamp():
@@ -22,7 +22,7 @@ def timestamp():
 
 def echo(sock, sequence):
     payload = secrets.token_bytes(16)
-    packet = frame(ECHO, 0, sequence, payload)
+    packet = encode(0, sequence, {"kind": "echo", "data": payload})
     started = time.monotonic()
     deadline = started + .15
     try:

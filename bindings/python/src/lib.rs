@@ -424,6 +424,13 @@ fn encode_frame<'py, F: Fn(&mut [u8]) -> Result<usize, protocol::EncodeError>>(
     Ok(bytes(py, &out[..n]))
 }
 
+/// `(kind, session, seq, payload)` of any frame with a valid header; the payload is unchecked.
+#[pyfunction]
+fn udp_split<'py>(py: Python<'py>, b: &[u8]) -> PyResult<(u8, u32, u32, Bound<'py, PyBytes>)> {
+    let (h, p) = udp::split(b).map_err(decode_err)?;
+    Ok((h.kind as u8, h.session, h.seq, bytes(py, p)))
+}
+
 /// A datagram a client sends to the car.
 #[pyfunction]
 fn udp_decode_to_car<'py>(py: Python<'py>, b: &[u8]) -> PyResult<Bound<'py, PyDict>> {
@@ -575,6 +582,7 @@ fn rovi_protocol(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("CAPABILITIES_LEN", capabilities::LEN)?;
     m.add("NETWORK_LEN", network::LEN)?;
     m.add("INFO_LEN", udp::INFO_LEN)?;
+    m.add("UDP_HEADER_LEN", udp::HEADER_LEN)?;
     m.add_function(wrap_pyfunction!(status_decode, m)?)?;
     m.add_function(wrap_pyfunction!(status_encode, m)?)?;
     m.add_function(wrap_pyfunction!(status_decode_ros, m)?)?;
@@ -594,6 +602,7 @@ fn rovi_protocol(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ble_setpoint_encode, m)?)?;
     m.add_function(wrap_pyfunction!(control_decode, m)?)?;
     m.add_function(wrap_pyfunction!(control_encode, m)?)?;
+    m.add_function(wrap_pyfunction!(udp_split, m)?)?;
     m.add_function(wrap_pyfunction!(udp_decode_to_car, m)?)?;
     m.add_function(wrap_pyfunction!(udp_encode_to_car, m)?)?;
     m.add_function(wrap_pyfunction!(udp_decode_from_car, m)?)?;

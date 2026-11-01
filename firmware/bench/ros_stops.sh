@@ -25,8 +25,9 @@ if [ -n "$(ss -H -ltn "sport = :$port")" ]; then
 fi
 offset=$(stat -c %s "$log")
 docker build -q -t rovi-ros-sim "$scenarios" >/dev/null
+pymodule=$("$root"/bindings/python/module.sh)  # rovi_protocol for the container's Python
 docker run -d --rm --name "$name" --net host \
-  -e ROVI_ROUTER_PORT="$port" -v "$scenarios:/repo/apps/simcar/scenarios:ro" -v "$root/apps/client:/repo/apps/client:ro" -v "$root/firmware/bench:/bench:ro" -v "$log:$log:ro" \
+  -e ROVI_ROUTER_PORT="$port" -v "$scenarios:/repo/apps/simcar/scenarios:ro" -v "$root/apps/client:/repo/apps/client:ro" -v "$pymodule:/pymodule:ro" -e PYTHONPATH=/pymodule -v "$root/firmware/bench:/bench:ro" -v "$log:$log:ro" \
   rovi-ros-sim bash -c 'set -e
     source /opt/ros/jazzy/setup.bash
     cfg=/opt/ros/jazzy/share/rmw_zenoh_cpp/config
@@ -41,7 +42,7 @@ from carlog import wait, ev
 found, seen = wait(sys.argv[1], int(sys.argv[2]), ev('ros', link='up'), timeout=20)
 assert found, ('ROS link did not come up', seen[-5:])
 PYWAIT
-docker exec -e ROVI_CARLOG="$log" -e ROVI_TARGET="${ROVI_TARGET:-}" -e PYTHONPATH=/repo/apps/simcar/scenarios \
+docker exec -e ROVI_CARLOG="$log" -e ROVI_TARGET="${ROVI_TARGET:-}" -e PYTHONPATH=/repo/apps/simcar/scenarios:/pymodule \
   -e ZENOH_SESSION_CONFIG_URI=/tmp/session.json5 "$name" \
   bash -c 'set -e; source /opt/ros/jazzy/setup.bash
     python3 "/bench/$1"' _ "$probe"

@@ -9,6 +9,7 @@ probes at a fixed rate and prints sent, received count, loss, and median, p95 an
 The echo is stateless and open to any UDP peer, so the UDP run works while another client owns the car.
 Over BLE the connection is the session, so the BLE run only connects while the car is free, and owns it meanwhile. It also streams zero setpoints at the probe rate: echoes are not activity, and the car drops an owner that sends no setpoint within the claim window.
 """
+import rovi_protocol as rp
 import argparse, asyncio, math, os, pathlib, select, socket, statistics, struct, subprocess, sys, time
 
 import wire
@@ -76,12 +77,15 @@ def udp(host, port, n=200, hz=20.0, wait=1.0):
             due = t0 + i / hz if i < n else t0 + (n - 1) / hz + wait
             while (left := due - time.perf_counter()) > 0:
                 if select.select([s], [], [], left)[0]:
-                    d = s.recv(1500)
-                    if d[:4] == b"RV\x01" + bytes([ECHO]):
-                        c.got(d[12:])
+                    try:
+                        f = rp.udp_decode_from_car(s.recv(1500))
+                    except rp.DecodeError:
+                        continue
+                    if f["message"]["kind"] == "echo":
+                        c.got(f["message"]["data"])
             if i < n:
-                s.sendto(b"RV\x01" + bytes([ECHO]) + struct.pack("<II", 0, i) + probe(i, time.perf_counter_ns()),
-                         (host, port))
+                echo = {"kind": "echo", "data": probe(i, time.perf_counter_ns())}
+                s.sendto(rp.udp_encode_to_car({"session": 0, "seq": i, "message": echo}), (host, port))
     finally:
         s.close()
     return c.ms()

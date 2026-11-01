@@ -134,7 +134,8 @@ pub enum FromCar<'a> {
     Info(Info),
 }
 
-fn header(datagram: &[u8]) -> Result<(Header, &[u8]), DecodeError> {
+/// The header and raw payload, with named errors; payloads are decoded by their own types.
+pub fn split(datagram: &[u8]) -> Result<(Header, &[u8]), DecodeError> {
     if datagram.len() < HEADER_LEN {
         return Err(DecodeError::Length);
     }
@@ -169,7 +170,7 @@ fn put(
 
 impl<'a> Frame<ToCar<'a>> {
     pub fn decode(datagram: &'a [u8]) -> Result<Self, DecodeError> {
-        let (h, p) = header(datagram)?;
+        let (h, p) = split(datagram)?;
         let message = match h.kind {
             Kind::Hello => empty(p).map(|_| ToCar::Hello)?,
             Kind::Setpoint => ToCar::Setpoint(Setpoint::decode(p)?),
@@ -218,7 +219,7 @@ impl<'a> Frame<ToCar<'a>> {
 
 impl<'a> Frame<FromCar<'a>> {
     pub fn decode(datagram: &'a [u8]) -> Result<Self, DecodeError> {
-        let (h, p) = header(datagram)?;
+        let (h, p) = split(datagram)?;
         let message = match h.kind {
             Kind::HelloAck => FromCar::HelloAck(Capabilities::decode(p)?),
             Kind::Status => FromCar::Status(Status::decode(p)?),

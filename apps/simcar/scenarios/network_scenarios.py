@@ -7,6 +7,7 @@ A fresh sim car per test; home mode is scripted through its stdin (`net.rs`), BL
 the virtual BLE socket (`vble.rs`). Development evidence only: no radio is modelled (ADR-0002).
 ROS cases run in the ROS scenario container.
 """
+import rovi_protocol as rp
 import os, socket, struct, subprocess, tempfile, time, unittest
 
 import carlog
@@ -37,9 +38,10 @@ class Udp(UdpClient):
                 d, _ = self.s.recvfrom(1500)
             except socket.timeout:
                 return None
-            kind, session, seq = d[3], *struct.unpack_from("<II", d, 4)
+            rp.udp_decode_from_car(d)  # every car reply must be valid under the crate
+            kind, session, seq, payload = rp.udp_split(d)
             if expected_seq is None or seq == expected_seq:
-                return kind, session, d[12:]
+                return kind, session, payload
 
     def armed(self):
         self.hello()

@@ -8,6 +8,7 @@
     ROVI_CARLOG=<file>    the car's `ev=` log (sim stdout is appended; for a board, its serial capture).
                           Without it a board run has client-side checks only.
 """
+import rovi_protocol as rp
 import os, socket, struct, subprocess, sys, tempfile, time, unittest, pathlib
 
 import carlog, latency
@@ -49,10 +50,10 @@ class Client:
                 return None
             if frm != car:
                 continue
-            assert d[:3] == b"RV\x01", d
-            session, seq = struct.unpack("<II", d[4:12])
+            rp.udp_decode_from_car(d)  # every car reply must be valid under the crate
+            kind, session, seq, payload = rp.udp_split(d)
             if expected_seq is None or seq == expected_seq:
-                return d[3], session, d[12:]
+                return kind, session, payload
             if time.monotonic() >= deadline:
                 return None
 

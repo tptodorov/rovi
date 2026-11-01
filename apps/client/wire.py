@@ -1,9 +1,12 @@
-"""The car's payloads shared by the UDP and BLE clients: setpoint CDR, Status and Capabilities (src/device.rs).
+"""The car's payloads for the UDP and BLE clients: setpoint CDR, Status and Capabilities.
 
-test_wire.py checks them against the Rust golden vectors and codes.
+A thin adapter over the `rovi_protocol` binding of the rovi-protocol crate (ADR-0017): layouts and
+validation live only there. Names stay in this module's spelling until the clients adopt the
+crate's (add-rovi-protocol design I4).
 """
-import struct
 from typing import NamedTuple
+
+import rovi_protocol as rp
 
 # Status codes, indexed by the byte the car sends.
 STATES = ("Open", "Claimed", "Armed", "Stopped")
@@ -11,29 +14,33 @@ REASONS = (None, "Stop", "LeaseExpired", "OwnerLost", "OutOfLimits")
 ERRORS = (None, "Busy", "NotOwner", "NotReady", "Invalid")
 
 
+def _camel(name):
+    return None if name == "none" else "".join(w.capitalize() for w in name.split("-"))
+
+
 def cdr(vx=0.0, vy=0.0, wz=0.0, sec=0, nanosec=0):
-    """TwistStamped CDR (68 bytes): empty frame_id (NUL plus 3 zero pad bytes), then the twist."""
-    return b"\x00\x01\x00\x00" + struct.pack("<iII", sec, nanosec, 1) + b"\x00" * 4 + struct.pack("<6d", vx, vy, 0, 0, 0, wz)
+    """TwistStamped CDR (68 bytes) with an empty frame id."""
+    return rp.setpoint_encode({"vx": vx, "vy": vy, "wz": wz, "sec": sec, "nanosec": nanosec})
 
 
 def ble_setpoint(seq, vx=0.0, vy=0.0, wz=0.0):
     """The BLE Setpoint value: `seq u32` LE, then the CDR (72 bytes)."""
-    return struct.pack("<I", seq) + cdr(vx, vy, wz)
+    return rp.ble_setpoint_encode(seq, {"vx": vx, "vy": vy, "wz": wz})
 
 
 class Status(NamedTuple):
     """Shared state, stop reason and last refused owner ARM/STOP (NotReady, Invalid).
     Only successful owner control or release clears the error; setpoints and echo do not.
-    Numeric codes remain version 1; Busy is a claimant reply, not a stored owner error."""
+    Busy is a claimant reply, not a stored owner error."""
     state: str
     reason: str | None
     error: str | None
 
     @classmethod
     def decode(cls, b):
-        if len(b) != 3 or b[0] >= len(STATES) or b[1] >= len(REASONS) or b[2] >= len(ERRORS):
-            raise ValueError(f"bad status {bytes(b).hex()}")
-        return cls(STATES[b[0]], REASONS[b[1]], ERRORS[b[2]])
+        """Raises `rovi_protocol.DecodeError` (a ValueError) for malformed bytes."""
+        d = rp.status_decode(bytes(b))
+        return cls(_camel(d["state"]), _camel(d["reason"]), _camel(d["error"]))
 
 
 class Capabilities(NamedTuple):
@@ -47,10 +54,10 @@ class Capabilities(NamedTuple):
     claim_ms: int
     reclaim_ms: int
 
-    LEN = 27
+    LEN = rp.CAPABILITIES_LEN
 
     @classmethod
     def decode(cls, b):
-        if len(b) != cls.LEN:
-            raise ValueError(f"capabilities are {cls.LEN} bytes, got {len(b)}")
-        return cls(*struct.unpack("<B5f3H", bytes(b)))
+        """Validated by the crate: version 1, finite positive geometry, finite non-negative
+        limits, non-zero windows. Raises `rovi_protocol.DecodeError` otherwise."""
+        return cls(**rp.capabilities_decode(bytes(b)))
