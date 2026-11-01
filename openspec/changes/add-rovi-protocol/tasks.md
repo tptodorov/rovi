@@ -25,7 +25,7 @@
 ## 4. Phone binding
 
 - [x] 4.1 Add the WebAssembly binding with pinned tooling; pass vector parity, Node and built-page tests including missing-module behaviour; measure bundle size. Done 2026-11-01: `bindings/wasm` (wasm-bindgen pinned to 0.2.121, serde) exposes the same codecs and error kinds; all 190 vectors pass through it in Node. Size: 205 KB wasm (77 KB gzipped) plus 37 KB glue, pinned by revision with the page. Without the module, Connect stays disabled with an explanation (browser test, both files); there is no fallback codec. Connect now starts disabled in the HTML, since the module loads just after the page. CSP allows `wasm-unsafe-eval`.
-- [ ] 4.2 Switch the phone codec; with motor power off, check Bluefy load, connect, Status/Network and both network actions; record evidence. Motion recheck only in an announced stand batch. Codec switch done 2026-11-01: `wire.js` is a thin adapter over the module, and session, UI and display use the crate's names (I4); 69 Node and 46 built-page browser tests pass. Bluefy check pending.
+- [x] 4.2 Switch the phone codec; with motor power off, check Bluefy load, connect, Status/Network and both network actions; record evidence. Motion recheck only in an announced stand batch. Codec switch done 2026-11-01: `wire.js` is a thin adapter over the module, and session, UI and display use the crate's names (I4); 69 Node and 46 built-page browser tests pass. Bluefy check passed 2026-11-01, motor power off: load, connect, Status/Network and both network actions, from Todor's observations and serial ([evidence](../../../firmware/bench/2026-11-01-iphone-wasm-network/notes.md)).
 
 ## 5. Close
 
