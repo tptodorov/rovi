@@ -16,4 +16,4 @@ Serial ([car.log](car.log)):
 * The phone reconnected and claimed; `mode_cmd source=Ble cmd=Home result=Ok`, release, restart, Home with the ROS router 2.2 s after boot.
 * The phone reconnected again and claimed with its STOP. Zero arm events; wheels 0 throughout.
 
-The capture was snapshotted while the phone was still connected, so its final disconnect is not in this log. Motion on the new page is not covered here (task 4.3). Home SSID redacted.
+The capture was snapshotted while the phone was still connected, so its final disconnect is not in this log. The later motion recheck is recorded in the [stand evidence](../2026-11-01-protocol-stand/notes.md) (task 4.2). Home SSID redacted.
