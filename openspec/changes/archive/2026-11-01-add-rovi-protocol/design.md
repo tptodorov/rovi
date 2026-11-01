@@ -2,7 +2,7 @@
 
 ## Context
 
-See [proposal](proposal.md). Today's mapping is [protocol.md](../../../docs/reference/protocol.md); layouts live in `rovi-core` (`udp.rs`, `setpoint.rs`, `status.rs`, `capabilities.rs`, `network.rs`, `device.rs`, `rmw.rs`) next to device logic, with hand-written copies in Python, JavaScript and the conformance suite.
+See [proposal](proposal.md). Today's mapping is [protocol.md](../../../../docs/reference/protocol.md); layouts live in `rovi-core` (`udp.rs`, `setpoint.rs`, `status.rs`, `capabilities.rs`, `network.rs`, `device.rs`, `rmw.rs`) next to device logic, with hand-written copies in Python, JavaScript and the conformance suite.
 
 ## Decisions
 
@@ -65,7 +65,7 @@ Inventory from 2026-10-28 code review (`rovi-core`, `firmware/src`, `apps/simcar
 | I8 | ROS topic table, types and QoS | Duplicated in `firmware/src/ros.rs` and `apps/simcar/src/ros.rs` (~440 differing lines, endpoint indexes by position) | One topic table in the crate; endpoints by name |
 | I9 | Network republish (on change, else every 1 s) | Hand-written in both ROS adapters; Status and Capabilities use `rovi-core` `Publication` | A `rovi-core` network `Publication`, like the others |
 | I10 | Sim virtual BLE op codes | Ad-hoc framing in `vble.rs` and in the conformance suite | Test transport defined in the crate (sim-only, no radio, ADR-0002) |
-| I11 | Minimum windows a client accepts | Laptop lease ≥ 200 ms (from its 200 ms stream-gap bound); phone lease ≥ 500 ms, claim ≥ 1000 ms (unmeasured Bluefy margin) | **Behaviour change, approved by Todor on 2026-10-29:** one crate constant for every client: lease ≥ 500 ms, claim ≥ 1000 ms, reclaim > 0. The car advertises 1000/10000/5000 ms, so no accepted setup is affected. Modifies [laptop-teleoperation](../../specs/laptop-teleoperation/spec.md); the phone already uses these values |
+| I11 | Minimum windows a client accepts | Laptop lease ≥ 200 ms (from its 200 ms stream-gap bound); phone lease ≥ 500 ms, claim ≥ 1000 ms (unmeasured Bluefy margin) | **Behaviour change, approved by Todor on 2026-10-29:** one crate constant for every client: lease ≥ 500 ms, claim ≥ 1000 ms, reclaim > 0. The car advertises 1000/10000/5000 ms, so no accepted setup is affected. Modifies [laptop-teleoperation](../../../specs/laptop-teleoperation/spec.md); the phone already uses these values |
 
 After I8–I9, the firmware and sim ROS adapters differ only in runtime glue (embassy vs std). Shared handler code goes into a common module where the runtimes allow.
 
@@ -109,4 +109,4 @@ T10 is the only contract change. Todor approved it on 2026-10-29 (“ok, i appro
 4. WebAssembly binding; switch the phone codec; Node/browser tests, then Bluefy check with motor power off.
 5. Delete the hand-written codecs once no caller remains.
 
-Record the decision as [ADR-0017](../../../docs/adr/0017-one-rust-protocol-crate.md).
+Record the decision as [ADR-0017](../../../../docs/adr/0017-one-rust-protocol-crate.md).

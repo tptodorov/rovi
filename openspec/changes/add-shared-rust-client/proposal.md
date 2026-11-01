@@ -8,7 +8,7 @@ Rust device codecs, Python laptop clients and the JavaScript phone client repeat
 
 ## What Changes
 
-- Introduce a reusable Rust client library for deterministic session decisions on top of the shared [`rovi-protocol`](../add-rovi-protocol/proposal.md) crate, which must land first.
+- Introduce a reusable Rust client library for deterministic session decisions on top of the shared [`rovi-protocol`](../archive/2026-11-01-add-rovi-protocol/proposal.md) crate, now in place.
 - Expose the same library to a native laptop client and a locally bundled WebAssembly phone adapter. Provide typed protocol building blocks usable by a future Rust ROS controller; building that controller is outside this change.
 - Migrate laptop UDP, laptop BLE and then the iPhone one at a time, each behind its own host and physical acceptance gate. Keep the accepted client available until its replacement passes.
 - Preserve current commands, limits, explicit manual ARM, stream/cleanup deadlines, network actions and transport-specific recovery. Keep terminal, Bluetooth, browser lifecycle and sensor collection in their platform adapters.

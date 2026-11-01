@@ -1,6 +1,6 @@
 # One typed Rust protocol for every participant
 
-**Status: draft; planning only.** On 2026-10-28 Todor asked that the Rust code defining the protocol be shared between the clients and the car, so communication is strongly typed, verifiable on the sim and on the device, and shared by every participant. This authorizes this proposal, not implementation, flashing or motor tests. Proposal acceptance must be recorded before implementation.
+**Status: accepted, implemented and archived 2026-11-01.** On 2026-10-28 Todor asked that the Rust code defining the protocol be shared between the clients and the car, so communication is strongly typed, verifiable on the sim and on the device, and shared by every participant. Acceptance is recorded in [task 1.1](tasks.md); physical results in tasks 3.3, 3.4 and 4.2.
 
 ## Why
 
@@ -27,7 +27,7 @@ Session logic (ARM, deadlines, recovery) is out of scope; the shared client ([#1
 
 - `laptop-teleoperation`: the minimum accepted lease rises from 200 ms to the single client minimum shared with the phone (lease 500 ms, claim 1000 ms, nonzero reclaim), approved by Todor on 2026-10-29.
 
-[car-control-api](../../specs/car-control-api/spec.md) behavior is unchanged. Byte layouts are unchanged except the approved ROS network key rename (T10).
+[car-control-api](../../../specs/car-control-api/spec.md) behavior is unchanged. Byte layouts are unchanged except the approved ROS network key rename (T10).
 
 ## Impact
 

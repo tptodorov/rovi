@@ -4,7 +4,7 @@
 
 See [proposal](proposal.md) for authorization and scope. The protocol mapping is [here](../../../docs/reference/protocol.md); accepted behavior lives in the [laptop](../../specs/laptop-teleoperation/spec.md), [phone](../../specs/iphone-ble-teleoperation/spec.md) and [phone network](../../specs/iphone-network-controls/spec.md) specifications. Current claim-on-write and takeover behavior also depends on the active [home-network change](../add-home-network-mode/proposal.md). Its range check remains unverified.
 
-Current responsibilities are split between Python `apps/client/wire.py`, `apps/teleop/{protocol,policy,runtime,ble}.py` and JavaScript `apps/iphone/{wire,transport,session,hold,physical}.js`. Wire types and validating codecs for every message come from [`rovi-protocol`](../add-rovi-protocol/design.md) ([ADR-0017](../../../docs/adr/0017-one-rust-protocol-crate.md)), which this change requires first. Supported-profile validation and client state transitions still need implementing; shared codecs alone do not remove duplicated session rules.
+Current responsibilities are split between Python `apps/client/wire.py`, `apps/teleop/{protocol,policy,runtime,ble}.py` and JavaScript `apps/iphone/{wire,transport,session,hold,physical}.js`. Wire types and validating codecs for every message come from [`rovi-protocol`](../archive/2026-11-01-add-rovi-protocol/design.md) ([ADR-0017](../../../docs/adr/0017-one-rust-protocol-crate.md)). Supported-profile validation and client state transitions still need implementing; shared codecs alone do not remove duplicated session rules.
 
 ## Shared module and interface
 
