@@ -422,7 +422,7 @@ mod tests {
             .info([192, 168, 1, 50])
             .encode_cdr(&mut out)
             .unwrap();
-        let text = b"mode=home pending=none fallback=none ip=192.168.1.50";
+        let text = b"mode=home pending=none reason=none ip=192.168.1.50";
         assert_eq!(out[..4], [0, 1, 0, 0]);
         assert_eq!(out[4..8], (text.len() as u32 + 1).to_le_bytes());
         assert_eq!(&out[8..n - 1], text);
@@ -432,7 +432,7 @@ mod tests {
         let len = n2.info([0; 4]).encode_cdr(&mut out).unwrap();
         assert_eq!(
             &out[8..len - 1],
-            b"mode=fallback pending=car-network fallback=scan ip=0.0.0.0"
+            b"mode=fallback pending=car-network reason=scan ip=0.0.0.0"
         );
     }
 

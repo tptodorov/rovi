@@ -44,13 +44,13 @@ class ProtocolTests(unittest.TestCase):
         event = s.receive(frame(INFO, 0, q, reply), 11)
         self.assertEqual(event[0], 'info')
         self.assertEqual(event[1], Status('Armed', None, None))
-        self.assertEqual(network_text(event[2]), 'mode=home pending=none fallback=none ip=192.168.1.50')
+        self.assertEqual(network_text(event[2]), 'mode=home pending=none reason=none ip=192.168.1.50')
         self.assertIsNone(s.receive(frame(INFO, 0, q, reply), 12), 'answered once')
 
     def test_network_text_names_every_code(self):
         self.assertEqual(network_text(bytes([0, 2, 7, 0, 0, 0, 0, 0])),
-                         'mode=fallback pending=car-network fallback=requested ip=0.0.0.0')
-        self.assertEqual(network_text(bytes([1, 1, 6, 0, 0, 0, 0, 0]))[:40], 'mode=attempting pending=home fallback=li')
+                         'mode=fallback pending=car-network reason=requested ip=0.0.0.0')
+        self.assertEqual(network_text(bytes([1, 1, 6, 0, 0, 0, 0, 0]))[:40], 'mode=attempting pending=home reason=link')
         self.assertEqual(network_text(b'\x09' * 8), 'network information not understood')
 
     def test_invalid_frames_do_not_refresh_deadline(self):

@@ -82,7 +82,7 @@ class ModeTests(unittest.TestCase):
         try:
             t=Terminal(peer.address,[sys.executable,'-u','-m','apps.teleop','--target',f'{peer.address[0]}:{peer.address[1]}','--mode','car'])
             t.expect('Connected disarmed')
-            t.expect('Car network: mode=home pending=none fallback=none ip=192.168.1.50')
+            t.expect('Car network: mode=home pending=none reason=none ip=192.168.1.50')
             t.expect('Mode car-network pending; it applies when this controller releases the car (quit)')
             self.assertIn((MODE,b'\x02'),[(k,pl) for k,_,_,pl in peer.packets])
             self.assertFalse(any(k==ARM for k,*_ in peer.packets),'a mode command never arms')

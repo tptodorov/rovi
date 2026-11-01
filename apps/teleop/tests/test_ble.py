@@ -230,7 +230,7 @@ class BleTests(unittest.IsolatedAsyncioTestCase):
         await self.start()
         controls=[d for u,d,_ in self.peer.writes if u==CONTROL]
         self.assertEqual(controls[:2],[b'\x02',b'\x04'],'claiming STOP, then Car network')
-        self.assertIn('Car network: mode=home pending=none fallback=none ip=192.168.1.50',self.output)
+        self.assertIn('Car network: mode=home pending=none reason=none ip=192.168.1.50',self.output)
         self.assertTrue(any('Mode car-network pending' in o for o in self.output))
 
     async def test_older_firmware_without_network_characteristic_still_connects(self):

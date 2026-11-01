@@ -21,7 +21,7 @@ def network_text(info):
         n = rp.network_decode(bytes(info))
     except rp.DecodeError:
         return "network information not understood"
-    return f"mode={n['mode']} pending={n['pending']} fallback={n['reason']} ip={n['ip']}"
+    return f"mode={n['mode']} pending={n['pending']} reason={n['reason']} ip={n['ip']}"
 HEADER = struct.Struct("<2sBBII")
 COMMAND = {HOME: "home", CAR_NETWORK: "car-network"}
 

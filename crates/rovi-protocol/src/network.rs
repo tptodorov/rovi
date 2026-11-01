@@ -156,13 +156,14 @@ impl NetworkInfo {
         })
     }
 
-    /// `mode=… pending=… fallback=… ip=…` as `std_msgs/String` CDR.
+    /// `mode=… pending=… reason=… ip=…` as `std_msgs/String` CDR (design T10: `reason`, as in
+    /// the binary layout; it was `fallback=` before 2026-11).
     pub fn encode_cdr(self, out: &mut [u8]) -> Result<usize, EncodeError> {
         let mut t = Text::<{ CDR_MAX - 9 }>::default();
         let [a, b, c, d] = self.ip;
         write!(
             t,
-            "mode={} pending={} fallback={} ip={a}.{b}.{c}.{d}",
+            "mode={} pending={} reason={} ip={a}.{b}.{c}.{d}",
             self.mode.name(),
             pending_name(self.pending),
             self.reason.name()
@@ -176,7 +177,7 @@ impl NetworkInfo {
         let (mode, pending, reason, ip) = (
             f.next("mode")?,
             f.next("pending")?,
-            f.next("fallback")?,
+            f.next("reason")?,
             f.next("ip")?,
         );
         f.end()?;
@@ -272,9 +273,9 @@ mod tests {
         assert_eq!(NetworkInfo::decode(&[0; 7]), Err(DecodeError::Length));
         let mut out = [0; CDR_MAX];
         for bad in [
-            "mode=home pending=none fallback=none ip=1.2.3",
-            "mode=home pending=none fallback=none ip=01.2.3.4",
-            "mode=home pending=none reason=none ip=1.2.3.4",
+            "mode=home pending=none reason=none ip=1.2.3",
+            "mode=home pending=none reason=none ip=01.2.3.4",
+            "mode=home pending=none fallback=none ip=1.2.3.4", // the pre-T10 key
         ] {
             let n = text::encode_string(bad, &mut out).unwrap();
             assert_eq!(
