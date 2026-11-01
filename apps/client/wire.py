@@ -1,21 +1,15 @@
 """The car's payloads for the UDP and BLE clients: setpoint CDR, Status and Capabilities.
 
-A thin adapter over the `rovi_protocol` binding of the rovi-protocol crate (ADR-0017): layouts and
-validation live only there. Names stay in this module's spelling until the clients adopt the
-crate's (add-rovi-protocol design I4).
+A thin adapter over the `rovi_protocol` binding of the rovi-protocol crate (ADR-0017): layouts,
+validation and names live only there. Status fields use the crate's spelling (`stopped`,
+`lease-expired`, `not-ready`, ...), with None for "none" (design D7/I4).
 """
 from typing import NamedTuple
 
 import rovi_protocol as rp
 
-# Status codes, indexed by the byte the car sends.
-STATES = ("Open", "Claimed", "Armed", "Stopped")
-REASONS = (None, "Stop", "LeaseExpired", "OwnerLost", "OutOfLimits")
-ERRORS = (None, "Busy", "NotOwner", "NotReady", "Invalid")
-
-
-def _camel(name):
-    return None if name == "none" else "".join(w.capitalize() for w in name.split("-"))
+def _name(name):
+    return None if name == "none" else name
 
 
 def cdr(vx=0.0, vy=0.0, wz=0.0, sec=0, nanosec=0):
@@ -29,7 +23,7 @@ def ble_setpoint(seq, vx=0.0, vy=0.0, wz=0.0):
 
 
 class Status(NamedTuple):
-    """Shared state, stop reason and last refused owner ARM/STOP (NotReady, Invalid).
+    """Shared state, stop reason and last refused owner ARM/STOP (not-ready, invalid).
     Only successful owner control or release clears the error; setpoints and echo do not.
     Busy is a claimant reply, not a stored owner error."""
     state: str
@@ -40,7 +34,7 @@ class Status(NamedTuple):
     def decode(cls, b):
         """Raises `rovi_protocol.DecodeError` (a ValueError) for malformed bytes."""
         d = rp.status_decode(bytes(b))
-        return cls(_camel(d["state"]), _camel(d["reason"]), _camel(d["error"]))
+        return cls(d["state"], _name(d["reason"]), _name(d["error"]))
 
 
 class Capabilities(NamedTuple):

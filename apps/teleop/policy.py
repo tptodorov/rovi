@@ -44,7 +44,7 @@ class Policy:
         return self.intent
 
     def observe(self, status, control):
-        if status.state != 'Armed' or status.reason or status.error:
+        if status.state != 'armed' or status.reason or status.error:
             self.clear()
         elif control == ARM:
             self.clear()

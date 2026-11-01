@@ -80,11 +80,11 @@ class BleClient:
             status = Status.decode(data)
         except ValueError:
             return False
-        if ((status.state=='Stopped') != (status.reason is not None)
-                or status.error not in (None,'NotReady','Invalid')):
+        if ((status.state=='stopped') != (status.reason is not None)
+                or status.error not in (None,'not-ready','invalid')):
             return False
         self.status,self.status_at = status,self.clock()
-        if status.state!='Armed' or status.reason or status.error:
+        if status.state!='armed' or status.reason or status.error:
             self.epoch += 1
         if self.policy:
             self.policy.observe(status,control)
@@ -154,7 +154,7 @@ class BleClient:
             if not self.observe(data,matched):
                 raise ClientError('invalid BLE control Status')
             if kind==STOP:
-                self.emit('STOP acknowledged' if self.status==Status('Stopped','Stop',None) else 'STOP unconfirmed/refused')
+                self.emit('STOP acknowledged' if self.status==Status('stopped','stop',None) else 'STOP unconfirmed/refused')
         finally:
             self.busy = False
 
@@ -202,7 +202,7 @@ class BleClient:
             raise LinkError(f'BLE car busy, another controller owns the car: {exc}') from exc
         except (OSError,asyncio.TimeoutError) as exc:
             raise LinkError(f'BLE claim failed: {exc}') from exc
-        if not self.observe(await self.io(self.peer.read_gatt_char(STATUS),1)) or self.status.state not in ('Claimed','Stopped'):
+        if not self.observe(await self.io(self.peer.read_gatt_char(STATUS),1)) or self.status.state not in ('claimed','stopped'):
             raise ClientError('unexpected BLE claim Status')
         if self.peer.services.get_characteristic(NETWORK) is not None:  # older firmware lacks it
             self.emit(f'Car network: {network_text(await self.io(self.peer.read_gatt_char(NETWORK),1))}')
@@ -274,7 +274,7 @@ class BleClient:
                         writes_ok = False
                 try:
                     status = Status.decode(await self.io(peer.read_gatt_char(STATUS),limit(.15)))
-                    confirmed = stop_written and status==Status('Stopped','Stop',None)
+                    confirmed = stop_written and status==Status('stopped','stop',None)
                 except (LinkError,ValueError):
                     pass
             try:

@@ -10,9 +10,6 @@ from apps.client.wire import Capabilities, Status
 HELLO, ACK, SETPOINT, ARM, STOP, BYE, STATUS, BUSY, ECHO, MODE, INFO = range(1, 12)
 # ADR-0016 mode command values and network-information names (8 bytes: mode, pending, reason, 0, IPv4).
 HOME, CAR_NETWORK = 1, 2
-NET_MODES = ("fallback", "attempting", "home")
-NET_PENDING = ("none", "home", "car-network")
-NET_REASONS = ("none", "no-settings", "scan", "join", "dhcp", "router", "link-lost", "requested")
 
 
 def network_text(info):
@@ -172,14 +169,14 @@ class Session:
                 status = Status.decode(payload)
             except ValueError:
                 return None
-            if ((status.state == "Stopped") != (status.reason is not None)
-                    or status.error not in (None, "NotReady", "Invalid")):
+            if ((status.state == "stopped") != (status.reason is not None)
+                    or status.error not in (None, "not-ready", "invalid")):
                 return None
-            if q == 0 and status == Status('Stopped', 'OwnerLost', None):
+            if q == 0 and status == Status('stopped', 'owner-lost', None):
                 # ADR-0016 takeover notice: the car now ignores this session.
                 raise LinkError("another controller took the car")
             matched = control[0] if control and q == control[1] else None
-            if matched or (status.state != 'Armed' and control and control[0] == ARM):
+            if matched or (status.state != 'armed' and control and control[0] == ARM):
                 self.pending = None
             self.status, self.status_at = status, now
             return ('status', status, matched)

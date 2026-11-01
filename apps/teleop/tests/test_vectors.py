@@ -13,11 +13,8 @@ from apps.teleop.protocol import ClientError, capabilities, frame, network_text,
 import rovi_protocol as rp
 
 VECTORS = json.loads((Path(__file__).resolve().parents[3] / "crates/rovi-protocol/vectors.json").read_text())
-# Python names (apps/client/wire.py) for the vector's ROS spellings (I4).
-STATE = {"open": "Open", "claimed": "Claimed", "armed": "Armed", "stopped": "Stopped"}
-NAME = {"none": None, "stop": "Stop", "lease-expired": "LeaseExpired", "owner-lost": "OwnerLost",
-        "out-of-limits": "OutOfLimits", "busy": "Busy", "not-owner": "NotOwner", "not-ready": "NotReady",
-        "invalid": "Invalid"}
+def name(n):
+    return None if n == "none" else n
 
 
 def cases(kind, message, encoding=None):
@@ -33,7 +30,7 @@ class Valid(unittest.TestCase):
         for v in cases("valid", "status", "binary"):
             with self.subTest(v["name"]):
                 s, want = Status.decode(bytes.fromhex(v["hex"])), v["value"]
-                self.assertEqual(s, (STATE[want["state"]], NAME[want["reason"]], NAME[want["error"]]))
+                self.assertEqual(s, (want["state"], name(want["reason"]), name(want["error"])))
 
     def test_capabilities(self):
         for v in cases("valid", "capabilities", "binary"):
