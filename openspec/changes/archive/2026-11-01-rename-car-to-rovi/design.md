@@ -27,7 +27,7 @@ It is a local identifier that bench scripts and procedures use, and it can keep 
 ## Risks / Trade-offs
 
 - **A host caches the old name** (BlueZ or iOS) → the car may not match until the host sees a fresh advertisement. Physical check 2.2 covers this.
-- **Host tests cannot prove the radios** → the name on air needs the physical check ([ADR-0002](../../../docs/adr/0002-simulation-never-proves-hardware.md)).
+- **Host tests cannot prove the radios** → the name on air needs the physical check ([ADR-0002](../../../../docs/adr/0002-simulation-never-proves-hardware.md)).
 
 ## Migration
 

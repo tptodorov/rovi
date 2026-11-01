@@ -1,6 +1,6 @@
 # Name the car Rovi on both radios
 
-**Status: accepted for implementation.** On 2026-11-01 Todor asked: "i want to replace "Rovi M8" wifi and BLE connection everywhere, since it should be called just Rovi and so it should be advertised in the connections and protocols as such". Physical acceptance is still open.
+**Status: implemented and accepted.** On 2026-11-01 Todor asked: "i want to replace "Rovi M8" wifi and BLE connection everywhere, since it should be called just Rovi and so it should be advertised in the connections and protocols as such". BLE/Wi-Fi names, laptop discovery and publication passed on 2026-11-01 ([evidence](../../../../firmware/bench/2026-11-01-rovi-name/notes.md)); no new physical Bluefy check or AP association is claimed.
 
 ## Why
 
