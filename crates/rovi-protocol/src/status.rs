@@ -175,13 +175,22 @@ impl Status {
         let (state, reason, error) = (f.next("state")?, f.next("reason")?, f.next("error")?);
         let session = f.parse("session")?;
         f.end()?;
+        Self::from_names(state, reason, error, session)
+    }
+
+    /// The Status these names spell (`none` for no reason or error), as the ROS text and the
+    /// bindings write them.
+    pub fn from_names(
+        state: &str,
+        reason: &str,
+        error: &str,
+        session: u32,
+    ) -> Result<Self, DecodeError> {
+        let find = |name: &str, all: &[&'static str]| all.iter().position(|n| *n == name);
         let reason = match reason {
             "none" => None,
             r => Some(
-                *REASONS
-                    .iter()
-                    .find(|x| x.name() == r)
-                    .ok_or(DecodeError::UnknownCode)?,
+                REASONS[find(r, &REASONS.map(StopReason::name)).ok_or(DecodeError::UnknownCode)?],
             ),
         };
         let state = match (state, reason) {
@@ -194,18 +203,26 @@ impl Status {
         };
         let error = match error {
             "none" => None,
-            e => Some(
-                *ERRORS
-                    .iter()
-                    .find(|x| x.name() == e)
-                    .ok_or(DecodeError::UnknownCode)?,
-            ),
+            e => Some(ERRORS[find(e, &ERRORS.map(Error::name)).ok_or(DecodeError::UnknownCode)?]),
         };
         Ok(Self {
             state,
             error,
             session,
         })
+    }
+
+    /// `(state, reason, error)` names; `none` where there is no reason or error.
+    pub fn names(self) -> (&'static str, &'static str, &'static str) {
+        let reason = match self.state {
+            State::Stopped(r) => r.name(),
+            _ => "none",
+        };
+        (
+            self.state.name(),
+            reason,
+            self.error.map_or("none", Error::name),
+        )
     }
 }
 

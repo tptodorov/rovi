@@ -1,0 +1,30 @@
+[package]
+name = "rovi-protocol-wasm"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "WebAssembly binding of rovi-protocol for the phone page (ADR-0017): the same codecs, no session policy"
+
+# Own workspace and lockfile, like the apps.
+[workspace]
+
+[lib]
+name = "rovi_protocol"
+crate-type = ["cdylib"]
+
+[dependencies]
+protocol = { package = "rovi-protocol", path = "../../crates/rovi-protocol" }
+js-sys = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_bytes = "0.11"
+serde-wasm-bindgen = "0.6"
+# Must equal the wasm-bindgen CLI (nixpkgs wasm-bindgen-cli and CI, see build.sh).
+wasm-bindgen = "=0.2.121"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

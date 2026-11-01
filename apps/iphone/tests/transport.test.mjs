@@ -16,18 +16,18 @@ test('normal GATT contract uses exact writes and explicit reads separately from 
   const fake = fakeBle(), reports = [];
   const ble = new Ble(fake.device, bytes => reports.push(status(bytes)), () => {});
   const initial = await ble.open();
-  assert.equal(initial.caps.length, 27); assert.equal(status(initial.report).state, 'Stopped', 'claimed by the STOP that open() sends');
+  assert.equal(initial.caps.length, 27); assert.equal(status(initial.report).state, 'stopped', 'claimed by the STOP that open() sends');
   await ble.send(setpoint(0)); await ble.control(1);
-  assert.equal(reports.at(-1).state, 'Armed'); assert.equal(status(await ble.read()).state, 'Armed');
-  await ble.control(2); assert.equal(status(await ble.read()).reason, 'Stop');
-  ble.disconnect(); fake.notify([2, 0, 0]); assert.equal(reports.at(-1).state, 'Stopped');
+  assert.equal(reports.at(-1).state, 'armed'); assert.equal(status(await ble.read()).state, 'armed');
+  await ble.control(2); assert.equal(status(await ble.read()).reason, 'stop');
+  ble.disconnect(); fake.notify([2, 0, 0]); assert.equal(reports.at(-1).state, 'stopped');
 });
 
 test('claim-on-write firmware is claimed with an acknowledged STOP before Status is read', async () => {
   const fake = fakeBle({ claimOnWrite: true });
   const ble = new Ble(fake.device, () => {}, () => {});
   const initial = await ble.open();
-  assert.deepEqual(status(initial.report), { state: 'Stopped', reason: 'Stop', error: 'none' });
+  assert.deepEqual(status(initial.report), { state: 'stopped', reason: 'stop', error: 'none' });
   const control = fake.calls.findIndex(([kind, code]) => kind === 'control' && code === 2);
   assert.ok(control >= 0 && control < fake.calls.findIndex(([kind]) => kind === 'read'), fake.calls);
   assert.equal(fake.calls.some(([kind, code]) => kind === 'setpoint' || (kind === 'control' && code === 1)), false);

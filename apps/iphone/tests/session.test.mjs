@@ -47,7 +47,7 @@ test('STOP supersedes a pending ARM; a late ARM cannot grant motion', async () =
   fake.chars.control.writeValueWithResponse = bytes => bytes[0] === 1 ? gate.promise.then(() => original(bytes)) : original(bytes);
   session.arm(); await flush(); session.press(1, 'forward'); session.stop();
   gate.resolve(); await flush();
-  assert.equal(session.localArm, false); assert.equal(session.reported.reason, 'Stop');
+  assert.equal(session.localArm, false); assert.equal(session.reported.reason, 'stop');
   assert.deepEqual(session.requested, ZERO); assert.equal(session.phase, 'ready');
   assert.ok(samples(fake).every(values => values.every(x => x === 0)));
 });
@@ -178,7 +178,7 @@ test('Physical needs neutral/ARM and explicit START; all three axes use the same
   assert.deepEqual(samples(fake).at(-1), [.1, .1, .3]);
   session.togglePhysical(); await advance(50); assert.deepEqual(samples(fake).at(-1), [0, 0, 0]);
   session.selectMode('buttons'); await flush(); assert.equal(session.localArm, false);
-  assert.equal(session.physical.enabled, false); assert.equal(session.reported.reason, 'Stop');
+  assert.equal(session.physical.enabled, false); assert.equal(session.reported.reason, 'stop');
   assert.deepEqual(session.requested, ZERO);
 });
 test('mode change supersedes pending Physical ARM and late results cannot arm Buttons', async () => {
@@ -188,7 +188,7 @@ test('mode change supersedes pending Physical ARM and late results cannot arm Bu
   session.arm(); await flush(); session.togglePhysical(); session.selectMode('buttons');
   gate.resolve(); await flush();
   assert.equal(session.mode, 'buttons'); assert.equal(session.localArm, false);
-  assert.equal(session.reported.reason, 'Stop'); assert.equal(session.physical.neutral, null);
+  assert.equal(session.reported.reason, 'stop'); assert.equal(session.physical.neutral, null);
   assert.ok(samples(fake).every(values => values.every(value => value === 0)));
 });
 test('START during pending ARM is discarded rather than replayed after confirmation', async () => {

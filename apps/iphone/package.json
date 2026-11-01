@@ -3,9 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "protocol": "bash ../../bindings/wasm/build.sh",
+    "pretest": "npm run protocol",
     "test": "node --test tests/*.test.mjs",
     "test:browser": "playwright test",
-    "build": "node build.mjs"
+    "build": "npm run protocol && node build.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1"

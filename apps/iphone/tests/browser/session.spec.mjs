@@ -35,9 +35,9 @@ test('real page and session: connect disarmed, explicit ARM, hold and release, c
   await page.mouse.up();
   await expect(page.locator('#requested')).toContainText('vx 0.00');
   await page.getByRole('button', { name: 'STOP', exact: true }).click();
-  await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');
+  await expect(page.locator('#reported')).toContainText('stopped · reason stop');
   await expect(button).toBeDisabled();
-  await expect(page.locator('#message')).toContainText('Car reported Stopped/Stop');
+  await expect(page.locator('#message')).toContainText('Car reported stopped/stop');
   await expect(page.locator('#stream')).toContainText(/\d+ writes · max gap \d+ ms · slowest write \d+ ms/);
   expect(errors).toEqual([]);
 });
@@ -62,7 +62,7 @@ test('multi-touch cancels intent until every old pointer is released', async ({ 
 
 test('phone-sized preview, real Status age and blur never recover ownership automatically', async ({ page }, info) => {
   await connect(page);
-  await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');  // claimed by its STOP
+  await expect(page.locator('#reported')).toContainText('stopped · reason stop');  // claimed by its STOP
   const backward = await page.locator('[data-direction="backward"]').boundingBox();
   expect(backward.y + backward.height).toBeLessThanOrEqual(844);
   await page.screenshot({ path: info.outputPath('controller.png'), fullPage: true });
@@ -97,7 +97,7 @@ test('STOP acts on touch while another finger holds a direction', async ({ page 
   // iOS synthesizes no click for a second finger, so STOP must act on touch-down alone.
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(forward, 1), point(stop, 2)] });
   await expect(page.locator('#local-arm')).toHaveText('Disarmed');
-  await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');
+  await expect(page.locator('#reported')).toContainText('stopped · reason stop');
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   expect(await stops()).toBe(claimed + 1);
 });

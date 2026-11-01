@@ -117,7 +117,7 @@ test('default Buttons never prompt; Physical combines angles and switching while
   await page.screenshot({ path: info.outputPath('physical.png'), fullPage: true });
   await page.getByRole('radio', { name: 'Buttons', exact: true }).check();
   await expect(page.locator('#local-arm')).toHaveText('Disarmed');
-  await expect(page.locator('#reported')).toContainText('Stopped · reason Stop');
+  await expect(page.locator('#reported')).toContainText('stopped · reason stop');
   await expect(page.locator('#requested')).toHaveText(zero);
 });
 test('permission denial and late permission after mode switch cannot arm or enable Physical', async ({ page }) => {

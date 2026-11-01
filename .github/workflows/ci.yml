@@ -40,6 +40,18 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: apps/iphone/package-lock.json
+      # The protocol module (bindings/wasm): wasm-bindgen must equal the crate's pinned version.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: bindings/wasm
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-bindgen@0.2.121
+      - run: cargo clippy --locked --release --target wasm32-unknown-unknown --manifest-path ../../bindings/wasm/Cargo.toml -- -D warnings
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm test
