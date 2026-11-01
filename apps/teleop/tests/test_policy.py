@@ -10,7 +10,7 @@ class PolicyTests(unittest.TestCase):
     def armed(self,caps=CAPS):
         p=Policy(caps);self.assertEqual(p.input(b'rw',0),'arm')
         self.assertEqual(p.vector(0),ZERO)
-        p.observe(Status('Armed',None,None),ARM)
+        p.observe(Status('armed',None,None),ARM)
         return p
 
     def test_no_implicit_arm_and_new_direction_after_arm(self):
@@ -45,10 +45,10 @@ class PolicyTests(unittest.TestCase):
 
     def test_reported_stop_and_errors_cancel_motion(self):
         p=self.armed();p.input(b'w',1)
-        p.observe(Status('Stopped','LeaseExpired',None),None)
-        p.observe(Status('Armed',None,None),None)
+        p.observe(Status('stopped','lease-expired',None),None)
+        p.observe(Status('armed',None,None),None)
         self.assertFalse(p.armed);self.assertEqual(p.vector(2),ZERO)
-        p.observe(Status('Armed',None,'Invalid'),ARM)
+        p.observe(Status('armed',None,'invalid'),ARM)
         self.assertFalse(p.armed)
 
     def test_loop_gap_boundary_fails_without_catchup(self):

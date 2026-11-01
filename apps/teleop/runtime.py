@@ -120,7 +120,7 @@ class Client:
         elif event[0] == 'status':
             self.policy.observe(event[1],event[2])
             if event[2] == STOP:
-                confirmed = event[1] == Status('Stopped','Stop',None)
+                confirmed = event[1] == Status('stopped','stop',None)
                 self.emit('STOP acknowledged' if confirmed else 'STOP unconfirmed/refused')
 
     def drain_socket(self):
@@ -248,7 +248,7 @@ class Client:
                 if peer != self.peer:
                     continue
                 kind,session,seq,payload = parse(data)
-                if (kind,session,seq) == (STATUS,s.session,q) and Status.decode(payload) == Status('Stopped','Stop',None):
+                if (kind,session,seq) == (STATUS,s.session,q) and Status.decode(payload) == Status('stopped','stop',None):
                     confirmed = True
                     break
             except (BlockingIOError,ValueError):

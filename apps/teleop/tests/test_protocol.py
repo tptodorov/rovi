@@ -43,7 +43,7 @@ class ProtocolTests(unittest.TestCase):
         self.assertIsNone(s.receive(frame(INFO, 0, q + 1, reply), 11), 'unmatched')
         event = s.receive(frame(INFO, 0, q, reply), 11)
         self.assertEqual(event[0], 'info')
-        self.assertEqual(event[1], Status('Armed', None, None))
+        self.assertEqual(event[1], Status('armed', None, None))
         self.assertEqual(network_text(event[2]), 'mode=home pending=none reason=none ip=192.168.1.50')
         self.assertIsNone(s.receive(frame(INFO, 0, q, reply), 12), 'answered once')
 
@@ -77,7 +77,7 @@ class ProtocolTests(unittest.TestCase):
         s=self.claimed(); seq=parse(s.control(ARM,10))[2]
         self.assertIsNone(s.receive(frame(STATUS,41,seq,b'\x02\x00\x00'),11))
         self.assertIsNone(s.receive(frame(STATUS,42,seq+1,b'\x02\x00\x00'),11))
-        self.assertEqual(s.receive(frame(STATUS,42,0,b'\x03\x02\x00'),12),('status',Status('Stopped','LeaseExpired',None),None))
+        self.assertEqual(s.receive(frame(STATUS,42,0,b'\x03\x02\x00'),12),('status',Status('stopped','lease-expired',None),None))
         self.assertIsNone(s.receive(frame(STATUS,42,seq,b'\x02\x00\x00'),13))
         seq=parse(s.control(ARM,14))[2]
         self.assertEqual(s.receive(frame(STATUS,42,seq,b'\x02\x00\x00'),15)[2],ARM)
