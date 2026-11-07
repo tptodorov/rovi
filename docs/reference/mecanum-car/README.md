@@ -15,6 +15,15 @@ Reference for the chassis kit used in the Rovi car. This records the seller list
 
 The listing photos show a silver, two-level chassis plate assembly, four yellow mecanum wheels with black rollers, and four yellow TT-style geared DC motor housings. Photos are saved in [`listing-images/`](listing-images/) as a visual record of the listing, not proof that every detail matches the received kit.
 
+## Received assembly photograph
+
+![Underside of the assembled Rovi chassis, with its front marked](underside-front.jpg)
+
+The handwritten arrow marks the front; the photo shows the mounted power banks and
+wheel arrangement. Capture date and operating conditions were not recorded, so this
+is an assembly reference rather than bench-test evidence. Converted from the supplied
+`IMG_0522.HEIC` to JPEG with location and camera metadata removed.
+
 ## Specifications confirmed from the listing
 
 * Chassis type: four-wheel mecanum / omnidirectional car chassis.
