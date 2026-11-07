@@ -24,3 +24,6 @@ __pycache__
 /bindings/wasm/target/
 /apps/iphone/rovi_protocol.js
 /apps/iphone/rovi_protocol_bg.wasm
+
+# Private per-checkout environment customizations.
+/.envrc.local
